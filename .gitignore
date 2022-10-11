@@ -9,3 +9,4 @@
 /.env
 /resources/static/openapi.json
 /data
+/db.sqlite

@@ -1,7 +1,7 @@
 FROM alpine
 
-COPY ./bin/brick-starter-kit /bin/brick-starter-kit
+COPY ./bin/photo-blog /bin/photo-blog
 
 EXPOSE 80
 
-ENTRYPOINT [ "/bin/brick-starter-kit" ]
+ENTRYPOINT [ "/bin/photo-blog" ]

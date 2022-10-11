@@ -6,17 +6,17 @@ import (
 	"time"
 
 	"github.com/bool64/brick"
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
-	"github.com/bool64/brick-starter-kit/internal/infra/cached"
-	"github.com/bool64/brick-starter-kit/internal/infra/schema"
-	"github.com/bool64/brick-starter-kit/internal/infra/service"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage/mysql"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage/sqlite"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
 	_ "github.com/go-sql-driver/mysql" // MySQL driver.
 	"github.com/swaggest/rest/response/gzip"
+	"github.com/vearutop/photo-blog/internal/domain/greeting"
+	"github.com/vearutop/photo-blog/internal/infra/cached"
+	"github.com/vearutop/photo-blog/internal/infra/schema"
+	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
+	"github.com/vearutop/photo-blog/internal/infra/storage/mysql"
+	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 

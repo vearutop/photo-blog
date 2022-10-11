@@ -1,4 +1,4 @@
-// Package main provides brick-starter-kit web service.
+// Package main provides photo-blog web service.
 package main
 
 import (
@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/bool64/brick"
-	"github.com/bool64/brick-starter-kit/internal/infra"
-	"github.com/bool64/brick-starter-kit/internal/infra/nethttp"
-	"github.com/bool64/brick-starter-kit/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra"
+	"github.com/vearutop/photo-blog/internal/infra/nethttp"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
 func main() {

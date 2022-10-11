@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/stats"
+	"github.com/vearutop/photo-blog/internal/domain/greeting"
 )
 
 // GreetingSaver saves greetings to database.

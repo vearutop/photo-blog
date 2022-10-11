@@ -1,6 +1,6 @@
-module github.com/bool64/brick-starter-kit
+module github.com/vearutop/photo-blog
 
-go 1.18
+go 1.19
 
 require (
 	github.com/bool64/brick v0.1.13

@@ -4,8 +4,8 @@ package cached
 import (
 	"context"
 
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
 	"github.com/bool64/cache"
+	"github.com/vearutop/photo-blog/internal/domain/greeting"
 )
 
 // NewGreetingMaker creates an instance of cached greeting maker.

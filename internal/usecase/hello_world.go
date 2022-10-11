@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/greeting"
 )
 
 type helloDeps interface {

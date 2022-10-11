@@ -20,8 +20,8 @@ env:
   TARGET_DELTA_COV: 90     # Target coverage of changed lines, in percents
   GODOG_ALLURE: "on"
   ALLURE_ENV_TICKET: ${{ github.event.pull_request.title }}
-  ALLURE_ENV_PULL_REQUEST_URL: https://github.com/bool64/brick-starter-kit/pull/${{github.event.issue.number}}
-  ALLURE_ENV_APP: brick-starter-kit
+  ALLURE_ENV_PULL_REQUEST_URL: https://github.com/vearutop/photo-blog/pull/${{github.event.issue.number}}
+  ALLURE_ENV_APP: photo-blog
 jobs:
   test-integration:
     runs-on: ubuntu-latest
@@ -116,7 +116,7 @@ jobs:
           message: |
             ### Integration Test Coverage
 
-            [Allure report](https://bool64.github.io/brick-starter-kit/${{ github.run_number }}/).
+            [Allure report](https://bool64.github.io/photo-blog/${{ github.run_number }}/).
 
             ${{ steps.test.outputs.total }}
             ${{ steps.annotate.outputs.total }}

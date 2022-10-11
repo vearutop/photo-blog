@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
-	"github.com/bool64/brick-starter-kit/internal/infra"
-	"github.com/bool64/brick-starter-kit/internal/infra/nethttp"
-	"github.com/bool64/brick-starter-kit/internal/infra/service"
 	"github.com/bool64/brick/runtime"
 	"github.com/bool64/httptestbench"
 	"github.com/stretchr/testify/require"
+	"github.com/vearutop/photo-blog/internal/domain/greeting"
+	"github.com/vearutop/photo-blog/internal/infra"
+	"github.com/vearutop/photo-blog/internal/infra/nethttp"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
 func Benchmark_hello(b *testing.B) {

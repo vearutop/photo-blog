@@ -7,16 +7,16 @@ import (
 	"testing"
 
 	"github.com/bool64/brick"
-	"github.com/bool64/brick-starter-kit/internal/infra"
-	"github.com/bool64/brick-starter-kit/internal/infra/nethttp"
-	"github.com/bool64/brick-starter-kit/internal/infra/service"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage"
 	"github.com/bool64/brick/config"
 	"github.com/bool64/brick/test"
 	"github.com/bool64/httptestbench"
 	"github.com/godogx/dbsteps"
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
+	"github.com/vearutop/photo-blog/internal/infra"
+	"github.com/vearutop/photo-blog/internal/infra/nethttp"
+	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
 )
 
 func TestFeatures(t *testing.T) {

@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/greeting"
 )
 
 // Clear removes all saved greetings.
