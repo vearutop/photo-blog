@@ -8,14 +8,12 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
-	_ "github.com/go-sql-driver/mysql" // MySQL driver.
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/vearutop/photo-blog/internal/domain/greeting"
 	"github.com/vearutop/photo-blog/internal/infra/cached"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
-	"github.com/vearutop/photo-blog/internal/infra/storage/mysql"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
@@ -68,7 +66,7 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 
 func setupStorage(l *service.Locator, cfg database.Config) error {
 	if cfg.DriverName == "" {
-		cfg.DriverName = "mysql"
+		cfg.DriverName = "sqlite"
 	}
 
 	var (
@@ -79,8 +77,6 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 	switch cfg.DriverName {
 	case "sqlite":
 		migrations = sqlite.Migrations
-	case "mysql":
-		migrations = mysql.Migrations
 	}
 
 	l.Storage, err = database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), migrations)
