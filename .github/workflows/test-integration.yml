@@ -1,0 +1,169 @@
+# This script is provided by github.com/bool64/dev.
+name: test-integration
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+# Cancel the workflow in progress in newer build is about to start.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  GO111MODULE: "on"
+  RUN_BASE_COVERAGE: "on"  # Runs test for PR base in case base test coverage is missing.
+  DOCKER_COMPOSE_FILE: ./docker-compose.yml
+  GO_VERSION: 1.19.x
+  TARGET_DELTA_COV: 90     # Target coverage of changed lines, in percents
+  GODOG_ALLURE: "on"
+  ALLURE_ENV_TICKET: ${{ github.event.pull_request.title }}
+  ALLURE_ENV_PULL_REQUEST_URL: https://github.com/bool64/brick-starter-kit/pull/${{github.event.issue.number}}
+  ALLURE_ENV_APP: brick-starter-kit
+jobs:
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go stable
+        if: env.GO_VERSION != 'tip'
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install Go tip
+        if: env.GO_VERSION == 'tip'
+        run: |
+          curl -sL https://storage.googleapis.com/go-build-snap/go/linux-amd64/$(git ls-remote https://github.com/golang/go.git HEAD | awk '{print $1;}').tar.gz -o gotip.tar.gz
+          ls -lah gotip.tar.gz
+          mkdir -p ~/sdk/gotip
+          tar -C ~/sdk/gotip -xzf gotip.tar.gz
+          ~/sdk/gotip/bin/go version
+          echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Go cache
+        uses: actions/cache@v2
+        with:
+          # In order:
+          # * Module download cache
+          # * Build cache (Linux)
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-cache-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-cache
+
+      - name: Restore base test coverage
+        id: base-coverage
+        if: github.event.pull_request.base.sha != ''
+        uses: actions/cache@v2
+        with:
+          path: |
+            integration-base.txt
+          # Use base sha for PR or new commit hash for master/main push in test result key.
+          key: ${{ runner.os }}-integration-test-coverage-${{ (github.event.pull_request.base.sha != github.event.after) && github.event.pull_request.base.sha || github.event.after }}
+
+      - name: Run test for base code
+        if: env.RUN_BASE_COVERAGE == 'on' && steps.base-coverage.outputs.cache-hit != 'true' && github.event.pull_request.base.sha != ''
+        run: |
+          git fetch origin master ${{ github.event.pull_request.base.sha }}
+          HEAD=$(git rev-parse HEAD)
+          git reset --hard ${{ github.event.pull_request.base.sha }}
+          (make test-integration && go tool cover -func=./integration.coverprofile > integration-base.txt) || echo "No test-integration in base"
+          git reset --hard $HEAD
+
+      - name: Test
+        id: test
+        run: |
+          echo "::set-output name=failed::false"
+          set -o pipefail && make test-integration || echo "::set-output name=failed::true" | tee integration_test.txt
+          go tool cover -func=./integration.coverprofile > integration.txt
+          TOTAL=$(grep 'total:' integration.txt)
+          echo "${TOTAL}"
+          echo "::set-output name=total::$TOTAL"
+
+      - name: Annotate missing test coverage
+        id: annotate
+        if: github.event.pull_request.base.sha != ''
+        run: |
+          curl -sLO https://github.com/vearutop/gocovdiff/releases/download/v1.3.6/linux_amd64.tar.gz && tar xf linux_amd64.tar.gz
+          gocovdiff_hash=$(git hash-object ./gocovdiff)
+          [ "$gocovdiff_hash" == "8e507e0d671d4d6dfb3612309b72b163492f28eb" ] || (echo "::error::unexpected hash for gocovdiff, possible tampering: $gocovdiff_hash" && exit 1)
+          git fetch origin master ${{ github.event.pull_request.base.sha }}
+          REP=$(./gocovdiff -cov integration.coverprofile -gha-annotations gha-integration.txt -delta-cov-file delta-cov-integration.txt -target-delta-cov ${TARGET_DELTA_COV})
+          echo "${REP}"
+          REP="${REP//$'\n'/%0A}"
+          cat gha-integration.txt
+          DIFF=$(test -e integration-base.txt && ./gocovdiff -func-cov integration.txt -func-base-cov integration-base.txt || echo "Missing base coverage file")
+          DIFF="${DIFF//$'\n'/%0A}"
+          TOTAL=$(cat delta-cov-integration.txt)
+          echo "::set-output name=rep::$REP"
+          echo "::set-output name=diff::$DIFF"
+          echo "::set-output name=total::$TOTAL"
+
+      - name: Comment Test Coverage
+        continue-on-error: true
+        if: github.event.pull_request.base.sha != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          header: integration-test
+          message: |
+            ### Integration Test Coverage
+
+            [Allure report](https://bool64.github.io/brick-starter-kit/${{ github.run_number }}/).
+
+            ${{ steps.test.outputs.total }}
+            ${{ steps.annotate.outputs.total }}
+            <details><summary>Coverage of changed lines</summary>
+            
+            ${{ steps.annotate.outputs.rep }}
+
+            </details>
+
+            <details><summary>Coverage diff with base branch</summary>
+
+            ${{ steps.annotate.outputs.diff }}
+            
+            </details>
+
+      - name: Store base coverage
+        if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
+        run: cp integration.txt integration-base.txt
+
+      - name: Checkout gh-pages
+        continue-on-error: true
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Generate allure report
+        continue-on-error: true
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: allure-results
+          gh_pages: gh-pages
+          allure_report: allure-report
+          allure_history: allure-history
+          keep_reports: 50
+
+      - name: Deploy allure report to Github Pages
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: allure-history
+
+      - name: Check test result
+        if: steps.test.outputs.failed == 'true'
+        run: |
+          echo "::error ::Test failed"
+          cat integration.txt
+          exit 1

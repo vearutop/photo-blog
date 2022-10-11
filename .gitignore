@@ -1,0 +1,11 @@
+/.idea
+/*.coverprofile
+/.vscode
+/bench-*.txt
+/vendor
+/bin
+/*.tar.gz
+/*.zip
+/.env
+/resources/static/openapi.json
+/data
