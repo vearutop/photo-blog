@@ -1,0 +1,4 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Tue Oct 11 20:41:21 GMT 2022","Tue Oct 11 20:41:21 GMT 2022","41","","brick-starter-kit-integration-test","","","","Happy path.","features/Hello.feature"
+"passed","Tue Oct 11 20:41:21 GMT 2022","Tue Oct 11 20:41:21 GMT 2022","21","","brick-starter-kit-integration-test","","","","Buggy path.","features/Hello.feature"
+"passed","Tue Oct 11 20:41:21 GMT 2022","Tue Oct 11 20:41:21 GMT 2022","30","","brick-starter-kit-integration-test","","","","Unhappy path.","features/Hello.feature"
