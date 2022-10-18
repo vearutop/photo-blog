@@ -62,7 +62,7 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		for _, name := range names {
 			if strings.HasSuffix(strings.ToLower(name), ".jpg") {
 				if img, err := deps.PhotoImageAdder().Add(ctx, photo.ImageData{}); err != nil {
-					errs = append(errs, ctxd.WrapError(ctx, err, "adding image", "name", name))
+					errs = append(errs, ctxd.WrapError(ctx, err, "", "name", name))
 				} else {
 					imgIDs = append(imgIDs, img.ID)
 				}
@@ -70,10 +70,14 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		}
 
 		if len(imgIDs) > 0 {
-
+			if err := deps.PhotoAlbumAdder().AddImages(ctx, a.ID, 123); err != nil {
+				errs = append(errs, err)
+			}
 		}
 
-		deps.PhotoAlbumAdder().AddImages(ctx, a.ID, 123)
+		if len(errs) > 0 {
+			return ctxd.MultiError(nil, errs...)
+		}
 
 		return nil
 	})

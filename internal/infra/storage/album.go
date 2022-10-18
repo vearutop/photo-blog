@@ -41,14 +41,14 @@ type AlbumRepository struct {
 	row     *photo.Album
 }
 
-func (gs *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
+func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
 	r := photo.Album{}
 	r.AlbumData = data
 	r.CreatedAt = time.Now()
 
-	q := gs.storage.InsertStmt(AlbumsTable, r)
+	q := ar.storage.InsertStmt(AlbumsTable, r)
 
-	if res, err := gs.storage.Exec(ctx, q); err != nil {
+	if res, err := ar.storage.Exec(ctx, q); err != nil {
 		return r, ctxd.WrapError(ctx, err, "store album")
 	} else {
 		id, err := res.LastInsertId()
@@ -62,20 +62,20 @@ func (gs *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	return r, nil
 }
 
-func (gs *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
+func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
 	row := photo.Album{}
 
-	q := gs.storage.SelectStmt(AlbumsTable, row).
-		Where(gs.rf.Fmt("%s = %s", &gs.row.Name, name))
+	q := ar.storage.SelectStmt(AlbumsTable, row).
+		Where(ar.rf.Fmt("%s = %s", &ar.row.Name, name))
 
-	if err := gs.storage.Select(ctx, q, &row); err != nil {
+	if err := ar.storage.Select(ctx, q, &row); err != nil {
 		return photo.Album{}, fmt.Errorf("find album by name %q: %w", name, err)
 	}
 
 	return row, nil
 }
 
-func (gs *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
+func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
 	rows := make([]AlbumImage, 0, len(imageIDs))
 
 	for _, imageID := range imageIDs {
@@ -86,19 +86,19 @@ func (gs *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs 
 		rows = append(rows, ai)
 	}
 
-	q := gs.storage.InsertStmt(AlbumImagesTable, rows)
+	q := ar.storage.InsertStmt(AlbumImagesTable, rows)
 
-	if _, err := gs.storage.Exec(ctx, q); err != nil {
+	if _, err := ar.storage.Exec(ctx, q); err != nil {
 		return ctxd.WrapError(ctx, err, "store album images")
 	}
 
 	return nil
 }
 
-func (gs *AlbumRepository) PhotoAlbumAdder() photo.AlbumAdder {
-	return gs
+func (ar *AlbumRepository) PhotoAlbumAdder() photo.AlbumAdder {
+	return ar
 }
 
-func (gs *AlbumRepository) PhotoAlbumFinder() photo.AlbumFinder {
-	return gs
+func (ar *AlbumRepository) PhotoAlbumFinder() photo.AlbumFinder {
+	return ar
 }

@@ -15,6 +15,10 @@ type ImageAdder interface {
 	Add(ctx context.Context, value ImageData) (Image, error)
 }
 
+type ThumbFinder interface {
+	Find(ctx context.Context, imageID int, width, height int) (Thumb, error)
+}
+
 type ThumbAdder interface {
 	Add(ctx context.Context, value ThumbValue) (Thumb, error)
 }

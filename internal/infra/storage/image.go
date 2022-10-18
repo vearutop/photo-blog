@@ -24,14 +24,14 @@ type ImageRepository struct {
 	storage *sqluct.Storage
 }
 
-func (gs *ImageRepository) Add(ctx context.Context, value photo.ImageData) (photo.Image, error) {
+func (ir *ImageRepository) Add(ctx context.Context, value photo.ImageData) (photo.Image, error) {
 	r := photo.Image{}
 	r.ImageData = value
 	r.CreatedAt = time.Now()
 
-	q := gs.storage.InsertStmt(ImagesTable, r)
+	q := ir.storage.InsertStmt(ImagesTable, r)
 
-	if res, err := gs.storage.Exec(ctx, q); err != nil {
+	if res, err := ir.storage.Exec(ctx, q); err != nil {
 		return r, ctxd.WrapError(ctx, err, "store image")
 	} else {
 		id, err := res.LastInsertId()
@@ -45,6 +45,6 @@ func (gs *ImageRepository) Add(ctx context.Context, value photo.ImageData) (phot
 	return r, nil
 }
 
-func (gs *ImageRepository) PhotoImageAdder() photo.ImageAdder {
-	return gs
+func (ir *ImageRepository) PhotoImageAdder() photo.ImageAdder {
+	return ir
 }

@@ -12,7 +12,7 @@ require (
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.0
-	github.com/swaggest/rest v0.2.32
+	github.com/swaggest/rest v0.2.33
 	github.com/swaggest/usecase v1.2.0
 	github.com/valyala/fasthttp v1.40.0
 	github.com/vearutop/statigz v1.1.8
@@ -61,7 +61,6 @@ require (
 	github.com/klauspost/compress v1.15.10 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.13.0 // indirect
@@ -72,7 +71,6 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/prometheus/statsd_exporter v0.22.8 // indirect
-	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
@@ -111,10 +109,7 @@ require (
 	modernc.org/ccgo/v3 v3.16.9 // indirect
 	modernc.org/libc v1.19.0 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
-	modernc.org/memory v1.4.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
 )
-
-replace github.com/swaggest/rest => /Users/vearutop/gohack/github.com/swaggest/rest
