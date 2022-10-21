@@ -2,12 +2,19 @@ package usecase
 
 import (
 	"context"
+	"github.com/bool64/ctxd"
+	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )
 
+type showAlbumDeps interface {
+	StatsTracker() stats.Tracker
+	CtxdLogger() ctxd.Logger
+}
+
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps helloDeps) usecase.Interactor {
+func ShowAlbum(deps showAlbumDeps) usecase.Interactor {
 	type showAlbumInput struct {
 		ID string `path:"id"`
 	}

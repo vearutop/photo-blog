@@ -1,11 +1,14 @@
 package nethttp_test
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/bool64/brick/runtime"
@@ -49,4 +52,44 @@ func Benchmark_hello(b *testing.B) {
 	b.ReportMetric(float64(runtime.StableHeapInUse())/float64(1024*1024), "MB/inuse")
 	l.Shutdown()
 	require.NoError(b, <-l.Wait())
+}
+
+func TestOlolo(t *testing.T) {
+	type Secret struct {
+		Name     string
+		Registry string
+		Username string
+		Pass     string
+		Email    string
+	}
+
+	type Data struct {
+		ImageCredentials []Secret
+	}
+
+	tmpl := template.New("foo")
+	tmpl, err := tmpl.Parse(`
+{{- define "imagePullSecret" }}
+{{- range $secret := .imageCredentials }}
+  {{ $secret.Name }}
+{{- end }}
+{{- end }}
+`)
+	require.NoError(t, err)
+
+	data := Data{
+		ImageCredentials: []Secret{
+			{
+				Name: "foo",
+			},
+			{
+				Name: "bar",
+			},
+		},
+	}
+
+	buf := bytes.NewBuffer(nil)
+	require.NoError(t, tmpl.Execute(buf, data))
+
+	fmt.Println(buf.String())
 }

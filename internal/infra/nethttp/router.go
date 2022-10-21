@@ -14,8 +14,7 @@ import (
 func NewRouter(deps *service.Locator) http.Handler {
 	r := brick.NewBaseWebService(deps.BaseLocator)
 
-	//r.Get("/hello", usecase.HelloWorld(deps))
-	//r.Delete("/hello", usecase.Clear(deps))
+	r.Post("/album", usecase.CreateAlbum(deps))
 
 	r.Post("/directory", usecase.AddDirectory(deps))
 	r.Get("/album/{id}", usecase.ShowAlbum(deps))

@@ -8,6 +8,8 @@ import (
 type Locator struct {
 	*brick.BaseLocator
 
-	GreetingMakerProvider
-	GreetingClearerProvider
+	PhotoAlbumAdderProvider
+	PhotoAlbumFinderProvider
+	PhotoImageAdderProvider
+	PhotoThumbAdderProvider
 }

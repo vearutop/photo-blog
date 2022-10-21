@@ -1,15 +1,21 @@
 package service
 
 import (
-	"github.com/vearutop/photo-blog/internal/domain/greeting"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
-// GreetingMakerProvider is a service provider.
-type GreetingMakerProvider interface {
-	GreetingMaker() greeting.Maker
+type PhotoAlbumAdderProvider interface {
+	PhotoAlbumAdder() photo.AlbumAdder
 }
 
-// GreetingClearerProvider is a service provider.
-type GreetingClearerProvider interface {
-	GreetingClearer() greeting.Clearer
+type PhotoAlbumFinderProvider interface {
+	PhotoAlbumFinder() photo.AlbumFinder
+}
+
+type PhotoImageAdderProvider interface {
+	PhotoImageAdder() photo.ImageAdder
+}
+
+type PhotoThumbAdderProvider interface {
+	PhotoThumbAdder() photo.ThumbAdder
 }
