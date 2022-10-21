@@ -4,8 +4,7 @@ go 1.18
 
 require (
 	github.com/bool64/brick v0.1.13
-	github.com/bool64/cache v0.2.7
-	github.com/bool64/ctxd v1.1.3
+	github.com/bool64/ctxd v1.2.0
 	github.com/bool64/dev v0.2.22
 	github.com/bool64/httptestbench v0.1.4
 	github.com/bool64/sqluct v0.1.10
@@ -27,6 +26,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bool64/cache v0.2.7 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
 	github.com/bool64/godogx v0.1.1 // indirect
 	github.com/bool64/httpmock v0.1.6 // indirect
