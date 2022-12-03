@@ -6,5 +6,5 @@ import (
 
 // SetupOpenapiCollector configures OpenAPI schema.
 func SetupOpenapiCollector(c *openapi.Collector) {
-	c.Reflector().SpecEns().Info.Title = "Brick Starter Kit"
+	c.Reflector().SpecEns().Info.Title = "Photo Blog"
 }

@@ -1,17 +1,16 @@
-module github.com/bool64/brick-starter-kit
+module github.com/vearutop/photo-blog
 
 go 1.18
 
 require (
 	github.com/bool64/brick v0.1.13
-	github.com/bool64/cache v0.2.7
 	github.com/bool64/ctxd v1.2.0
 	github.com/bool64/dev v0.2.22
 	github.com/bool64/httptestbench v0.1.4
 	github.com/bool64/sqluct v0.1.10
 	github.com/bool64/stats v0.2.2
-	github.com/go-sql-driver/mysql v1.7.0
 	github.com/godogx/dbsteps v0.1.2
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.1
 	github.com/swaggest/rest v0.2.36
 	github.com/swaggest/usecase v1.2.0
@@ -27,6 +26,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bool64/cache v0.2.7 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
 	github.com/bool64/godogx v0.1.1 // indirect
 	github.com/bool64/httpmock v0.1.8 // indirect
@@ -43,6 +43,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/godogx/allure v0.2.0 // indirect
 	github.com/godogx/httpsteps v0.2.5 // indirect
 	github.com/godogx/resource v0.1.1 // indirect

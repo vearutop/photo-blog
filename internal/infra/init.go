@@ -2,21 +2,15 @@ package infra
 
 import (
 	"context"
-	"io/fs"
-	"time"
-
 	"github.com/bool64/brick"
-	"github.com/bool64/brick-starter-kit/internal/domain/greeting"
-	"github.com/bool64/brick-starter-kit/internal/infra/cached"
-	"github.com/bool64/brick-starter-kit/internal/infra/schema"
-	"github.com/bool64/brick-starter-kit/internal/infra/service"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage/mysql"
-	"github.com/bool64/brick-starter-kit/internal/infra/storage/sqlite"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
-	_ "github.com/go-sql-driver/mysql" // MySQL driver.
 	"github.com/swaggest/rest/response/gzip"
+	"github.com/vearutop/photo-blog/internal/infra/schema"
+	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
+	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
+	"io/fs"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 
@@ -47,28 +41,19 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 		return nil, err
 	}
 
-	gs := &storage.GreetingSaver{
-		Upstream: &greeting.SimpleMaker{},
-		Storage:  l.Storage,
-		Stats:    l.StatsTracker(),
-	}
+	ar := storage.NewAlbumRepository(l.Storage)
+	l.PhotoAlbumAdderProvider = ar
+	l.PhotoAlbumFinderProvider = ar
 
-	l.GreetingMakerProvider = gs
-	l.GreetingClearerProvider = gs
-
-	greetingsCache := brick.MakeCacheOf[string](l.BaseLocator, "greetings", 3*time.Minute)
-	l.GreetingMakerProvider = cached.NewGreetingMaker(l.GreetingMaker(), greetingsCache)
-
-	if err := l.TransferCache(context.Background()); err != nil {
-		l.CtxdLogger().Warn(context.Background(), "failed to transfer cache", "error", err)
-	}
+	l.PhotoImageAdderProvider = storage.NewImageRepository(l.Storage)
+	l.PhotoThumbAdderProvider = storage.NewThumbRepository(l.Storage)
 
 	return l, nil
 }
 
 func setupStorage(l *service.Locator, cfg database.Config) error {
 	if cfg.DriverName == "" {
-		cfg.DriverName = "mysql"
+		cfg.DriverName = "sqlite"
 	}
 
 	var (
@@ -79,8 +64,6 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 	switch cfg.DriverName {
 	case "sqlite":
 		migrations = sqlite.Migrations
-	case "mysql":
-		migrations = mysql.Migrations
 	}
 
 	l.Storage, err = database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), migrations)

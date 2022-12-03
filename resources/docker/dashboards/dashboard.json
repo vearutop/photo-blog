@@ -89,7 +89,7 @@
    "pluginVersion": "8.5.1",
    "targets": [
     {
-     "expr": "sum(rate(http_server_request_count{job=\"brick-starter-kit\"}[$__interval]))",
+     "expr": "sum(rate(http_server_request_count{job=\"photo-blog\"}[$__interval]))",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -163,7 +163,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.99, sum(rate(http_server_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (le))",
+     "expr": "histogram_quantile(0.99, sum(rate(http_server_latency_bucket{job=\"photo-blog\"}[$__interval])) by (le))",
      "interval": "",
      "legendFormat": "",
      "refId": "A"
@@ -242,7 +242,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(http_server_response_count_by_status_code{job=\"brick-starter-kit\", http_status=~\"[1234]..\"}[$__interval])) / sum(rate(http_server_response_count_by_status_code{job=\"brick-starter-kit\"}[$__interval]))",
+     "expr": "sum(rate(http_server_response_count_by_status_code{job=\"photo-blog\", http_status=~\"[1234]..\"}[$__interval])) / sum(rate(http_server_response_count_by_status_code{job=\"photo-blog\"}[$__interval]))",
      "interval": "",
      "legendFormat": "",
      "refId": "A"
@@ -306,7 +306,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(http_server_latency_by_path_count{job=\"brick-starter-kit\"}[$__interval])) by (http_server_route)",
+     "expr": "sum(rate(http_server_latency_by_path_count{job=\"photo-blog\"}[$__interval])) by (http_server_route)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -398,7 +398,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "histogram_quantile(0.95, sum(rate(http_server_latency_by_path_bucket{job=\"brick-starter-kit\"}[$__interval])) by (http_server_route, le)) ",
+     "expr": "histogram_quantile(0.95, sum(rate(http_server_latency_by_path_bucket{job=\"photo-blog\"}[$__interval])) by (http_server_route, le)) ",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -495,7 +495,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(http_server_response_count_by_status_code{job=\"brick-starter-kit\", http_status=~\"[45]..\"}[$__interval])) / sum(rate(http_server_response_count_by_status_code{job=\"brick-starter-kit\"}[$__interval]))",
+     "expr": "sum(rate(http_server_response_count_by_status_code{job=\"photo-blog\", http_status=~\"[45]..\"}[$__interval])) / sum(rate(http_server_response_count_by_status_code{job=\"photo-blog\"}[$__interval]))",
      "interval": "",
      "legendFormat": "Error Rate",
      "refId": "B"
@@ -588,7 +588,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.50, sum(rate(http_server_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (le))",
+     "expr": "histogram_quantile(0.50, sum(rate(http_server_latency_bucket{job=\"photo-blog\"}[$__interval])) by (le))",
      "format": "time_series",
      "hide": false,
      "interval": "1m",
@@ -601,7 +601,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.95, sum(rate(http_server_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (le))",
+     "expr": "histogram_quantile(0.95, sum(rate(http_server_latency_bucket{job=\"photo-blog\"}[$__interval])) by (le))",
      "format": "time_series",
      "hide": false,
      "interval": "1m",
@@ -614,7 +614,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.99, sum(rate(http_server_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (le))",
+     "expr": "histogram_quantile(0.99, sum(rate(http_server_latency_bucket{job=\"photo-blog\"}[$__interval])) by (le))",
      "format": "time_series",
      "hide": false,
      "interval": "1m",
@@ -627,7 +627,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.999, sum(rate(http_server_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (le))",
+     "expr": "histogram_quantile(0.999, sum(rate(http_server_latency_bucket{job=\"photo-blog\"}[$__interval])) by (le))",
      "interval": "1m",
      "legendFormat": "99.9th",
      "refId": "C"
@@ -637,7 +637,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.9999, sum(rate(http_server_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (le))",
+     "expr": "histogram_quantile(0.9999, sum(rate(http_server_latency_bucket{job=\"photo-blog\"}[$__interval])) by (le))",
      "interval": "1m",
      "legendFormat": "99.99th",
      "refId": "E"
@@ -735,7 +735,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(http_server_request_bytes_sum{job=\"brick-starter-kit\"}[$__interval]))",
+     "expr": "sum(rate(http_server_request_bytes_sum{job=\"photo-blog\"}[$__interval]))",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -747,7 +747,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "-sum(rate(http_server_response_bytes_sum{job=\"brick-starter-kit\"}[$__interval]))",
+     "expr": "-sum(rate(http_server_response_bytes_sum{job=\"photo-blog\"}[$__interval]))",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -844,7 +844,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(http_server_response_count_by_status_code{job=\"brick-starter-kit\"}[$__interval])) by (http_status)",
+     "expr": "sum(rate(http_server_response_count_by_status_code{job=\"photo-blog\"}[$__interval])) by (http_status)",
      "format": "time_series",
      "hide": false,
      "interval": "1m",
@@ -940,7 +940,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "process_resident_memory_bytes{job=\"brick-starter-kit\"}",
+     "expr": "process_resident_memory_bytes{job=\"photo-blog\"}",
      "interval": "",
      "legendFormat": "mem",
      "refId": "A"
@@ -1036,7 +1036,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "rate(process_cpu_seconds_total{job=\"brick-starter-kit\"}[$__interval])",
+     "expr": "rate(process_cpu_seconds_total{job=\"photo-blog\"}[$__interval])",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 2,
@@ -1127,7 +1127,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(rate(use_case_interactions_count{job=\"brick-starter-kit\"}[$__interval])) by (name,status)",
+     "expr": "sum(rate(use_case_interactions_count{job=\"photo-blog\"}[$__interval])) by (name,status)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1218,7 +1218,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "histogram_quantile(0.95, sum(rate(http_client_latency_by_host_bucket{job=\"brick-starter-kit\"}[$__interval])) by (http_client_host, le)) ",
+     "expr": "histogram_quantile(0.95, sum(rate(http_client_latency_by_host_bucket{job=\"photo-blog\"}[$__interval])) by (http_client_host, le)) ",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1313,7 +1313,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "histogram_quantile(0.999, sum(rate(go_sql_client_latency_bucket{job=\"brick-starter-kit\"}[$__interval])) by (go_sql_status,le)) ",
+     "expr": "histogram_quantile(0.999, sum(rate(go_sql_client_latency_bucket{job=\"photo-blog\"}[$__interval])) by (go_sql_status,le)) ",
      "format": "time_series",
      "instant": false,
      "interval": "1m",
@@ -1409,7 +1409,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(cache_miss{job=\"brick-starter-kit\"}[$__interval])) by (name)",
+     "expr": "sum(rate(cache_miss{job=\"photo-blog\"}[$__interval])) by (name)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1421,7 +1421,7 @@
       "type": "prometheus",
       "uid": "PBFA97CFB590B2093"
      },
-     "expr": "sum(rate(cache_write{job=\"brick-starter-kit\"}[$__interval])) by (name)",
+     "expr": "sum(rate(cache_write{job=\"photo-blog\"}[$__interval])) by (name)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1434,7 +1434,7 @@
       "uid": "PBFA97CFB590B2093"
      },
      "editorMode": "code",
-     "expr": "sum(rate(cache_expired{job=\"brick-starter-kit\"}[$__interval])) by (name)",
+     "expr": "sum(rate(cache_expired{job=\"photo-blog\"}[$__interval])) by (name)",
      "hide": false,
      "interval": "1m",
      "legendFormat": "{{name}} expired",
@@ -1447,7 +1447,7 @@
       "uid": "PBFA97CFB590B2093"
      },
      "editorMode": "code",
-     "expr": "sum(rate(cache_build{job=\"brick-starter-kit\"}[$__interval])) by (name)",
+     "expr": "sum(rate(cache_build{job=\"photo-blog\"}[$__interval])) by (name)",
      "hide": false,
      "interval": "1m",
      "legendFormat": "{{name}} build",
@@ -1538,7 +1538,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(rate(http_client_latency_by_host_count{job=\"brick-starter-kit\"}[$__interval])) by (http_client_host)",
+     "expr": "sum(rate(http_client_latency_by_host_count{job=\"photo-blog\"}[$__interval])) by (http_client_host)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1629,7 +1629,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(rate(sql_storage_queries_total{job=~\"brick-starter-kit\"}[$__interval])) by (method)",
+     "expr": "sum(rate(sql_storage_queries_total{job=~\"photo-blog\"}[$__interval])) by (method)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1720,7 +1720,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(rate(cache_hit{job=~\"brick-starter-kit\"}[$__interval])) by (name)",
+     "expr": "sum(rate(cache_hit{job=~\"photo-blog\"}[$__interval])) by (name)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1811,7 +1811,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "avg(cache_items{job=\"brick-starter-kit\"}) by (name)",
+     "expr": "avg(cache_items{job=\"photo-blog\"}) by (name)",
      "format": "time_series",
      "intervalFactor": 1,
      "legendFormat": "{{name}}",
@@ -1901,7 +1901,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "1000 * sum(rate(sql_storage_queries_seconds{job=\"brick-starter-kit\"}[$__interval])) by (method) / sum(rate(sql_storage_queries_total{job=\"brick-starter-kit\"}[$__interval])) by (method)",
+     "expr": "1000 * sum(rate(sql_storage_queries_seconds{job=\"photo-blog\"}[$__interval])) by (method) / sum(rate(sql_storage_queries_total{job=\"photo-blog\"}[$__interval])) by (method)",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 1,
@@ -1992,7 +1992,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(go_goroutines{job=\"brick-starter-kit\"})",
+     "expr": "sum(go_goroutines{job=\"photo-blog\"})",
      "format": "time_series",
      "interval": "1m",
      "intervalFactor": 10,
@@ -2083,7 +2083,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "1000*sum(go_gc_duration_seconds{job=\"brick-starter-kit\",quantile=\"0.75\"})",
+     "expr": "1000*sum(go_gc_duration_seconds{job=\"photo-blog\",quantile=\"0.75\"})",
      "format": "time_series",
      "interval": "",
      "intervalFactor": 10,
@@ -2174,7 +2174,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(go_memstats_heap_alloc_bytes{job=\"brick-starter-kit\"})",
+     "expr": "sum(go_memstats_heap_alloc_bytes{job=\"photo-blog\"})",
      "format": "time_series",
      "interval": "",
      "intervalFactor": 10,
@@ -2265,7 +2265,7 @@
    "steppedLine": false,
    "targets": [
     {
-     "expr": "sum(go_memstats_heap_objects{job=\"brick-starter-kit\"})",
+     "expr": "sum(go_memstats_heap_objects{job=\"photo-blog\"})",
      "format": "time_series",
      "interval": "",
      "intervalFactor": 10,
@@ -2341,8 +2341,8 @@
   ]
  },
  "timezone": "",
- "title": "Brick Starter Kit",
- "uid": "brick-starter-kit",
+ "title": "Photo Blog",
+ "uid": "photo-blog",
  "version": 1,
  "weekStart": ""
 }
