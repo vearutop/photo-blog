@@ -39,7 +39,7 @@ type ThumbValue struct {
 }
 
 type Identity struct {
-	ID int `db:"id,omitempty" json:"id"`
+	ID int `db:"id,omitempty,identity" json:"id"`
 }
 
 type Time struct {

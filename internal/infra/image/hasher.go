@@ -6,5 +6,3 @@ type ThumbConfig struct {
 
 type Thumbnailer struct {
 }
-
-type

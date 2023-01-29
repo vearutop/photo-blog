@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -25,20 +26,14 @@ type AlbumImage struct {
 
 func NewAlbumRepository(storage *sqluct.Storage) *AlbumRepository {
 	ar := &AlbumRepository{}
-	ar.storage = storage
-
-	ar.row = &photo.Album{}
-	ar.rf = storage.Ref()
-	ar.rf.AddTableAlias(ar.row, AlbumsTable)
+	ar.s = sqluct.Table[photo.Album](storage, AlbumsTable)
 
 	return ar
 }
 
 // AlbumRepository saves albums to database.
 type AlbumRepository struct {
-	storage *sqluct.Storage
-	rf      *sqluct.Referencer
-	row     *photo.Album
+	s sqluct.StorageOf[photo.Album]
 }
 
 func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
@@ -46,33 +41,20 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	r.AlbumData = data
 	r.CreatedAt = time.Now()
 
-	q := ar.storage.InsertStmt(AlbumsTable, r)
-
-	if res, err := ar.storage.Exec(ctx, q); err != nil {
-		return r, ctxd.WrapError(ctx, err, "store album")
+	if id, err := ar.s.Insert(ctx, r); err != nil {
+		return r, fmt.Errorf("add album: %w", err)
 	} else {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return r, ctxd.WrapError(ctx, err, "get created album id")
-		}
-
 		r.ID = int(id)
+		return r, nil
 	}
-
-	return r, nil
 }
 
 func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
-	row := photo.Album{}
+	q := ar.s.SelectStmt(AlbumsTable, ar.s.R).
+		Where(squirrel.Eq{ar.s.Ref(&ar.s.R.Name): name}).
+		Limit(1)
 
-	q := ar.storage.SelectStmt(AlbumsTable, row).
-		Where(ar.rf.Fmt("%s = %s", &ar.row.Name, name))
-
-	if err := ar.storage.Select(ctx, q, &row); err != nil {
-		return photo.Album{}, fmt.Errorf("find album by name %q: %w", name, err)
-	}
-
-	return row, nil
+	return ar.s.Get(ctx, q)
 }
 
 func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
@@ -86,9 +68,9 @@ func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs 
 		rows = append(rows, ai)
 	}
 
-	q := ar.storage.InsertStmt(AlbumImagesTable, rows)
+	q := ar.s.InsertStmt(AlbumImagesTable, rows)
 
-	if _, err := ar.storage.Exec(ctx, q); err != nil {
+	if _, err := ar.s.Exec(ctx, q); err != nil {
 		return ctxd.WrapError(ctx, err, "store album images")
 	}
 
