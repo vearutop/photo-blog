@@ -7,7 +7,6 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type showThumbDeps interface {
@@ -47,7 +46,7 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 			return err
 		}
 
-		http.ServeContent(rw, in.req, "thumb.jpg", time.Now(), cont)
+		http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont)
 
 		return nil
 	})

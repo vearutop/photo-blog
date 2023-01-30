@@ -18,7 +18,7 @@
 <div style="margin:2em">
     <h1 id="album-title">Album Title</h1>
     <div class="test-gallery"></div>
-    <a id="album-dl" href="#">Download all photos (zip)</a>
+    <a id="album-dl" href="#">Download all photos (zip).</a>
 </div>
 
 
@@ -49,10 +49,10 @@
                 a.attr("data-pswp-height", 1667)
                 a.attr("target", "_blank")
                 a.attr("data-pswp-srcset",
-                    "/thumb/300w/" + img.hash + ".jpg 300w,\n" +
-                    "/thumb/600w/" + img.hash + ".jpg 600w,\n" +
-                    "/thumb/1200w/" + img.hash + ".jpg 1200w,\n" +
-                    "/thumb/2400w/" + img.hash + ".jpg 2400w\n"
+                    "/thumb/300w/" + img.hash + ".jpg 300w, " +
+                    "/thumb/600w/" + img.hash + ".jpg 600w, " +
+                    "/thumb/1200w/" + img.hash + ".jpg 1200w, " +
+                    "/thumb/2400w/" + img.hash + ".jpg 2400w"
                 )
                 a.html('<img src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
 
