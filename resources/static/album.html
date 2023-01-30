@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Greeter</title>
+    <title>{{.Title}}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon"/>
@@ -12,13 +12,19 @@
     <script src="/static/client.js"></script>
     <script src="/static/photoswipe.umd.min.js"></script>
     <script src="/static/photoswipe-lightbox.umd.min.js"></script>
+
+    <meta property="og:title" content="{{.Title}}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="{{.CoverImage}}" />
+
+    <meta name="robots" content="noindex">
 </head>
 <body>
 
 <div style="margin:2em">
-    <h1 id="album-title">Album Title</h1>
-    <div class="test-gallery"></div>
-    <a id="album-dl" href="#">Download all photos (zip).</a>
+    <h1 id="album-title">{{.Title}}</h1>
+    <div class="gallery"></div>
+    <a href="/album/{{.Name}}.zip">Download all photos (zip).</a>
 </div>
 
 
@@ -27,18 +33,10 @@
         "use strict";
         var client = new Backend('');
 
-        var path = window.location.pathname.split("/")
-        var name = path[path.length - 2]
-
-        $("#album-dl").attr("href", "/album/" + name + ".zip")
-
         client.getAlbumNameJson({
-            name: name
+            name: "{{.Name}}"
         }, function (result) {
             console.log("OK", result)
-
-            $('#album-title').html(result.album.title)
-            document.title = result.album.title
 
             for (var i = 0; i < result.images.length; i++) {
                 var img = result.images[i]
@@ -56,11 +54,11 @@
                 )
                 a.html('<img src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
 
-                $(".test-gallery").append(a)
+                $(".gallery").append(a)
             }
 
             var lightbox = new PhotoSwipeLightbox({
-                gallery: '.test-gallery',
+                gallery: '.gallery',
                 children: 'a',
                 // dynamic import is not supported in UMD version
                 pswpModule: PhotoSwipe

@@ -5,68 +5,25 @@ import (
 	"errors"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
-	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
+	"github.com/vearutop/photo-blog/resources/static"
 	"html/template"
 	"io"
-	"net/http"
 )
 
-type htmlResponseOutput struct {
-	ID         int
-	Filter     string
+type albumPage struct {
 	Title      string
-	Items      []string
-	AntiHeader bool `header:"X-Anti-Header"`
+	Name       string
+	CoverImage string
 
 	writer io.Writer
 }
 
-func (o *htmlResponseOutput) SetWriter(w io.Writer) {
+func (o *albumPage) SetWriter(w io.Writer) {
 	o.writer = w
 }
 
-func (o *htmlResponseOutput) Render(tmpl *template.Template) error {
+func (o *albumPage) Render(tmpl *template.Template) error {
 	return tmpl.Execute(o.writer, o)
-}
-
-func htmlResponse() usecase.Interactor {
-	type htmlResponseInput struct {
-		ID     int    `path:"id"`
-		Filter string `query:"filter"`
-		Header bool   `header:"X-Header"`
-	}
-
-	const tpl = `<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="UTF-8">
-		<title>{{.Title}}</title>
-	</head>
-	<body>
-		<a href="/html-response/{{.ID}}?filter={{.Filter}}">Next {{.Title}}</a><br />
-		{{range .Items}}<div>{{ . }}</div>{{else}}<div><strong>no rows</strong></div>{{end}}
-	</body>
-</html>`
-
-	tmpl, err := template.New("htmlResponse").Parse(tpl)
-	if err != nil {
-		panic(err)
-	}
-
-	u := usecase.NewInteractor(func(ctx context.Context, in htmlResponseInput, out *htmlResponseOutput) (err error) {
-		out.AntiHeader = !in.Header
-		out.Filter = in.Filter
-		out.ID = in.ID + 1
-		out.Title = "Foo"
-		out.Items = []string{"foo", "bar", "baz"}
-
-		return out.Render(tmpl)
-	})
-
-	u.SetTitle("Request With HTML Response")
-	u.SetDescription("Request with templated HTML response.")
-
-	return u
 }
 
 // ShowAlbum creates use case interactor to show album.
@@ -75,19 +32,39 @@ func ShowAlbum(deps getAlbumDeps) usecase.Interactor {
 		Name string `path:"name"`
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *usecase.OutputWithEmbeddedWriter) error {
+	tpl, err := static.Assets.ReadFile("album.html")
+	if err != nil {
+		panic(err)
+	}
+
+	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
+	if err != nil {
+		panic(err)
+	}
+
+	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *albumPage) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		rw, ok := out.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
+		album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+		if err != nil {
+			return err
 		}
 
-		r, _ := http.NewRequest(http.MethodGet, "/album.html", nil)
-		ui.Static.ServeHTTP(rw, r)
+		images, err := deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+		if err != nil {
+			return err
+		}
 
-		return nil
+		if len(images) == 0 {
+			return errors.New("no images")
+		}
+
+		out.Title = album.Title
+		out.Name = album.Name
+		out.CoverImage = "/thumb/1200w/" + images[0].StringHash() + ".jpg"
+
+		return out.Render(tmpl)
 	})
 
 	u.SetTags("Photos")

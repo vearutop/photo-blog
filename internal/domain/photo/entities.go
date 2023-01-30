@@ -32,6 +32,10 @@ type ImageData struct {
 	Path string `db:"path"`
 }
 
+func (i ImageData) StringHash() string {
+	return strconv.FormatUint(uint64(i.Hash), 36)
+}
+
 type Thumb struct {
 	Identity
 	Time

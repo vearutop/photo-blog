@@ -8,7 +8,6 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"path"
-	"strconv"
 )
 
 type getAlbumDeps interface {
@@ -52,7 +51,7 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		for _, i := range images {
 			out.Images = append(out.Images, image{
 				Name: path.Base(i.Path),
-				Hash: strconv.FormatUint(uint64(i.Hash), 36),
+				Hash: i.StringHash(),
 			})
 		}
 
