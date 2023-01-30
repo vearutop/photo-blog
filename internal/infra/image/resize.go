@@ -11,9 +11,22 @@ import (
 	"os"
 )
 
-type Thumbnailer struct{}
+func NewThumbnailer() *Thumbnailer {
+	return &Thumbnailer{
+		sem: make(chan struct{}, 1),
+	}
+}
 
-func (t Thumbnailer) Thumbnail(ctx context.Context, image photo.Image, size photo.ThumbSize) (io.ReadSeeker, error) {
+type Thumbnailer struct {
+	sem chan struct{}
+}
+
+func (t *Thumbnailer) Thumbnail(ctx context.Context, image photo.Image, size photo.ThumbSize) (io.ReadSeeker, error) {
+	t.sem <- struct{}{}
+	defer func() {
+		<-t.sem
+	}()
+
 	f, err := os.Open(image.Path)
 	if err != nil {
 		return nil, err
@@ -37,7 +50,7 @@ func (t Thumbnailer) Thumbnail(ctx context.Context, image photo.Image, size phot
 	return bytes.NewReader(buf.Bytes()), nil
 }
 
-func (t Thumbnailer) PhotoThumbnailer() photo.Thumbnailer {
+func (t *Thumbnailer) PhotoThumbnailer() photo.Thumbnailer {
 	return t
 }
 

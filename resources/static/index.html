@@ -5,67 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon"/>
-    <link rel="stylesheet" href="/static/pure.css">
-    <link rel="stylesheet" href="/static/photoswipe.css">
-
-    <script src="/static/jquery-3.6.3.min.js"></script>
-    <script src="/static/client.js"></script>
-    <script src="/static/photoswipe.umd.min.js"></script>
-    <script src="/static/photoswipe-lightbox.umd.min.js"></script>
 </head>
 <body>
 
 <div style="margin:2em">
-    <h1 id="album-title">Album Title</h1>
-    <div class="test-gallery">
-
-    </div>
-
-    <script>
-        (function () {
-            "use strict";
-            var client = new Backend('');
-
-            client.getAlbumNameJson({
-                name: "tenerife-2022"
-            }, function (result) {
-                $('#album-title').html(result.album.title)
-
-                for (var i = 0; i < result.images.length; i++) {
-                    var img = result.images[i]
-
-                    var a = $("<a>")
-                    a.attr("href", "/images/" + img.hash + ".jpg")
-                    a.attr("data-pswp-width", 2500)
-                    a.attr("data-pswp-height", 1667)
-                    a.attr("target", "_blank")
-                    a.attr("data-pswp-srcset",
-                        "/thumb/300w/"+img.hash+".jpg 300w,\n"+
-                        "/thumb/600w/"+img.hash+".jpg 600w,\n"+
-                        "/thumb/1200w/"+img.hash+".jpg 1200w,\n"+
-                        "/thumb/2400w/"+img.hash+".jpg 2400w\n"
-                    )
-                    a.html('<img src="/thumb/300w/'+img.hash+'.jpg"/>')
-
-                    $(".test-gallery").append(a)
-                }
-
-                var lightbox = new PhotoSwipeLightbox({
-                    gallery: '.test-gallery',
-                    children: 'a',
-                    // dynamic import is not supported in UMD version
-                    pswpModule: PhotoSwipe
-                });
-                lightbox.init();
-
-                console.log("OK", result)
-            }, function (error) {
-
-            }, function (error) {
-
-            })
-        })();
-    </script>
+    <h1>Hello there!</h1>
+</div>
 
 </body>
 </html>

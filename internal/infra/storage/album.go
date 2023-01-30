@@ -51,7 +51,7 @@ func (ar *AlbumRepository) FindImages(ctx context.Context, albumID int) ([]photo
 			ar.si.Fmt("%s ON %s = %s AND %s = ?",
 				ar.sai.R, &ar.si.R.ID, &ar.sai.R.ImageID, &ar.sai.R.AlbumID),
 			albumID,
-		)
+		).OrderByClause(ar.si.Ref(&ar.si.R.Path))
 
 	return ar.si.List(ctx, q)
 }

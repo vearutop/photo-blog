@@ -52,3 +52,7 @@ js-client-docker:
 js-client:
 	@go run . -openapi > ./resources/static/openapi.json
 	@swac js-client ./resources/static/openapi.json --out ./resources/static/ --client-name Backend
+
+deploy: build-linux
+	@scp -C ./bin/photo-blog ubuntu@adjus.tk:photo-blog.new
+	@ssh ubuntu@facepa.ml "killall photo-blog;sleep 1;mv ./photo-blog ./photo-blog.old;mv ./photo-blog.new ./photo-blog;screen -dmS photo-blog ./photo-blog -conf photo-blog.env"

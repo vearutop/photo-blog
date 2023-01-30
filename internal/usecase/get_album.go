@@ -7,6 +7,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"path"
 	"strconv"
 )
 
@@ -16,13 +17,14 @@ type getAlbumDeps interface {
 	PhotoAlbumFinder() photo.AlbumFinder
 }
 
-// GetAlbum creates use case interactor to show album.
+// GetAlbum creates use case interactor to get album data.
 func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 	type getAlbumInput struct {
 		Name string `path:"name"`
 	}
 
 	type image struct {
+		Name string `json:"name"`
 		Hash string `json:"hash"`
 	}
 
@@ -49,6 +51,7 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		out.Images = make([]image, 0, len(images))
 		for _, i := range images {
 			out.Images = append(out.Images, image{
+				Name: path.Base(i.Path),
 				Hash: strconv.FormatUint(uint64(i.Hash), 36),
 			})
 		}
