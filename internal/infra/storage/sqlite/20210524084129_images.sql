@@ -25,7 +25,7 @@ CREATE TABLE images
     `id`         INTEGER PRIMARY KEY,
     `created_at` DATETIME     NOT NULL DEFAULT current_timestamp,
     `hash`       integer      not null unique,
-    `path`       VARCHAR(255) NOT NULL UNIQUE
+    `path`       VARCHAR(255) NOT NULL
 );
 -- +goose StatementEnd
 

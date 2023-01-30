@@ -1,19 +1,21 @@
 module github.com/vearutop/photo-blog
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/bool64/brick v0.1.15
-	github.com/bool64/ctxd v1.2.0
-	github.com/bool64/dev v0.2.23
+	github.com/bool64/ctxd v1.2.1
+	github.com/bool64/dev v0.2.24
 	github.com/bool64/httptestbench v0.1.4
-	github.com/bool64/sqluct v0.1.12
+	github.com/bool64/sqluct v0.1.13-0.20230129234555-af7748e6015d
 	github.com/bool64/stats v0.2.2
+	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.1
-	github.com/swaggest/rest v0.2.36
+	github.com/swaggest/jsonschema-go v0.3.47
+	github.com/swaggest/rest v0.2.40-0.20230129235331-5e7a3777a745
 	github.com/swaggest/usecase v1.2.0
 	github.com/valyala/fasthttp v1.43.0
 	github.com/vearutop/statigz v1.2.0
@@ -34,7 +36,6 @@ require (
 	github.com/bool64/prom-stats v0.1.3 // indirect
 	github.com/bool64/shared v0.1.5 // indirect
 	github.com/bool64/zapctxd v1.0.0 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
 	github.com/cucumber/godog v0.12.5 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
@@ -81,8 +82,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/swaggest/assertjson v1.7.0 // indirect
 	github.com/swaggest/form/v5 v5.0.2 // indirect
-	github.com/swaggest/jsonschema-go v0.3.43 // indirect
-	github.com/swaggest/openapi-go v0.2.26 // indirect
+	github.com/swaggest/openapi-go v0.2.28 // indirect
 	github.com/swaggest/refl v1.1.0 // indirect
 	github.com/swaggest/swgui v1.5.1 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect

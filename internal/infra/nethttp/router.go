@@ -17,7 +17,10 @@ func NewRouter(deps *service.Locator) http.Handler {
 	r.Post("/album", usecase.CreateAlbum(deps))
 
 	r.Post("/directory", usecase.AddDirectory(deps))
-	r.Get("/album/{id}", usecase.ShowAlbum(deps))
+	r.Get("/album/{name}.json", usecase.GetAlbum(deps))
+
+	r.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
+	r.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 
 	r.Method(http.MethodGet, "/", ui.Index())
 

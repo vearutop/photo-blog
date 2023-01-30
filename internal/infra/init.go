@@ -6,12 +6,14 @@ import (
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
 	"github.com/swaggest/rest/response/gzip"
+	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"io/fs"
 	_ "modernc.org/sqlite" // SQLite3 driver.
+	"net/http"
 )
 
 // NewServiceLocator creates application service locator.
@@ -35,7 +37,15 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
 
-	l.HTTPServerMiddlewares = append(l.HTTPServerMiddlewares, gzip.Middleware)
+	l.HTTPServerMiddlewares = append(l.HTTPServerMiddlewares,
+		gzip.Middleware,
+		func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+
+				h.ServeHTTP(writer, request)
+			})
+		},
+	)
 
 	if err = setupStorage(l, cfg.Database); err != nil {
 		return nil, err
@@ -45,8 +55,10 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	l.PhotoAlbumAdderProvider = ar
 	l.PhotoAlbumFinderProvider = ar
 
-	l.PhotoImageAdderProvider = storage.NewImageRepository(l.Storage)
-	l.PhotoThumbAdderProvider = storage.NewThumbRepository(l.Storage)
+	ir := storage.NewImageRepository(l.Storage)
+	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
+	l.PhotoThumbnailerProvider = storage.NewThumbRepository(l.Storage, image.Thumbnailer{})
+	l.PhotoImageFinderProvider = ir
 
 	return l, nil
 }

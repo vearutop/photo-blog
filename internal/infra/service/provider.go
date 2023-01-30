@@ -12,10 +12,14 @@ type PhotoAlbumFinderProvider interface {
 	PhotoAlbumFinder() photo.AlbumFinder
 }
 
-type PhotoImageAdderProvider interface {
-	PhotoImageAdder() photo.ImageAdder
+type PhotoImageEnsurerProvider interface {
+	PhotoImageEnsurer() photo.ImageEnsurer
 }
 
-type PhotoThumbAdderProvider interface {
-	PhotoThumbAdder() photo.ThumbAdder
+type PhotoImageFinderProvider interface {
+	PhotoImageFinder() photo.ImageFinder
+}
+
+type PhotoThumbnailerProvider interface {
+	PhotoThumbnailer() photo.Thumbnailer
 }

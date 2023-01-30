@@ -26,14 +26,34 @@ type AlbumImage struct {
 
 func NewAlbumRepository(storage *sqluct.Storage) *AlbumRepository {
 	ar := &AlbumRepository{}
+	ar.st = storage
 	ar.s = sqluct.Table[photo.Album](storage, AlbumsTable)
+	ar.sai = sqluct.Table[AlbumImage](storage, AlbumImagesTable)
+	ar.si = sqluct.Table[photo.Image](storage, ImagesTable)
+
+	// Adding AlbumImagesTable to ImagesTable referencer.
+	ar.si.Referencer.AddTableAlias(ar.sai.R, AlbumImagesTable)
 
 	return ar
 }
 
 // AlbumRepository saves albums to database.
 type AlbumRepository struct {
-	s sqluct.StorageOf[photo.Album]
+	st  *sqluct.Storage
+	s   sqluct.StorageOf[photo.Album]
+	sai sqluct.StorageOf[AlbumImage]
+	si  sqluct.StorageOf[photo.Image]
+}
+
+func (ar *AlbumRepository) FindImages(ctx context.Context, albumID int) ([]photo.Image, error) {
+	q := ar.si.SelectStmt().
+		InnerJoin(
+			ar.si.Fmt("%s ON %s = %s AND %s = ?",
+				ar.sai.R, &ar.si.R.ID, &ar.sai.R.ImageID, &ar.sai.R.AlbumID),
+			albumID,
+		)
+
+	return ar.si.List(ctx, q)
 }
 
 func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
@@ -41,7 +61,7 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	r.AlbumData = data
 	r.CreatedAt = time.Now()
 
-	if id, err := ar.s.Insert(ctx, r); err != nil {
+	if id, err := ar.s.InsertRow(ctx, r); err != nil {
 		return r, fmt.Errorf("add album: %w", err)
 	} else {
 		r.ID = int(id)
@@ -50,7 +70,7 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 }
 
 func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
-	q := ar.s.SelectStmt(AlbumsTable, ar.s.R).
+	q := ar.s.SelectStmt().
 		Where(squirrel.Eq{ar.s.Ref(&ar.s.R.Name): name}).
 		Limit(1)
 
@@ -68,10 +88,8 @@ func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs 
 		rows = append(rows, ai)
 	}
 
-	q := ar.s.InsertStmt(AlbumImagesTable, rows)
-
-	if _, err := ar.s.Exec(ctx, q); err != nil {
-		return ctxd.WrapError(ctx, err, "store album images")
+	if _, err := ar.sai.InsertRows(ctx, rows, sqluct.InsertIgnore); err != nil {
+		return ctxd.WrapError(ctx, err, "store album images", "rows", rows)
 	}
 
 	return nil

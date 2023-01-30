@@ -10,6 +10,7 @@ type Locator struct {
 
 	PhotoAlbumAdderProvider
 	PhotoAlbumFinderProvider
-	PhotoImageAdderProvider
-	PhotoThumbAdderProvider
+	PhotoImageEnsurerProvider
+	PhotoImageFinderProvider
+	PhotoThumbnailerProvider
 }

@@ -1,10 +1,45 @@
 package image
 
 import (
+	"bytes"
+	"context"
+	"fmt"
 	"github.com/nfnt/resize"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"image/jpeg"
 	"io"
+	"os"
 )
+
+type Thumbnailer struct{}
+
+func (t Thumbnailer) Thumbnail(ctx context.Context, image photo.Image, size photo.ThumbSize) (io.ReadSeeker, error) {
+	f, err := os.Open(image.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	r := Resizer{
+		Quality: 85,
+		Interp:  resize.Lanczos2,
+	}
+
+	buf := bytes.NewBuffer(nil)
+	w, h, err := size.WidthHeight()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.ResizeJPEG(f, buf, w, h); err != nil {
+		return nil, fmt.Errorf("failed to resize: %w", err)
+	}
+
+	return bytes.NewReader(buf.Bytes()), nil
+}
+
+func (t Thumbnailer) PhotoThumbnailer() photo.Thumbnailer {
+	return t
+}
 
 type Resizer struct {
 	Quality int
