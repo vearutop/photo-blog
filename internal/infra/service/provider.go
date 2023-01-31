@@ -16,6 +16,10 @@ type PhotoImageEnsurerProvider interface {
 	PhotoImageEnsurer() photo.ImageEnsurer
 }
 
+type PhotoImageUpdaterProvider interface {
+	PhotoImageUpdater() photo.ImageUpdater
+}
+
 type PhotoImageFinderProvider interface {
 	PhotoImageFinder() photo.ImageFinder
 }

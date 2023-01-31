@@ -4,33 +4,37 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/bool64/brick/opencensus"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"go.opencensus.io/trace"
+	"image"
 	"image/jpeg"
 	"io"
 	"os"
+	"sync"
+	"time"
 )
 
 func NewThumbnailer() *Thumbnailer {
-	return &Thumbnailer{
-		sem: make(chan struct{}, 1),
-	}
+	return &Thumbnailer{}
 }
 
 type Thumbnailer struct {
-	sem chan struct{}
+	mu        sync.Mutex
+	lastPath  string
+	lastImage image.Image
 }
 
-func (t *Thumbnailer) Thumbnail(ctx context.Context, image photo.Image, size photo.ThumbSize) (io.ReadSeeker, error) {
-	t.sem <- struct{}{}
-	defer func() {
-		<-t.sem
-	}()
+func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (res io.ReadSeeker, err error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
-	f, err := os.Open(image.Path)
-	if err != nil {
-		return nil, err
-	}
+	ctx, finish := opencensus.AddSpan(ctx,
+		trace.StringAttribute("path", i.Path),
+		trace.StringAttribute("size", string(size)),
+	)
+	defer finish(&err)
 
 	r := Resizer{
 		Quality: 85,
@@ -43,7 +47,34 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, image photo.Image, size pho
 		return nil, err
 	}
 
-	if err := r.ResizeJPEG(f, buf, w, h); err != nil {
+	var img image.Image
+
+	if t.lastPath == i.Path {
+		img = t.lastImage
+	} else {
+		t.lastImage = nil
+		t.lastPath = ""
+
+		img, err = r.loadJPEG(ctx, i.Path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load JPEG: %w", err)
+		}
+
+		t.lastPath = i.Path
+		t.lastImage = img
+
+		go func() {
+			time.Sleep(20 * time.Second)
+			t.mu.Lock()
+			defer t.mu.Unlock()
+			if t.lastPath == i.Path {
+				t.lastImage = nil
+				t.lastPath = ""
+			}
+		}()
+	}
+
+	if err := r.resizeJPEG(ctx, img, buf, w, h); err != nil {
 		return nil, fmt.Errorf("failed to resize: %w", err)
 	}
 
@@ -59,12 +90,24 @@ type Resizer struct {
 	Interp  resize.InterpolationFunction
 }
 
-func (r *Resizer) ResizeJPEG(src io.Reader, dst io.Writer, width, height uint) error {
-	// decode jpeg into image.Image
-	img, err := jpeg.Decode(src)
+func (r *Resizer) loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
+	ctx, finish := opencensus.AddSpan(ctx)
+	defer finish(&err)
+
+	f, err := os.Open(fn)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	defer f.Close()
+
+	// decode jpeg into image.Image
+	return jpeg.Decode(f)
+}
+
+func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (err error) {
+	ctx, finish := opencensus.AddSpan(ctx)
+	defer finish(&err)
 
 	// image to width 1000 using Lanczos resampling
 	// and preserve aspect ratio

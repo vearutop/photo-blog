@@ -23,8 +23,10 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 	}
 
 	type image struct {
-		Name string `json:"name"`
-		Hash string `json:"hash"`
+		Name   string `json:"name"`
+		Hash   string `json:"hash"`
+		Width  int64  `json:"width"`
+		Height int64  `json:"height"`
 	}
 
 	type getAlbumOutput struct {
@@ -50,8 +52,10 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		out.Images = make([]image, 0, len(images))
 		for _, i := range images {
 			out.Images = append(out.Images, image{
-				Name: path.Base(i.Path),
-				Hash: i.StringHash(),
+				Name:   path.Base(i.Path),
+				Hash:   i.StringHash(),
+				Width:  i.Width,
+				Height: i.Height,
 			})
 		}
 

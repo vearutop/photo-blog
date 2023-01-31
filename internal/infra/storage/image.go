@@ -15,17 +15,21 @@ import (
 const (
 	// ImagesTable is the name of the table.
 	ImagesTable = "images"
+
+	ErrMissingHash = ctxd.SentinelError("missing image hash")
 )
 
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 	return &ImageRepository{
 		StorageOf: sqluct.Table[photo.Image](storage, ImagesTable),
+		st:        storage,
 	}
 }
 
 // ImageRepository saves images to database.
 type ImageRepository struct {
 	sqluct.StorageOf[photo.Image]
+	st *sqluct.Storage
 }
 
 func (ir *ImageRepository) FindByHash(ctx context.Context, hash int64) (photo.Image, error) {
@@ -35,7 +39,7 @@ func (ir *ImageRepository) FindByHash(ctx context.Context, hash int64) (photo.Im
 
 func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (photo.Image, error) {
 	if value.Hash == 0 {
-		return photo.Image{}, errors.New("missing image hash")
+		return photo.Image{}, ErrMissingHash
 	}
 
 	r := photo.Image{}
@@ -64,7 +68,22 @@ func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (p
 	return r, nil
 }
 
+func (ir *ImageRepository) Update(ctx context.Context, value photo.ImageData) error {
+	if value.Hash == 0 {
+		return ErrMissingHash
+	}
+
+	q := ir.st.UpdateStmt(ImagesTable, value).Where(squirrel.Eq{ir.Ref(&ir.R.Hash): value.Hash})
+	_, err := ir.st.Exec(ctx, q)
+
+	return err
+}
+
 func (ir *ImageRepository) PhotoImageEnsurer() photo.ImageEnsurer {
+	return ir
+}
+
+func (ir *ImageRepository) PhotoImageUpdater() photo.ImageUpdater {
 	return ir
 }
 

@@ -4,7 +4,7 @@
     <title>{{.Title}}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon"/>
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
     <link rel="stylesheet" href="/static/photoswipe.css">
 
@@ -50,7 +50,8 @@
                     "/thumb/300w/" + img.hash + ".jpg 300w, " +
                     "/thumb/600w/" + img.hash + ".jpg 600w, " +
                     "/thumb/1200w/" + img.hash + ".jpg 1200w, " +
-                    "/thumb/2400w/" + img.hash + ".jpg 2400w"
+                    "/thumb/2400w/" + img.hash + ".jpg 2400w, " +
+                    "/image/" + img.hash + ".jpg " + img.width + "w"
                 )
                 a.html('<img src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
 

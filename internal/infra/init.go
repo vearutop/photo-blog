@@ -57,6 +57,7 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 
 	ir := storage.NewImageRepository(l.Storage)
 	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
+	l.PhotoImageUpdaterProvider = ir
 	l.PhotoThumbnailerProvider = storage.NewThumbRepository(l.Storage, image.NewThumbnailer())
 	l.PhotoImageFinderProvider = ir
 

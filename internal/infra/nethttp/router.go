@@ -2,6 +2,7 @@
 package nethttp
 
 import (
+	"github.com/swaggest/rest/nethttp"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"net/http"
 
@@ -18,6 +19,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 	r.Post("/directory", usecase.AddDirectory(deps))
 	r.Get("/album/{name}.json", usecase.GetAlbum(deps))
+	r.Get("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 	r.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
 	r.Get("/image/{hash}.jpg", usecase.ShowImage(deps))

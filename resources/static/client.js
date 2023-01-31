@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: devel go1.20-c0497d1 Fri Dec 2 23:40:37 2022 +0000
+     * Version: Version: dev, GoVersion: go1.19.5
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -123,6 +123,41 @@
     };
 
     /**
+     * Download Album
+     * @param {GetAlbumNameZipRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.getAlbumNameZip = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
+        '.zip?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Add Directory
      * Add a directory of photos to an album (non-recursive).
      * @param {PostDirectoryRequest} req - request parameters.
@@ -212,6 +247,53 @@
     };
 
     /**
+     * Index Album
+     * @param {GetIndexNameRequest} req - request parameters.
+     * @param {RawCallback} onAccepted
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getIndexName = function (req, onAccepted, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 202:
+                    if (typeof (onAccepted) === 'function') {
+                        onAccepted(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/index/' + encodeURIComponent(req.name) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Show Thumb
      * @param {GetThumbSizeHashJpgRequest} req - request parameters.
      * @param {RawCallback} onOK
@@ -237,6 +319,53 @@
         var url = this.baseURL + '/thumb/' + encodeURIComponent(req.size) +
         '/' + encodeURIComponent(req.hash) +
         '.jpg?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Album
+     * @param {GetNameRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getName = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/' + encodeURIComponent(req.name) +
+        '/?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);

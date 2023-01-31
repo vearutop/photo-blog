@@ -16,6 +16,10 @@ type ImageEnsurer interface {
 	Ensure(ctx context.Context, value ImageData) (Image, error)
 }
 
+type ImageUpdater interface {
+	Update(ctx context.Context, value ImageData) error
+}
+
 type ImageFinder interface {
 	FindByHash(ctx context.Context, hash int64) (Image, error)
 }

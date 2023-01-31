@@ -45,6 +45,9 @@
  * @typedef UsecaseImage
  * @type {Object}
  * @property {String} hash
+ * @property {Number} height
+ * @property {String} name
+ * @property {Number} width
  */
 
 /**
@@ -57,6 +60,17 @@
 /**
  * @callback UsecaseGetAlbumOutputCallback
  * @param {UsecaseGetAlbumOutput} value
+ */
+
+/**
+ * @typedef GetAlbumNameZipRequest
+ * @type {Object}
+ * @property {String} name
+ */
+
+/**
+ * @callback RawCallback
+ * @param {XMLHttpRequest} value
  */
 
 /**
@@ -84,14 +98,21 @@
  */
 
 /**
- * @callback RawCallback
- * @param {XMLHttpRequest} value
+ * @typedef GetIndexNameRequest
+ * @type {Object}
+ * @property {String} name
  */
 
 /**
  * @typedef GetThumbSizeHashJpgRequest
  * @type {Object}
- * @property {('300w'|'600w'|'1200w'|'2400w')} size
+ * @property {('600w'|'2400w'|'300w'|'1200w')} size
  * @property {String} hash
+ */
+
+/**
+ * @typedef GetNameRequest
+ * @type {Object}
+ * @property {String} name
  */
 

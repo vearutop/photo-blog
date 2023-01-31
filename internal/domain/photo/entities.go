@@ -27,9 +27,11 @@ type Image struct {
 }
 
 type ImageData struct {
-	Hash int64  `db:"hash"`
-	Size int64  `db:"size"`
-	Path string `db:"path"`
+	Hash   int64  `db:"hash"`
+	Size   int64  `db:"size"`
+	Path   string `db:"path"`
+	Width  int64  `db:"width"`
+	Height int64  `db:"height"`
 }
 
 func (i ImageData) StringHash() string {
@@ -70,7 +72,7 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 	return 0, 0, fmt.Errorf("unexpected size: %s", t)
 }
 
-var ThumbSizes = []ThumbSize{"300w", "600w", "1200w", "2400w"}
+var ThumbSizes = []ThumbSize{"600w", "2400w", "300w", "1200w"}
 
 type ThumbValue struct {
 	ImageID int    `db:"image_id"`
