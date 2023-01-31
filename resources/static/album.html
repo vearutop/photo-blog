@@ -43,17 +43,18 @@
 
                 var a = $("<a>")
                 a.attr("href", "/image/" + img.hash + ".jpg")
-                a.attr("data-pswp-width", 2500)
-                a.attr("data-pswp-height", 1667)
+                a.attr("data-pswp-width", img.width)
+                a.attr("data-pswp-height", img.height)
                 a.attr("target", "_blank")
                 a.attr("data-pswp-srcset",
-                    "/thumb/300w/" + img.hash + ".jpg 300w, " +
-                    "/thumb/600w/" + img.hash + ".jpg 600w, " +
-                    "/thumb/1200w/" + img.hash + ".jpg 1200w, " +
-                    "/thumb/2400w/" + img.hash + ".jpg 2400w, " +
-                    "/image/" + img.hash + ".jpg " + img.width + "w"
+                    "/thumb/300w/" + img.hash + ".jpg 300w" +
+                    ", /thumb/600w/" + img.hash + ".jpg 600w" +
+                    ", /thumb/1200w/" + img.hash + ".jpg 1200w" +
+                    ", /thumb/2400w/" + img.hash + ".jpg 2400w" +
+                    ""
+                    // ", /image/" + img.hash + ".jpg " + img.width + "w"
                 )
-                a.html('<img src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
+                a.html('<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
 
                 $(".gallery").append(a)
             }

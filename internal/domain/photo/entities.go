@@ -69,10 +69,19 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 		return uint(w), 0, nil
 	}
 
+	if strings.HasSuffix(s, "h") {
+		h, err := strconv.Atoi(strings.TrimSuffix(s, "h"))
+		if err != nil {
+			return 0, 0, err
+		}
+
+		return 0, uint(h), nil
+	}
+
 	return 0, 0, fmt.Errorf("unexpected size: %s", t)
 }
 
-var ThumbSizes = []ThumbSize{"600w", "2400w", "300w", "1200w"}
+var ThumbSizes = []ThumbSize{"200h", "400h", "600w", "2400w", "300w", "1200w"}
 
 type ThumbValue struct {
 	ImageID int    `db:"image_id"`
