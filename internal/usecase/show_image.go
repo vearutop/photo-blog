@@ -3,10 +3,11 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/swaggest/usecase"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"net/http"
 	"strconv"
+
+	"github.com/swaggest/usecase"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
 type showImageDeps interface {

@@ -2,13 +2,13 @@
 package nethttp
 
 import (
-	"github.com/swaggest/rest/nethttp"
-	"github.com/vearutop/photo-blog/internal/usecase"
 	"net/http"
 
 	"github.com/bool64/brick"
+	"github.com/swaggest/rest/nethttp"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/usecase"
 )
 
 // NewRouter creates an instance of router filled with handlers and docs.

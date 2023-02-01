@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/bool64/brick/opencensus"
-	"github.com/nfnt/resize"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"go.opencensus.io/trace"
 	"image"
 	"image/jpeg"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/bool64/brick/opencensus"
+	"github.com/nfnt/resize"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"go.opencensus.io/trace"
 )
 
 func NewThumbnailer() *Thumbnailer {

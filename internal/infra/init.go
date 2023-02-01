@@ -2,6 +2,9 @@ package infra
 
 import (
 	"context"
+	"io/fs"
+	"net/http"
+
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
@@ -11,9 +14,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
-	"io/fs"
 	_ "modernc.org/sqlite" // SQLite3 driver.
-	"net/http"
 )
 
 // NewServiceLocator creates application service locator.
@@ -41,7 +42,6 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 		gzip.Middleware,
 		func(h http.Handler) http.Handler {
 			return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-
 				h.ServeHTTP(writer, request)
 			})
 		},
@@ -51,15 +51,15 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 		return nil, err
 	}
 
-	ar := storage.NewAlbumRepository(l.Storage)
-	l.PhotoAlbumAdderProvider = ar
-	l.PhotoAlbumFinderProvider = ar
+	albumRepo := storage.NewAlbumRepository(l.Storage)
+	l.PhotoAlbumAdderProvider = albumRepo
+	l.PhotoAlbumFinderProvider = albumRepo
 
-	ir := storage.NewImageRepository(l.Storage)
-	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
-	l.PhotoImageUpdaterProvider = ir
+	imageRepo := storage.NewImageRepository(l.Storage)
+	l.PhotoImageEnsurerProvider = image.NewHasher(imageRepo, l.CtxdLogger())
+	l.PhotoImageUpdaterProvider = imageRepo
 	l.PhotoThumbnailerProvider = storage.NewThumbRepository(l.Storage, image.NewThumbnailer())
-	l.PhotoImageFinderProvider = ir
+	l.PhotoImageFinderProvider = imageRepo
 
 	exifRepo := storage.NewExifRepository(l.Storage)
 	l.PhotoExifFinderProvider = exifRepo

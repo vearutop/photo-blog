@@ -2,16 +2,17 @@ package usecase
 
 import (
 	"context"
+	"image/jpeg"
+	"os"
+	"sync/atomic"
+	"time"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/image"
-	"image/jpeg"
-	"os"
-	"sync/atomic"
-	"time"
 )
 
 type indexAlbumDeps interface {

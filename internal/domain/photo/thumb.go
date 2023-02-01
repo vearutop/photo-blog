@@ -1,46 +1,25 @@
 package photo
 
 import (
+	"context"
 	"fmt"
-	"github.com/swaggest/jsonschema-go"
+	"io"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
-// Album describes database mapping.
-type Album struct {
-	Identity
-	Time
-	AlbumData
+type Thumbnailer interface {
+	Thumbnail(ctx context.Context, image Image, size ThumbSize) (io.ReadSeeker, error)
 }
 
-type AlbumData struct {
-	Title string `db:"title" formData:"title" json:"title"`
-	Name  string `db:"name" formData:"name" json:"name"`
+type ThumbFinder interface {
+	Find(ctx context.Context, imageID int, width, height uint) (Thumb, error)
 }
 
-type Image struct {
-	Identity
-	Time
-	ImageData
-}
-
-type ImageData struct {
-	Hash   int64  `db:"hash"`
-	Size   int64  `db:"size"`
-	Path   string `db:"path"`
-	Width  int64  `db:"width"`
-	Height int64  `db:"height"`
-}
-
-func (i ImageData) StringHash() string {
-	return strconv.FormatUint(uint64(i.Hash), 36)
-}
-
-func StringHashToInt64(hash string) (int64, error) {
-	u, err := strconv.ParseUint(hash, 36, 64)
-	return int64(u), err
+type ThumbAdder interface {
+	Add(ctx context.Context, value ThumbValue) (Thumb, error)
 }
 
 type Thumb struct {
@@ -93,12 +72,4 @@ type ThumbValue struct {
 	Width   uint   `db:"width"`
 	Height  uint   `db:"height"`
 	Data    []byte `db:"data"`
-}
-
-type Identity struct {
-	ID int `db:"id,omitempty,serialIdentity" json:"id"`
-}
-
-type Time struct {
-	CreatedAt time.Time `db:"created_at,omitempty" json:"created_at"`
 }

@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+type ExifEnsurer interface {
+	Ensure(ctx context.Context, value Exif) error
+}
+
+type ExifFinder interface {
+	FindByHash(ctx context.Context, hash int64) (Exif, error)
+}
+
 type Exif struct {
 	Time
 	Hash int64 `db:"hash" description:"image hash"`
@@ -20,12 +28,4 @@ type Exif struct {
 	CameraModel     string     `db:"camera_model" json:"camera_model"`
 	Software        string     `db:"software" json:"software"`
 	Digitized       *time.Time `db:"digitized" json:"digitized"`
-}
-
-type ExifEnsurer interface {
-	Ensure(ctx context.Context, value Exif) error
-}
-
-type ExifFinder interface {
-	FindByHash(ctx context.Context, hash int64) (Exif, error)
 }

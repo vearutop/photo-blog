@@ -5,13 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bool64/ctxd"
-	"github.com/swaggest/usecase"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"io"
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/bool64/ctxd"
+	"github.com/swaggest/usecase"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
 type dlAlbumDeps interface {

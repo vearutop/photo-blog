@@ -2,11 +2,12 @@ package image
 
 import (
 	"context"
+	"io"
+	"os"
+
 	"github.com/bool64/ctxd"
 	"github.com/cespare/xxhash/v2"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"io"
-	"os"
 )
 
 func NewHasher(upstream photo.ImageEnsurer, log ctxd.Logger) *Hasher {

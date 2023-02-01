@@ -3,11 +3,12 @@ package usecase
 import (
 	"context"
 	"errors"
+	"html/template"
+	"io"
+
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/resources/static"
-	"html/template"
-	"io"
 )
 
 type albumPage struct {

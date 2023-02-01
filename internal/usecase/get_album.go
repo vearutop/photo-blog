@@ -2,12 +2,13 @@ package usecase
 
 import (
 	"context"
+	"path"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"path"
 )
 
 type getAlbumDeps interface {

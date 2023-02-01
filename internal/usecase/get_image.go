@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
+	"os"
+
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/image"
-	"os"
 )
 
 func GetImage(deps showImageDeps) usecase.Interactor {

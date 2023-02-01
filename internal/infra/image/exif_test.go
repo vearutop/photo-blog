@@ -1,11 +1,12 @@
 package image_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/assertjson"
 	"github.com/vearutop/photo-blog/internal/infra/image"
-	"os"
-	"testing"
 )
 
 func TestReadMeta(t *testing.T) {

@@ -3,13 +3,14 @@ package image
 import (
 	"bytes"
 	"fmt"
-	exif "github.com/dsoprea/go-exif/v3"
-	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"io"
 	"strconv"
 	"strings"
 	"time"
+
+	exif "github.com/dsoprea/go-exif/v3"
+	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
 type Meta struct {
