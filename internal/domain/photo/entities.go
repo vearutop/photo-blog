@@ -38,6 +38,11 @@ func (i ImageData) StringHash() string {
 	return strconv.FormatUint(uint64(i.Hash), 36)
 }
 
+func StringHashToInt64(hash string) (int64, error) {
+	u, err := strconv.ParseUint(hash, 36, 64)
+	return int64(u), err
+}
+
 type Thumb struct {
 	Identity
 	Time

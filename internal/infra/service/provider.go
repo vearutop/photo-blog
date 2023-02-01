@@ -27,3 +27,19 @@ type PhotoImageFinderProvider interface {
 type PhotoThumbnailerProvider interface {
 	PhotoThumbnailer() photo.Thumbnailer
 }
+
+type PhotoExifEnsurerProvider interface {
+	PhotoExifEnsurer() photo.ExifEnsurer
+}
+
+type PhotoExifFinderProvider interface {
+	PhotoExifFinder() photo.ExifFinder
+}
+
+type PhotoGpsEnsurerProvider interface {
+	PhotoGpsEnsurer() photo.GpsEnsurer
+}
+
+type PhotoGpsFinderProvider interface {
+	PhotoGpsFinder() photo.GpsFinder
+}

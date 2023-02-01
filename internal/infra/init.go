@@ -61,6 +61,14 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	l.PhotoThumbnailerProvider = storage.NewThumbRepository(l.Storage, image.NewThumbnailer())
 	l.PhotoImageFinderProvider = ir
 
+	exifRepo := storage.NewExifRepository(l.Storage)
+	l.PhotoExifFinderProvider = exifRepo
+	l.PhotoExifEnsurerProvider = exifRepo
+
+	gpsRepo := storage.NewGpsRepository(l.Storage)
+	l.PhotoGpsFinderProvider = gpsRepo
+	l.PhotoGpsEnsurerProvider = gpsRepo
+
 	return l, nil
 }
 
