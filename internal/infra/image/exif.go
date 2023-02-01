@@ -5,146 +5,137 @@ import (
 	"fmt"
 	exif "github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	"os"
+	"io"
+	"strconv"
+	"time"
 )
 
-type ExifReader struct {
+type GpsInfo struct {
+	Altitude  int
+	Longitude float64
+	Latitude  float64
+	Time      time.Time
 }
 
-//type IfdEntry struct {
-//	IfdPath     string                      `json:"ifd_path"`
-//	FqIfdPath   string                      `json:"fq_ifd_path"`
-//	IfdIndex    int                         `json:"ifd_index"`
-//	TagId       uint16                      `json:"tag_id"`
-//	TagName     string                      `json:"tag_name"`
-//	TagTypeId   exifcommon.TagTypePrimitive `json:"tag_type_id"`
-//	TagTypeName string                      `json:"tag_type_name"`
-//	UnitCount   uint32                      `json:"unit_count"`
-//	Value       interface{}                 `json:"value"`
-//	ValueString string                      `json:"value_string"`
-//}
-//
-//func (er *ExifReader) Foo() error {
-//	im, err := exifcommon.NewIfdMappingWithStandard()
-//	if err != nil {
-//		return err
-//	}
-//
-//	ti := exif.NewTagIndex()
-//
-//	entries := make([]IfdEntry, 0)
-//	visitor := func(fqIfdPath string, ifdIndex int, tagId uint16, tagType exifcommon.TagTypePrimitive, valueContext exifcommon.ValueContext) (err error) {
-//		ifdPath, err := im.StripPathPhraseIndices(fqIfdPath)
-//
-//		if err != nil {
-//			return err
-//		}
-//
-//		it, err := ti.Get(ifdPath, tagId)
-//		if err != nil {
-//			if log.Is(err, exif.ErrTagNotFound) {
-//				fmt.Printf("WARNING: Unknown tag: [%s] (%04x)\n", ifdPath, tagId)
-//				return nil
-//			} else {
-//				log.Panic(err)
-//			}
-//		}
-//
-//		valueString := ""
-//		var value interface{}
-//		if tagType.Type() == exif.TypeUndefined {
-//			var err error
-//			value, err = valueContext.Undefined()
-//			if err != nil {
-//				if err == exif.ErrUnhandledUnknownTypedTag {
-//					value = nil
-//				} else {
-//					log.Panic(err)
-//				}
-//			}
-//
-//			valueString = fmt.Sprintf("%v", value)
-//		} else {
-//			valueString, err = valueContext.FormatFirst()
-//			log.PanicIf(err)
-//
-//			value = valueString
-//		}
-//
-//		entry := IfdEntry{
-//			IfdPath:     ifdPath,
-//			FqIfdPath:   fqIfdPath,
-//			IfdIndex:    ifdIndex,
-//			TagId:       tagId,
-//			TagName:     it.Name,
-//			TagTypeId:   tagType.Type(),
-//			TagTypeName: tagType.Name(),
-//			UnitCount:   valueContext.UnitCount(),
-//			Value:       value,
-//			ValueString: valueString,
-//		}
-//
-//		entries = append(entries, entry)
-//
-//		return nil
-//	}
-//
-//	_, err = exif.Visit(exifcommon.IfdStandardIfdIdentity, im, ti, rawExif, visitor)
-//
-//}
+type Meta struct {
+	Rating  int
+	Exif    map[string]string
+	GpsInfo *GpsInfo
+}
 
-func (er *ExifReader) Read(filepath string) error {
-	b, err := os.ReadFile(filepath)
+func ReadMeta(r io.ReadSeeker) (Meta, error) {
+	res := Meta{}
+
+	const ratingPref = `xmp:Rating="`
+	cc, err := find(r, []byte(ratingPref), len(ratingPref)+2)
 	if err != nil {
-		return err
+		return res, err
 	}
-	i := bytes.Index(b, []byte(`Rating`))
-	println(string(b[i : i+10000]))
 
-	rawExif, err := exif.SearchFileAndExtractExif(filepath)
+	if len(cc) >= len(ratingPref)+2 {
+		rating, err := strconv.Atoi(string(cc)[len(ratingPref) : len(ratingPref)+1])
+		if err != nil {
+			return res, err
+		}
+
+		res.Rating = rating
+	}
+
+	_, err = r.Seek(0, io.SeekStart)
 	if err != nil {
-		return err
+		return res, err
+	}
+
+	rawExif, err := exif.SearchAndExtractExifWithReader(r)
+	if err != nil {
+		return res, err
 	}
 
 	im, err := exifcommon.NewIfdMappingWithStandard()
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	ti := exif.NewTagIndex()
 
 	_, index, err := exif.Collect(im, ti, rawExif)
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	ifd, err := index.RootIfd.ChildWithIfdPath(exifcommon.IfdGpsInfoStandardIfdIdentity)
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	gi, err := ifd.GpsInfo()
 	if err != nil {
-		return err
+		return res, err
 	}
 
+	if gi != nil {
+		g := GpsInfo{}
+		g.Altitude = gi.Altitude
+		g.Longitude = gi.Longitude.Decimal()
+		g.Latitude = gi.Latitude.Decimal()
+		g.Time = gi.Timestamp
+
+		res.GpsInfo = &g
+	}
+
+	res.Exif = make(map[string]string)
 	cb := func(ifd *exif.Ifd, ite *exif.IfdTagEntry) error {
-		//println(ifd.String(), ite.String())
 		v, _ := ite.Value()
-		s, _ := ite.Format()
-		println(ite.IfdPath(), ite.TagName(), s)
-		fmt.Printf("%#v\n", v)
-		// Something useful.
+		var s string
+
+		if r, ok := v.([]exifcommon.Rational); ok && len(r) == 1 {
+			f := float64(r[0].Numerator) / float64(r[0].Denominator)
+			s = fmt.Sprintf("%.1f", f)
+		} else {
+			s, err = ite.Format()
+			if err != nil {
+				s = err.Error()
+			}
+		}
+
+		res.Exif[ite.IfdPath()+"/"+ite.TagName()] = s
 
 		return nil
 	}
 
 	err = index.RootIfd.EnumerateTagsRecursively(cb)
 	if err != nil {
-		return err
+		return res, err
 	}
 
-	fmt.Printf("%s\n%#v \n", gi.String(), gi)
+	return res, nil
+}
 
-	return nil
+func find(r io.Reader, search []byte, resLen int) ([]byte, error) {
+	l := 4096
+
+	if l < len(search)+resLen {
+		l = len(search) + resLen
+	}
+
+	dbl := make([]byte, 2*l)
+	buf := make([]byte, l)
+
+	for {
+		_, err := r.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+
+		copy(dbl[l:], buf)
+
+		if i := bytes.Index(dbl, search); i != -1 {
+			return dbl[i:], nil
+		}
+
+		copy(dbl, buf)
+	}
 }
