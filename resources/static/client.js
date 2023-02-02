@@ -247,6 +247,41 @@
     };
 
     /**
+     * Get Image
+     * @param {GetImageHashJsonRequest} req - request parameters.
+     * @param {UsecaseImageInfoCallback} onOK
+     */
+    Backend.prototype.getImageHashJson = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/image/' + encodeURIComponent(req.hash) +
+        '.json?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Index Album
      * @param {GetIndexNameRequest} req - request parameters.
      * @param {RawCallback} onAccepted

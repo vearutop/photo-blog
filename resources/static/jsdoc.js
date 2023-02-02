@@ -42,8 +42,37 @@
  */
 
 /**
+ * @typedef PhotoExif
+ * @type {Object}
+ * @property {String} camera_make
+ * @property {String} camera_model
+ * @property {String} created_at
+ * @property {?String} digitized
+ * @property {String} exposure_time
+ * @property {Number} exposure_time_sec
+ * @property {Number} f_number
+ * @property {Number} focal_length
+ * @property {Number} iso_speed
+ * @property {String} lens_model
+ * @property {Number} rating
+ * @property {String} software
+ */
+
+/**
+ * @typedef PhotoGps
+ * @type {Object}
+ * @property {Number} altitude
+ * @property {String} created_at
+ * @property {Number} latitude
+ * @property {Number} longitude
+ * @property {String} time
+ */
+
+/**
  * @typedef UsecaseImage
  * @type {Object}
+ * @property {PhotoExif} exif
+ * @property {PhotoGps} gps
  * @property {String} hash
  * @property {Number} height
  * @property {String} name
@@ -98,6 +127,48 @@
  */
 
 /**
+ * @typedef GetImageHashJsonRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef PhotoImage
+ * @type {Object}
+ * @property {String} created_at
+ * @property {Number} id
+ */
+
+/**
+ * @typedef ImageMeta
+ * @type {Object}
+ * @property {String} camera_make
+ * @property {String} camera_model
+ * @property {String} created_at
+ * @property {?String} digitized
+ * @property {String} exposure_time
+ * @property {Number} exposure_time_sec
+ * @property {Number} f_number
+ * @property {Number} focal_length
+ * @property {Number} iso_speed
+ * @property {String} lens_model
+ * @property {Number} rating
+ * @property {String} software
+ */
+
+/**
+ * @typedef UsecaseImageInfo
+ * @type {Object}
+ * @property {PhotoImage} image
+ * @property {ImageMeta} meta
+ */
+
+/**
+ * @callback UsecaseImageInfoCallback
+ * @param {UsecaseImageInfo} value
+ */
+
+/**
  * @typedef GetIndexNameRequest
  * @type {Object}
  * @property {String} name
@@ -106,7 +177,7 @@
 /**
  * @typedef GetThumbSizeHashJpgRequest
  * @type {Object}
- * @property {('600w'|'2400w'|'300w'|'1200w')} size
+ * @property {('200h'|'400h'|'600w'|'2400w'|'300w'|'1200w')} size
  * @property {String} hash
  */
 
