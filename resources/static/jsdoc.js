@@ -52,6 +52,7 @@
  * @property {Number} exposure_time_sec
  * @property {Number} f_number
  * @property {Number} focal_length
+ * @property {String} hash
  * @property {Number} iso_speed
  * @property {String} lens_model
  * @property {Number} rating
@@ -63,6 +64,7 @@
  * @type {Object}
  * @property {Number} altitude
  * @property {String} created_at
+ * @property {String} hash
  * @property {Number} latitude
  * @property {Number} longitude
  * @property {String} time
@@ -150,6 +152,7 @@
  * @property {Number} exposure_time_sec
  * @property {Number} f_number
  * @property {Number} focal_length
+ * @property {String} hash
  * @property {Number} iso_speed
  * @property {String} lens_model
  * @property {Number} rating

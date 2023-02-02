@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: go1.19.5
+     * Version: Version: dev, GoVersion: devel go1.20-c0497d1 Fri Dec 2 23:40:37 2022 +0000
      * @constructor
      * @param {string} baseURL - Base URL.
      */
