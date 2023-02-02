@@ -30,13 +30,14 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 	const ratingPref = `xmp:Rating` // Can be `<xmp:Rating>5</xmp:Rating>` or `xmp:Rating="5"`.
 	cc, err := find(r, []byte(ratingPref), len(ratingPref)+3)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("scan xmp: %w", err)
 	}
 
 	if len(cc) >= len(ratingPref)+3 {
-		rating, err := strconv.Atoi(strings.Trim(string(cc)[len(ratingPref)+1:len(ratingPref)+3], `"></`))
+		ss := strings.Trim(string(cc)[len(ratingPref)+1:len(ratingPref)+3], `"></`)
+		rating, err := strconv.Atoi(ss)
 		if err != nil {
-			return res, err
+			return res, fmt.Errorf("parse xmp rating %q: %w", ss, err)
 		}
 
 		res.Rating = rating
@@ -44,24 +45,24 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 
 	_, err = r.Seek(0, io.SeekStart)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("seek: %w", err)
 	}
 
 	rawExif, err := exif.SearchAndExtractExifWithReader(r)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("search exif: %w", err)
 	}
 
 	im, err := exifcommon.NewIfdMappingWithStandard()
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("ifd mapping: %w", err)
 	}
 
 	ti := exif.NewTagIndex()
 
 	_, index, err := exif.Collect(im, ti, rawExif)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("exif collect: %w", err)
 	}
 
 	ifd, err := index.RootIfd.ChildWithIfdPath(exifcommon.IfdGpsInfoStandardIfdIdentity)
@@ -144,7 +145,7 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 
 	err = index.RootIfd.EnumerateTagsRecursively(cb)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("enumerate tags: %w", err)
 	}
 
 	return res, nil

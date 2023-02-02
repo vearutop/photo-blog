@@ -46,7 +46,7 @@ func (ir *GpsRepository) Ensure(ctx context.Context, value photo.Gps) error {
 		var se *sqlite.Error
 
 		if errors.As(err, &se) {
-			if se.Code() == 2067 {
+			if se.Code() == 2067 || se.Code() == 1555 {
 				err = status.Wrap(err, status.AlreadyExists)
 			}
 		}
