@@ -13,17 +13,36 @@
     <script src="/static/photoswipe.umd.min.js"></script>
     <script src="/static/photoswipe-lightbox.umd.min.js"></script>
 
-    <meta property="og:title" content="{{.Title}}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="{{.CoverImage}}" />
+    <meta property="og:title" content="{{.Title}}"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content="{{.CoverImage}}"/>
 
     <meta name="robots" content="noindex">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+          integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+          crossorigin=""/>
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+            integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+            crossorigin=""></script>
+
+    <style>
+        .image-marker {
+            border-radius: 20%;
+        }
+    </style>
 </head>
 <body>
 
 <div style="margin:2em">
     <h1 id="album-title">{{.Title}}</h1>
+
+
     <div class="gallery"></div>
+
+    <div id="map" style="height:500px;display: none"></div>
+
     <a href="/album/{{.Name}}.zip">Download all photos (zip).</a>
 </div>
 
@@ -31,6 +50,20 @@
 <script>
     (function () {
         "use strict";
+
+        var gpsBounds = {
+            minLat: null,
+            maxLat: null,
+            minLng: null,
+            maxLng: null
+        };
+
+
+        /**
+         * @type {Array<PhotoGps>}
+         */
+        var gpsMarkers = []
+
         var client = new Backend('');
 
         client.getAlbumNameJson({
@@ -40,6 +73,32 @@
 
             for (var i = 0; i < result.images.length; i++) {
                 var img = result.images[i]
+
+                if (typeof img.gps != 'undefined') {
+                    console.log(img.gps)
+                    gpsMarkers.push(img.gps)
+                    if (gpsBounds.maxLat == null) {
+                        gpsBounds.maxLat = img.gps.latitude
+                        gpsBounds.minLat = img.gps.latitude
+                        gpsBounds.maxLng = img.gps.longitude
+                        gpsBounds.minLng = img.gps.longitude
+                    } else {
+                        if (img.gps.longitude > gpsBounds.maxLng) {
+                            gpsBounds.maxLng = img.gps.longitude
+                        }
+                        if (img.gps.longitude < gpsBounds.minLng) {
+                            gpsBounds.minLng = img.gps.longitude
+                        }
+                        if (img.gps.latitude > gpsBounds.maxLat) {
+                            gpsBounds.maxLat = img.gps.latitude
+                        }
+                        if (img.gps.latitude < gpsBounds.minLat) {
+                            gpsBounds.minLat = img.gps.latitude
+                        }
+                    }
+                }
+
+                console.log("gspBounds:", gpsBounds)
 
                 var a = $("<a>")
                 a.attr("href", "/image/" + img.hash + ".jpg")
@@ -66,11 +125,38 @@
                 pswpModule: PhotoSwipe
             });
             lightbox.init();
+
+            if (gpsBounds.minLat != null) {
+                console.log("setting up map")
+                $('#map').show()
+                var map = L.map('map').fitBounds([
+                    [0.995 * gpsBounds.minLat, 0.995 * gpsBounds.minLng],
+                    [1.005 * gpsBounds.maxLat, 1.005 * gpsBounds.maxLng]
+                ]);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+
+                for (var i = 0; i < gpsMarkers.length; i++) {
+                    var m = gpsMarkers[i]
+                    L.marker([m.latitude, m.longitude],
+                        {
+                            icon: L.icon({
+                                iconUrl: '/thumb/300w/' + m.hash + '.jpg',
+                                iconSize: [40],
+                                className: 'image-marker'
+                            })
+                        }).addTo(map).bindPopup(L.popup().setContent('<p>Pos: ' + m.latitude.toFixed(6) + ',' + m.longitude.toFixed(6) + ', Alt: ' + m.altitude + 'm</p>' +
+                        '<img style="width: 300px" src="/thumb/300w/' + m.hash + '.jpg" srcset="/thumb/600w/' + m.hash + '.jpg 2x" />'))
+                }
+            }
         }, function (error) {
 
         }, function (error) {
 
         })
+
     })();
 </script>
 </body>
