@@ -63,7 +63,7 @@ func ShowAlbum(deps getAlbumDeps) usecase.Interactor {
 
 		out.Title = album.Title
 		out.Name = album.Name
-		out.CoverImage = "/thumb/1200w/" + images[0].StringHash() + ".jpg"
+		out.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
 
 		return out.Render(tmpl)
 	})

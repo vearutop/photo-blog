@@ -10,12 +10,12 @@ type GpsEnsurer interface {
 }
 
 type GpsFinder interface {
-	FindByHash(ctx context.Context, hash int64) (Gps, error)
+	FindByHash(ctx context.Context, hash Hash) (Gps, error)
 }
 
 type Gps struct {
 	Time
-	Hash int64 `db:"hash" description:"image hash"`
+	Hash Hash `db:"hash" description:"image hash"`
 
 	Altitude  float64   `db:"altitude" json:"altitude"`
 	Longitude float64   `db:"longitude" json:"longitude"`

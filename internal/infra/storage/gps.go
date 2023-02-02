@@ -29,7 +29,7 @@ type GpsRepository struct {
 	sqluct.StorageOf[photo.Gps]
 }
 
-func (ir *GpsRepository) FindByHash(ctx context.Context, hash int64) (photo.Gps, error) {
+func (ir *GpsRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Gps, error) {
 	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(&ir.R.Hash): hash})
 	return ir.Get(ctx, q)
 }

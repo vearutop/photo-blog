@@ -29,7 +29,7 @@ type ExifRepository struct {
 	sqluct.StorageOf[photo.Exif]
 }
 
-func (ir *ExifRepository) FindByHash(ctx context.Context, hash int64) (photo.Exif, error) {
+func (ir *ExifRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Exif, error) {
 	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(&ir.R.Hash): hash})
 	return ir.Get(ctx, q)
 }

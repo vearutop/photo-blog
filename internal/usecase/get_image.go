@@ -11,7 +11,7 @@ import (
 
 func GetImage(deps showImageDeps) usecase.Interactor {
 	type getImageInput struct {
-		Hash string `path:"hash"`
+		Hash photo.Hash `path:"hash"`
 	}
 	type imageInfo struct {
 		Image photo.Image `json:"image"`
@@ -19,12 +19,7 @@ func GetImage(deps showImageDeps) usecase.Interactor {
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getImageInput, out *imageInfo) error {
-		h, err := photo.StringHashToInt64(in.Hash)
-		if err != nil {
-			return err
-		}
-
-		img, err := deps.PhotoImageFinder().FindByHash(ctx, h)
+		img, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
 		}

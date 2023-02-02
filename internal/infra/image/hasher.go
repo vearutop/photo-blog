@@ -54,7 +54,7 @@ func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Image
 		return photo.Image{}, err
 	}
 
-	value.Hash = int64(x.Sum64())
+	value.Hash = photo.Hash(x.Sum64())
 
 	closed = true
 	if err = f.Close(); err != nil {

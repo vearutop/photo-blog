@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -17,7 +16,7 @@ type showThumbDeps interface {
 
 type showThumbInput struct {
 	Size photo.ThumbSize `path:"size"`
-	Hash string          `path:"hash"`
+	Hash photo.Hash      `path:"hash"`
 	req  *http.Request
 }
 
@@ -32,12 +31,7 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 			return errors.New("missing http.ResponseWriter")
 		}
 
-		h, err := strconv.ParseUint(in.Hash, 36, 64)
-		if err != nil {
-			return err
-		}
-
-		image, err := deps.PhotoImageFinder().FindByHash(ctx, int64(h))
+		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
 		}

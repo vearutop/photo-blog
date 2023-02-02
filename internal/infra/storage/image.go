@@ -33,7 +33,7 @@ type ImageRepository struct {
 	st *sqluct.Storage
 }
 
-func (ir *ImageRepository) FindByHash(ctx context.Context, hash int64) (photo.Image, error) {
+func (ir *ImageRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Image, error) {
 	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(&ir.R.Hash): hash})
 	return ir.Get(ctx, q)
 }

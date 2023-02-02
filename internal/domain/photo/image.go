@@ -2,7 +2,6 @@ package photo
 
 import (
 	"context"
-	"strconv"
 )
 
 type ImageIndexer interface {
@@ -18,7 +17,7 @@ type ImageUpdater interface {
 }
 
 type ImageFinder interface {
-	FindByHash(ctx context.Context, hash int64) (Image, error)
+	FindByHash(ctx context.Context, hash Hash) (Image, error)
 }
 
 type Image struct {
@@ -28,18 +27,9 @@ type Image struct {
 }
 
 type ImageData struct {
-	Hash   int64  `db:"hash"`
+	Hash   Hash   `db:"hash"`
 	Size   int64  `db:"size"`
 	Path   string `db:"path"`
 	Width  int64  `db:"width"`
 	Height int64  `db:"height"`
-}
-
-func (i ImageData) StringHash() string {
-	return strconv.FormatUint(uint64(i.Hash), 36)
-}
-
-func StringHashToInt64(hash string) (int64, error) {
-	u, err := strconv.ParseUint(hash, 36, 64)
-	return int64(u), err
 }

@@ -10,12 +10,12 @@ type ExifEnsurer interface {
 }
 
 type ExifFinder interface {
-	FindByHash(ctx context.Context, hash int64) (Exif, error)
+	FindByHash(ctx context.Context, hash Hash) (Exif, error)
 }
 
 type Exif struct {
 	Time
-	Hash int64 `db:"hash" description:"image hash"`
+	Hash Hash `db:"hash" description:"image hash"`
 
 	Rating          int        `db:"rating" json:"rating"`
 	ExposureTime    string     `db:"exposure_time" json:"exposure_time"`

@@ -59,7 +59,7 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		for _, i := range images {
 			img := image{
 				Name:   path.Base(i.Path),
-				Hash:   i.StringHash(),
+				Hash:   i.Hash.String(),
 				Width:  i.Width,
 				Height: i.Height,
 			}
@@ -69,7 +69,7 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 				img.Gps = &gps
 			} else if !errors.Is(err, status.NotFound) {
 				deps.CtxdLogger().Warn(ctx, "failed to find gps",
-					"hash", i.StringHash(), "error", err.Error())
+					"hash", i.Hash.String(), "error", err.Error())
 			}
 
 			exif, err := deps.PhotoExifFinder().FindByHash(ctx, i.Hash)
@@ -77,7 +77,7 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 				img.Exif = &exif
 			} else if !errors.Is(err, status.NotFound) {
 				deps.CtxdLogger().Warn(ctx, "failed to find exif",
-					"hash", i.StringHash(), "error", err.Error())
+					"hash", i.Hash.String(), "error", err.Error())
 			}
 
 			out.Images = append(out.Images, img)
