@@ -69,6 +69,8 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	l.PhotoGpsFinderProvider = gpsRepo
 	l.PhotoGpsEnsurerProvider = gpsRepo
 
+	l.PhotoImageIndexerProvider = image.NewIndexer(l)
+
 	return l, nil
 }
 

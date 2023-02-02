@@ -24,6 +24,10 @@ type PhotoImageFinderProvider interface {
 	PhotoImageFinder() photo.ImageFinder
 }
 
+type PhotoImageIndexerProvider interface {
+	PhotoImageIndexer() photo.ImageIndexer
+}
+
 type PhotoThumbnailerProvider interface {
 	PhotoThumbnailer() photo.Thumbnailer
 }

@@ -5,6 +5,10 @@ import (
 	"strconv"
 )
 
+type ImageIndexer interface {
+	Index(ctx context.Context, image Image) error
+}
+
 type ImageEnsurer interface {
 	Ensure(ctx context.Context, value ImageData) (Image, error)
 }

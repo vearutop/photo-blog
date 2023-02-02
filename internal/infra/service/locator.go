@@ -14,6 +14,7 @@ type Locator struct {
 	PhotoImageEnsurerProvider
 	PhotoImageUpdaterProvider
 	PhotoImageFinderProvider
+	PhotoImageIndexerProvider
 
 	PhotoThumbnailerProvider
 
