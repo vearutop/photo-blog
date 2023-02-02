@@ -511,8 +511,8 @@ github.com/swaggest/rest v0.2.40-0.20230129235331-5e7a3777a745/go.mod h1:7GUzE+w
 github.com/swaggest/swgui v1.5.1 h1:CXJ2l9n1nEz2AJXl/FHDGD5ZtlKnTRJb2p86njBfXfo=
 github.com/swaggest/swgui v1.5.1/go.mod h1:lKfAIKTFBStjUtyXz56OQpXgQtpGZAWWIBv4QJtxRQA=
 github.com/swaggest/usecase v0.1.5/go.mod h1:uubX4ZbjQK1Bnl0xX9hOYpb/IUiSoVKk/yQImawbNMU=
-github.com/swaggest/usecase v1.2.0 h1:cHVFqxIbHfyTXp02JmWXk+ZADaSa87UZP+b3qL5Nz90=
-github.com/swaggest/usecase v1.2.0/go.mod h1:oc5+QoAxG3Et5Gl9lRXgEOm00l4VN9gdVQSMIa5EeLY=
+github.com/swaggest/usecase v1.2.1 h1:XYVdK9tK2KCPglTflUi7aWBrVwIyb58D5mvGWED7pNs=
+github.com/swaggest/usecase v1.2.1/go.mod h1:5ccwVsLJ9eQpU4m0AGTM444pdqSPQBiocIwMmdRH9lQ=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/uber/jaeger-client-go v2.25.0+incompatible h1:IxcNZ7WRY1Y3G4poYlx24szfsn/3LvK9QHCq9oQw8+U=
 github.com/uber/jaeger-client-go v2.25.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=

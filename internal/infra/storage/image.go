@@ -2,15 +2,12 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
-	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"modernc.org/sqlite"
 )
 
 const (
@@ -35,7 +32,7 @@ type ImageRepository struct {
 
 func (ir *ImageRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Image, error) {
 	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(&ir.R.Hash): hash})
-	return ir.Get(ctx, q)
+	return augmentResErr(ir.Get(ctx, q))
 }
 
 func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (photo.Image, error) {
@@ -53,15 +50,7 @@ func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (p
 	}
 
 	if id, err := ir.InsertRow(ctx, r); err != nil {
-		var se *sqlite.Error
-
-		if errors.As(err, &se) {
-			if se.Code() == 2067 || se.Code() == 1555 {
-				err = status.Wrap(err, status.AlreadyExists)
-			}
-		}
-
-		return r, ctxd.WrapError(ctx, err, "store image")
+		return r, ctxd.WrapError(ctx, augmentErr(err), "store image")
 	} else {
 		r.ID = int(id)
 	}
@@ -77,7 +66,7 @@ func (ir *ImageRepository) Update(ctx context.Context, value photo.ImageData) er
 	q := ir.st.UpdateStmt(ImagesTable, value).Where(squirrel.Eq{ir.Ref(&ir.R.Hash): value.Hash})
 	_, err := ir.st.Exec(ctx, q)
 
-	return err
+	return augmentErr(err)
 }
 
 func (ir *ImageRepository) PhotoImageEnsurer() photo.ImageEnsurer {

@@ -15,9 +15,10 @@ require (
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.1
+	github.com/swaggest/assertjson v1.7.0
 	github.com/swaggest/jsonschema-go v0.3.47
 	github.com/swaggest/rest v0.2.40-0.20230129235331-5e7a3777a745
-	github.com/swaggest/usecase v1.2.0
+	github.com/swaggest/usecase v1.2.1
 	github.com/valyala/fasthttp v1.44.0
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
@@ -86,7 +87,6 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/swaggest/assertjson v1.7.0 // indirect
 	github.com/swaggest/form/v5 v5.0.2 // indirect
 	github.com/swaggest/openapi-go v0.2.28 // indirect
 	github.com/swaggest/refl v1.1.0 // indirect

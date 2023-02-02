@@ -86,7 +86,8 @@ func (tr *ThumbRepository) Find(ctx context.Context, imageID int, width, height 
 
 	row, err := tr.Get(ctx, q)
 	if err != nil {
-		return photo.Thumb{}, fmt.Errorf("find thumb by image id %q and size %dx%d: %w", imageID, width, height, err)
+		return photo.Thumb{}, fmt.Errorf("find thumb by image id %q and size %dx%d: %w",
+			imageID, width, height, augmentErr(err))
 	}
 
 	return row, nil
@@ -98,7 +99,7 @@ func (tr *ThumbRepository) Add(ctx context.Context, value photo.ThumbValue) (pho
 	r.CreatedAt = time.Now()
 
 	if id, err := tr.InsertRow(ctx, r); err != nil {
-		return r, ctxd.WrapError(ctx, err, "store thumbnail")
+		return r, ctxd.WrapError(ctx, augmentErr(err), "store thumbnail")
 	} else {
 		r.ID = int(id)
 	}

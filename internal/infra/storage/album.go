@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -54,7 +53,7 @@ func (ar *AlbumRepository) FindImages(ctx context.Context, albumID int) ([]photo
 			albumID,
 		).OrderByClause(ar.si.Ref(&ar.si.R.Path))
 
-	return ar.si.List(ctx, q)
+	return augmentResErr(ar.si.List(ctx, q))
 }
 
 func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
@@ -63,7 +62,7 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	r.CreatedAt = time.Now()
 
 	if id, err := ar.s.InsertRow(ctx, r); err != nil {
-		return r, fmt.Errorf("add album: %w", err)
+		return augmentResErr(r, err)
 	} else {
 		r.ID = int(id)
 		return r, nil
@@ -75,7 +74,7 @@ func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.A
 		Where(squirrel.Eq{ar.s.Ref(&ar.s.R.Name): name}).
 		Limit(1)
 
-	return ar.s.Get(ctx, q)
+	return augmentResErr(ar.s.Get(ctx, q))
 }
 
 func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
@@ -90,7 +89,7 @@ func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs 
 	}
 
 	if _, err := ar.sai.InsertRows(ctx, rows, sqluct.InsertIgnore); err != nil {
-		return ctxd.WrapError(ctx, err, "store album images", "rows", rows)
+		return ctxd.WrapError(ctx, augmentErr(err), "store album images", "rows", rows)
 	}
 
 	return nil

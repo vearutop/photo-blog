@@ -15,7 +15,7 @@ type GpsFinder interface {
 
 type Gps struct {
 	Time
-	Hash Hash `db:"hash" description:"image hash"`
+	Hash Hash `db:"hash" json:"hash" description:"image hash"`
 
 	Altitude  float64   `db:"altitude" json:"altitude"`
 	Longitude float64   `db:"longitude" json:"longitude"`
