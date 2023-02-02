@@ -65,23 +65,16 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 	}
 
 	ifd, err := index.RootIfd.ChildWithIfdPath(exifcommon.IfdGpsInfoStandardIfdIdentity)
-	if err != nil {
-		return res, err
-	}
+	if err == nil {
+		if gi, err := ifd.GpsInfo(); err == nil && gi != nil {
+			g := photo.Gps{}
+			g.Altitude = float64(gi.Altitude)
+			g.Longitude = gi.Longitude.Decimal()
+			g.Latitude = gi.Latitude.Decimal()
+			g.GpsTime = gi.Timestamp
 
-	gi, err := ifd.GpsInfo()
-	if err != nil {
-		return res, err
-	}
-
-	if gi != nil {
-		g := photo.Gps{}
-		g.Altitude = float64(gi.Altitude)
-		g.Longitude = gi.Longitude.Decimal()
-		g.Latitude = gi.Latitude.Decimal()
-		g.GpsTime = gi.Timestamp
-
-		res.GpsInfo = &g
+			res.GpsInfo = &g
+		}
 	}
 
 	digTime := ""

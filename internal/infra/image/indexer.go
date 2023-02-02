@@ -50,15 +50,13 @@ func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
 func (i *Indexer) Index(ctx context.Context, img photo.Image) (err error) {
 	ctx = ctxd.AddFields(ctx, "img", img)
 
-	var f *os.File
-
 	if img.Width == 0 {
-		f, err = os.Open(img.Path)
+		f, err := os.Open(img.Path)
 		if err != nil {
 			return ctxd.WrapError(ctx, err, "open image file")
 		}
 		c, err := jpeg.DecodeConfig(f)
-		defer i.closeFile(ctx, f)
+		i.closeFile(ctx, f)
 
 		if err != nil {
 			return ctxd.WrapError(ctx, err, "image dimensions")
@@ -72,7 +70,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image) (err error) {
 		}
 	}
 
-	if err := i.ensureExif(ctx, img, f); err != nil {
+	if err := i.ensureExif(ctx, img); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure exif", "error", err)
 	}
 
@@ -91,22 +89,20 @@ func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, f *os.File) error {
+func (i *Indexer) ensureExif(ctx context.Context, img photo.Image) error {
 	if _, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err == nil {
 		if _, err := i.deps.PhotoGpsFinder().FindByHash(ctx, img.Hash); err == nil {
 			return nil
 		}
 	}
 
-	if f == nil {
-		f, err := os.Open(img.Path)
-		if err != nil {
-			return ctxd.WrapError(ctx, err, "open image file")
-		}
-		i.closeFile(ctx, f)
+	f, err := os.Open(img.Path)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "open image file")
 	}
 
 	m, err := ReadMeta(f)
+	i.closeFile(ctx, f)
 	if err != nil {
 		return ctxd.WrapError(ctx, err, "read image meta")
 	}
