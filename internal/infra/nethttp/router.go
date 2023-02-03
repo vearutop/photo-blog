@@ -26,7 +26,9 @@ func NewRouter(deps *service.Locator) http.Handler {
 	r.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
 	r.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 
-	r.Method(http.MethodGet, "/", ui.Index())
+	r.Method(http.MethodGet, "/", ui.Static)
+	r.Method(http.MethodGet, "/panoimage.html", ui.Static)
+
 	r.Get("/{name}/", usecase.ShowAlbum(deps))
 
 	r.Mount("/static/", http.StripPrefix("/static", ui.Static))

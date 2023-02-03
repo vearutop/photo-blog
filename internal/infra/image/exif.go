@@ -26,6 +26,20 @@ func (m Meta) ExifData() map[string]any {
 func ReadMeta(r io.ReadSeeker) (Meta, error) {
 	res := Meta{}
 
+	//    <rdf:RDF>
+	//      <rdf:Description rdf:about="">
+	//        <ns2:ProjectionType>equirectangular</ns2:ProjectionType>
+	//        <ns2:UsePanoramaViewer>True</ns2:UsePanoramaViewer>
+	//        <ns2:CroppedAreaLeftPixels>0</ns2:CroppedAreaLeftPixels>
+	//        <ns2:CroppedAreaTopPixels>0</ns2:CroppedAreaTopPixels>
+	//        <ns2:PoseHeadingDegrees>0.0</ns2:PoseHeadingDegrees>
+	//        <ns2:PosePitchDegrees>2.5</ns2:PosePitchDegrees>
+	//        <ns2:PoseRollDegrees>-0.4</ns2:PoseRollDegrees>
+	//<------><ns2:StitchingSoftware> Samsung Gear 360 Mac </ns2:StitchingSoftware>
+	//      </rdf:Description>
+	//    </rdf:RDF>
+	//  </ns0:xmpmeta>.
+
 	// TODO properly scan and process XMP tags, including bespoke xmp:Label from Photoshop and ACDSee.
 	const ratingPref = `xmp:Rating` // Can be `<xmp:Rating>5</xmp:Rating>` or `xmp:Rating="5"`.
 	cc, err := find(r, []byte(ratingPref), len(ratingPref)+3)
