@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/assertjson"
 	"github.com/vearutop/photo-blog/internal/infra/image"
@@ -11,20 +12,24 @@ import (
 
 func TestReadMeta(t *testing.T) {
 	f, err := os.Open("_testdata/IMG_5612.jpg")
+	defer func() {
+		require.NoError(t, f.Close())
+	}()
 	require.NoError(t, err)
 
 	m, err := image.ReadMeta(f)
 	require.NoError(t, err)
 	assertjson.EqualMarshal(t, []byte(`{
-	  "Rating":5,"ExposureTime":"1/320","ExposureTimeSec":0.003125,
-	  "FNumber":11,"FocalLength":50,"ISOSpeedRatings":100,
-	  "LensModel":"EF50mm f/1.8 STM","CameraMake":"Canon",
-	  "CameraModel":"Canon EOS 6D",
-	  "Software":"Adobe Photoshop Camera Raw 14.3 (Windows)",
-      "Digitized": "2022-12-08T13:24:48+01:00",
+	  "created_at":"0001-01-01T00:00:00Z","hash":"0","rating":5,
+	  "exposure_time":"1/320","exposure_time_sec":0.003125,"f_number":11,
+	  "focal_length":50,"iso_speed":100,"lens_model":"EF50mm f/1.8 STM",
+	  "camera_make":"Canon","camera_model":"Canon EOS 6D",
+	  "software":"Adobe Photoshop Camera Raw 14.3 (Windows)",
+	  "digitized":"2022-12-08T13:24:48+01:00","projection_type":"",
 	  "GpsInfo":{
-		"Altitude":2092.4,"Longitude":-16.678148333333333,"Latitude":28.21437,
-		"Time":"2022-12-08T11:24:44Z"
+		"created_at":"0001-01-01T00:00:00Z","hash":"0","altitude":2092.4,
+		"longitude":-16.678148333333333,"latitude":28.21437,
+		"time":"2022-12-08T11:24:44Z"
 	  }
 	}`), m)
 
@@ -69,20 +74,18 @@ func TestReadMeta(t *testing.T) {
 func TestReadMeta_360(t *testing.T) {
 	f, err := os.Open("_testdata/360.jpg")
 	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, f.Close())
+	}()
 
 	m, err := image.ReadMeta(f)
 	require.NoError(t, err)
 	assertjson.EqualMarshal(t, []byte(`{
-	  "Rating":5,"ExposureTime":"1/320","ExposureTimeSec":0.003125,
-	  "FNumber":11,"FocalLength":50,"ISOSpeedRatings":100,
-	  "LensModel":"EF50mm f/1.8 STM","CameraMake":"Canon",
-	  "CameraModel":"Canon EOS 6D",
-	  "Software":"Adobe Photoshop Camera Raw 14.3 (Windows)",
-      "Digitized": "2022-12-08T13:24:48+01:00",
-	  "GpsInfo":{
-		"Altitude":2092.4,"Longitude":-16.678148333333333,"Latitude":28.21437,
-		"Time":"2022-12-08T11:24:44Z"
-	  }
+	  "created_at":"0001-01-01T00:00:00Z","hash":"0","rating":0,
+	  "exposure_time":"1/1250","exposure_time_sec":0.0008,"f_number":2,
+	  "focal_length":1.2,"iso_speed":100,"lens_model":"","camera_make":"SAMSUNG",
+	  "camera_model":"SM-C200","software":"Samsung Gear 360 Mac",
+	  "digitized":"2022-08-02T10:52:26Z","projection_type":"equirectangular"
 	}`), m)
 
 	assertjson.EqualMarshal(t, []byte(`{
@@ -121,4 +124,59 @@ func TestReadMeta_360(t *testing.T) {
 	  "IFD/Software":"Adobe Photoshop Camera Raw 14.3 (Windows)",
 	  "IFD/XResolution":300,"IFD/YResolution":300
 	}`), m.ExifData())
+}
+
+func TestFindSpans(t *testing.T) {
+	f, err := os.Open("_testdata/IMG_5612.jpg")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, f.Close())
+	}()
+
+	xmp := image.Span{
+		Before: 10,
+		Start:  []byte(`<x:xmpmeta`),
+		End:    []byte(`</x:xmpmeta>`),
+	}
+
+	assert.NoError(t, image.FindSpans(f, &xmp))
+
+	println(string(xmp.Result))
+}
+
+func TestFindSpans_360(t *testing.T) {
+	f, err := os.Open("_testdata/360.jpg")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, f.Close())
+	}()
+
+	xmp := image.Span{
+		Start: []byte(`<x:xmpmeta`),
+		End:   []byte(`</x:xmpmeta>`),
+	}
+
+	ns0xmp := image.Span{
+		Start: []byte(`<ns0:xmpmeta`),
+		End:   []byte(`</ns0:xmpmeta>`),
+	}
+
+	assert.NoError(t, image.FindSpans(f, &ns0xmp, &xmp))
+
+	assert.Equal(t, `<ns0:xmpmeta xmlns:ns0="adobe:ns:meta/" xmlns:ns2="http://ns.google.com/photos/1.0/panorama/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmptk="SAMSUNG 360CAM">
+    <rdf:RDF>
+      <rdf:Description rdf:about="">
+        <ns2:ProjectionType>equirectangular</ns2:ProjectionType>
+        <ns2:UsePanoramaViewer>True</ns2:UsePanoramaViewer>
+        <ns2:CroppedAreaLeftPixels>0</ns2:CroppedAreaLeftPixels>
+        <ns2:CroppedAreaTopPixels>0</ns2:CroppedAreaTopPixels>
+        <ns2:PoseHeadingDegrees>0.0</ns2:PoseHeadingDegrees>
+        <ns2:PosePitchDegrees>2.5</ns2:PosePitchDegrees>
+        <ns2:PoseRollDegrees>-0.4</ns2:PoseRollDegrees>
+	<ns2:StitchingSoftware> Samsung Gear 360 Mac </ns2:StitchingSoftware>
+      </rdf:Description>
+    </rdf:RDF>
+  </ns0:xmpmeta>`, string(ns0xmp.Result))
+
+	assert.False(t, xmp.Found)
 }

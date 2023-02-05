@@ -28,4 +28,5 @@ type Exif struct {
 	CameraModel     string     `db:"camera_model" json:"camera_model"`
 	Software        string     `db:"software" json:"software"`
 	Digitized       *time.Time `db:"digitized" json:"digitized"`
+	ProjectionType  string     `db:"projection_type" json:"projection_type"`
 }

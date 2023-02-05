@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 	"time"
 
 	exif "github.com/dsoprea/go-exif/v3"
@@ -16,7 +15,7 @@ import (
 type Meta struct {
 	exif map[string]any
 	photo.Exif
-	GpsInfo *photo.Gps
+	GpsInfo *photo.Gps `json:"gps_info,omitempty"`
 }
 
 func (m Meta) ExifData() map[string]any {
@@ -40,25 +39,43 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 	//    </rdf:RDF>
 	//  </ns0:xmpmeta>.
 
-	// TODO properly scan and process XMP tags, including bespoke xmp:Label from Photoshop and ACDSee.
-	const ratingPref = `xmp:Rating` // Can be `<xmp:Rating>5</xmp:Rating>` or `xmp:Rating="5"`.
-	cc, err := find(r, []byte(ratingPref), len(ratingPref)+3)
-	if err != nil {
-		return res, fmt.Errorf("scan xmp: %w", err)
+	xmp := Span{
+		Start: []byte(":xmpmeta"),
+		End:   []byte(":xmpmeta>"),
+	}
+	if err := FindSpans(r, &xmp); err != nil {
+		return res, fmt.Errorf("find xmp: %w", err)
 	}
 
-	if len(cc) >= len(ratingPref)+3 {
-		ss := strings.Trim(string(cc)[len(ratingPref)+1:len(ratingPref)+3], `"></`)
-		rating, err := strconv.Atoi(ss)
-		if err != nil {
-			return res, fmt.Errorf("parse xmp rating %q: %w", ss, err)
+	if xmp.Found {
+		//<ns2:ProjectionType>equirectangular</ns2:ProjectionType>
+		pt := Span{Start: []byte("<ns2:ProjectionType>"), End: []byte("</ns2:ProjectionType>"), Trim: true}
+		r1 := Span{Start: []byte(`xmp:Rating="`), End: []byte(`"`), Trim: true}
+		r2 := Span{Start: []byte(`<xmp:Rating>`), End: []byte(`</xmp:Rating>`), Trim: true}
+
+		_ = FindSpans(bytes.NewReader(xmp.Result), &pt, &r1, &r2)
+		if pt.Found {
+			res.ProjectionType = string(pt.Result)
 		}
 
-		res.Rating = rating
+		rs := ""
+		if r1.Found {
+			rs = string(r1.Result)
+		} else if r2.Found {
+			rs = string(r2.Result)
+		}
+
+		if rs != "" {
+			rating, err := strconv.Atoi(rs)
+			if err != nil {
+				return res, fmt.Errorf("parse xmp rating %q: %w", rs, err)
+			}
+
+			res.Rating = rating
+		}
 	}
 
-	_, err = r.Seek(0, io.SeekStart)
-	if err != nil {
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
 		return res, fmt.Errorf("seek: %w", err)
 	}
 
@@ -235,6 +252,92 @@ func extractExifValue(v any) any {
 	}
 
 	return nil
+}
+
+type Span struct {
+	Before        int
+	Start, End    []byte
+	CaseSensitive bool
+	Result        []byte
+	Found         bool
+	Trim          bool
+}
+
+func FindSpans(r io.Reader, spans ...*Span) error {
+	l := 4096
+
+	for _, s := range spans {
+		if len(s.Start) > l {
+			l = len(s.Start)
+		}
+
+		if len(s.End) > l {
+			l = len(s.End)
+		}
+	}
+
+	dbl := make([]byte, 2*l)
+	buf := make([]byte, l)
+	pending := len(spans)
+
+	for {
+		if pending == 0 {
+			return nil
+		}
+
+		_, err := r.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		copy(dbl[l:], buf)
+
+		for _, s := range spans {
+			if s.Found {
+				continue
+			}
+
+			started := len(s.Result) > 0
+			chunk := dbl
+			if started {
+				chunk = buf
+			}
+
+			if !started {
+				if i := bytes.Index(chunk, s.Start); i != -1 {
+					if s.Trim {
+						i += len(s.Start)
+					}
+
+					i -= s.Before
+					if i < 0 {
+						i = 0
+					}
+					chunk = chunk[i:]
+					started = true
+				}
+			}
+
+			if started {
+				s.Result = append(s.Result, chunk...)
+
+				if i := bytes.Index(s.Result, s.End); i != -1 {
+					if s.Trim {
+						s.Result = s.Result[:i]
+					} else {
+						s.Result = s.Result[:i+len(s.End)]
+					}
+					s.Found = true
+					pending--
+				}
+			}
+		}
+
+		copy(dbl, buf)
+	}
 }
 
 func find(r io.Reader, search []byte, resLen int) ([]byte, error) {

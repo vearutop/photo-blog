@@ -1,10 +1,10 @@
 package photo
 
 import (
-	"github.com/swaggest/jsonschema-go"
 	"strconv"
 
 	"github.com/bool64/ctxd"
+	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/usecase/status"
 )
 
