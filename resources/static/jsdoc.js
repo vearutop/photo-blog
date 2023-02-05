@@ -55,6 +55,7 @@
  * @property {String} hash
  * @property {Number} iso_speed
  * @property {String} lens_model
+ * @property {String} projection_type
  * @property {Number} rating
  * @property {String} software
  */
@@ -105,6 +106,13 @@
  */
 
 /**
+ * @typedef DeleteAlbumNameHashRequest
+ * @type {Object}
+ * @property {String} name
+ * @property {String} hash
+ */
+
+/**
  * @typedef PostDirectoryRequest
  * @type {Object}
  * @property {String} albumName
@@ -131,6 +139,7 @@
 /**
  * @typedef GetImageHashJsonRequest
  * @type {Object}
+ * @property {Boolean} readMeta - Read meta from original file.
  * @property {String} hash
  */
 
@@ -142,28 +151,11 @@
  */
 
 /**
- * @typedef ImageMeta
- * @type {Object}
- * @property {String} camera_make
- * @property {String} camera_model
- * @property {String} created_at
- * @property {?String} digitized
- * @property {String} exposure_time
- * @property {Number} exposure_time_sec
- * @property {Number} f_number
- * @property {Number} focal_length
- * @property {String} hash
- * @property {Number} iso_speed
- * @property {String} lens_model
- * @property {Number} rating
- * @property {String} software
- */
-
-/**
  * @typedef UsecaseImageInfo
  * @type {Object}
+ * @property {PhotoExif} exif
+ * @property {PhotoGps} gps
  * @property {PhotoImage} image
- * @property {ImageMeta} meta
  */
 
 /**

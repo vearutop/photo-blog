@@ -158,6 +158,48 @@
     };
 
     /**
+     * Remove From Album
+     * @param {DeleteAlbumNameHashRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.deleteAlbumNameHash = function (req, onNoContent, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
+        '/' + encodeURIComponent(req.hash) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("DELETE", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Add Directory
      * Add a directory of photos to an album (non-recursive).
      * @param {PostDirectoryRequest} req - request parameters.
@@ -271,6 +313,9 @@
 
         var url = this.baseURL + '/image/' + encodeURIComponent(req.hash) +
         '.json?';
+        if (req.readMeta != null) {
+            url += 'read_meta=' + encodeURIComponent(req.readMeta) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
