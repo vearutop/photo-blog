@@ -77,6 +77,15 @@ func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.A
 	return augmentResErr(ar.s.Get(ctx, q))
 }
 
+func (ar *AlbumRepository) DeleteImages(ctx context.Context, albumID int, imageIDs ...int) error {
+	_, err := ar.sai.DeleteStmt().Where(squirrel.Eq{
+		ar.sai.Ref(&ar.sai.R.AlbumID): albumID,
+		ar.sai.Ref(&ar.sai.R.ImageID): imageIDs,
+	}).ExecContext(ctx)
+
+	return augmentErr(err)
+}
+
 func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
 	rows := make([]AlbumImage, 0, len(imageIDs))
 
@@ -100,5 +109,9 @@ func (ar *AlbumRepository) PhotoAlbumAdder() photo.AlbumAdder {
 }
 
 func (ar *AlbumRepository) PhotoAlbumFinder() photo.AlbumFinder {
+	return ar
+}
+
+func (ar *AlbumRepository) PhotoAlbumDeleter() photo.AlbumDeleter {
 	return ar
 }

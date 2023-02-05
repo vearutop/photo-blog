@@ -12,6 +12,10 @@ type PhotoAlbumFinderProvider interface {
 	PhotoAlbumFinder() photo.AlbumFinder
 }
 
+type PhotoAlbumDeleterProvider interface {
+	PhotoAlbumDeleter() photo.AlbumDeleter
+}
+
 type PhotoImageEnsurerProvider interface {
 	PhotoImageEnsurer() photo.ImageEnsurer
 }

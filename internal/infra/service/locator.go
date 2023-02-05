@@ -9,6 +9,7 @@ type Locator struct {
 	*brick.BaseLocator
 
 	PhotoAlbumAdderProvider
+	PhotoAlbumDeleterProvider
 	PhotoAlbumFinderProvider
 
 	PhotoImageEnsurerProvider

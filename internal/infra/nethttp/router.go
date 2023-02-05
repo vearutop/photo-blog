@@ -21,6 +21,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 	r.Get("/album/{name}.json", usecase.GetAlbum(deps))
 	r.Get("/image/{hash}.json", usecase.GetImage(deps))
 	r.Get("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
+	r.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
 	r.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
 	r.Get("/image/{hash}.jpg", usecase.ShowImage(deps))

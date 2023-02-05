@@ -20,14 +20,12 @@ const (
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 	return &ImageRepository{
 		StorageOf: sqluct.Table[photo.Image](storage, ImagesTable),
-		st:        storage,
 	}
 }
 
 // ImageRepository saves images to database.
 type ImageRepository struct {
 	sqluct.StorageOf[photo.Image]
-	st *sqluct.Storage
 }
 
 func (ir *ImageRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Image, error) {
@@ -63,8 +61,8 @@ func (ir *ImageRepository) Update(ctx context.Context, value photo.ImageData) er
 		return ErrMissingHash
 	}
 
-	q := ir.st.UpdateStmt(ImagesTable, value).Where(squirrel.Eq{ir.Ref(&ir.R.Hash): value.Hash})
-	_, err := ir.st.Exec(ctx, q)
+	q := ir.UpdateStmt(value).Where(squirrel.Eq{ir.Ref(&ir.R.Hash): value.Hash})
+	_, err := q.ExecContext(ctx)
 
 	return augmentErr(err)
 }

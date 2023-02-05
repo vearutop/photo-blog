@@ -8,7 +8,7 @@ require (
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.24
 	github.com/bool64/httptestbench v0.1.4
-	github.com/bool64/sqluct v0.1.13-0.20230129234555-af7748e6015d
+	github.com/bool64/sqluct v0.1.13-0.20230205194732-aed15bab56d2
 	github.com/bool64/stats v0.2.2
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/dsoprea/go-exif/v3 v3.0.0-20221012082141-d21ac8e2de85

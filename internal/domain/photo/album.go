@@ -4,7 +4,11 @@ import "context"
 
 type AlbumAdder interface {
 	Add(ctx context.Context, data AlbumData) (Album, error)
-	AddImages(ctx context.Context, albumID int, imageIDs ...int) error
+	AddImages(ctx context.Context, albumID int, imageIDs ...int) error // TODO: migrate to image hashes.
+}
+
+type AlbumDeleter interface {
+	DeleteImages(ctx context.Context, albumID int, imageIDs ...int) error
 }
 
 type AlbumFinder interface {
