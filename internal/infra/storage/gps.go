@@ -39,7 +39,7 @@ func (ir *GpsRepository) Ensure(ctx context.Context, value photo.Gps) error {
 	r := value
 	r.CreatedAt = time.Now()
 
-	if _, err := ir.InsertRow(ctx, r); err != nil {
+	if _, err := ir.InsertRow(ctx, r, sqluct.InsertIgnore); err != nil {
 		return ctxd.WrapError(ctx, augmentErr(err), "store gps")
 	}
 
