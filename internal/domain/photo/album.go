@@ -13,6 +13,7 @@ type AlbumDeleter interface {
 
 type AlbumFinder interface {
 	FindByName(ctx context.Context, name string) (Album, error)
+	FindAll(ctx context.Context) ([]Album, error)
 	FindImages(ctx context.Context, albumID int) ([]Image, error)
 }
 
@@ -24,6 +25,7 @@ type Album struct {
 }
 
 type AlbumData struct {
-	Title string `db:"title" formData:"title" json:"title"`
-	Name  string `db:"name" formData:"name" json:"name"`
+	Title  string `db:"title" formData:"title" json:"title"`
+	Name   string `db:"name" formData:"name" json:"name"`
+	Public bool   `db:"public" formData:"public" json:"public"`
 }

@@ -13,6 +13,7 @@ const Name = "photo-blog"
 type Config struct {
 	brick.BaseConfig
 
-	Database database.Config `split_words:"true"`
-	Jaeger   jaeger.Config   `split_words:"true"`
+	Database      database.Config `split_words:"true"`
+	Jaeger        jaeger.Config   `split_words:"true"`
+	AdminPassHash string          `split_words:"true"`
 }

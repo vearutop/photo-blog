@@ -19,6 +19,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 	r.Post("/directory", usecase.AddDirectory(deps))
 	r.Get("/album/{name}.json", usecase.GetAlbum(deps))
+	r.Get("/albums.json", usecase.GetAlbums(deps))
 	r.Get("/image/{hash}.json", usecase.GetImage(deps))
 	r.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 	r.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
@@ -32,6 +33,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 	r.Get("/{name}/", usecase.ShowAlbum(deps))
 	r.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
+
+	r.Post("/make-pass-hash", usecase.MakePassHash())
 
 	r.Mount("/static/", http.StripPrefix("/static", ui.Static))
 

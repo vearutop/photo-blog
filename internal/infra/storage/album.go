@@ -69,6 +69,10 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	}
 }
 
+func (ar *AlbumRepository) FindAll(ctx context.Context) ([]photo.Album, error) {
+	return augmentResErr(ar.s.List(ctx, ar.s.SelectStmt()))
+}
+
 func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
 	q := ar.s.SelectStmt().
 		Where(squirrel.Eq{ar.s.Ref(&ar.s.R.Name): name}).

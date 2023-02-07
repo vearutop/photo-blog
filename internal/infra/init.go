@@ -9,6 +9,7 @@ import (
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
 	"github.com/swaggest/rest/response/gzip"
+	"github.com/swaggest/swgui"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -35,6 +36,10 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	if err = jaeger.Setup(cfg.Jaeger, l.BaseLocator); err != nil {
 		return nil, err
 	}
+
+	l.SwaggerUIOptions = append(l.SwaggerUIOptions, func(cfg *swgui.Config) {
+		cfg.HideCurl = true
+	})
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
 

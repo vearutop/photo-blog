@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/Masterminds/squirrel v1.5.3
-	github.com/bool64/brick v0.1.16-0.20230131220955-092377418b21
+	github.com/bool64/brick v0.1.16-0.20230207181707-683504b84fb7
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.24
 	github.com/bool64/httptestbench v0.1.4
@@ -18,10 +18,12 @@ require (
 	github.com/swaggest/assertjson v1.7.0
 	github.com/swaggest/jsonschema-go v0.3.47
 	github.com/swaggest/rest v0.2.40-0.20230129235331-5e7a3777a745
+	github.com/swaggest/swgui v1.6.0
 	github.com/swaggest/usecase v1.2.1
 	github.com/valyala/fasthttp v1.44.0
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
+	golang.org/x/crypto v0.5.0
 	modernc.org/sqlite v1.20.3
 )
 
@@ -40,7 +42,7 @@ require (
 	github.com/bool64/shared v0.1.5 // indirect
 	github.com/bool64/zapctxd v1.0.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
-	github.com/cucumber/godog v0.12.5 // indirect
+	github.com/cucumber/godog v0.12.6 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
@@ -55,17 +57,17 @@ require (
 	github.com/godogx/allure v0.2.0 // indirect
 	github.com/godogx/httpsteps v0.2.5 // indirect
 	github.com/godogx/resource v0.1.1 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-memdb v1.3.3 // indirect
+	github.com/hashicorp/go-memdb v1.3.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
-	github.com/joho/godotenv v1.4.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
@@ -90,7 +92,6 @@ require (
 	github.com/swaggest/form/v5 v5.0.2 // indirect
 	github.com/swaggest/openapi-go v0.2.28 // indirect
 	github.com/swaggest/refl v1.1.0 // indirect
-	github.com/swaggest/swgui v1.5.1 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vearutop/dynhist-go v1.2.0 // indirect
@@ -104,11 +105,11 @@ require (
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
-	google.golang.org/genproto v0.0.0-20230127162408-596548ed4efa // indirect
+	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
 	google.golang.org/grpc v1.52.3 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
