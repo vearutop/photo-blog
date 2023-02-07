@@ -20,17 +20,18 @@ func NewRouter(deps *service.Locator) http.Handler {
 	r.Post("/directory", usecase.AddDirectory(deps))
 	r.Get("/album/{name}.json", usecase.GetAlbum(deps))
 	r.Get("/image/{hash}.json", usecase.GetImage(deps))
-	r.Get("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
+	r.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 	r.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
+	r.Post("/album/{name}/{hash}", usecase.AddToAlbum(deps))
 	r.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
 	r.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
 	r.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 
 	r.Method(http.MethodGet, "/", ui.Static)
-	r.Method(http.MethodGet, "/panoimage.html", ui.Static)
 
 	r.Get("/{name}/", usecase.ShowAlbum(deps))
+	r.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 
 	r.Mount("/static/", http.StripPrefix("/static", ui.Static))
 

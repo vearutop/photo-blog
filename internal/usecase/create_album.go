@@ -33,7 +33,7 @@ func CreateAlbum(deps createAlbumDeps) usecase.Interactor {
 	})
 
 	u.SetDescription("Create a named album.")
-	u.SetTags("Photos")
+	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

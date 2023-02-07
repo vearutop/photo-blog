@@ -38,8 +38,12 @@
 <div style="margin:2em">
     <h1 id="album-title">{{.Title}}</h1>
 
-
     <div class="gallery"></div>
+
+    <div class="gallery-pano" style="display:none">
+        <h2>Panoramas</h2>
+
+    </div>
 
     <div id="map" style="height:500px; margin-top:40px; display: none"></div>
 
@@ -101,23 +105,32 @@
                     }
                 }
 
-                var a = $("<a>")
-                a.attr("id", 'img' + img.hash)
-                a.attr("href", "/image/" + img.hash + ".jpg")
-                a.attr("data-pswp-width", img.width)
-                a.attr("data-pswp-height", img.height)
-                a.attr("target", "_blank")
-                a.attr("data-pswp-srcset",
-                    "/thumb/300w/" + img.hash + ".jpg 300w" +
-                    ", /thumb/600w/" + img.hash + ".jpg 600w" +
-                    ", /thumb/1200w/" + img.hash + ".jpg 1200w" +
-                    ", /thumb/2400w/" + img.hash + ".jpg 2400w" +
-                    // ""
-                    ", /image/" + img.hash + ".jpg " + img.width + "w"
-                )
-                a.html('<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
+                if (img.exif.projection_type == "") {
+                    var a = $("<a>")
+                    a.attr("id", 'img' + img.hash)
+                    a.attr("href", "/image/" + img.hash + ".jpg")
+                    a.attr("data-pswp-width", img.width)
+                    a.attr("data-pswp-height", img.height)
+                    a.attr("target", "_blank")
+                    a.attr("data-pswp-srcset",
+                        "/thumb/300w/" + img.hash + ".jpg 300w" +
+                        ", /thumb/600w/" + img.hash + ".jpg 600w" +
+                        ", /thumb/1200w/" + img.hash + ".jpg 1200w" +
+                        ", /thumb/2400w/" + img.hash + ".jpg 2400w" +
+                        // ""
+                        ", /image/" + img.hash + ".jpg " + img.width + "w"
+                    )
+                    a.html('<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
 
-                $(".gallery").append(a)
+                    $(".gallery").append(a)
+                } else {
+                    var a = $("<a>")
+                    a.attr("id", 'img' + img.hash)
+                    a.attr("href", "/{{.Name}}/pano-" + img.hash + ".html")
+                    a.html('<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
+
+                    $(".gallery-pano").show().append(a)
+                }
             }
 
             var lightbox = new PhotoSwipeLightbox({

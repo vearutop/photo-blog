@@ -11,3 +11,8 @@ type Identity struct {
 type Time struct {
 	CreatedAt time.Time `db:"created_at,omitempty" json:"created_at"`
 }
+
+type HashHead struct {
+	Time
+	Hash Hash `db:"hash" json:"hash" description:"image hash"`
+}

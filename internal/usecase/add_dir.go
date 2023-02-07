@@ -90,7 +90,7 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 	})
 
 	u.SetDescription("Add a directory of photos to an album (non-recursive).")
-	u.SetTags("Photos")
+	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

@@ -3,7 +3,6 @@ package storage
 import (
 	"database/sql"
 	"errors"
-
 	"github.com/swaggest/usecase/status"
 	"modernc.org/sqlite"
 )

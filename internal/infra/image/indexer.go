@@ -47,7 +47,7 @@ func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
 	}
 }
 
-func (i *Indexer) Index(ctx context.Context, img photo.Image) (err error) {
+func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
 	ctx = ctxd.AddFields(ctx, "img", img)
 
 	if img.Width == 0 {
@@ -70,7 +70,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image) (err error) {
 		}
 	}
 
-	if err := i.ensureExif(ctx, img); err != nil {
+	if err := i.ensureExif(ctx, img, flags); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure exif", "error", err)
 	}
 
@@ -89,11 +89,18 @@ func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureExif(ctx context.Context, img photo.Image) error {
+func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.IndexingFlags) error {
+	exifExists, gpsExists := false, false
+
 	if _, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err == nil {
+		exifExists = true
 		if _, err := i.deps.PhotoGpsFinder().FindByHash(ctx, img.Hash); err == nil {
-			return nil
+			gpsExists = true
 		}
+	}
+
+	if exifExists && gpsExists && !flags.RebuildExif && !flags.RebuildGps {
+		return nil
 	}
 
 	f, err := os.Open(img.Path)

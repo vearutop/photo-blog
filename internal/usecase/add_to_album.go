@@ -10,16 +10,21 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
-type removeFromAlbumDeps interface {
+type addToAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
 	PhotoAlbumFinder() photo.AlbumFinder
-	PhotoAlbumDeleter() photo.AlbumDeleter
+	PhotoImageFinder() photo.ImageFinder
+	PhotoAlbumAdder() photo.AlbumAdder
+}
+type albumImageInput struct {
+	Name string     `path:"name"`
+	Hash photo.Hash `path:"hash"`
 }
 
-// RemoveFromAlbum creates use case interactor to delete a photo from album.
-func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
+// AddToAlbum creates use case interactor to add a photo to album.
+func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in albumImageInput, out *struct{}) error {
 		deps.StatsTracker().Add(ctx, "remove_from_album", 1)
 		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.Name, "hash", in.Hash)
@@ -29,18 +34,12 @@ func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
 		}
 
-		for _, img := range images {
-			if img.Hash == in.Hash {
-				return deps.PhotoAlbumDeleter().DeleteImages(ctx, album.ID, img.ID)
-			}
-		}
-
-		return nil
+		return deps.PhotoAlbumAdder().AddImages(ctx, album.ID, image.ID)
 	})
 
 	u.SetTags("Album")

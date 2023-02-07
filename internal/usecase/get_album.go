@@ -86,7 +86,7 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		return nil
 	})
 
-	u.SetTags("Photos")
+	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

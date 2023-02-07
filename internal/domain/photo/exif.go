@@ -14,8 +14,7 @@ type ExifFinder interface {
 }
 
 type Exif struct {
-	Time
-	Hash Hash `db:"hash" json:"hash" description:"image hash"`
+	HashHead
 
 	Rating          int        `db:"rating" json:"rating"`
 	ExposureTime    string     `db:"exposure_time" json:"exposure_time"`

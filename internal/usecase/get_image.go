@@ -68,6 +68,7 @@ func GetImage(deps getImageDeps) usecase.Interactor {
 
 		return nil
 	})
+	u.SetTags("Image")
 
 	return u
 }

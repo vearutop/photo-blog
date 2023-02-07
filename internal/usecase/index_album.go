@@ -22,13 +22,14 @@ type indexAlbumDeps interface {
 
 // IndexAlbum creates use case interactor to index album.
 func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
-	type getAlbumInput struct {
+	type indexAlbumInput struct {
 		Name string `path:"name"`
+		photo.IndexingFlags
 	}
 
 	var inProgress int64
 
-	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *struct{}) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in indexAlbumInput, out *struct{}) error {
 		deps.StatsTracker().Add(ctx, "index_album", 1)
 		deps.CtxdLogger().Info(ctx, "indexing album", "name", in.Name)
 
@@ -48,7 +49,7 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		go func() {
 			ctx := detachedContext{parent: ctx}
 			for _, img := range images {
-				if err := deps.PhotoImageIndexer().Index(ctx, img); err != nil {
+				if err := deps.PhotoImageIndexer().Index(ctx, img, in.IndexingFlags); err != nil {
 					deps.CtxdLogger().Error(ctx, "failed to index image", "error", err)
 				}
 				deps.StatsTracker().Set(ctx, "indexing_images_pending",
@@ -59,7 +60,7 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		return nil
 	})
 
-	u.SetTags("Photos")
+	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

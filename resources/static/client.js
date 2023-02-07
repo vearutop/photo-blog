@@ -328,12 +328,12 @@
 
     /**
      * Index Album
-     * @param {GetIndexNameRequest} req - request parameters.
+     * @param {PostIndexNameRequest} req - request parameters.
      * @param {RawCallback} onAccepted
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.getIndexName = function (req, onAccepted, onBadRequest, onInternalServerError) {
+    Backend.prototype.postIndexName = function (req, onAccepted, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -365,12 +365,19 @@
         '?';
         url = url.slice(0, -1);
 
-        x.open("GET", url, true);
+        x.open("POST", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
+        var formData = new FormData();
+        if (typeof req.rebuildExif !== 'undefined') {
+            formData.append('rebuild_exif', req.rebuildExif);
+        }
+        if (typeof req.rebuildGps !== 'undefined') {
+            formData.append('rebuild_gps', req.rebuildGps);
+        }
 
-        x.send();
+        x.send(formData);
     };
 
     /**

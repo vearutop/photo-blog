@@ -68,7 +68,7 @@ func ShowAlbum(deps getAlbumDeps) usecase.Interactor {
 		return out.Render(tmpl)
 	})
 
-	u.SetTags("Photos")
+	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

@@ -82,6 +82,7 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 
 		return nil
 	})
+	u.SetTags("Album")
 
 	return u
 }

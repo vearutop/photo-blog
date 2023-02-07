@@ -5,7 +5,7 @@ import (
 )
 
 type ImageIndexer interface {
-	Index(ctx context.Context, image Image) error
+	Index(ctx context.Context, image Image, flags IndexingFlags) error
 }
 
 type ImageEnsurer interface {
@@ -18,6 +18,11 @@ type ImageUpdater interface {
 
 type ImageFinder interface {
 	FindByHash(ctx context.Context, hash Hash) (Image, error)
+}
+
+type IndexingFlags struct {
+	RebuildExif bool `formData:"rebuild_exif"`
+	RebuildGps  bool `formData:"rebuild_gps"`
 }
 
 type Image struct {

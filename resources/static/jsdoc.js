@@ -164,9 +164,11 @@
  */
 
 /**
- * @typedef GetIndexNameRequest
+ * @typedef PostIndexNameRequest
  * @type {Object}
  * @property {String} name
+ * @property {Boolean} rebuildExif
+ * @property {Boolean} rebuildGps
  */
 
 /**

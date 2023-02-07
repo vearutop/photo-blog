@@ -45,6 +45,7 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 
 		return nil
 	})
+	u.SetTags("Image")
 
 	return u
 }
