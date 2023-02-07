@@ -47,9 +47,7 @@ type hashedRepo[V any, T interface {
 }
 
 func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash photo.Hash) (V, error) {
-	var r T = ir.R
-
-	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(r.HashPtr()): hash})
+	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(T(ir.R).HashPtr()): hash})
 	return augmentResErr(ir.Get(ctx, q))
 }
 
