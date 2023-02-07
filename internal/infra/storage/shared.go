@@ -1,9 +1,16 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"time"
+
+	"github.com/Masterminds/squirrel"
+	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"modernc.org/sqlite"
 )
 
@@ -29,4 +36,43 @@ func augmentErr(err error) error {
 
 func augmentResErr[V any](res V, err error) (V, error) {
 	return res, augmentErr(err)
+}
+
+type hashedRepo[V any, T interface {
+	*V
+	HashPtr() *photo.Hash
+	SetCreatedAt(t time.Time)
+}] struct {
+	sqluct.StorageOf[V]
+}
+
+func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash photo.Hash) (V, error) {
+	var r T = ir.R
+
+	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(r.HashPtr()): hash})
+	return augmentResErr(ir.Get(ctx, q))
+}
+
+func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) error {
+	v := T(&value)
+	h := *v.HashPtr()
+
+	if h == 0 {
+		return ErrMissingHash
+	}
+
+	if _, err := ir.FindByHash(ctx, h); err == nil {
+		// Update.
+		if _, err := ir.UpdateStmt(value).Where(squirrel.Eq{ir.Ref(T(ir.R).HashPtr()): h}).ExecContext(ctx); err != nil {
+			return ctxd.WrapError(ctx, augmentErr(err), "update")
+		}
+	} else {
+		// Insert.
+		v.SetCreatedAt(time.Now())
+		if _, err := ir.InsertRow(ctx, value, sqluct.InsertIgnore); err != nil {
+			return ctxd.WrapError(ctx, augmentErr(err), "insert")
+		}
+	}
+
+	return nil
 }

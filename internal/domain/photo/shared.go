@@ -16,3 +16,11 @@ type HashHead struct {
 	Time
 	Hash Hash `db:"hash" json:"hash" description:"image hash"`
 }
+
+func (h *HashHead) HashPtr() *Hash {
+	return &h.Hash
+}
+
+func (h *HashHead) SetCreatedAt(t time.Time) {
+	h.CreatedAt = t
+}
