@@ -16,4 +16,5 @@ type Config struct {
 	Database      database.Config `split_words:"true"`
 	Jaeger        jaeger.Config   `split_words:"true"`
 	AdminPassHash string          `split_words:"true"`
+	AdminPassSalt string          `split_words:"true"`
 }

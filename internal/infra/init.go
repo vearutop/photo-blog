@@ -28,6 +28,8 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 		}
 	}()
 
+	println(cfg.AdminPassHash, cfg.AdminPassSalt)
+
 	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
 	if err != nil {
 		return nil, err

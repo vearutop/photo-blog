@@ -16,14 +16,14 @@ func Hash(in HashInput) string {
 	return base64.RawStdEncoding.EncodeToString(key)
 }
 
-type salt string
+type Salt string
 
 type HashInput struct {
 	Pass string `formData:"pass" format:"password"`
-	Salt salt   `formData:"salt"`
+	Salt Salt   `formData:"salt"`
 }
 
-func (m salt) PrepareJSONSchema(schema *jsonschema.Schema) error {
+func (m Salt) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	n, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt))
 	if err != nil {
 		return err

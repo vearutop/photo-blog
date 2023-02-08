@@ -2,6 +2,7 @@
 package nethttp
 
 import (
+	"github.com/swaggest/openapi-go/openapi3"
 	"net/http"
 
 	"github.com/bool64/brick"
@@ -14,6 +15,16 @@ import (
 // NewRouter creates an instance of router filled with handlers and docs.
 func NewRouter(deps *service.Locator) http.Handler {
 	r := brick.NewBaseWebService(deps.BaseLocator)
+
+	r.Group()
+
+	adminAuth := basicAuth("Admin Access", map[string]string{"admin": "admin"})
+	r.Use(nethttp.AnnotateOpenAPI(r.OpenAPICollector, func(op *openapi3.Operation) error {
+		op.Tags = []string{"Admin Mode"}
+
+		return nil
+	}))
+	r.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(r.OpenAPICollector, "Admin", "Admin access"))
 
 	r.Post("/album", usecase.CreateAlbum(deps))
 

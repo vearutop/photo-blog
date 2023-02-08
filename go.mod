@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/Masterminds/squirrel v1.5.3
-	github.com/bool64/brick v0.1.16-0.20230207181707-683504b84fb7
+	github.com/bool64/brick v0.2.0
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.24
 	github.com/bool64/httptestbench v0.1.4
