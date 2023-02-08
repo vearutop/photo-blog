@@ -21,6 +21,6 @@ func main() {
 			log.Fatalf("failed to init service: %v", err)
 		}
 
-		return sl.BaseLocator, nethttp.NewRouter(sl)
+		return sl.BaseLocator, nethttp.NewRouter(sl, cfg)
 	})
 }

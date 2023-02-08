@@ -12,11 +12,13 @@ require (
 	github.com/bool64/stats v0.2.2
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/dsoprea/go-exif/v3 v3.0.0-20221012082141-d21ac8e2de85
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.1
 	github.com/swaggest/assertjson v1.7.0
 	github.com/swaggest/jsonschema-go v0.3.47
+	github.com/swaggest/openapi-go v0.2.28
 	github.com/swaggest/rest v0.2.40-0.20230129235331-5e7a3777a745
 	github.com/swaggest/swgui v1.6.0
 	github.com/swaggest/usecase v1.2.1
@@ -49,7 +51,6 @@ require (
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
@@ -90,7 +91,6 @@ require (
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/swaggest/form/v5 v5.0.2 // indirect
-	github.com/swaggest/openapi-go v0.2.28 // indirect
 	github.com/swaggest/refl v1.1.0 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

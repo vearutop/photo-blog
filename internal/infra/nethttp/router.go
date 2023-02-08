@@ -2,7 +2,10 @@
 package nethttp
 
 import (
+	"github.com/go-chi/chi/v5"
 	"github.com/swaggest/openapi-go/openapi3"
+	"github.com/swaggest/rest/chirouter"
+	"github.com/swaggest/rest/web"
 	"net/http"
 
 	"github.com/bool64/brick"
@@ -13,41 +16,62 @@ import (
 )
 
 // NewRouter creates an instance of router filled with handlers and docs.
-func NewRouter(deps *service.Locator) http.Handler {
-	r := brick.NewBaseWebService(deps.BaseLocator)
+func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
+	s := brick.NewBaseWebService(deps.BaseLocator)
 
-	r.Group()
+	s.Group(func(r chi.Router) {
+		s := fork(s, r)
 
-	adminAuth := basicAuth("Admin Access", map[string]string{"admin": "admin"})
-	r.Use(nethttp.AnnotateOpenAPI(r.OpenAPICollector, func(op *openapi3.Operation) error {
-		op.Tags = []string{"Admin Mode"}
+		if cfg.AdminPassHash != "" {
+			adminAuth := basicAuth("Admin Access", cfg.AdminPassHash, cfg.AdminPassSalt)
+			s.Use(nethttp.AnnotateOpenAPI(s.OpenAPICollector, func(op *openapi3.Operation) error {
+				op.Tags = append(op.Tags, "Admin Mode")
 
-		return nil
-	}))
-	r.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(r.OpenAPICollector, "Admin", "Admin access"))
+				return nil
+			}))
+			s.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(s.OpenAPICollector, "Admin", "Admin access"))
+		}
 
-	r.Post("/album", usecase.CreateAlbum(deps))
+		s.Post("/album", usecase.CreateAlbum(deps))
+		s.Post("/directory", usecase.AddDirectory(deps))
+		s.Get("/albums.json", usecase.GetAlbums(deps))
+		s.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 
-	r.Post("/directory", usecase.AddDirectory(deps))
-	r.Get("/album/{name}.json", usecase.GetAlbum(deps))
-	r.Get("/albums.json", usecase.GetAlbums(deps))
-	r.Get("/image/{hash}.json", usecase.GetImage(deps))
-	r.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
-	r.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
-	r.Post("/album/{name}/{hash}", usecase.AddToAlbum(deps))
-	r.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
+		s.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
+		s.Post("/album/{name}/{hash}", usecase.AddToAlbum(deps))
+	})
 
-	r.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
-	r.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
+	s.Get("/album/{name}.json", usecase.GetAlbum(deps))
+	s.Get("/image/{hash}.json", usecase.GetImage(deps))
+	s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
-	r.Method(http.MethodGet, "/", ui.Static)
+	s.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
+	s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 
-	r.Get("/{name}/", usecase.ShowAlbum(deps))
-	r.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
+	s.Method(http.MethodGet, "/", ui.Static)
 
-	r.Post("/make-pass-hash", usecase.MakePassHash())
+	s.Get("/{name}/", usecase.ShowAlbum(deps))
+	s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 
-	r.Mount("/static/", http.StripPrefix("/static", ui.Static))
+	s.Post("/make-pass-hash", usecase.MakePassHash())
 
-	return r
+	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
+
+	return s
+}
+
+func fork(s *web.Service, r chi.Router) *web.Service {
+	f := *s
+
+	if w, ok := r.(*chirouter.Wrapper); ok {
+		f.Wrapper = w
+
+		return &f
+	}
+
+	w := *f.Wrapper
+	w.Router = r
+	f.Wrapper = &w
+
+	return &f
 }
