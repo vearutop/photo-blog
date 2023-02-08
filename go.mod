@@ -124,3 +124,5 @@ require (
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
+
+replace github.com/bool64/sqluct => /home/vearutop/gohack/github.com/bool64/sqluct

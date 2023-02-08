@@ -7,7 +7,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -74,7 +73,7 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, image photo.Image, siz
 
 func (tr *ThumbRepository) Find(ctx context.Context, imageID int, width, height uint) (photo.Thumb, error) {
 	q := tr.SelectStmt().
-		Where(squirrel.Eq{tr.Ref(&tr.R.ImageID): imageID})
+		Where(tr.Eq(&tr.R.ImageID, imageID))
 
 	if width > 0 {
 		q = q.Where(tr.Fmt("%s = %d", &tr.R.Width, width))

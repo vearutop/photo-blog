@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -69,23 +68,27 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	}
 }
 
+func (ar *AlbumRepository) Update(ctx context.Context, id int, data photo.AlbumData) error {
+	return augmentReturnErr(ar.s.UpdateStmt(data).Where(ar.s.Eq(&ar.s.R.ID, id)).ExecContext(ctx))
+}
+
 func (ar *AlbumRepository) FindAll(ctx context.Context) ([]photo.Album, error) {
 	return augmentResErr(ar.s.List(ctx, ar.s.SelectStmt()))
 }
 
 func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
 	q := ar.s.SelectStmt().
-		Where(squirrel.Eq{ar.s.Ref(&ar.s.R.Name): name}).
+		Where(ar.s.Eq(&ar.s.R.Name, name)).
 		Limit(1)
 
 	return augmentResErr(ar.s.Get(ctx, q))
 }
 
 func (ar *AlbumRepository) DeleteImages(ctx context.Context, albumID int, imageIDs ...int) error {
-	_, err := ar.sai.DeleteStmt().Where(squirrel.Eq{
-		ar.sai.Ref(&ar.sai.R.AlbumID): albumID,
-		ar.sai.Ref(&ar.sai.R.ImageID): imageIDs,
-	}).ExecContext(ctx)
+	_, err := ar.sai.DeleteStmt().
+		Where(ar.sai.Eq(&ar.sai.R.AlbumID, albumID)).
+		Where(ar.sai.Eq(&ar.sai.R.ImageID, imageIDs)).
+		ExecContext(ctx)
 
 	return augmentErr(err)
 }
@@ -109,6 +112,10 @@ func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs 
 }
 
 func (ar *AlbumRepository) PhotoAlbumAdder() photo.AlbumAdder {
+	return ar
+}
+
+func (ar *AlbumRepository) PhotoAlbumUpdater() photo.AlbumUpdater {
 	return ar
 }
 

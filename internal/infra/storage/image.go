@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -29,7 +28,7 @@ type ImageRepository struct {
 }
 
 func (ir *ImageRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Image, error) {
-	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(&ir.R.Hash): hash})
+	q := ir.SelectStmt().Where(ir.Eq(&ir.R.Hash, hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
 
@@ -42,7 +41,7 @@ func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (p
 	r.ImageData = value
 	r.CreatedAt = time.Now()
 
-	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(&ir.R.Hash): r.Hash})
+	q := ir.SelectStmt().Where(ir.Eq(&ir.R.Hash, r.Hash))
 	if i, err := ir.Get(ctx, q); err == nil {
 		return i, nil
 	}
@@ -61,7 +60,7 @@ func (ir *ImageRepository) Update(ctx context.Context, value photo.ImageData) er
 		return ErrMissingHash
 	}
 
-	q := ir.UpdateStmt(value).Where(squirrel.Eq{ir.Ref(&ir.R.Hash): value.Hash})
+	q := ir.UpdateStmt(value).Where(ir.Eq(&ir.R.Hash, value.Hash))
 	_, err := q.ExecContext(ctx)
 
 	return augmentErr(err)

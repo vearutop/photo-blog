@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/usecase/status"
@@ -34,6 +33,10 @@ func augmentErr(err error) error {
 	return err
 }
 
+func augmentReturnErr[V any](_ V, err error) error {
+	return augmentErr(err)
+}
+
 func augmentResErr[V any](res V, err error) (V, error) {
 	return res, augmentErr(err)
 }
@@ -47,7 +50,7 @@ type hashedRepo[V any, T interface {
 }
 
 func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash photo.Hash) (V, error) {
-	q := ir.SelectStmt().Where(squirrel.Eq{ir.Ref(T(ir.R).HashPtr()): hash})
+	q := ir.SelectStmt().Where(ir.Eq(T(ir.R).HashPtr(), hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
 
@@ -61,7 +64,7 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) error {
 
 	if _, err := ir.FindByHash(ctx, h); err == nil {
 		// Update.
-		if _, err := ir.UpdateStmt(value).Where(squirrel.Eq{ir.Ref(T(ir.R).HashPtr()): h}).ExecContext(ctx); err != nil {
+		if _, err := ir.UpdateStmt(value).Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx); err != nil {
 			return ctxd.WrapError(ctx, augmentErr(err), "update")
 		}
 	} else {

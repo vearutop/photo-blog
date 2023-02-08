@@ -2,8 +2,9 @@ package nethttp
 
 import (
 	"fmt"
-	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"net/http"
+
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 )
 
 // basicAuth implements a simple middleware handler for adding basic http auth to a route.

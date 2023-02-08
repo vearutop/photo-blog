@@ -8,6 +8,10 @@ type PhotoAlbumAdderProvider interface {
 	PhotoAlbumAdder() photo.AlbumAdder
 }
 
+type PhotoAlbumUpdaterProvider interface {
+	PhotoAlbumUpdater() photo.AlbumUpdater
+}
+
 type PhotoAlbumFinderProvider interface {
 	PhotoAlbumFinder() photo.AlbumFinder
 }

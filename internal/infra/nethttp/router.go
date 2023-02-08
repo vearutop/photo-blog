@@ -2,14 +2,14 @@
 package nethttp
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/swaggest/openapi-go/openapi3"
-	"github.com/swaggest/rest/chirouter"
-	"github.com/swaggest/rest/web"
 	"net/http"
 
 	"github.com/bool64/brick"
+	"github.com/go-chi/chi/v5"
+	"github.com/swaggest/openapi-go/openapi3"
+	"github.com/swaggest/rest/chirouter"
 	"github.com/swaggest/rest/nethttp"
+	"github.com/swaggest/rest/web"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/usecase"
@@ -33,6 +33,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		}
 
 		s.Post("/album", usecase.CreateAlbum(deps))
+		s.Put("/album/{id}", usecase.UpdateAlbum(deps))
 		s.Post("/directory", usecase.AddDirectory(deps))
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
