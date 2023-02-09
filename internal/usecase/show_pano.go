@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"html/template"
 	"io"
 
@@ -39,8 +40,8 @@ type showPanoDeps interface {
 // ShowPano creates use case interactor to show pano.
 func ShowPano(deps showPanoDeps) usecase.Interactor {
 	type getPanoInput struct {
-		Name string     `path:"name"`
-		Hash photo.Hash `path:"hash"`
+		Name string    `path:"name"`
+		Hash uniq.Hash `path:"hash"`
 	}
 
 	tpl, err := static.Assets.ReadFile("pano.html")

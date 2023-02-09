@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"net/http"
 
 	"github.com/swaggest/usecase"
@@ -14,7 +15,7 @@ type showImageDeps interface {
 }
 
 type showImageInput struct {
-	Hash photo.Hash `path:"hash"`
+	Hash uniq.Hash `path:"hash"`
 	req  *http.Request
 }
 

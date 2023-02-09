@@ -34,6 +34,14 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 
 		s.Post("/album", usecase.CreateAlbum(deps))
 		s.Put("/album/{id}", usecase.UpdateAlbum(deps))
+		s.Put("/album/{id}/desc", usecase.UpdateAlbumDesc(deps),
+			nethttp.AnnotateOperation(func(op *openapi3.Operation) error {
+				mt := openapi3.MediaType{}
+				mt.SchemaEns().SchemaEns().WithType(openapi3.SchemaTypeString)
+				op.RequestBodyEns().RequestBodyEns().WithContentItem("text/plain", mt)
+
+				return nil
+			}))
 		s.Post("/directory", usecase.AddDirectory(deps))
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))

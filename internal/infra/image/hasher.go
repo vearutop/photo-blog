@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"io"
 	"os"
 
@@ -54,7 +55,7 @@ func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Image
 		return photo.Image{}, err
 	}
 
-	value.Hash = photo.Hash(x.Sum64())
+	value.Hash = uniq.Hash(x.Sum64())
 
 	closed = true
 	if err = f.Close(); err != nil {

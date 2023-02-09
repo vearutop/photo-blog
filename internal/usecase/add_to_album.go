@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -19,8 +20,8 @@ type addToAlbumDeps interface {
 	PhotoAlbumAdder() photo.AlbumAdder
 }
 type albumImageInput struct {
-	Name string     `path:"name"`
-	Hash photo.Hash `path:"hash"`
+	Name string    `path:"name"`
+	Hash uniq.Hash `path:"hash"`
 }
 
 // AddToAlbum creates use case interactor to add a photo to album.

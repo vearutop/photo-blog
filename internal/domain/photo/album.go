@@ -1,6 +1,9 @@
 package photo
 
-import "context"
+import (
+	"context"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+)
 
 type AlbumAdder interface {
 	Add(ctx context.Context, data AlbumData) (Album, error)
@@ -24,12 +27,13 @@ type AlbumFinder interface {
 // Album describes database mapping.
 type Album struct {
 	Identity
-	Time
+	uniq.Head
 	AlbumData
 }
 
 type AlbumData struct {
-	Title  string `db:"title" formData:"title" json:"title"`
-	Name   string `db:"name" formData:"name" json:"name"`
-	Public bool   `db:"public" formData:"public" json:"public"`
+	Title      string    `db:"title" formData:"title" json:"title"`
+	Name       string    `db:"name" formData:"name" json:"name" description:"Name value is immutable, it can be deleted with whole record."`
+	Public     bool      `db:"public" formData:"public" json:"public"`
+	CoverImage uniq.Hash `db:"cover_image" formData:"cover_image" json:"cover_image"`
 }

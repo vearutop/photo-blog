@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"net/http"
 
 	"github.com/swaggest/usecase"
@@ -16,7 +17,7 @@ type showThumbDeps interface {
 
 type showThumbInput struct {
 	Size photo.ThumbSize `path:"size"`
-	Hash photo.Hash      `path:"hash"`
+	Hash uniq.Hash       `path:"hash"`
 	req  *http.Request
 }
 

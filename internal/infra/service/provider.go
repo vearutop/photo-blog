@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type PhotoAlbumAdderProvider interface {
@@ -21,15 +22,15 @@ type PhotoAlbumDeleterProvider interface {
 }
 
 type PhotoImageEnsurerProvider interface {
-	PhotoImageEnsurer() photo.ImageEnsurer
+	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
 }
 
 type PhotoImageUpdaterProvider interface {
-	PhotoImageUpdater() photo.ImageUpdater
+	PhotoImageUpdater() uniq.Updater[photo.Image]
 }
 
 type PhotoImageFinderProvider interface {
-	PhotoImageFinder() photo.ImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 }
 
 type PhotoImageIndexerProvider interface {

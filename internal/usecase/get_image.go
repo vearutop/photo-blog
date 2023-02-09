@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"os"
 
 	"github.com/swaggest/usecase"
@@ -19,8 +20,8 @@ type getImageDeps interface {
 
 func GetImage(deps getImageDeps) usecase.Interactor {
 	type getImageInput struct {
-		Hash     photo.Hash `path:"hash"`
-		ReadMeta bool       `query:"read_meta" description:"Read meta from original file."`
+		Hash     uniq.Hash `path:"hash"`
+		ReadMeta bool      `query:"read_meta" description:"Read meta from original file."`
 	}
 	type imageInfo struct {
 		Image photo.Image `json:"image"`

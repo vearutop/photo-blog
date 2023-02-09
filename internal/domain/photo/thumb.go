@@ -3,6 +3,7 @@ package photo
 import (
 	"context"
 	"fmt"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"io"
 	"strconv"
 	"strings"
@@ -24,7 +25,7 @@ type ThumbAdder interface {
 
 type Thumb struct {
 	Identity
-	Time
+	uniq.Head
 	ThumbValue
 }
 

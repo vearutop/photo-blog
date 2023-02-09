@@ -1,13 +1,13 @@
-package photo_test
+package uniq_test
 
 import (
 	"encoding/json"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"math"
 	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
 func TestHash_MarshalJSON(t *testing.T) {
@@ -21,7 +21,7 @@ func TestHash_MarshalJSON(t *testing.T) {
 		-1281587067978813000,
 	} {
 		t.Run(strconv.Itoa(int(i)), func(t *testing.T) {
-			h := photo.Hash(i)
+			h := uniq.Hash(i)
 
 			s := h.String()
 			j, err := json.Marshal(s)
@@ -30,7 +30,7 @@ func TestHash_MarshalJSON(t *testing.T) {
 			tt, err := h.MarshalText()
 			assert.NoError(t, err)
 
-			h2 := photo.Hash(0)
+			h2 := uniq.Hash(0)
 			assert.NoError(t, h2.UnmarshalText([]byte(s)))
 			assert.Equal(t, h, h2)
 
