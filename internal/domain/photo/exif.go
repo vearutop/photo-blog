@@ -3,6 +3,8 @@ package photo
 import (
 	"context"
 	"time"
+
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type ExifEnsurer interface {
@@ -10,11 +12,11 @@ type ExifEnsurer interface {
 }
 
 type ExifFinder interface {
-	FindByHash(ctx context.Context, hash Hash) (Exif, error)
+	FindByHash(ctx context.Context, hash uniq.Hash) (Exif, error)
 }
 
 type Exif struct {
-	HashHead
+	uniq.Head
 
 	Rating          int        `db:"rating" json:"rating"`
 	ExposureTime    string     `db:"exposure_time" json:"exposure_time"`

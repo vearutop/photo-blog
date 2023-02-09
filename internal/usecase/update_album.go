@@ -25,7 +25,7 @@ func UpdateAlbum(deps updateAlbumDeps) usecase.Interactor {
 
 	u := usecase.NewInteractor(func(ctx context.Context, in updateAlbumInput, out *struct{}) error {
 		deps.StatsTracker().Add(ctx, "update_album", 1)
-		deps.CtxdLogger().Important(ctx, "creating album", "name", in.Name)
+		deps.CtxdLogger().Important(ctx, "updating album", "id", in.ID)
 
 		return deps.PhotoAlbumUpdater().Update(ctx, in.ID, in.AlbumData)
 	})

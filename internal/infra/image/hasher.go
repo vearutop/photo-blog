@@ -8,6 +8,7 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/cespare/xxhash/v2"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 func NewHasher(upstream photo.ImageEnsurer, log ctxd.Logger) *Hasher {
@@ -54,7 +55,7 @@ func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Image
 		return photo.Image{}, err
 	}
 
-	value.Hash = photo.Hash(x.Sum64())
+	value.Hash = uniq.Hash(x.Sum64())
 
 	closed = true
 	if err = f.Close(); err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/resources/static"
 )
 
@@ -39,8 +40,8 @@ type showPanoDeps interface {
 // ShowPano creates use case interactor to show pano.
 func ShowPano(deps showPanoDeps) usecase.Interactor {
 	type getPanoInput struct {
-		Name string     `path:"name"`
-		Hash photo.Hash `path:"hash"`
+		Name string    `path:"name"`
+		Hash uniq.Hash `path:"hash"`
 	}
 
 	tpl, err := static.Assets.ReadFile("pano.html")

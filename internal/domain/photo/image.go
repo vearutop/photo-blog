@@ -2,6 +2,8 @@ package photo
 
 import (
 	"context"
+
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type ImageIndexer interface {
@@ -17,7 +19,7 @@ type ImageUpdater interface {
 }
 
 type ImageFinder interface {
-	FindByHash(ctx context.Context, hash Hash) (Image, error)
+	FindByHash(ctx context.Context, hash uniq.Hash) (Image, error)
 }
 
 type IndexingFlags struct {
@@ -27,14 +29,14 @@ type IndexingFlags struct {
 
 type Image struct {
 	Identity
-	Time
+	uniq.Time
 	ImageData
 }
 
 type ImageData struct {
-	Hash   Hash   `db:"hash"`
-	Size   int64  `db:"size"`
-	Path   string `db:"path"`
-	Width  int64  `db:"width"`
-	Height int64  `db:"height"`
+	Hash   uniq.Hash `db:"hash"`
+	Size   int64     `db:"size"`
+	Path   string    `db:"path"`
+	Width  int64     `db:"width"`
+	Height int64     `db:"height"`
 }

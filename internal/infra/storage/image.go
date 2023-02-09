@@ -7,13 +7,12 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 const (
 	// ImagesTable is the name of the table.
 	ImagesTable = "images"
-
-	ErrMissingHash = ctxd.SentinelError("missing image hash")
 )
 
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
@@ -27,7 +26,7 @@ type ImageRepository struct {
 	sqluct.StorageOf[photo.Image]
 }
 
-func (ir *ImageRepository) FindByHash(ctx context.Context, hash photo.Hash) (photo.Image, error) {
+func (ir *ImageRepository) FindByHash(ctx context.Context, hash uniq.Hash) (photo.Image, error) {
 	q := ir.SelectStmt().Where(ir.Eq(&ir.R.Hash, hash))
 	return augmentResErr(ir.Get(ctx, q))
 }

@@ -1,6 +1,10 @@
 package photo
 
-import "context"
+import (
+	"context"
+
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+)
 
 type AlbumAdder interface {
 	Add(ctx context.Context, data AlbumData) (Album, error)
@@ -24,7 +28,7 @@ type AlbumFinder interface {
 // Album describes database mapping.
 type Album struct {
 	Identity
-	Time
+	uniq.Time
 	AlbumData
 }
 

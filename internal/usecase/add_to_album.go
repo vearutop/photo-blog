@@ -8,6 +8,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type addToAlbumDeps interface {
@@ -19,8 +20,8 @@ type addToAlbumDeps interface {
 	PhotoAlbumAdder() photo.AlbumAdder
 }
 type albumImageInput struct {
-	Name string     `path:"name"`
-	Hash photo.Hash `path:"hash"`
+	Name string    `path:"name"`
+	Hash uniq.Hash `path:"hash"`
 }
 
 // AddToAlbum creates use case interactor to add a photo to album.

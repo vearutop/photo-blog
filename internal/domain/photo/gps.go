@@ -3,6 +3,8 @@ package photo
 import (
 	"context"
 	"time"
+
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type GpsEnsurer interface {
@@ -10,11 +12,11 @@ type GpsEnsurer interface {
 }
 
 type GpsFinder interface {
-	FindByHash(ctx context.Context, hash Hash) (Gps, error)
+	FindByHash(ctx context.Context, hash uniq.Hash) (Gps, error)
 }
 
 type Gps struct {
-	HashHead
+	uniq.Head
 
 	Altitude  float64   `db:"altitude" json:"altitude"`
 	Longitude float64   `db:"longitude" json:"longitude"`

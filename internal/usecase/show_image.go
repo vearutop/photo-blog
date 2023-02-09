@@ -7,6 +7,7 @@ import (
 
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type showImageDeps interface {
@@ -14,7 +15,7 @@ type showImageDeps interface {
 }
 
 type showImageInput struct {
-	Hash photo.Hash `path:"hash"`
+	Hash uniq.Hash `path:"hash"`
 	req  *http.Request
 }
 

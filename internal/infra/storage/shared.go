@@ -9,9 +9,11 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/usecase/status"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"modernc.org/sqlite"
 )
+
+const ErrMissingHash = ctxd.SentinelError("missing hash")
 
 func augmentErr(err error) error {
 	if err == nil {
@@ -43,13 +45,13 @@ func augmentResErr[V any](res V, err error) (V, error) {
 
 type hashedRepo[V any, T interface {
 	*V
-	HashPtr() *photo.Hash
+	HashPtr() *uniq.Hash
 	SetCreatedAt(t time.Time)
 }] struct {
 	sqluct.StorageOf[V]
 }
 
-func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash photo.Hash) (V, error) {
+func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, error) {
 	q := ir.SelectStmt().Where(ir.Eq(T(ir.R).HashPtr(), hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
@@ -70,10 +72,38 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) error {
 	} else {
 		// Insert.
 		v.SetCreatedAt(time.Now())
-		if _, err := ir.InsertRow(ctx, value, sqluct.InsertIgnore); err != nil {
+		if _, err := ir.InsertRow(ctx, value); err != nil {
 			return ctxd.WrapError(ctx, augmentErr(err), "insert")
 		}
 	}
 
 	return nil
+}
+
+func (ir *hashedRepo[V, T]) Add(ctx context.Context, value V) error {
+	v := T(&value)
+	h := *v.HashPtr()
+
+	if h == 0 {
+		return ErrMissingHash
+	}
+
+	v.SetCreatedAt(time.Now())
+
+	return augmentReturnErr(ir.InsertRow(ctx, value))
+}
+
+func (ir *hashedRepo[V, T]) Update(ctx context.Context, value V) error {
+	v := T(&value)
+	h := *v.HashPtr()
+
+	if h == 0 {
+		return ErrMissingHash
+	}
+
+	return augmentReturnErr(ir.UpdateStmt(value).Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx))
+}
+
+func (ir *hashedRepo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
+	return augmentReturnErr(ir.DeleteStmt().Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx))
 }

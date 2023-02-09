@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/swaggest/jsonschema-go"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type Thumbnailer interface {
@@ -24,7 +25,7 @@ type ThumbAdder interface {
 
 type Thumb struct {
 	Identity
-	Time
+	uniq.Time
 	ThumbValue
 }
 
