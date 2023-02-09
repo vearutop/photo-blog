@@ -3,12 +3,11 @@ module github.com/vearutop/photo-blog
 go 1.19
 
 require (
-	github.com/Masterminds/squirrel v1.5.3
 	github.com/bool64/brick v0.2.0
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.24
+	github.com/bool64/dev v0.2.25
 	github.com/bool64/httptestbench v0.1.4
-	github.com/bool64/sqluct v0.1.13-0.20230205194732-aed15bab56d2
+	github.com/bool64/sqluct v0.1.13-0.20230209002932-7f4782003959
 	github.com/bool64/stats v0.2.2
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/dsoprea/go-exif/v3 v3.0.0-20221012082141-d21ac8e2de85
@@ -19,13 +18,13 @@ require (
 	github.com/swaggest/assertjson v1.7.0
 	github.com/swaggest/jsonschema-go v0.3.47
 	github.com/swaggest/openapi-go v0.2.28
-	github.com/swaggest/rest v0.2.40-0.20230129235331-5e7a3777a745
+	github.com/swaggest/rest v0.2.41
 	github.com/swaggest/swgui v1.6.0
 	github.com/swaggest/usecase v1.2.1
 	github.com/valyala/fasthttp v1.44.0
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
-	golang.org/x/crypto v0.5.0
+	golang.org/x/crypto v0.6.0
 	modernc.org/sqlite v1.20.3
 )
 
@@ -33,6 +32,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
+	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bool64/cache v0.4.4 // indirect
@@ -103,10 +103,10 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/net v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
 	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
@@ -124,5 +124,3 @@ require (
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
-
-replace github.com/bool64/sqluct => /home/vearutop/gohack/github.com/bool64/sqluct
