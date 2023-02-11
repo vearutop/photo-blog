@@ -17,4 +17,5 @@ type Config struct {
 	Jaeger        jaeger.Config   `split_words:"true"`
 	AdminPassHash string          `split_words:"true"`
 	AdminPassSalt string          `split_words:"true"`
+	PhotosStorage string          `split_words:"true" default:"./photo-blog-data/"`
 }

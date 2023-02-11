@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync/atomic"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -20,6 +21,7 @@ type addDirectoryDeps interface {
 	PhotoAlbumFinder() photo.AlbumFinder
 	PhotoImageEnsurer() photo.ImageEnsurer
 	PhotoAlbumAdder() photo.AlbumAdder
+	PhotoImageIndexer() photo.ImageIndexer
 }
 
 // AddDirectory creates use case interactor to add directory of photos.
@@ -37,6 +39,11 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "add_dir", 1)
 		deps.CtxdLogger().Important(ctx, "adding directory", "path", in.Path)
 
+		a, err := deps.PhotoAlbumFinder().FindByName(ctx, in.AlbumName)
+		if err != nil {
+			return ctxd.WrapError(ctx, err, "find album", "name", in.AlbumName)
+		}
+
 		dir, err := os.Open(in.Path)
 		if err != nil {
 			return nil
@@ -51,11 +58,6 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 
 		out.Names = names
 
-		a, err := deps.PhotoAlbumFinder().FindByName(ctx, in.AlbumName)
-		if err != nil {
-			return ctxd.WrapError(ctx, err, "find album", "name", in.AlbumName)
-		}
-
 		var (
 			imgIDs []int
 			errs   []string
@@ -67,8 +69,20 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 				if img, err := deps.PhotoImageEnsurer().Ensure(ctx, d); err != nil {
 					errs = append(errs, name+": "+err.Error())
 				} else {
+					go func() {
+						deps.StatsTracker().Set(ctx, "indexing_images_pending",
+							float64(atomic.AddInt64(&indexInProgress, 1)))
+						ctx := detachedContext{parent: ctx}
+						if err := deps.PhotoImageIndexer().Index(ctx, img, photo.IndexingFlags{}); err != nil {
+							deps.CtxdLogger().Error(ctx, "failed to index image", "error", err)
+						}
+						deps.StatsTracker().Set(ctx, "indexing_images_pending",
+							float64(atomic.AddInt64(&indexInProgress, -1)))
+					}()
+
 					imgIDs = append(imgIDs, img.ID)
 				}
+
 			}
 		}
 
