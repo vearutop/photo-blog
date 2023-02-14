@@ -33,7 +33,8 @@ type Album struct {
 }
 
 type AlbumData struct {
-	Title  string `db:"title" formData:"title" json:"title"`
-	Name   string `db:"name" formData:"name" json:"name"`
-	Public bool   `db:"public" formData:"public" json:"public"`
+	Title  string    `db:"title" formData:"title" json:"title"`
+	Hash   uniq.Hash `db:"hash" formData:"hash" json:"hash"`
+	Name   string    `db:"name" formData:"name" json:"name"`
+	Public bool      `db:"public" formData:"public" json:"public"`
 }

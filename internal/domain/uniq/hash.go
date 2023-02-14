@@ -4,11 +4,16 @@ import (
 	"strconv"
 
 	"github.com/bool64/ctxd"
+	"github.com/cespare/xxhash/v2"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/usecase/status"
 )
 
 type Hash int64
+
+func StringHash(s string) Hash {
+	return Hash(xxhash.Sum64String(s))
+}
 
 func (h Hash) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	*schema.Type = jsonschema.String.Type()

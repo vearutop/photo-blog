@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/bool64/brick/opencensus"
-	"go.opencensus.io/trace"
-
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"go.opencensus.io/trace"
 )
 
 type indexAlbumDeps interface {
@@ -20,6 +20,7 @@ type indexAlbumDeps interface {
 	CtxdLogger() ctxd.Logger
 
 	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumUpdater() photo.AlbumUpdater
 	PhotoImageIndexer() photo.ImageIndexer
 	PhotoImageFinder() photo.ImageFinder
 }
@@ -29,7 +30,7 @@ var indexInProgress int64
 // IndexAlbum creates use case interactor to index album.
 func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 	type indexAlbumInput struct {
-		Name string `path:"name"`
+		Name string `path:"name" description:"Album name, use '-' for all images and albums."`
 		photo.IndexingFlags
 	}
 
@@ -50,6 +51,21 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 				return err
 			}
 		} else {
+			albums, err := deps.PhotoAlbumFinder().FindAll(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, album := range albums {
+				if album.Hash == 0 {
+					album.Hash = uniq.StringHash(album.Name)
+
+					if err := deps.PhotoAlbumUpdater().Update(ctx, album.ID, album.AlbumData); err != nil {
+						return err
+					}
+				}
+			}
+
 			images, err = deps.PhotoImageFinder().FindAll(ctx)
 			if err != nil {
 				return err
