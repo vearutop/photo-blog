@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 
@@ -12,7 +13,10 @@ import (
 )
 
 func main() {
-	var cfg service.Config
+	var (
+		cfg     service.Config
+		migrate = flag.Bool("migrate", false, "Run migrations and exit.")
+	)
 
 	brick.Start(&cfg, func(docsMode bool) (*brick.BaseLocator, http.Handler) {
 		// Initialize application resources.
@@ -22,5 +26,9 @@ func main() {
 		}
 
 		return sl.BaseLocator, nethttp.NewRouter(sl, cfg)
+	}, func(o *brick.StartOptions) {
+		if migrate != nil && *migrate {
+			o.NoHTTP = true
+		}
 	})
 }

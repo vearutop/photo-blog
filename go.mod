@@ -3,7 +3,7 @@ module github.com/vearutop/photo-blog
 go 1.19
 
 require (
-	github.com/bool64/brick v0.2.0
+	github.com/bool64/brick v0.2.1-0.20230214002146-8dc75e7f6361
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.25
 	github.com/bool64/httptestbench v0.1.4
@@ -109,8 +109,8 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
-	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
-	google.golang.org/grpc v1.52.3 // indirect
+	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
+	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

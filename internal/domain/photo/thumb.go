@@ -1,6 +1,7 @@
 package photo
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -12,21 +13,18 @@ import (
 )
 
 type Thumbnailer interface {
-	Thumbnail(ctx context.Context, image Image, size ThumbSize) (io.ReadSeeker, error)
-}
-
-type ThumbFinder interface {
-	Find(ctx context.Context, imageID int, width, height uint) (Thumb, error)
-}
-
-type ThumbAdder interface {
-	Add(ctx context.Context, value ThumbValue) (Thumb, error)
+	Thumbnail(ctx context.Context, image Image, size ThumbSize) (Thumb, error)
 }
 
 type Thumb struct {
-	Identity
-	uniq.Time
-	ThumbValue
+	uniq.Head
+	Width  uint   `db:"width"`
+	Height uint   `db:"height"`
+	Data   []byte `db:"data"`
+}
+
+func (t Thumb) ReadSeeker() io.ReadSeeker {
+	return bytes.NewReader(t.Data)
 }
 
 type ThumbSize string
@@ -67,10 +65,3 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 }
 
 var ThumbSizes = []ThumbSize{"200h", "400h", "600w", "2400w", "300w", "1200w"}
-
-type ThumbValue struct {
-	ImageID int    `db:"image_id"`
-	Width   uint   `db:"width"`
-	Height  uint   `db:"height"`
-	Data    []byte `db:"data"`
-}

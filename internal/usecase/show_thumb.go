@@ -37,12 +37,13 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 			return err
 		}
 
-		cont, err := deps.PhotoThumbnailer().Thumbnail(ctx, image, in.Size)
+		dctx := detachedContext{parent: ctx}
+		cont, err := deps.PhotoThumbnailer().Thumbnail(dctx, image, in.Size)
 		if err != nil {
 			return err
 		}
 
-		http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont)
+		http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont.ReadSeeker())
 
 		return nil
 	})

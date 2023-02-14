@@ -31,7 +31,7 @@ type Time struct {
 
 type Head struct {
 	Time
-	Hash Hash `db:"uniq" json:"uniq" description:"Unique value uniq."`
+	Hash Hash `db:"hash" json:"hash" description:"Unique hash value."`
 }
 
 func (h *Head) HashPtr() *Hash {

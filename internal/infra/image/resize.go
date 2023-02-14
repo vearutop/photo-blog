@@ -27,7 +27,7 @@ type Thumbnailer struct {
 	lastImage image.Image
 }
 
-func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (res io.ReadSeeker, err error) {
+func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (th photo.Thumb, err error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -45,7 +45,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	buf := bytes.NewBuffer(nil)
 	w, h, err := size.WidthHeight()
 	if err != nil {
-		return nil, err
+		return th, err
 	}
 
 	var img image.Image
@@ -58,7 +58,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 
 		img, err = r.loadJPEG(ctx, i.Path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load JPEG: %w", err)
+			return th, fmt.Errorf("failed to load JPEG: %w", err)
 		}
 
 		t.lastPath = i.Path
@@ -75,11 +75,18 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 		}()
 	}
 
-	if err := r.resizeJPEG(ctx, img, buf, w, h); err != nil {
-		return nil, fmt.Errorf("failed to resize: %w", err)
+	w, h, err = r.resizeJPEG(ctx, img, buf, w, h)
+	if err != nil {
+		return th, fmt.Errorf("failed to resize: %w", err)
 	}
 
-	return bytes.NewReader(buf.Bytes()), nil
+	//return bytes.NewReader(buf.Bytes()), nil
+	th.Width = w
+	th.Height = h
+	th.Hash = i.Hash
+	th.Data = buf.Bytes()
+
+	return th, nil
 }
 
 func (t *Thumbnailer) PhotoThumbnailer() photo.Thumbnailer {
@@ -106,7 +113,7 @@ func (r *Resizer) loadJPEG(ctx context.Context, fn string) (img image.Image, err
 	return jpeg.Decode(f)
 }
 
-func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (err error) {
+func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (w, h uint, err error) {
 	ctx, finish := opencensus.AddSpan(ctx)
 	defer finish(&err)
 
@@ -117,6 +124,8 @@ func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer
 	o := jpeg.Options{}
 	o.Quality = r.Quality
 
+	w, h = uint(m.Bounds().Dx()), uint(m.Bounds().Dy())
+
 	// write new image to file
-	return jpeg.Encode(dst, m, &o)
+	return w, h, jpeg.Encode(dst, m, &o)
 }

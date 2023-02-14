@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/fs"
 	"net/http"
+	"time"
 
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
@@ -27,8 +28,6 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 			l.CtxdLogger().Error(context.Background(), err.Error())
 		}
 	}()
-
-	println(cfg.AdminPassHash, cfg.AdminPassSalt)
 
 	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
 	if err != nil {
@@ -98,10 +97,13 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 		migrations = sqlite.Migrations
 	}
 
+	l.CtxdLogger().Info(context.Background(), "setting up storage")
+	start := time.Now()
 	l.Storage, err = database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), migrations)
 	if err != nil {
 		return err
 	}
+	l.CtxdLogger().Info(context.Background(), "storage setup complete", "elapsed", time.Since(start).String())
 
 	return nil
 }
