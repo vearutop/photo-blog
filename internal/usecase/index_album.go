@@ -38,7 +38,7 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "index_album", 1)
 		deps.CtxdLogger().Info(ctx, "indexing album", "name", in.Name)
 
-		var images []photo.Image
+		var images []photo.Images
 
 		if in.Name != "-" {
 			album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)

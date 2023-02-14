@@ -47,7 +47,7 @@ func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
 	}
 }
 
-func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
+func (i *Indexer) Index(ctx context.Context, img photo.Images, flags photo.IndexingFlags) (err error) {
 	ctx = ctxd.AddFields(ctx, "img", img)
 
 	if img.Width == 0 {
@@ -79,7 +79,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	return nil
 }
 
-func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
+func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Images) {
 	for _, size := range photo.ThumbSizes {
 		_, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
 		if err != nil {
@@ -89,7 +89,7 @@ func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.IndexingFlags) error {
+func (i *Indexer) ensureExif(ctx context.Context, img photo.Images, flags photo.IndexingFlags) error {
 	exifExists, gpsExists := false, false
 
 	if _, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err == nil {

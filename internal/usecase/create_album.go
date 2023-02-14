@@ -18,7 +18,7 @@ type createAlbumDeps interface {
 
 // CreateAlbum creates use case interactor to add directory of photos.
 func CreateAlbum(deps createAlbumDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in photo.AlbumData, out *photo.Album) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in photo.AlbumData, out *photo.Albums) error {
 		deps.StatsTracker().Add(ctx, "create_album", 1)
 		deps.CtxdLogger().Important(ctx, "creating album", "name", in.Name)
 

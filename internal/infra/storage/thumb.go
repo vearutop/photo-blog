@@ -30,7 +30,7 @@ type ThumbRepository struct {
 	hashedRepo[photo.Thumb, *photo.Thumb]
 }
 
-func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
+func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Images, size photo.ThumbSize) (photo.Thumb, error) {
 	th := photo.Thumb{}
 
 	w, h, err := size.WidthHeight()

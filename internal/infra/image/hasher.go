@@ -27,14 +27,14 @@ func (h *Hasher) PhotoImageEnsurer() photo.ImageEnsurer {
 	return h
 }
 
-func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Image, error) {
+func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Images, error) {
 	if value.Hash != 0 {
 		return h.upstream.Ensure(ctx, value)
 	}
 
 	f, err := os.Open(value.Path)
 	if err != nil {
-		return photo.Image{}, ctxd.WrapError(ctx, err, "failed to open image",
+		return photo.Images{}, ctxd.WrapError(ctx, err, "failed to open image",
 			"path", value.Path)
 	}
 	closed := false
@@ -52,14 +52,14 @@ func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Image
 
 	value.Size, err = io.Copy(x, f)
 	if err != nil {
-		return photo.Image{}, err
+		return photo.Images{}, err
 	}
 
 	value.Hash = uniq.Hash(x.Sum64())
 
 	closed = true
 	if err = f.Close(); err != nil {
-		return photo.Image{}, err
+		return photo.Images{}, err
 	}
 
 	return h.upstream.Ensure(ctx, value)

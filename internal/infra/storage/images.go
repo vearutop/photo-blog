@@ -15,32 +15,32 @@ const (
 	ImagesTable = "images"
 )
 
-func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
-	return &ImageRepository{
-		StorageOf: sqluct.Table[photo.Image](storage, ImagesTable),
+func NewImagesRepository(storage *sqluct.Storage) *ImagesRepository {
+	return &ImagesRepository{
+		StorageOf: sqluct.Table[photo.Images](storage, ImagesTable),
 	}
 }
 
-// ImageRepository saves images to database.
-type ImageRepository struct {
-	sqluct.StorageOf[photo.Image]
+// ImagesRepository saves images to database.
+type ImagesRepository struct {
+	sqluct.StorageOf[photo.Images]
 }
 
-func (ir *ImageRepository) FindByHash(ctx context.Context, hash uniq.Hash) (photo.Image, error) {
+func (ir *ImagesRepository) FindByHash(ctx context.Context, hash uniq.Hash) (photo.Images, error) {
 	q := ir.SelectStmt().Where(ir.Eq(&ir.R.Hash, hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
 
-func (ir *ImageRepository) FindAll(ctx context.Context) ([]photo.Image, error) {
+func (ir *ImagesRepository) FindAll(ctx context.Context) ([]photo.Images, error) {
 	return augmentResErr(ir.List(ctx, ir.SelectStmt()))
 }
 
-func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (photo.Image, error) {
+func (ir *ImagesRepository) Ensure(ctx context.Context, value photo.ImageData) (photo.Images, error) {
 	if value.Hash == 0 {
-		return photo.Image{}, ErrMissingHash
+		return photo.Images{}, ErrMissingHash
 	}
 
-	r := photo.Image{}
+	r := photo.Images{}
 	r.ImageData = value
 	r.CreatedAt = time.Now()
 
@@ -58,7 +58,7 @@ func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (p
 	return r, nil
 }
 
-func (ir *ImageRepository) Update(ctx context.Context, value photo.ImageData) error {
+func (ir *ImagesRepository) Update(ctx context.Context, value photo.ImageData) error {
 	if value.Hash == 0 {
 		return ErrMissingHash
 	}
@@ -69,14 +69,14 @@ func (ir *ImageRepository) Update(ctx context.Context, value photo.ImageData) er
 	return augmentErr(err)
 }
 
-func (ir *ImageRepository) PhotoImageEnsurer() photo.ImageEnsurer {
+func (ir *ImagesRepository) PhotoImageEnsurer() photo.ImageEnsurer {
 	return ir
 }
 
-func (ir *ImageRepository) PhotoImageUpdater() photo.ImageUpdater {
+func (ir *ImagesRepository) PhotoImageUpdater() photo.ImageUpdater {
 	return ir
 }
 
-func (ir *ImageRepository) PhotoImageFinder() photo.ImageFinder {
+func (ir *ImagesRepository) PhotoImageFinder() photo.ImageFinder {
 	return ir
 }

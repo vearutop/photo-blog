@@ -65,7 +65,7 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	l.PhotoAlbumFinderProvider = albumRepo
 	l.PhotoAlbumDeleterProvider = albumRepo
 
-	imageRepo := storage.NewImageRepository(l.Storage)
+	imageRepo := storage.NewImagesRepository(l.Storage)
 	l.PhotoImageEnsurerProvider = image.NewHasher(imageRepo, l.CtxdLogger())
 	l.PhotoImageUpdaterProvider = imageRepo
 	l.PhotoImageFinderProvider = imageRepo

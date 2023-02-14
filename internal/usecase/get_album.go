@@ -36,8 +36,8 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 	}
 
 	type getAlbumOutput struct {
-		Album  photo.Album `json:"album"`
-		Images []image     `json:"images,omitempty"`
+		Album  photo.Albums `json:"album"`
+		Images []image      `json:"images,omitempty"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *getAlbumOutput) error {

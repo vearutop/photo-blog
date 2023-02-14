@@ -7,11 +7,11 @@ import (
 )
 
 type ImageIndexer interface {
-	Index(ctx context.Context, image Image, flags IndexingFlags) error
+	Index(ctx context.Context, image Images, flags IndexingFlags) error
 }
 
 type ImageEnsurer interface {
-	Ensure(ctx context.Context, value ImageData) (Image, error)
+	Ensure(ctx context.Context, value ImageData) (Images, error)
 }
 
 type ImageUpdater interface {
@@ -19,8 +19,8 @@ type ImageUpdater interface {
 }
 
 type ImageFinder interface {
-	FindByHash(ctx context.Context, hash uniq.Hash) (Image, error)
-	FindAll(ctx context.Context) ([]Image, error)
+	FindByHash(ctx context.Context, hash uniq.Hash) (Images, error)
+	FindAll(ctx context.Context) ([]Images, error)
 }
 
 type IndexingFlags struct {
@@ -28,7 +28,7 @@ type IndexingFlags struct {
 	RebuildGps  bool `formData:"rebuild_gps"`
 }
 
-type Image struct {
+type Images struct {
 	Identity
 	uniq.Time
 	ImageData

@@ -26,9 +26,9 @@ type AlbumImages struct {
 func NewAlbumsRepository(storage *sqluct.Storage) *AlbumsRepository {
 	ar := &AlbumsRepository{}
 	ar.st = storage
-	ar.s = sqluct.Table[photo.Album](storage, AlbumsTable)
+	ar.s = sqluct.Table[photo.Albums](storage, AlbumsTable)
 	ar.sai = sqluct.Table[AlbumImages](storage, AlbumImagesTable)
-	ar.si = sqluct.Table[photo.Image](storage, ImagesTable)
+	ar.si = sqluct.Table[photo.Images](storage, ImagesTable)
 
 	// Adding AlbumImagesTable to ImagesTable referencer.
 	ar.si.Referencer.AddTableAlias(ar.sai.R, AlbumImagesTable)
@@ -39,12 +39,12 @@ func NewAlbumsRepository(storage *sqluct.Storage) *AlbumsRepository {
 // AlbumsRepository saves albums to database.
 type AlbumsRepository struct {
 	st  *sqluct.Storage
-	s   sqluct.StorageOf[photo.Album]
+	s   sqluct.StorageOf[photo.Albums]
 	sai sqluct.StorageOf[AlbumImages]
-	si  sqluct.StorageOf[photo.Image]
+	si  sqluct.StorageOf[photo.Images]
 }
 
-func (ar *AlbumsRepository) FindImages(ctx context.Context, albumID int) ([]photo.Image, error) {
+func (ar *AlbumsRepository) FindImages(ctx context.Context, albumID int) ([]photo.Images, error) {
 	q := ar.si.SelectStmt().
 		InnerJoin(
 			ar.si.Fmt("%s ON %s = %s AND %s = ?",
@@ -55,8 +55,8 @@ func (ar *AlbumsRepository) FindImages(ctx context.Context, albumID int) ([]phot
 	return augmentResErr(ar.si.List(ctx, q))
 }
 
-func (ar *AlbumsRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
-	r := photo.Album{}
+func (ar *AlbumsRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Albums, error) {
+	r := photo.Albums{}
 	r.AlbumData = data
 	r.CreatedAt = time.Now()
 
@@ -72,11 +72,11 @@ func (ar *AlbumsRepository) Update(ctx context.Context, id int, data photo.Album
 	return augmentReturnErr(ar.s.UpdateStmt(data).Where(ar.s.Eq(&ar.s.R.ID, id)).ExecContext(ctx))
 }
 
-func (ar *AlbumsRepository) FindAll(ctx context.Context) ([]photo.Album, error) {
+func (ar *AlbumsRepository) FindAll(ctx context.Context) ([]photo.Albums, error) {
 	return augmentResErr(ar.s.List(ctx, ar.s.SelectStmt()))
 }
 
-func (ar *AlbumsRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
+func (ar *AlbumsRepository) FindByName(ctx context.Context, name string) (photo.Albums, error) {
 	q := ar.s.SelectStmt().
 		Where(ar.s.Eq(&ar.s.R.Name, name)).
 		Limit(1)
