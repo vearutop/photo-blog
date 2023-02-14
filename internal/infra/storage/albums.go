@@ -17,17 +17,17 @@ const (
 	AlbumImagesTable = "album_images"
 )
 
-// AlbumImage describes database mapping.
-type AlbumImage struct {
+// AlbumImages describes database mapping.
+type AlbumImages struct {
 	AlbumID int `db:"album_id"`
 	ImageID int `db:"image_id"`
 }
 
-func NewAlbumRepository(storage *sqluct.Storage) *AlbumRepository {
-	ar := &AlbumRepository{}
+func NewAlbumsRepository(storage *sqluct.Storage) *AlbumsRepository {
+	ar := &AlbumsRepository{}
 	ar.st = storage
 	ar.s = sqluct.Table[photo.Album](storage, AlbumsTable)
-	ar.sai = sqluct.Table[AlbumImage](storage, AlbumImagesTable)
+	ar.sai = sqluct.Table[AlbumImages](storage, AlbumImagesTable)
 	ar.si = sqluct.Table[photo.Image](storage, ImagesTable)
 
 	// Adding AlbumImagesTable to ImagesTable referencer.
@@ -36,15 +36,15 @@ func NewAlbumRepository(storage *sqluct.Storage) *AlbumRepository {
 	return ar
 }
 
-// AlbumRepository saves albums to database.
-type AlbumRepository struct {
+// AlbumsRepository saves albums to database.
+type AlbumsRepository struct {
 	st  *sqluct.Storage
 	s   sqluct.StorageOf[photo.Album]
-	sai sqluct.StorageOf[AlbumImage]
+	sai sqluct.StorageOf[AlbumImages]
 	si  sqluct.StorageOf[photo.Image]
 }
 
-func (ar *AlbumRepository) FindImages(ctx context.Context, albumID int) ([]photo.Image, error) {
+func (ar *AlbumsRepository) FindImages(ctx context.Context, albumID int) ([]photo.Image, error) {
 	q := ar.si.SelectStmt().
 		InnerJoin(
 			ar.si.Fmt("%s ON %s = %s AND %s = ?",
@@ -55,7 +55,7 @@ func (ar *AlbumRepository) FindImages(ctx context.Context, albumID int) ([]photo
 	return augmentResErr(ar.si.List(ctx, q))
 }
 
-func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
+func (ar *AlbumsRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
 	r := photo.Album{}
 	r.AlbumData = data
 	r.CreatedAt = time.Now()
@@ -68,15 +68,15 @@ func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo
 	}
 }
 
-func (ar *AlbumRepository) Update(ctx context.Context, id int, data photo.AlbumData) error {
+func (ar *AlbumsRepository) Update(ctx context.Context, id int, data photo.AlbumData) error {
 	return augmentReturnErr(ar.s.UpdateStmt(data).Where(ar.s.Eq(&ar.s.R.ID, id)).ExecContext(ctx))
 }
 
-func (ar *AlbumRepository) FindAll(ctx context.Context) ([]photo.Album, error) {
+func (ar *AlbumsRepository) FindAll(ctx context.Context) ([]photo.Album, error) {
 	return augmentResErr(ar.s.List(ctx, ar.s.SelectStmt()))
 }
 
-func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
+func (ar *AlbumsRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
 	q := ar.s.SelectStmt().
 		Where(ar.s.Eq(&ar.s.R.Name, name)).
 		Limit(1)
@@ -84,7 +84,7 @@ func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.A
 	return augmentResErr(ar.s.Get(ctx, q))
 }
 
-func (ar *AlbumRepository) DeleteImages(ctx context.Context, albumID int, imageIDs ...int) error {
+func (ar *AlbumsRepository) DeleteImages(ctx context.Context, albumID int, imageIDs ...int) error {
 	_, err := ar.sai.DeleteStmt().
 		Where(ar.sai.Eq(&ar.sai.R.AlbumID, albumID)).
 		Where(ar.sai.Eq(&ar.sai.R.ImageID, imageIDs)).
@@ -93,11 +93,11 @@ func (ar *AlbumRepository) DeleteImages(ctx context.Context, albumID int, imageI
 	return augmentErr(err)
 }
 
-func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
-	rows := make([]AlbumImage, 0, len(imageIDs))
+func (ar *AlbumsRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
+	rows := make([]AlbumImages, 0, len(imageIDs))
 
 	for _, imageID := range imageIDs {
-		ai := AlbumImage{}
+		ai := AlbumImages{}
 		ai.ImageID = imageID
 		ai.AlbumID = albumID
 
@@ -111,18 +111,18 @@ func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs 
 	return nil
 }
 
-func (ar *AlbumRepository) PhotoAlbumAdder() photo.AlbumAdder {
+func (ar *AlbumsRepository) PhotoAlbumAdder() photo.AlbumAdder {
 	return ar
 }
 
-func (ar *AlbumRepository) PhotoAlbumUpdater() photo.AlbumUpdater {
+func (ar *AlbumsRepository) PhotoAlbumUpdater() photo.AlbumUpdater {
 	return ar
 }
 
-func (ar *AlbumRepository) PhotoAlbumFinder() photo.AlbumFinder {
+func (ar *AlbumsRepository) PhotoAlbumFinder() photo.AlbumFinder {
 	return ar
 }
 
-func (ar *AlbumRepository) PhotoAlbumDeleter() photo.AlbumDeleter {
+func (ar *AlbumsRepository) PhotoAlbumDeleter() photo.AlbumDeleter {
 	return ar
 }
