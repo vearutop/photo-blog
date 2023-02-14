@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/bool64/ctxd"
 	"net/http"
 
 	"github.com/swaggest/usecase"
@@ -40,7 +41,7 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 		dctx := detachedContext{parent: ctx}
 		cont, err := deps.PhotoThumbnailer().Thumbnail(dctx, image, in.Size)
 		if err != nil {
-			return err
+			return ctxd.WrapError(ctx, err, "getting thumbnail")
 		}
 
 		http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont.ReadSeeker())
