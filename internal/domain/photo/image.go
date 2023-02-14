@@ -20,6 +20,7 @@ type ImageUpdater interface {
 
 type ImageFinder interface {
 	FindByHash(ctx context.Context, hash uniq.Hash) (Image, error)
+	FindAll(ctx context.Context) ([]Image, error)
 }
 
 type IndexingFlags struct {

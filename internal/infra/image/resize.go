@@ -12,24 +12,42 @@ import (
 	"time"
 
 	"github.com/bool64/brick/opencensus"
+	"github.com/bool64/ctxd"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"go.opencensus.io/trace"
 )
 
-func NewThumbnailer() *Thumbnailer {
-	return &Thumbnailer{}
+func NewThumbnailer(logger ctxd.Logger) *Thumbnailer {
+	return &Thumbnailer{logger: logger}
 }
 
 type Thumbnailer struct {
-	mu        sync.Mutex
-	lastPath  string
-	lastImage image.Image
+	mu     sync.Mutex
+	logger ctxd.Logger
+}
+
+type thumbCtxKey struct{}
+
+func LargerThumbToContext(ctx context.Context, th photo.Thumb) context.Context {
+	return context.WithValue(ctx, thumbCtxKey{}, &th)
+}
+
+func largerThumbFromContext(ctx context.Context) *photo.Thumb {
+	if th, ok := ctx.Value(thumbCtxKey{}).(*photo.Thumb); ok {
+		return th
+	}
+
+	return nil
 }
 
 func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (th photo.Thumb, err error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+
+	start := time.Now()
+	ctx = ctxd.AddFields(ctx, "img", i.Path, "size", size)
+	t.logger.Info(ctx, "starting thumb")
 
 	ctx, finish := opencensus.AddSpan(ctx,
 		trace.StringAttribute("path", i.Path),
@@ -48,31 +66,9 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 		return th, err
 	}
 
-	var img image.Image
-
-	if t.lastPath == i.Path {
-		img = t.lastImage
-	} else {
-		t.lastImage = nil
-		t.lastPath = ""
-
-		img, err = r.loadJPEG(ctx, i.Path)
-		if err != nil {
-			return th, fmt.Errorf("failed to load JPEG: %w", err)
-		}
-
-		t.lastPath = i.Path
-		t.lastImage = img
-
-		go func() {
-			time.Sleep(20 * time.Second)
-			t.mu.Lock()
-			defer t.mu.Unlock()
-			if t.lastPath == i.Path {
-				t.lastImage = nil
-				t.lastPath = ""
-			}
-		}()
+	img, err := t.loadImage(ctx, i, w, h)
+	if err != nil {
+		return th, err
 	}
 
 	w, h, err = r.resizeJPEG(ctx, img, buf, w, h)
@@ -80,13 +76,35 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 		return th, fmt.Errorf("failed to resize: %w", err)
 	}
 
-	//return bytes.NewReader(buf.Bytes()), nil
 	th.Width = w
 	th.Height = h
 	th.Hash = i.Hash
 	th.Data = buf.Bytes()
 
+	t.logger.Info(ctx, "thumb done", "elapsed", time.Since(start).String())
+
 	return th, nil
+}
+
+func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
+	lt := largerThumbFromContext(ctx)
+	if lt != nil && (lt.Width > w || lt.Height > h) {
+		img, err := jpeg.Decode(lt.ReadSeeker())
+		if err != nil {
+			return nil, fmt.Errorf("decoding larger thumb: %w", err)
+		}
+
+		return img, nil
+	}
+
+	time.Sleep(time.Second) // To reduce CPU load.
+
+	img, err := loadJPEG(ctx, i.Path)
+	if err != nil {
+		return img, fmt.Errorf("failed to load JPEG: %w", err)
+	}
+
+	return img, nil
 }
 
 func (t *Thumbnailer) PhotoThumbnailer() photo.Thumbnailer {
@@ -98,7 +116,7 @@ type Resizer struct {
 	Interp  resize.InterpolationFunction
 }
 
-func (r *Resizer) loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
+func loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
 	ctx, finish := opencensus.AddSpan(ctx)
 	defer finish(&err)
 

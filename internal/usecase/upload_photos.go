@@ -2,8 +2,9 @@ package usecase
 
 import (
 	"context"
-	"github.com/swaggest/usecase"
 	"mime/multipart"
+
+	"github.com/swaggest/usecase"
 )
 
 func UploadPhotos() usecase.Interactor {

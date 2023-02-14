@@ -5,6 +5,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bool64/brick/opencensus"
+	"go.opencensus.io/trace"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
@@ -18,6 +21,7 @@ type indexAlbumDeps interface {
 
 	PhotoAlbumFinder() photo.AlbumFinder
 	PhotoImageIndexer() photo.ImageIndexer
+	PhotoImageFinder() photo.ImageFinder
 }
 
 var indexInProgress int64
@@ -29,18 +33,27 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		photo.IndexingFlags
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in indexAlbumInput, out *struct{}) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in indexAlbumInput, out *struct{}) (err error) {
 		deps.StatsTracker().Add(ctx, "index_album", 1)
 		deps.CtxdLogger().Info(ctx, "indexing album", "name", in.Name)
 
-		album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
-		if err != nil {
-			return err
-		}
+		var images []photo.Image
 
-		images, err := deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
-		if err != nil {
-			return err
+		if in.Name != "-" {
+			album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+			if err != nil {
+				return err
+			}
+
+			images, err = deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+			if err != nil {
+				return err
+			}
+		} else {
+			images, err = deps.PhotoImageFinder().FindAll(ctx)
+			if err != nil {
+				return err
+			}
 		}
 
 		deps.StatsTracker().Set(ctx, "indexing_images_pending",
@@ -49,11 +62,13 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		go func() {
 			ctx := detachedContext{parent: ctx}
 			for _, img := range images {
+				ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))
 				if err := deps.PhotoImageIndexer().Index(ctx, img, in.IndexingFlags); err != nil {
 					deps.CtxdLogger().Error(ctx, "failed to index image", "error", err)
 				}
 				deps.StatsTracker().Set(ctx, "indexing_images_pending",
 					float64(atomic.AddInt64(&indexInProgress, -1)))
+				done(&err)
 			}
 		}()
 

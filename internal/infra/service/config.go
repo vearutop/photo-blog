@@ -18,4 +18,5 @@ type Config struct {
 	AdminPassHash string          `split_words:"true"`
 	AdminPassSalt string          `split_words:"true"`
 	PhotosStorage string          `split_words:"true" default:"./photo-blog-data/"`
+	ThumbStorage  string          `split_words:"true" default:"./photo-blog-thumb.sqlite"`
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
+	"github.com/bool64/sqluct"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
 	"github.com/vearutop/photo-blog/internal/infra/image"
@@ -16,6 +17,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
+	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 
@@ -66,8 +68,13 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	imageRepo := storage.NewImageRepository(l.Storage)
 	l.PhotoImageEnsurerProvider = image.NewHasher(imageRepo, l.CtxdLogger())
 	l.PhotoImageUpdaterProvider = imageRepo
-	l.PhotoThumbnailerProvider = storage.NewThumbRepository(l.Storage, image.NewThumbnailer())
 	l.PhotoImageFinderProvider = imageRepo
+
+	thumbStorage, err := setupThumbStorage(l, cfg.ThumbStorage)
+	if err != nil {
+		return nil, err
+	}
+	l.PhotoThumbnailerProvider = storage.NewThumbRepository(thumbStorage, image.NewThumbnailer(l.CtxdLogger()))
 
 	exifRepo := storage.NewExifRepository(l.Storage)
 	l.PhotoExifFinderProvider = exifRepo
@@ -80,6 +87,24 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
 	return l, nil
+}
+
+func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, error) {
+	cfg := database.Config{}
+	cfg.DriverName = "sqlite"
+	cfg.MaxOpen = 1
+	cfg.DSN = filepath
+	cfg.ApplyMigrations = true
+
+	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
+	start := time.Now()
+	st, err := database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), sqlite_thumbs.Migrations)
+	if err != nil {
+		return nil, err
+	}
+	l.CtxdLogger().Info(context.Background(), "thumb storage setup complete", "elapsed", time.Since(start).String())
+
+	return st, nil
 }
 
 func setupStorage(l *service.Locator, cfg database.Config) error {

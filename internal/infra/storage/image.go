@@ -31,6 +31,10 @@ func (ir *ImageRepository) FindByHash(ctx context.Context, hash uniq.Hash) (phot
 	return augmentResErr(ir.Get(ctx, q))
 }
 
+func (ir *ImageRepository) FindAll(ctx context.Context) ([]photo.Image, error) {
+	return augmentResErr(ir.List(ctx, ir.SelectStmt()))
+}
+
 func (ir *ImageRepository) Ensure(ctx context.Context, value photo.ImageData) (photo.Image, error) {
 	if value.Hash == 0 {
 		return photo.Image{}, ErrMissingHash

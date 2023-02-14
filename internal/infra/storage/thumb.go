@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	image "github.com/vearutop/photo-blog/internal/infra/image"
 )
 
 const (
@@ -28,7 +30,7 @@ type ThumbRepository struct {
 	hashedRepo[photo.Thumb, *photo.Thumb]
 }
 
-func (tr *ThumbRepository) Thumbnail(ctx context.Context, image photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
+func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
 	th := photo.Thumb{}
 
 	w, h, err := size.WidthHeight()
@@ -36,12 +38,16 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, image photo.Image, siz
 		return th, err
 	}
 
-	th, err = tr.Find(ctx, image.Hash, w, h)
+	th, err = tr.Find(ctx, img.Hash, w, h)
 	if err == nil {
 		return th, nil
 	}
 
-	th, err = tr.upstream.Thumbnail(ctx, image, size)
+	if lt, err := tr.FindLarger(ctx, img.Hash, w, h); err == nil {
+		ctx = image.LargerThumbToContext(ctx, lt)
+	}
+
+	th, err = tr.upstream.Thumbnail(ctx, img, size)
 	if err != nil {
 		return th, err
 	}
@@ -51,6 +57,27 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, image photo.Image, siz
 	}
 
 	return th, nil
+}
+
+func (tr *ThumbRepository) FindLarger(ctx context.Context, imageHash uniq.Hash, width, height uint) (photo.Thumb, error) {
+	q := tr.SelectStmt().
+		Where(tr.Eq(&tr.R.Hash, imageHash))
+
+	if width > 0 {
+		q = q.Where(tr.Fmt("%s >= %d", &tr.R.Width, width))
+	}
+
+	if height > 0 {
+		q = q.Where(tr.Fmt("%s >= %d", &tr.R.Height, height))
+	}
+
+	row, err := tr.Get(ctx, q)
+	if err != nil {
+		return photo.Thumb{}, fmt.Errorf("find thumb by image %q and size %dx%d: %w",
+			imageHash, width, height, augmentErr(err))
+	}
+
+	return row, nil
 }
 
 func (tr *ThumbRepository) Find(ctx context.Context, imageHash uniq.Hash, width, height uint) (photo.Thumb, error) {

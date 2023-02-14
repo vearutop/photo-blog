@@ -64,4 +64,4 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 	return 0, 0, fmt.Errorf("unexpected size: %s", t)
 }
 
-var ThumbSizes = []ThumbSize{"200h", "400h", "600w", "2400w", "300w", "1200w"}
+var ThumbSizes = []ThumbSize{"2400w", "1200w", "600w", "300w", "200h", "400h"}
