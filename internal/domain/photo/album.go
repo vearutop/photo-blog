@@ -11,6 +11,14 @@ type AlbumAdder interface {
 	AddImages(ctx context.Context, albumID int, imageIDs ...int) error // TODO: migrate to image hashes.
 }
 
+type AlbumImageAdder interface {
+	AddImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error
+}
+
+type AlbumImageDeleter interface {
+	DeleteImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error
+}
+
 type AlbumUpdater interface {
 	Update(ctx context.Context, id int, data AlbumData) error
 }

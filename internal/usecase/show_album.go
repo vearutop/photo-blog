@@ -47,12 +47,12 @@ func ShowAlbum(deps getAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
 		if err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+		images, err := deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
 		if err != nil {
 			return err
 		}

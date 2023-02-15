@@ -19,7 +19,7 @@ type indexAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
 	PhotoAlbumUpdater() photo.AlbumUpdater
 	PhotoImageIndexer() photo.ImageIndexer
 	PhotoImageFinder() photo.ImageFinder
@@ -41,17 +41,17 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		var images []photo.Images
 
 		if in.Name != "-" {
-			album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+			album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
 			if err != nil {
 				return err
 			}
 
-			images, err = deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+			images, err = deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
 			if err != nil {
 				return err
 			}
 		} else {
-			albums, err := deps.PhotoAlbumFinder().FindAll(ctx)
+			albums, err := deps.PhotoAlbumFinderOld().FindAll(ctx)
 			if err != nil {
 				return err
 			}

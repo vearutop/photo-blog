@@ -2,7 +2,20 @@ package service
 
 import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
+
+type PhotoAlbumImageAdderProvider interface {
+	PhotoAlbumImageAdder() photo.AlbumImageAdder
+}
+
+type PhotoAlbumImageDeleterProvider interface {
+	PhotoAlbumImageDeleter() photo.AlbumImageDeleter
+}
+
+type PhotoAlbumEnsurerProvider interface {
+	PhotoAlbumEnsurer() uniq.Ensurer[photo.Album]
+}
 
 type PhotoAlbumAdderProvider interface {
 	PhotoAlbumAdder() photo.AlbumAdder
@@ -12,8 +25,8 @@ type PhotoAlbumUpdaterProvider interface {
 	PhotoAlbumUpdater() photo.AlbumUpdater
 }
 
-type PhotoAlbumFinderProvider interface {
-	PhotoAlbumFinder() photo.AlbumFinder
+type PhotoAlbumFinderOldProvider interface {
+	PhotoAlbumFinderOld() photo.AlbumFinder
 }
 
 type PhotoAlbumDeleterProvider interface {
@@ -41,17 +54,17 @@ type PhotoThumbnailerProvider interface {
 }
 
 type PhotoExifEnsurerProvider interface {
-	PhotoExifEnsurer() photo.ExifEnsurer
+	PhotoExifEnsurer() uniq.Ensurer[photo.Exif]
 }
 
 type PhotoExifFinderProvider interface {
-	PhotoExifFinder() photo.ExifFinder
+	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
 
 type PhotoGpsEnsurerProvider interface {
-	PhotoGpsEnsurer() photo.GpsEnsurer
+	PhotoGpsEnsurer() uniq.Ensurer[photo.Gps]
 }
 
 type PhotoGpsFinderProvider interface {
-	PhotoGpsFinder() photo.GpsFinder
+	PhotoGpsFinder() uniq.Finder[photo.Gps]
 }

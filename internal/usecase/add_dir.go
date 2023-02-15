@@ -18,7 +18,7 @@ type addDirectoryDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
 	PhotoImageEnsurer() photo.ImageEnsurer
 	PhotoAlbumAdder() photo.AlbumAdder
 	PhotoImageIndexer() photo.ImageIndexer
@@ -39,7 +39,7 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "add_dir", 1)
 		deps.CtxdLogger().Important(ctx, "adding directory", "path", in.Path)
 
-		a, err := deps.PhotoAlbumFinder().FindByName(ctx, in.AlbumName)
+		a, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.AlbumName)
 		if err != nil {
 			return ctxd.WrapError(ctx, err, "find album", "name", in.AlbumName)
 		}

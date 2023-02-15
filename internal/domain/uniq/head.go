@@ -6,7 +6,7 @@ import (
 )
 
 type Ensurer[V any] interface {
-	Ensure(ctx context.Context, value V) error
+	Ensure(ctx context.Context, value V) (V, error)
 }
 
 type Finder[V any] interface {
@@ -40,4 +40,8 @@ func (h *Head) HashPtr() *Hash {
 
 func (h *Head) SetCreatedAt(t time.Time) {
 	h.CreatedAt = t
+}
+
+func (h *Head) GetCreatedAt() time.Time {
+	return h.CreatedAt
 }

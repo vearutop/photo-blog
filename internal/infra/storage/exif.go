@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 const (
@@ -23,10 +24,10 @@ type ExifRepository struct {
 	hashedRepo[photo.Exif, *photo.Exif]
 }
 
-func (ir *ExifRepository) PhotoExifEnsurer() photo.ExifEnsurer {
+func (ir *ExifRepository) PhotoExifEnsurer() uniq.Ensurer[photo.Exif] {
 	return ir
 }
 
-func (ir *ExifRepository) PhotoExifFinder() photo.ExifFinder {
+func (ir *ExifRepository) PhotoExifFinder() uniq.Finder[photo.Exif] {
 	return ir
 }

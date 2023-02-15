@@ -7,6 +7,7 @@ import (
 
 	"github.com/bool64/ctxd"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type indexerDeps interface {
@@ -16,11 +17,11 @@ type indexerDeps interface {
 
 	PhotoImageUpdater() photo.ImageUpdater
 
-	PhotoExifEnsurer() photo.ExifEnsurer
-	PhotoExifFinder() photo.ExifFinder
+	PhotoExifEnsurer() uniq.Ensurer[photo.Exif]
+	PhotoExifFinder() uniq.Finder[photo.Exif]
 
-	PhotoGpsEnsurer() photo.GpsEnsurer
-	PhotoGpsFinder() photo.GpsFinder
+	PhotoGpsEnsurer() uniq.Ensurer[photo.Gps]
+	PhotoGpsFinder() uniq.Finder[photo.Gps]
 }
 
 func NewIndexer(deps indexerDeps) *Indexer {
@@ -115,14 +116,14 @@ func (i *Indexer) ensureExif(ctx context.Context, img photo.Images, flags photo.
 	}
 
 	m.Exif.Hash = img.Hash
-	if err := i.deps.PhotoExifEnsurer().Ensure(ctx, m.Exif); err != nil {
+	if _, err := i.deps.PhotoExifEnsurer().Ensure(ctx, m.Exif); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to store image meta",
 			"error", err.Error(), "exif", m.Exif)
 	}
 
 	if m.GpsInfo != nil {
 		m.GpsInfo.Hash = img.Hash
-		if err := i.deps.PhotoGpsEnsurer().Ensure(ctx, *m.GpsInfo); err != nil {
+		if _, err := i.deps.PhotoGpsEnsurer().Ensure(ctx, *m.GpsInfo); err != nil {
 			i.deps.CtxdLogger().Error(ctx, "failed to store image gps",
 				"error", err.Error(), "gps", m.GpsInfo)
 		}

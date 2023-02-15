@@ -13,7 +13,7 @@ import (
 type updateAlbumDescDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
 	PhotoAlbumUpdater() photo.AlbumUpdater
 }
 

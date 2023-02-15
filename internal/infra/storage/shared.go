@@ -47,6 +47,7 @@ type hashedRepo[V any, T interface {
 	*V
 	HashPtr() *uniq.Hash
 	SetCreatedAt(t time.Time)
+	GetCreatedAt() time.Time
 }] struct {
 	sqluct.StorageOf[V]
 }
@@ -56,28 +57,31 @@ func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, 
 	return augmentResErr(ir.Get(ctx, q))
 }
 
-func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) error {
+func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) (V, error) {
 	v := T(&value)
 	h := *v.HashPtr()
 
 	if h == 0 {
-		return ErrMissingHash
+		return value, ErrMissingHash
 	}
 
-	if _, err := ir.FindByHash(ctx, h); err == nil {
+	if val, err := ir.FindByHash(ctx, h); err == nil {
 		// Update.
+		vv := T(&val)
+		v.SetCreatedAt(vv.GetCreatedAt())
+
 		if _, err := ir.UpdateStmt(value).Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx); err != nil {
-			return ctxd.WrapError(ctx, augmentErr(err), "update")
+			return value, ctxd.WrapError(ctx, augmentErr(err), "update")
 		}
 	} else {
 		// Insert.
 		v.SetCreatedAt(time.Now())
 		if _, err := ir.InsertRow(ctx, value); err != nil {
-			return ctxd.WrapError(ctx, augmentErr(err), "insert")
+			return value, ctxd.WrapError(ctx, augmentErr(err), "insert")
 		}
 	}
 
-	return nil
+	return value, nil
 }
 
 func (ir *hashedRepo[V, T]) Add(ctx context.Context, value V) error {

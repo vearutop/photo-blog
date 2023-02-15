@@ -10,14 +10,15 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type getAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinder() photo.AlbumFinder
-	PhotoGpsFinder() photo.GpsFinder
-	PhotoExifFinder() photo.ExifFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
+	PhotoGpsFinder() uniq.Finder[photo.Gps]
+	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
 
 // GetAlbum creates use case interactor to get album data.
@@ -44,12 +45,12 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "get_album", 1)
 		deps.CtxdLogger().Info(ctx, "getting album", "name", in.Name)
 
-		album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
 		if err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+		images, err := deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
 		if err != nil {
 			return err
 		}

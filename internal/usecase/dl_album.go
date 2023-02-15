@@ -17,7 +17,7 @@ import (
 
 type dlAlbumDeps interface {
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
 	PhotoImageFinder() photo.ImageFinder
 }
 
@@ -32,12 +32,12 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			return errors.New("missing http.ResponseWriter")
 		}
 
-		album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
 		if err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinder().FindImages(ctx, album.ID)
+		images, err := deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
 		if err != nil {
 			return err
 		}

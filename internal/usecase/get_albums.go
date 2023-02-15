@@ -13,7 +13,7 @@ import (
 type getAlbumsDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
 }
 
 // GetAlbums creates use case interactor to get album data.
@@ -26,7 +26,7 @@ func GetAlbums(deps getAlbumsDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "get_albums", 1)
 		deps.CtxdLogger().Info(ctx, "getting albums")
 
-		albums, err := deps.PhotoAlbumFinder().FindAll(ctx)
+		albums, err := deps.PhotoAlbumFinderOld().FindAll(ctx)
 		if err != nil {
 			return err
 		}

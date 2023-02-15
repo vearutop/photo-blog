@@ -8,10 +8,14 @@ import (
 type Locator struct {
 	*brick.BaseLocator
 
+	PhotoAlbumEnsurerProvider
+	PhotoAlbumImageAdderProvider
+	PhotoAlbumImageDeleterProvider
+
 	PhotoAlbumAdderProvider
 	PhotoAlbumUpdaterProvider
 	PhotoAlbumDeleterProvider
-	PhotoAlbumFinderProvider
+	PhotoAlbumFinderOldProvider
 
 	PhotoImageEnsurerProvider
 	PhotoImageUpdaterProvider

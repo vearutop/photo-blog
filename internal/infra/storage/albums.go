@@ -119,7 +119,7 @@ func (ar *AlbumsRepository) PhotoAlbumUpdater() photo.AlbumUpdater {
 	return ar
 }
 
-func (ar *AlbumsRepository) PhotoAlbumFinder() photo.AlbumFinder {
+func (ar *AlbumsRepository) PhotoAlbumFinderOld() photo.AlbumFinder {
 	return ar
 }
 

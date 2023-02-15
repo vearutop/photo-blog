@@ -14,8 +14,8 @@ import (
 
 type getImageDeps interface {
 	PhotoImageFinder() photo.ImageFinder
-	PhotoGpsFinder() photo.GpsFinder
-	PhotoExifFinder() photo.ExifFinder
+	PhotoGpsFinder() uniq.Finder[photo.Gps]
+	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
 
 func GetImage(deps getImageDeps) usecase.Interactor {

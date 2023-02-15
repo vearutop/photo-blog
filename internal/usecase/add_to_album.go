@@ -15,7 +15,7 @@ type addToAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinderOld() photo.AlbumFinder
 	PhotoImageFinder() photo.ImageFinder
 	PhotoAlbumAdder() photo.AlbumAdder
 }
@@ -30,7 +30,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "remove_from_album", 1)
 		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.Name, "hash", in.Hash)
 
-		album, err := deps.PhotoAlbumFinder().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
 		if err != nil {
 			return err
 		}

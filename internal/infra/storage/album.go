@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -84,10 +85,22 @@ func (r *AlbumRepository) AddImages(ctx context.Context, albumHash uniq.Hash, im
 	return nil
 }
 
+func (r *AlbumRepository) PhotoAlbumImageAdder() photo.AlbumImageAdder {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumImageDeleter() photo.AlbumImageDeleter {
+	return r
+}
+
 func (r *AlbumRepository) PhotoAlbumEnsurer() uniq.Ensurer[photo.Album] {
 	return r
 }
 
 func (r *AlbumRepository) PhotoAlbumFinder() uniq.Finder[photo.Album] {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumUpdater() uniq.Updater[photo.Album] {
 	return r
 }
