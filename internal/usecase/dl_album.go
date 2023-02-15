@@ -13,12 +13,14 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type dlAlbumDeps interface {
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinderOld() photo.AlbumFinder
-	PhotoImageFinder() photo.ImageFinder
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoImageFinder() uniq.Finder[photo.Image]
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
 }
 
 type dlAlbumInput struct {
@@ -32,12 +34,12 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			return errors.New("missing http.ResponseWriter")
 		}
 
-		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 		if err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
+		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, album.Hash)
 		if err != nil {
 			return err
 		}

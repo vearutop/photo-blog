@@ -31,3 +31,7 @@ func (ir *ImageRepository) PhotoImageEnsurer() uniq.Ensurer[photo.Image] {
 func (ir *ImageRepository) PhotoImageFinder() uniq.Finder[photo.Image] {
 	return ir
 }
+
+func (ir *ImageRepository) PhotoImageUpdater() uniq.Updater[photo.Image] {
+	return ir
+}

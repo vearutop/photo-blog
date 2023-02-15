@@ -13,7 +13,7 @@ import (
 )
 
 type getImageDeps interface {
-	PhotoImageFinder() photo.ImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
@@ -24,9 +24,9 @@ func GetImage(deps getImageDeps) usecase.Interactor {
 		ReadMeta bool      `query:"read_meta" description:"Read meta from original file."`
 	}
 	type imageInfo struct {
-		Image photo.Images `json:"image"`
-		Exif  photo.Exif   `json:"exif"`
-		Gps   *photo.Gps   `json:"gps"`
+		Image photo.Image `json:"image"`
+		Exif  photo.Exif  `json:"exif"`
+		Gps   *photo.Gps  `json:"gps"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getImageInput, out *imageInfo) error {

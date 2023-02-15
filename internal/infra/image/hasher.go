@@ -11,7 +11,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
-func NewHasher(upstream photo.ImageEnsurer, log ctxd.Logger) *Hasher {
+func NewHasher(upstream uniq.Ensurer[photo.Image], log ctxd.Logger) *Hasher {
 	return &Hasher{
 		upstream: upstream,
 		log:      log,
@@ -19,22 +19,22 @@ func NewHasher(upstream photo.ImageEnsurer, log ctxd.Logger) *Hasher {
 }
 
 type Hasher struct {
-	upstream photo.ImageEnsurer
+	upstream uniq.Ensurer[photo.Image]
 	log      ctxd.Logger
 }
 
-func (h *Hasher) PhotoImageEnsurer() photo.ImageEnsurer {
+func (h *Hasher) PhotoImageEnsurer() uniq.Ensurer[photo.Image] {
 	return h
 }
 
-func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Images, error) {
+func (h *Hasher) Ensure(ctx context.Context, value photo.Image) (photo.Image, error) {
 	if value.Hash != 0 {
 		return h.upstream.Ensure(ctx, value)
 	}
 
 	f, err := os.Open(value.Path)
 	if err != nil {
-		return photo.Images{}, ctxd.WrapError(ctx, err, "failed to open image",
+		return photo.Image{}, ctxd.WrapError(ctx, err, "failed to open image",
 			"path", value.Path)
 	}
 	closed := false
@@ -52,14 +52,14 @@ func (h *Hasher) Ensure(ctx context.Context, value photo.ImageData) (photo.Image
 
 	value.Size, err = io.Copy(x, f)
 	if err != nil {
-		return photo.Images{}, err
+		return photo.Image{}, err
 	}
 
 	value.Hash = uniq.Hash(x.Sum64())
 
 	closed = true
 	if err = f.Close(); err != nil {
-		return photo.Images{}, err
+		return photo.Image{}, err
 	}
 
 	return h.upstream.Ensure(ctx, value)

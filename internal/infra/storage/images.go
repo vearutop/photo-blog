@@ -68,15 +68,3 @@ func (ir *ImagesRepository) Update(ctx context.Context, value photo.ImageData) e
 
 	return augmentErr(err)
 }
-
-func (ir *ImagesRepository) PhotoImageEnsurer() photo.ImageEnsurer {
-	return ir
-}
-
-func (ir *ImagesRepository) PhotoImageUpdater() photo.ImageUpdater {
-	return ir
-}
-
-func (ir *ImagesRepository) PhotoImageFinder() photo.ImageFinder {
-	return ir
-}

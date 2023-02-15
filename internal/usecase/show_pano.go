@@ -34,7 +34,7 @@ func (o *panoPage) Render(tmpl *template.Template) error {
 type showPanoDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinderOld() photo.AlbumFinder
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 
 // ShowPano creates use case interactor to show pano.
@@ -58,7 +58,7 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "show_pano", 1)
 		deps.CtxdLogger().Info(ctx, "showing pano", "name", in.Name)
 
-		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 		if err != nil {
 			return err
 		}

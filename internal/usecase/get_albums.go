@@ -8,25 +8,26 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type getAlbumsDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinderOld() photo.AlbumFinder
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 
 // GetAlbums creates use case interactor to get album data.
 func GetAlbums(deps getAlbumsDeps) usecase.Interactor {
 	type getAlbumsOutput struct {
-		Albums []photo.Albums `json:"albums"`
+		Albums []photo.Album `json:"albums"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *getAlbumsOutput) error {
 		deps.StatsTracker().Add(ctx, "get_albums", 1)
 		deps.CtxdLogger().Info(ctx, "getting albums")
 
-		albums, err := deps.PhotoAlbumFinderOld().FindAll(ctx)
+		albums, err := deps.PhotoAlbumFinder().FindAll(ctx)
 		if err != nil {
 			return err
 		}

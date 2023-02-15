@@ -15,9 +15,9 @@ type addToAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	PhotoAlbumFinderOld() photo.AlbumFinder
-	PhotoImageFinder() photo.ImageFinder
-	PhotoAlbumAdder() photo.AlbumAdder
+	PhotoImageFinder() uniq.Finder[photo.Image]
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumImageAdder() photo.AlbumImageAdder
 }
 type albumImageInput struct {
 	Name string    `path:"name"`
@@ -30,7 +30,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "remove_from_album", 1)
 		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.Name, "hash", in.Hash)
 
-		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
+		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 		if err != nil {
 			return err
 		}
@@ -40,7 +40,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 			return err
 		}
 
-		return deps.PhotoAlbumAdder().AddImages(ctx, album.ID, image.ID)
+		return deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, image.Hash)
 	})
 
 	u.SetTags("Album")

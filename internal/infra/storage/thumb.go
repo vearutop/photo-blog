@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -30,7 +31,7 @@ type ThumbRepository struct {
 	hashedRepo[photo.Thumb, *photo.Thumb]
 }
 
-func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Images, size photo.ThumbSize) (photo.Thumb, error) {
+func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
 	th := photo.Thumb{}
 
 	w, h, err := size.WidthHeight()
@@ -64,11 +65,11 @@ func (tr *ThumbRepository) FindLarger(ctx context.Context, imageHash uniq.Hash, 
 		Where(tr.Eq(&tr.R.Hash, imageHash))
 
 	if width > 0 {
-		q = q.Where(tr.Fmt("%s >= %d", &tr.R.Width, width))
+		q = q.Where(squirrel.GtOrEq(tr.Eq(&tr.R.Width, width)))
 	}
 
 	if height > 0 {
-		q = q.Where(tr.Fmt("%s >= %d", &tr.R.Height, height))
+		q = q.Where(squirrel.GtOrEq(tr.Eq(&tr.R.Height, height)))
 	}
 
 	row, err := tr.Get(ctx, q)
@@ -85,11 +86,11 @@ func (tr *ThumbRepository) Find(ctx context.Context, imageHash uniq.Hash, width,
 		Where(tr.Eq(&tr.R.Hash, imageHash))
 
 	if width > 0 {
-		q = q.Where(tr.Fmt("%s = %d", &tr.R.Width, width))
+		q = q.Where(tr.Eq(&tr.R.Width, width))
 	}
 
 	if height > 0 {
-		q = q.Where(tr.Fmt("%s = %d", &tr.R.Height, height))
+		q = q.Where(tr.Eq(&tr.R.Height, height))
 	}
 
 	row, err := tr.Get(ctx, q)

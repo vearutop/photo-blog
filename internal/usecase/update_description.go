@@ -8,13 +8,14 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type updateAlbumDescDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinderOld() photo.AlbumFinder
-	PhotoAlbumUpdater() photo.AlbumUpdater
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumUpdater() uniq.Updater[photo.Album]
 }
 
 // UpdateAlbumDesc creates use case interactor to update album description.

@@ -11,6 +11,7 @@ type Ensurer[V any] interface {
 
 type Finder[V any] interface {
 	FindByHash(ctx context.Context, hash Hash) (V, error)
+	FindAll(ctx context.Context) ([]V, error)
 }
 
 type Adder[V any] interface {

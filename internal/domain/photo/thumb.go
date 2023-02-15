@@ -13,7 +13,7 @@ import (
 )
 
 type Thumbnailer interface {
-	Thumbnail(ctx context.Context, image Images, size ThumbSize) (Thumb, error)
+	Thumbnail(ctx context.Context, image Image, size ThumbSize) (Thumb, error)
 }
 
 type Thumb struct {

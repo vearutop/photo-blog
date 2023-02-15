@@ -8,6 +8,7 @@ import (
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/resources/static"
 )
 
@@ -47,12 +48,14 @@ func ShowAlbum(deps getAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
+		albumHash := photo.AlbumHash(in.Name)
+
+		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
 		if err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
+		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
 		if err != nil {
 			return err
 		}

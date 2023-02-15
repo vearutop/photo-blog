@@ -15,7 +15,7 @@ type indexerDeps interface {
 
 	PhotoThumbnailer() photo.Thumbnailer
 
-	PhotoImageUpdater() photo.ImageUpdater
+	PhotoImageUpdater() uniq.Updater[photo.Image]
 
 	PhotoExifEnsurer() uniq.Ensurer[photo.Exif]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
@@ -48,7 +48,7 @@ func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
 	}
 }
 
-func (i *Indexer) Index(ctx context.Context, img photo.Images, flags photo.IndexingFlags) (err error) {
+func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
 	ctx = ctxd.AddFields(ctx, "img", img)
 
 	if img.Width == 0 {
@@ -66,7 +66,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Images, flags photo.Index
 		img.Width = int64(c.Width)
 		img.Height = int64(c.Height)
 
-		if err := i.deps.PhotoImageUpdater().Update(ctx, img.ImageData); err != nil {
+		if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
 			return ctxd.WrapError(ctx, err, "update image")
 		}
 	}
@@ -80,7 +80,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Images, flags photo.Index
 	return nil
 }
 
-func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Images) {
+func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 	for _, size := range photo.ThumbSizes {
 		_, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
 		if err != nil {
@@ -90,7 +90,7 @@ func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Images) {
 	}
 }
 
-func (i *Indexer) ensureExif(ctx context.Context, img photo.Images, flags photo.IndexingFlags) error {
+func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.IndexingFlags) error {
 	exifExists, gpsExists := false, false
 
 	if _, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err == nil {

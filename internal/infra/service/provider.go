@@ -9,6 +9,10 @@ type PhotoAlbumImageAdderProvider interface {
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
 }
 
+type PhotoAlbumImageFinderProvider interface {
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
+}
+
 type PhotoAlbumImageDeleterProvider interface {
 	PhotoAlbumImageDeleter() photo.AlbumImageDeleter
 }
@@ -17,32 +21,24 @@ type PhotoAlbumEnsurerProvider interface {
 	PhotoAlbumEnsurer() uniq.Ensurer[photo.Album]
 }
 
-type PhotoAlbumAdderProvider interface {
-	PhotoAlbumAdder() photo.AlbumAdder
-}
-
 type PhotoAlbumUpdaterProvider interface {
-	PhotoAlbumUpdater() photo.AlbumUpdater
+	PhotoAlbumUpdater() uniq.Updater[photo.Album]
 }
 
-type PhotoAlbumFinderOldProvider interface {
-	PhotoAlbumFinderOld() photo.AlbumFinder
-}
-
-type PhotoAlbumDeleterProvider interface {
-	PhotoAlbumDeleter() photo.AlbumDeleter
+type PhotoAlbumFinderProvider interface {
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 
 type PhotoImageEnsurerProvider interface {
-	PhotoImageEnsurer() photo.ImageEnsurer
+	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
 }
 
 type PhotoImageUpdaterProvider interface {
-	PhotoImageUpdater() photo.ImageUpdater
+	PhotoImageUpdater() uniq.Updater[photo.Image]
 }
 
 type PhotoImageFinderProvider interface {
-	PhotoImageFinder() photo.ImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 }
 
 type PhotoImageIndexerProvider interface {

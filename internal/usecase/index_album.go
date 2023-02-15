@@ -19,10 +19,11 @@ type indexAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	PhotoAlbumFinderOld() photo.AlbumFinder
-	PhotoAlbumUpdater() photo.AlbumUpdater
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumUpdater() uniq.Updater[photo.Album]
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoImageIndexer() photo.ImageIndexer
-	PhotoImageFinder() photo.ImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 }
 
 var indexInProgress int64
@@ -38,20 +39,20 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "index_album", 1)
 		deps.CtxdLogger().Info(ctx, "indexing album", "name", in.Name)
 
-		var images []photo.Images
+		var images []photo.Image
 
 		if in.Name != "-" {
-			album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
+			album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 			if err != nil {
 				return err
 			}
 
-			images, err = deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
+			images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, album.Hash)
 			if err != nil {
 				return err
 			}
 		} else {
-			albums, err := deps.PhotoAlbumFinderOld().FindAll(ctx)
+			albums, err := deps.PhotoAlbumFinder().FindAll(ctx)
 			if err != nil {
 				return err
 			}
@@ -60,7 +61,7 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 				if album.Hash == 0 {
 					album.Hash = uniq.StringHash(album.Name)
 
-					if err := deps.PhotoAlbumUpdater().Update(ctx, album.ID, album.AlbumData); err != nil {
+					if err := deps.PhotoAlbumUpdater().Update(ctx, album); err != nil {
 						return err
 					}
 				}

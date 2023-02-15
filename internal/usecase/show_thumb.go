@@ -12,7 +12,7 @@ import (
 )
 
 type showThumbDeps interface {
-	PhotoImageFinder() photo.ImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoThumbnailer() photo.Thumbnailer
 }
 

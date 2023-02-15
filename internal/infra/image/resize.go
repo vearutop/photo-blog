@@ -41,7 +41,7 @@ func largerThumbFromContext(ctx context.Context) *photo.Thumb {
 	return nil
 }
 
-func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Images, size photo.ThumbSize) (th photo.Thumb, err error) {
+func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (th photo.Thumb, err error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -86,7 +86,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Images, size photo.
 	return th, nil
 }
 
-func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Images, w, h uint) (image.Image, error) {
+func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
 	lt := largerThumbFromContext(ctx)
 	if lt != nil && (lt.Width > w || lt.Height > h) {
 		img, err := jpeg.Decode(lt.ReadSeeker())

@@ -57,6 +57,10 @@ func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, 
 	return augmentResErr(ir.Get(ctx, q))
 }
 
+func (ir *hashedRepo[V, T]) FindAll(ctx context.Context) ([]V, error) {
+	return augmentResErr(ir.List(ctx, ir.SelectStmt()))
+}
+
 func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) (V, error) {
 	v := T(&value)
 	h := *v.HashPtr()

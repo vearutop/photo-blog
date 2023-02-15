@@ -96,8 +96,8 @@ github.com/bool64/prom-stats v0.1.3/go.mod h1:uAydOHn7rCblxGm4TkhSAFjTOsTgduxMIV
 github.com/bool64/shared v0.1.3/go.mod h1:RF1p1Oi29ofgOvinBpetbF5mceOUP3kpMkvLbWOmtm0=
 github.com/bool64/shared v0.1.5 h1:fp3eUhBsrSjNCQPcSdQqZxxh9bBwrYiZ+zOKFkM0/2E=
 github.com/bool64/shared v0.1.5/go.mod h1:081yz68YC9jeFB3+Bbmno2RFWvGKv1lPKkMP6MHJlPs=
-github.com/bool64/sqluct v0.1.13-0.20230209002932-7f4782003959 h1:tjef9oNvO8IGkvOQQaPyIbU5MUEWpGihH+oLtZ74D/Y=
-github.com/bool64/sqluct v0.1.13-0.20230209002932-7f4782003959/go.mod h1:FirSuO0ug+C3w5/nShsgPLxVtIsR/4v9p+y1HCWP08I=
+github.com/bool64/sqluct v0.1.13-0.20230215230142-1c1a2eed9103 h1:FI4LxQSGLxJYMagibeS8y/4k8e4AnagPjUBnYE+q4ik=
+github.com/bool64/sqluct v0.1.13-0.20230215230142-1c1a2eed9103/go.mod h1:EzMJLU666xSqS0W/G1t1/HrU1hxKePKx9QbvxABeSRg=
 github.com/bool64/stats v0.2.2 h1:BRfpJk/4KKMo4K+c9jv4aGemyekHCvCQFRljbmHC7gk=
 github.com/bool64/stats v0.2.2/go.mod h1:MlIBXxLmuimNc8EDnB3XAYDN+suGvgv+XUUwrFelAA4=
 github.com/bool64/zapctxd v1.0.0 h1:c2wpeHSQdaqdjUGhfUmq9wFpbtZWXqgTlEj9JH9RbEg=

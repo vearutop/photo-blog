@@ -11,7 +11,7 @@ import (
 )
 
 type showImageDeps interface {
-	PhotoImageFinder() photo.ImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 }
 
 type showImageInput struct {

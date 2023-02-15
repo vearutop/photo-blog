@@ -60,22 +60,17 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	}
 
 	ir := storage.NewImageRepository(l.Storage)
+	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
+	l.PhotoImageUpdaterProvider = ir
+	l.PhotoImageFinderProvider = ir
 
 	ar := storage.NewAlbumRepository(l.Storage, ir)
 	l.PhotoAlbumEnsurerProvider = ar
+	l.PhotoAlbumUpdaterProvider = ar
+	l.PhotoAlbumFinderProvider = ar
 	l.PhotoAlbumImageAdderProvider = ar
+	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
-
-	albumRepo := storage.NewAlbumsRepository(l.Storage)
-	l.PhotoAlbumAdderProvider = albumRepo
-	l.PhotoAlbumUpdaterProvider = albumRepo
-	l.PhotoAlbumFinderOldProvider = albumRepo
-	l.PhotoAlbumDeleterProvider = albumRepo
-
-	imageRepo := storage.NewImagesRepository(l.Storage)
-	l.PhotoImageEnsurerProvider = image.NewHasher(imageRepo, l.CtxdLogger())
-	l.PhotoImageUpdaterProvider = imageRepo
-	l.PhotoImageFinderProvider = imageRepo
 
 	thumbStorage, err := setupThumbStorage(l, cfg.ThumbStorage)
 	if err != nil {
@@ -136,6 +131,14 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 		return err
 	}
 	l.CtxdLogger().Info(context.Background(), "storage setup complete", "elapsed", time.Since(start).String())
+
+	l.Storage.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
+		return ctx, func(err error) {
+			if err != nil {
+				l.CtxdLogger().Warn(ctx, "sql failed", "stmt", stmt, "args", args)
+			}
+		}
+	}
 
 	return nil
 }

@@ -7,20 +7,7 @@ import (
 )
 
 type ImageIndexer interface {
-	Index(ctx context.Context, image Images, flags IndexingFlags) error
-}
-
-type ImageEnsurer interface {
-	Ensure(ctx context.Context, value ImageData) (Images, error)
-}
-
-type ImageUpdater interface {
-	Update(ctx context.Context, value ImageData) error
-}
-
-type ImageFinder interface {
-	FindByHash(ctx context.Context, hash uniq.Hash) (Images, error)
-	FindAll(ctx context.Context) ([]Images, error)
+	Index(ctx context.Context, image Image, flags IndexingFlags) error
 }
 
 type IndexingFlags struct {

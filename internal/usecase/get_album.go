@@ -16,7 +16,8 @@ import (
 type getAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	PhotoAlbumFinderOld() photo.AlbumFinder
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
@@ -37,20 +38,22 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 	}
 
 	type getAlbumOutput struct {
-		Album  photo.Albums `json:"album"`
-		Images []image      `json:"images,omitempty"`
+		Album  photo.Album `json:"album"`
+		Images []image     `json:"images,omitempty"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *getAlbumOutput) error {
 		deps.StatsTracker().Add(ctx, "get_album", 1)
 		deps.CtxdLogger().Info(ctx, "getting album", "name", in.Name)
 
-		album, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.Name)
+		albumHash := photo.AlbumHash(in.Name)
+
+		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
 		if err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumFinderOld().FindImages(ctx, album.ID)
+		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
 		if err != nil {
 			return err
 		}

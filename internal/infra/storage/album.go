@@ -25,11 +25,14 @@ type AlbumImage struct {
 }
 
 func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepository {
+	ai := sqluct.Table[AlbumImage](storage, AlbumImageTable)
+	ir.Referencer.AddTableAlias(ai.R, AlbumImageTable)
+
 	return &AlbumRepository{
 		hashedRepo: hashedRepo[photo.Album, *photo.Album]{
 			StorageOf: sqluct.Table[photo.Album](storage, AlbumTable),
 		},
-		ai: sqluct.Table[AlbumImage](storage, AlbumImageTable),
+		ai: ai,
 		i:  ir,
 	}
 }
@@ -90,6 +93,10 @@ func (r *AlbumRepository) PhotoAlbumImageAdder() photo.AlbumImageAdder {
 }
 
 func (r *AlbumRepository) PhotoAlbumImageDeleter() photo.AlbumImageDeleter {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumImageFinder() photo.AlbumImageFinder {
 	return r
 }
 

@@ -12,15 +12,17 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type addDirectoryDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	PhotoAlbumFinderOld() photo.AlbumFinder
-	PhotoImageEnsurer() photo.ImageEnsurer
-	PhotoAlbumAdder() photo.AlbumAdder
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumImageAdder() photo.AlbumImageAdder
+
+	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
 	PhotoImageIndexer() photo.ImageIndexer
 }
 
@@ -39,7 +41,7 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "add_dir", 1)
 		deps.CtxdLogger().Important(ctx, "adding directory", "path", in.Path)
 
-		a, err := deps.PhotoAlbumFinderOld().FindByName(ctx, in.AlbumName)
+		a, err := deps.PhotoAlbumFinder().FindByHash(ctx, uniq.StringHash(in.AlbumName))
 		if err != nil {
 			return ctxd.WrapError(ctx, err, "find album", "name", in.AlbumName)
 		}
@@ -59,13 +61,13 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		out.Names = names
 
 		var (
-			imgIDs []int
-			errs   []string
+			imgHashes []uniq.Hash
+			errs      []string
 		)
 
 		for _, name := range names {
 			if strings.HasSuffix(strings.ToLower(name), ".jpg") {
-				d := photo.ImageData{Path: path.Join(in.Path, name)}
+				d := photo.Image{Path: path.Join(in.Path, name)}
 				if img, err := deps.PhotoImageEnsurer().Ensure(ctx, d); err != nil {
 					errs = append(errs, name+": "+err.Error())
 				} else {
@@ -80,14 +82,14 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 							float64(atomic.AddInt64(&indexInProgress, -1)))
 					}()
 
-					imgIDs = append(imgIDs, img.ID)
+					imgHashes = append(imgHashes, img.Hash)
 				}
 
 			}
 		}
 
-		if len(imgIDs) > 0 {
-			if err := deps.PhotoAlbumAdder().AddImages(ctx, a.ID, imgIDs...); err != nil {
+		if len(imgHashes) > 0 {
+			if err := deps.PhotoAlbumImageAdder().AddImages(ctx, a.Hash, imgHashes...); err != nil {
 				if len(errs) > 0 {
 					errs = append(errs, err.Error())
 				} else {
