@@ -1,19 +1,10 @@
 package photo
 
 import (
-	"context"
 	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
-
-type GpsEnsurer interface {
-	Ensure(ctx context.Context, value Gps) error
-}
-
-type GpsFinder interface {
-	FindByHash(ctx context.Context, hash uniq.Hash) (Gps, error)
-}
 
 type Gps struct {
 	uniq.Head

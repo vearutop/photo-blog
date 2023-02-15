@@ -23,17 +23,3 @@ type Image struct {
 	Height   int64  `db:"height"`
 	BlurHash string `db:"blurhash"`
 }
-
-type Images struct {
-	Identity
-	uniq.Time
-	ImageData
-}
-
-type ImageData struct {
-	Hash   uniq.Hash `db:"hash"`
-	Size   int64     `db:"size"`
-	Path   string    `db:"path"`
-	Width  int64     `db:"width"`
-	Height int64     `db:"height"`
-}

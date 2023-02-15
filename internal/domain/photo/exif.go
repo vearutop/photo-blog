@@ -1,19 +1,10 @@
 package photo
 
 import (
-	"context"
 	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
-
-type ExifEnsurer interface {
-	Ensure(ctx context.Context, value Exif) error
-}
-
-type ExifFinder interface {
-	FindByHash(ctx context.Context, hash uniq.Hash) (Exif, error)
-}
 
 type Exif struct {
 	uniq.Head
