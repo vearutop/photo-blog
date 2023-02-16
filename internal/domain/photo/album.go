@@ -20,9 +20,10 @@ type AlbumImageFinder interface {
 
 type Album struct {
 	uniq.Head
-	Title  string `db:"title" formData:"title" json:"title"`
-	Name   string `db:"name" formData:"name" json:"name"`
-	Public bool   `db:"public" formData:"public" json:"public"`
+	Title      string    `db:"title" formData:"title" json:"title"`
+	Name       string    `db:"name" formData:"name" json:"name"`
+	Public     bool      `db:"public" formData:"public" json:"public"`
+	CoverImage uniq.Hash `db:"cover_image" formData:"cover_image" json:"cover_image"`
 }
 
 func AlbumHash(name string) uniq.Hash {
