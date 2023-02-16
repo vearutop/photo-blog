@@ -8,6 +8,8 @@ import (
 type Locator struct {
 	*brick.BaseLocator
 
+	Config Config
+
 	PhotoAlbumEnsurerProvider
 	PhotoAlbumUpdaterProvider
 	PhotoAlbumFinderProvider
@@ -27,4 +29,9 @@ type Locator struct {
 
 	PhotoGpsEnsurerProvider
 	PhotoGpsFinderProvider
+}
+
+// ServiceConfig gives access to service configuration.
+func (l *Locator) ServiceConfig() Config {
+	return l.Config
 }

@@ -33,7 +33,9 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		}
 
 		s.Post("/album", usecase.CreateAlbum(deps))
-		s.Post("/directory", usecase.AddDirectory(deps))
+		s.Post("/album/{name}/directory", usecase.AddDirectory(deps))
+		s.Post("/album/{name}/images", usecase.UploadImages(deps))
+
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 

@@ -26,6 +26,7 @@ import (
 // NewServiceLocator creates application service locator.
 func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator, err error) {
 	l := &service.Locator{}
+	l.Config = cfg
 
 	defer func() {
 		if err != nil && l != nil && l.LoggerProvider != nil {

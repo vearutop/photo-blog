@@ -26,24 +26,24 @@ type addDirectoryDeps interface {
 	PhotoImageIndexer() photo.ImageIndexer
 }
 
-// AddDirectory creates use case interactor to add directory of photos.
+// AddDirectory creates use case interactor to add directory of photos to an album.
 func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 	type addDirInput struct {
-		Path      string `formData:"path"`
-		AlbumName string `formData:"album_name"`
+		Path string `formData:"path"`
+		Name string `path:"name" description:"Album name."`
 	}
 
-	type helloOutput struct {
+	type addDirOutput struct {
 		Names []string `json:"names"`
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in addDirInput, out *helloOutput) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in addDirInput, out *addDirOutput) error {
 		deps.StatsTracker().Add(ctx, "add_dir", 1)
 		deps.CtxdLogger().Important(ctx, "adding directory", "path", in.Path)
 
-		a, err := deps.PhotoAlbumFinder().FindByHash(ctx, uniq.StringHash(in.AlbumName))
+		a, err := deps.PhotoAlbumFinder().FindByHash(ctx, uniq.StringHash(in.Name))
 		if err != nil {
-			return ctxd.WrapError(ctx, err, "find album", "name", in.AlbumName)
+			return ctxd.WrapError(ctx, err, "find album", "name", in.Name)
 		}
 
 		dir, err := os.Open(in.Path)
@@ -105,7 +105,7 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 		return nil
 	})
 
-	u.SetDescription("Add a directory of photos to an album (non-recursive).")
+	u.SetDescription("Add a host-local directory of photos to an album (non-recursive).")
 	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
