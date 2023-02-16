@@ -4,6 +4,7 @@
  * @typedef CreateAlbumRequest
  * @type {Object}
  * @property {String} name
+ * @property {Boolean} public
  * @property {String} title
  */
 
@@ -11,8 +12,9 @@
  * @typedef PhotoAlbum
  * @type {Object}
  * @property {String} created_at
- * @property {Number} id
+ * @property {String} hash
  * @property {String} name
+ * @property {Boolean} public
  * @property {String} title
  */
 
@@ -74,6 +76,7 @@
 /**
  * @typedef UsecaseImage
  * @type {Object}
+ * @property {String} blur_hash
  * @property {PhotoExif} exif
  * @property {PhotoGps} gps
  * @property {String} hash
@@ -113,6 +116,24 @@
  */
 
 /**
+ * @typedef PostAlbumNameHashRequest
+ * @type {Object}
+ * @property {String} name
+ * @property {String} hash
+ */
+
+/**
+ * @typedef UsecaseGetAlbumsOutput
+ * @type {Object}
+ * @property {?Array<PhotoAlbum>} albums
+ */
+
+/**
+ * @callback UsecaseGetAlbumsOutputCallback
+ * @param {UsecaseGetAlbumsOutput} value
+ */
+
+/**
  * @typedef PostDirectoryRequest
  * @type {Object}
  * @property {String} albumName
@@ -147,7 +168,7 @@
  * @typedef PhotoImage
  * @type {Object}
  * @property {String} created_at
- * @property {Number} id
+ * @property {String} hash
  */
 
 /**
@@ -166,15 +187,22 @@
 /**
  * @typedef PostIndexNameRequest
  * @type {Object}
- * @property {String} name
+ * @property {String} name - Album name, use '-' for all images and albums.
  * @property {Boolean} rebuildExif
  * @property {Boolean} rebuildGps
  */
 
 /**
+ * @typedef PostMakePassHashRequest
+ * @type {Object}
+ * @property {String} pass
+ * @property {String} salt
+ */
+
+/**
  * @typedef GetThumbSizeHashJpgRequest
  * @type {Object}
- * @property {('200h'|'400h'|'600w'|'2400w'|'300w'|'1200w')} size
+ * @property {('2400w'|'1200w'|'600w'|'300w'|'200h'|'400h')} size
  * @property {String} hash
  */
 
@@ -182,5 +210,12 @@
  * @typedef GetNameRequest
  * @type {Object}
  * @property {String} name
+ */
+
+/**
+ * @typedef GetNamePanoHashHtmlRequest
+ * @type {Object}
+ * @property {String} name
+ * @property {String} hash
  */
 

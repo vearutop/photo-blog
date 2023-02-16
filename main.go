@@ -20,7 +20,7 @@ func main() {
 
 	brick.Start(&cfg, func(docsMode bool) (*brick.BaseLocator, http.Handler) {
 		// Initialize application resources.
-		sl, err := infra.NewServiceLocator(cfg)
+		sl, err := infra.NewServiceLocator(cfg, docsMode)
 		if err != nil {
 			log.Fatalf("failed to init service: %v", err)
 		}

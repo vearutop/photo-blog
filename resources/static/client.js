@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: devel go1.20-c0497d1 Fri Dec 2 23:40:37 2022 +0000
+     * Version: Version: dev, GoVersion: go1.19.5
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -67,6 +67,9 @@
         var formData = new FormData();
         if (typeof req.name !== 'undefined') {
             formData.append('name', req.name);
+        }
+        if (typeof req.public !== 'undefined') {
+            formData.append('public', req.public);
         }
         if (typeof req.title !== 'undefined') {
             formData.append('title', req.title);
@@ -192,6 +195,88 @@
         url = url.slice(0, -1);
 
         x.open("DELETE", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Add To Album
+     * @param {PostAlbumNameHashRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.postAlbumNameHash = function (req, onNoContent, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
+        '/' + encodeURIComponent(req.hash) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Get Albums
+     * @param {Object} req - request parameters.
+     * @param {UsecaseGetAlbumsOutputCallback} onOK
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getAlbumsJson = function (req, onOK, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/albums.json?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
@@ -381,6 +466,47 @@
     };
 
     /**
+     * Make Pass Hash
+     * @param {PostMakePassHashRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.postMakePassHash = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/make-pass-hash?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        var formData = new FormData();
+        if (typeof req.pass !== 'undefined') {
+            formData.append('pass', req.pass);
+        }
+        if (typeof req.salt !== 'undefined') {
+            formData.append('salt', req.salt);
+        }
+
+        x.send(formData);
+    };
+
+    /**
      * Show Thumb
      * @param {GetThumbSizeHashJpgRequest} req - request parameters.
      * @param {RawCallback} onOK
@@ -453,6 +579,54 @@
 
         var url = this.baseURL + '/' + encodeURIComponent(req.name) +
         '/?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Pano
+     * @param {GetNamePanoHashHtmlRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getNamePanoHashHtml = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/' + encodeURIComponent(req.name) +
+        '/pano-' + encodeURIComponent(req.hash) +
+        '.html?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);

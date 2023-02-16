@@ -29,12 +29,13 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 	}
 
 	type image struct {
-		Name   string      `json:"name"`
-		Hash   string      `json:"hash"`
-		Width  int64       `json:"width"`
-		Height int64       `json:"height"`
-		Gps    *photo.Gps  `json:"gps,omitempty"`
-		Exif   *photo.Exif `json:"exif,omitempty"`
+		Name     string      `json:"name"`
+		Hash     string      `json:"hash"`
+		Width    int64       `json:"width"`
+		Height   int64       `json:"height"`
+		BlurHash string      `json:"blur_hash,omitempty"`
+		Gps      *photo.Gps  `json:"gps,omitempty"`
+		Exif     *photo.Exif `json:"exif,omitempty"`
 	}
 
 	type getAlbumOutput struct {
@@ -62,10 +63,11 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 		out.Images = make([]image, 0, len(images))
 		for _, i := range images {
 			img := image{
-				Name:   path.Base(i.Path),
-				Hash:   i.Hash.String(),
-				Width:  i.Width,
-				Height: i.Height,
+				Name:     path.Base(i.Path),
+				Hash:     i.Hash.String(),
+				Width:    i.Width,
+				Height:   i.Height,
+				BlurHash: i.BlurHash,
 			}
 
 			gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)

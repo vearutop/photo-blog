@@ -12,6 +12,7 @@
     <script src="/static/client.js"></script>
     <script src="/static/photoswipe.umd.min.js"></script>
     <script src="/static/photoswipe-lightbox.umd.min.js"></script>
+    <script src="/static/blurhash.js"></script>
 
     <meta property="og:title" content="{{.Title}}"/>
     <meta property="og:type" content="website"/>
@@ -31,6 +32,32 @@
         .image-marker {
             border-radius: 20%;
         }
+
+        .thumb canvas {
+            position: absolute;
+            width: 300px;
+            height: 200px;
+            z-index: 1;
+            display: block;
+        }
+
+        .thumb img {
+            position: relative;
+            z-index: 2;
+        }
+
+        .gallery {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, 300px);
+        }
+
+        #map {
+            height: 500px;
+            margin-top: 40px;
+            display: none;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -45,9 +72,9 @@
 
     </div>
 
-    <div id="map" style="height:500px; margin-top:40px; display: none"></div>
-
-    <a href="/album/{{.Name}}.zip">Download all photos (zip).</a>
+    <div>
+        <a href="/album/{{.Name}}.zip">Download all photos (zip).</a>
+    </div>
 </div>
 
 
@@ -108,6 +135,7 @@
                 if (typeof img.exif == "undefined" || img.exif.projection_type === "") {
                     var a = $("<a>")
                     a.attr("id", 'img' + img.hash)
+                    a.attr("class", "image")
                     a.attr("href", "/image/" + img.hash + ".jpg")
                     a.attr("target", "_blank")
 
@@ -128,9 +156,14 @@
                     }
 
                     a.attr("data-pswp-srcset", srcSet)
-                    a.html('<div style="display:inline-block;background:#333;text-align:center;' + containerStyle + '"><img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
+                    a.html('<div class="thumb" style="display:inline-block;background:#333;text-align:center;' + containerStyle + '">' +
+                        '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
+                        '<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
 
                     $(".gallery").append(a)
+                    if (typeof img.blur_hash !== "undefined") {
+                        blurHash(img.blur_hash, document.getElementById('bh-' + img.hash))
+                    }
                 } else {
                     var a = $("<a>")
                     a.attr("id", 'img' + img.hash)
@@ -143,8 +176,7 @@
 
             var lightbox = new PhotoSwipeLightbox({
                 gallery: '.gallery',
-                children: 'a',
-                // dynamic import is not supported in UMD version
+                children: 'a.image',
                 pswpModule: PhotoSwipe
             });
             lightbox.init();
@@ -171,6 +203,8 @@
             })
 
             if (gpsBounds.minLat != null) {
+                $(".gallery").append('<div id="map"></div>')
+
                 $('#map').show()
                 var map = L.map('map').fitBounds([
                     [gpsBounds.minLat, gpsBounds.minLng],

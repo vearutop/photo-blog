@@ -24,7 +24,7 @@ import (
 )
 
 // NewServiceLocator creates application service locator.
-func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
+func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator, err error) {
 	l := &service.Locator{}
 
 	defer func() {
@@ -47,6 +47,10 @@ func NewServiceLocator(cfg service.Config) (loc *service.Locator, err error) {
 	})
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
+
+	if docsMode {
+		return l, nil
+	}
 
 	l.HTTPServerMiddlewares = append(l.HTTPServerMiddlewares,
 		gzip.Middleware,
