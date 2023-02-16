@@ -3,12 +3,14 @@ module github.com/vearutop/photo-blog
 go 1.19
 
 require (
+	github.com/Masterminds/squirrel v1.5.3
 	github.com/bool64/brick v0.2.1-0.20230214002146-8dc75e7f6361
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.25
 	github.com/bool64/httptestbench v0.1.4
 	github.com/bool64/sqluct v0.1.13-0.20230215230142-1c1a2eed9103
 	github.com/bool64/stats v0.2.2
+	github.com/buckket/go-blurhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/dsoprea/go-exif/v3 v3.0.0-20221012082141-d21ac8e2de85
 	github.com/go-chi/chi/v5 v5.0.8
@@ -32,7 +34,6 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
-	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bool64/cache v0.4.4 // indirect

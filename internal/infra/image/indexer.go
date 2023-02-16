@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/bool64/ctxd"
+	blurhash "github.com/buckket/go-blurhash"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
@@ -76,8 +77,43 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	}
 
 	i.ensureThumbs(ctx, img)
+	i.ensureBlurHash(ctx, img)
 
 	return nil
+}
+
+func (i *Indexer) ensureBlurHash(ctx context.Context, img photo.Image) {
+	if img.BlurHash != "" {
+		return
+	}
+
+	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, "300w")
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to get thumbnail",
+			"error", err.Error(), "size", "300w")
+		return
+	}
+
+	j, err := jpeg.Decode(th.ReadSeeker())
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed decode thumbnail",
+			"error", err.Error())
+		return
+	}
+
+	bh, err := blurhash.Encode(5, 5, j)
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to encode blurhash",
+			"error", err.Error())
+		return
+	}
+
+	img.BlurHash = bh
+
+	if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to save image",
+			"error", err.Error())
+	}
 }
 
 func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {

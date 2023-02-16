@@ -2,6 +2,8 @@ package infra
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"io/fs"
 	"net/http"
 	"time"
@@ -134,8 +136,9 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 
 	l.Storage.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
 		return ctx, func(err error) {
-			if err != nil {
-				l.CtxdLogger().Warn(ctx, "sql failed", "stmt", stmt, "args", args)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				l.CtxdLogger().Warn(ctx, "sql failed",
+					"stmt", stmt, "args", args, "error", err.Error())
 			}
 		}
 	}
