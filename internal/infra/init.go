@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"io/fs"
 	"net/http"
 	"time"
@@ -48,6 +49,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	})
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
+	l.SchemaRepo = schema.NewRepository(&l.OpenAPI.Reflector().Reflector)
+	if err := setupSchemaRepo(l.SchemaRepo); err != nil {
+		return nil, err
+	}
 
 	if docsMode {
 		return l, nil
@@ -145,6 +150,24 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 				l.CtxdLogger().Warn(ctx, "sql failed",
 					"stmt", stmt, "args", args, "error", err.Error())
 			}
+		}
+	}
+
+	return nil
+}
+
+func setupSchemaRepo(r *schema.Repository) error {
+	return firstFail(
+		r.AddSchema("album", photo.Album{}),
+		r.AddSchema("gps", photo.Gps{}),
+		r.AddSchema("exif", photo.Gps{}),
+	)
+}
+
+func firstFail(errs ...error) error {
+	for _, err := range errs {
+		if err != nil {
+			return err
 		}
 	}
 

@@ -21,19 +21,10 @@
 <script type="text/javascript" src="/static/underscore.js"></script>
 <script type="text/javascript" src="/static/jsv.js"></script>
 <script type="text/javascript" src="/static/jsonform.js"></script>
+<script src="/static/client.js"></script>
 <script type="text/javascript">
     $('#schema-form').jsonForm({
-        schema: {
-            name: {
-                type: 'string',
-                title: 'Name',
-                required: true
-            },
-            age: {
-                type: 'number',
-                title: 'Age'
-            }
-        },
+        schema: {{.Schema}},
         onSubmit: function (errors, values) {
             console.log(values);
             console.log(errors);

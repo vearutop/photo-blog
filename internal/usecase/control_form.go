@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
+	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"html/template"
 	"io"
 
@@ -13,9 +15,8 @@ import (
 )
 
 type formPage struct {
-	Title      string
-	Name       string
-	CoverImage string
+	Title  string
+	Schema template.JS
 
 	writer io.Writer
 }
@@ -31,12 +32,14 @@ func (o *formPage) Render(tmpl *template.Template) error {
 type getFormDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
+
+	SchemaRepository() *schema.Repository
 }
 
 // ShowForm creates use case interactor to show form.
 func ShowForm(deps getFormDeps) usecase.Interactor {
 	type getFormInput struct {
-		Name string `query:"name"`
+		Name string `path:"name"`
 	}
 
 	tpl, err := static.Assets.ReadFile("form.html")
@@ -52,6 +55,14 @@ func ShowForm(deps getFormDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in getFormInput, out *formPage) error {
 		deps.StatsTracker().Add(ctx, "show_form", 1)
 		deps.CtxdLogger().Info(ctx, "showing form", "name", in.Name)
+
+		s := deps.SchemaRepository().Schema(in.Name)
+		j, err := json.Marshal(s)
+		if err != nil {
+			return err
+		}
+
+		out.Schema = template.JS(j)
 
 		return out.Render(tmpl)
 	})
