@@ -41,6 +41,8 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 
 		s.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
 		s.Post("/album/{name}/{hash}", usecase.AddToAlbum(deps))
+
+		s.Get("/control/form", usecase.ShowForm(deps))
 	})
 
 	s.Get("/album/{name}.json", usecase.GetAlbum(deps))
