@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>Getting started with JSON Form</title>
+    <title>Edit {{.EntityName}}</title>
     <link rel="stylesheet" type="text/css" href="/static/bootstrap.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/static/favicon.png" type="image/png"/>
@@ -12,7 +12,7 @@
 <body>
 
 <div style="margin:2em" class="pure-u-2-5">
-    <h1>Getting started with JSON Form</h1>
+    <h1>Edit {{.EntityName}}</h1>
     <form id="schema-form" class="pure-form"></form>
     <div id="res" class="alert"></div>
 </div>
@@ -28,13 +28,6 @@
         onSubmit: function (errors, values) {
             console.log(values);
             console.log(errors);
-            if (errors) {
-                $('#res').html('<p>I beg your pardon?</p>');
-            } else {
-                $('#res').html('<p>Hello ' + values.name + '.' +
-                    (values.age ? '<br/>You are ' + values.age + '.' : '') +
-                    '</p>');
-            }
         }
     });
 </script>

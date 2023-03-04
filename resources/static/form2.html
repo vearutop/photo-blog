@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Edit {{.EntityName}}</title>
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+    <link rel="stylesheet" href="/static/pure.css">
+
+</head>
+<body>
+
+<div style="margin:2em" class="pure-u-2-5">
+    <h1>Edit {{.EntityName}}</h1>
+    <form id="schema-form" class="pure-form"></form>
+    <div id="res" class="alert"></div>
+</div>
+
+<script type="text/javascript" src="/static/jquery-3.6.3.min.js"></script>
+<script type="text/javascript" src="/static/underscore.js"></script>
+<script type="text/javascript" src="/static/jsv.js"></script>
+<script type="text/javascript" src="/static/jsonform.js"></script>
+<script src="/static/client.js"></script>
+<script type="text/javascript">
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+    // Get the value of "some_key" in eg "https://example.com/?some_key=some_value"
+    let value = params.some_key; // "some_value"
+
+    function getUrlJson(url, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        x.open("GET", url, true);
+        x.send();
+    };
+
+
+    getUrlJson(params.get("schema", function (schema) {
+        getUrlJson(params.get("value", function (value) {
+            $('#schema-form').jsonForm({
+                schema: schema,
+                value: value,
+                onSubmit: function (errors, values) {
+                    console.log(values);
+                    console.log(errors);
+                }
+            })
+            ;
+        }))
+    }))
+
+
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"html/template"
 	"io"
@@ -15,8 +16,10 @@ import (
 )
 
 type formPage struct {
-	Title  string
-	Schema template.JS
+	EntityName string
+	Title      string
+	Schema     template.JS
+	Value      template.JS
 
 	writer io.Writer
 }
@@ -39,7 +42,8 @@ type getFormDeps interface {
 // ShowForm creates use case interactor to show form.
 func ShowForm(deps getFormDeps) usecase.Interactor {
 	type getFormInput struct {
-		Name string `path:"name"`
+		Name string    `path:"name"`
+		ID   uniq.Hash `path:"id"`
 	}
 
 	tpl, err := static.Assets.ReadFile("form.html")
@@ -62,6 +66,8 @@ func ShowForm(deps getFormDeps) usecase.Interactor {
 			return err
 		}
 
+		out.EntityName = in.Name
+		out.Value = `{}`
 		out.Schema = template.JS(j)
 
 		return out.Render(tmpl)
