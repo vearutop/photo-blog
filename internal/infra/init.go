@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"io/fs"
 	"net/http"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -159,6 +159,7 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 func setupSchemaRepo(r *schema.Repository) error {
 	return firstFail(
 		r.AddSchema("album", photo.Album{}),
+		r.AddSchema("image", photo.Image{}),
 		r.AddSchema("gps", photo.Gps{}),
 		r.AddSchema("exif", photo.Gps{}),
 	)

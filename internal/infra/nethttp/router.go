@@ -10,9 +10,12 @@ import (
 	"github.com/swaggest/rest/chirouter"
 	"github.com/swaggest/rest/nethttp"
 	"github.com/swaggest/rest/web"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/usecase"
+	"github.com/vearutop/photo-blog/internal/usecase/control"
 )
 
 // NewRouter creates an instance of router filled with handlers and docs.
@@ -25,7 +28,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		if cfg.AdminPassHash != "" {
 			adminAuth := basicAuth("Admin Access", cfg.AdminPassHash, cfg.AdminPassSalt)
 			s.Use(nethttp.AnnotateOpenAPI(s.OpenAPICollector, func(op *openapi3.Operation) error {
-				op.Tags = append(op.Tags, "Admin Mode")
+				op.Tags = append(op.Tags, "Control Panel")
 
 				return nil
 			}))
@@ -43,10 +46,21 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Post("/album/{name}/{hash}", usecase.AddToAlbum(deps))
 
 		s.Get("/control/{name}/{id}", usecase.ShowForm(deps))
+
+		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
+		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
+		s.Get("/exif/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Exif] { return deps.PhotoExifFinder() }))
+		s.Get("/gps/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Gps] { return deps.PhotoGpsFinder() }))
+		s.Get("/schema/{name}.json", control.GetSchema(deps))
+
+		s.Put("/album", control.Update(deps, func() uniq.Ensurer[photo.Album] { return deps.PhotoAlbumEnsurer() }))
+		s.Put("/image", control.Update(deps, func() uniq.Ensurer[photo.Image] { return deps.PhotoImageEnsurer() }))
+		s.Put("/exif", control.Update(deps, func() uniq.Ensurer[photo.Exif] { return deps.PhotoExifEnsurer() }))
+		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))
 	})
 
-	s.Get("/album/{name}.json", usecase.GetAlbum(deps))
-	s.Get("/image/{hash}.json", usecase.GetImage(deps))
+	s.Get("/album-images/{name}.json", usecase.GetAlbumImages(deps))
+	s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 	s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
 	s.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
@@ -60,6 +74,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s.Post("/make-pass-hash", usecase.MakePassHash())
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
+	s.Handle("/json-form.html", ui.Static)
 
 	return s
 }

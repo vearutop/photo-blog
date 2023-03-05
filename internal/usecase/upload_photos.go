@@ -2,16 +2,17 @@ package usecase
 
 import (
 	"context"
+	"io"
+	"mime/multipart"
+	"os"
+	"path"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/service"
-	"io"
-	"mime/multipart"
-	"os"
-	"path"
 )
 
 type uploadPhotosDeps interface {
@@ -36,7 +37,7 @@ func UploadImages(deps uploadPhotosDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in photoFiles, out *struct{}) error {
 		albumDir := path.Join(deps.ServiceConfig().PhotosStorage, in.Name)
 
-		if err := os.MkdirAll(albumDir, 0600); err != nil {
+		if err := os.MkdirAll(albumDir, 0o600); err != nil {
 			return err
 		}
 
@@ -47,7 +48,7 @@ func UploadImages(deps uploadPhotosDeps) usecase.Interactor {
 				return err
 			}
 
-			//targetName := path.Join(albumDir, f.Filename)
+			// targetName := path.Join(albumDir, f.Filename)
 
 			target, err := os.Create(path.Join(albumDir, f.Filename))
 			if err == nil {

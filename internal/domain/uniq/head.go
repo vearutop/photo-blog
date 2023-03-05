@@ -27,12 +27,12 @@ type Deleter[V any] interface {
 }
 
 type Time struct {
-	CreatedAt time.Time `db:"created_at,omitempty" json:"created_at" title:"Created At" description:"Timestamp of creation."`
+	CreatedAt time.Time `db:"created_at,omitempty" formType:"hidden" json:"created_at" title:"Created At" description:"Timestamp of creation."`
 }
 
 type Head struct {
 	Time
-	Hash Hash `db:"hash" json:"hash" description:"Unique hash value." title:"Hash Id"`
+	Hash Hash `db:"hash" formType:"hidden" json:"hash" description:"Unique hash value." title:"Hash Id"`
 }
 
 func (h *Head) HashPtr() *Hash {

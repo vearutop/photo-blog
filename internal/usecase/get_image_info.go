@@ -12,13 +12,13 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image"
 )
 
-type getImageDeps interface {
+type getImageInfoDeps interface {
 	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
 
-func GetImage(deps getImageDeps) usecase.Interactor {
+func GetImageInfo(deps getImageInfoDeps) usecase.Interactor {
 	type getImageInput struct {
 		Hash     uniq.Hash `path:"hash"`
 		ReadMeta bool      `query:"read_meta" description:"Read meta from original file."`

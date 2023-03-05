@@ -13,7 +13,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
-type getAlbumDeps interface {
+type getAlbumImagesDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
@@ -22,8 +22,8 @@ type getAlbumDeps interface {
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 }
 
-// GetAlbum creates use case interactor to get album data.
-func GetAlbum(deps getAlbumDeps) usecase.Interactor {
+// GetAlbumImages creates use case interactor to get album data.
+func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 	type getAlbumInput struct {
 		Name string `path:"name"`
 	}
@@ -44,8 +44,8 @@ func GetAlbum(deps getAlbumDeps) usecase.Interactor {
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *getAlbumOutput) error {
-		deps.StatsTracker().Add(ctx, "get_album", 1)
-		deps.CtxdLogger().Info(ctx, "getting album", "name", in.Name)
+		deps.StatsTracker().Add(ctx, "get_album_images", 1)
+		deps.CtxdLogger().Info(ctx, "getting album images", "name", in.Name)
 
 		albumHash := photo.AlbumHash(in.Name)
 

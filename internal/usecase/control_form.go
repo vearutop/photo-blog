@@ -3,15 +3,15 @@ package usecase
 import (
 	"context"
 	"encoding/json"
-	"github.com/bool64/ctxd"
-	"github.com/bool64/stats"
-	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"html/template"
 	"io"
 
+	"github.com/bool64/ctxd"
+	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/resources/static"
 )
 

@@ -13,5 +13,7 @@ Project template with GitHub actions for Go.
 
 ## Usage
 
+http://localhost:8089/json-form.html#schema=/schema/album.json&value=/album/2a8vev1kgazvu.json&submitUrl=/album&submitMethod=PUT&title=Edit%20album
+
 Create a new repository from this template, check out it and run `./run_me.sh` to replace template name with name of
 your repository.

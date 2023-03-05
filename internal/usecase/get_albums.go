@@ -20,7 +20,7 @@ type getAlbumsDeps interface {
 // GetAlbums creates use case interactor to get album data.
 func GetAlbums(deps getAlbumsDeps) usecase.Interactor {
 	type getAlbumsOutput struct {
-		Albums []photo.Album `json:"albums"`
+		Albums []photo.Album `json:"albums,omitempty"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *getAlbumsOutput) error {

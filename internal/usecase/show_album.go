@@ -29,7 +29,7 @@ func (o *albumPage) Render(tmpl *template.Template) error {
 }
 
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps getAlbumDeps) usecase.Interactor {
+func ShowAlbum(deps getAlbumImagesDeps) usecase.Interactor {
 	type getAlbumInput struct {
 		Name string `path:"name"`
 	}

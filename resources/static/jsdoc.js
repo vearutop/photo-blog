@@ -3,19 +3,21 @@
 /**
  * @typedef CreateAlbumRequest
  * @type {Object}
- * @property {String} name
- * @property {Boolean} public
- * @property {String} title
+ * @property {String} coverImage
+ * @property {String} name - NameA slug value that is used in album URL.
+ * @property {Boolean} public - PublicMakes album visible in the main page.
+ * @property {String} title - TitleTitle of an album.
  */
 
 /**
  * @typedef PhotoAlbum
  * @type {Object}
- * @property {String} created_at
+ * @property {String} cover_image
+ * @property {String} created_at - Created AtTimestamp of creation.
  * @property {String} hash
- * @property {String} name
- * @property {Boolean} public
- * @property {String} title
+ * @property {String} name - NameA slug value that is used in album URL.
+ * @property {Boolean} public - PublicMakes album visible in the main page.
+ * @property {String} title - TitleTitle of an album.
  */
 
 /**
@@ -38,7 +40,21 @@
  */
 
 /**
- * @typedef GetAlbumNameJsonRequest
+ * @typedef PutAlbumRequest
+ * @type {Object}
+ * @property {String} coverImage
+ * @property {String} name - NameA slug value that is used in album URL.
+ * @property {Boolean} public - PublicMakes album visible in the main page.
+ * @property {String} title - TitleTitle of an album.
+ */
+
+/**
+ * @callback RawCallback
+ * @param {XMLHttpRequest} value
+ */
+
+/**
+ * @typedef GetAlbumImagesNameJsonRequest
  * @type {Object}
  * @property {String} name
  */
@@ -48,7 +64,7 @@
  * @type {Object}
  * @property {String} camera_make
  * @property {String} camera_model
- * @property {String} created_at
+ * @property {String} created_at - Created AtTimestamp of creation.
  * @property {?String} digitized
  * @property {String} exposure_time
  * @property {Number} exposure_time_sec
@@ -66,7 +82,7 @@
  * @typedef PhotoGps
  * @type {Object}
  * @property {Number} altitude
- * @property {String} created_at
+ * @property {String} created_at - Created AtTimestamp of creation.
  * @property {String} hash
  * @property {Number} latitude
  * @property {Number} longitude
@@ -98,14 +114,40 @@
  */
 
 /**
+ * @typedef GetAlbumHashJsonRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
  * @typedef GetAlbumNameZipRequest
  * @type {Object}
  * @property {String} name
  */
 
 /**
- * @callback RawCallback
- * @param {XMLHttpRequest} value
+ * @typedef PostAlbumNameDirectoryRequest
+ * @type {Object}
+ * @property {String} name - Album name.
+ * @property {String} path
+ */
+
+/**
+ * @typedef UsecaseAddDirOutput
+ * @type {Object}
+ * @property {?Array<String>} names
+ */
+
+/**
+ * @callback UsecaseAddDirOutputCallback
+ * @param {UsecaseAddDirOutput} value
+ */
+
+/**
+ * @typedef PostAlbumNameImagesRequest
+ * @type {Object}
+ * @property {String} name
+ * @property {?Array<?File|?Blob>} photos
  */
 
 /**
@@ -125,7 +167,7 @@
 /**
  * @typedef UsecaseGetAlbumsOutput
  * @type {Object}
- * @property {?Array<PhotoAlbum>} albums
+ * @property {Array<PhotoAlbum>} albums
  */
 
 /**
@@ -134,40 +176,63 @@
  */
 
 /**
- * @typedef PostDirectoryRequest
+ * @typedef GetControlNameIdRequest
  * @type {Object}
- * @property {String} albumName
- * @property {String} path
+ * @property {String} name
+ * @property {String} id
  */
 
 /**
- * @typedef UsecaseHelloOutput
+ * @typedef PutExifRequest
  * @type {Object}
- * @property {?Array<String>} names
+ * @property {PhotoExif} body
  */
 
 /**
- * @callback UsecaseHelloOutputCallback
- * @param {UsecaseHelloOutput} value
- */
-
-/**
- * @typedef GetImageHashJpgRequest
+ * @typedef GetExifHashJsonRequest
  * @type {Object}
  * @property {String} hash
  */
 
 /**
- * @typedef GetImageHashJsonRequest
+ * @callback PhotoExifCallback
+ * @param {PhotoExif} value
+ */
+
+/**
+ * @typedef PutGpsRequest
  * @type {Object}
- * @property {Boolean} readMeta - Read meta from original file.
+ * @property {PhotoGps} body
+ */
+
+/**
+ * @typedef GetGpsHashJsonRequest
+ * @type {Object}
  * @property {String} hash
+ */
+
+/**
+ * @callback PhotoGpsCallback
+ * @param {PhotoGps} value
  */
 
 /**
  * @typedef PhotoImage
  * @type {Object}
- * @property {String} created_at
+ * @property {String} created_at - Created AtTimestamp of creation.
+ * @property {String} hash
+ */
+
+/**
+ * @typedef PutImageRequest
+ * @type {Object}
+ * @property {PhotoImage} body
+ */
+
+/**
+ * @typedef GetImageInfoHashJsonRequest
+ * @type {Object}
+ * @property {Boolean} readMeta - Read meta from original file.
  * @property {String} hash
  */
 
@@ -185,6 +250,23 @@
  */
 
 /**
+ * @typedef GetImageHashJpgRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef GetImageHashJsonRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @callback PhotoImageCallback
+ * @param {PhotoImage} value
+ */
+
+/**
  * @typedef PostIndexNameRequest
  * @type {Object}
  * @property {String} name - Album name, use '-' for all images and albums.
@@ -197,6 +279,44 @@
  * @type {Object}
  * @property {String} pass
  * @property {String} salt
+ */
+
+/**
+ * @typedef GetSchemaNameJsonRequest
+ * @type {Object}
+ * @property {String} name
+ */
+
+/**
+ * @typedef SchemaFormItem
+ * @type {Object}
+ * @property {String} activeClass - Button mode for radio buttons.
+ * @property {String} append
+ * @property {String} fieldHtmlClass
+ * @property {String} helpvalue
+ * @property {String} htmlClass
+ * @property {Object.<String,String>} htmlMetaData
+ * @property {String} inlinetitle
+ * @property {String} key
+ * @property {Boolean} notitle
+ * @property {String} placeholder
+ * @property {String} prepend
+ * @property {Boolean} readonly
+ * @property {String} title
+ * @property {Object.<String,String>} titleMap - Title mapping for enum.
+ * @property {String} type
+ */
+
+/**
+ * @typedef SchemaFormSchema
+ * @type {Object}
+ * @property {Array<SchemaFormItem>} form
+ * @property {*} schema
+ */
+
+/**
+ * @callback SchemaFormSchemaCallback
+ * @param {SchemaFormSchema} value
  */
 
 /**

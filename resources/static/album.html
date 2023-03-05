@@ -98,7 +98,7 @@
         var gpsMarkers = []
         var client = new Backend('');
 
-        client.getAlbumNameJson({
+        client.getAlbumImagesNameJson({
             name: "{{.Name}}"
         }, function (result) {
             var hashByIdx = {}
@@ -158,7 +158,7 @@
                     a.attr("data-pswp-srcset", srcSet)
                     a.html('<div class="thumb" style="display:inline-block;background:#333;text-align:center;' + containerStyle + '">' +
                         '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                        '<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
+                        '<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
 
                     $(".gallery").append(a)
                     if (typeof img.blur_hash !== "undefined") {
@@ -168,7 +168,7 @@
                     var a = $("<a>")
                     a.attr("id", 'img' + img.hash)
                     a.attr("href", "/{{.Name}}/pano-" + img.hash + ".html")
-                    a.html('<img src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
+                    a.html('<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
 
                     $(".gallery-pano").show().append(a)
                 }
