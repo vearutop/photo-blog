@@ -35,17 +35,17 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 			s.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(s.OpenAPICollector, "Admin", "Admin access"))
 		}
 
-		s.Post("/album", usecase.CreateAlbum(deps))
-		s.Post("/album/{name}/directory", usecase.AddDirectory(deps))
-		s.Post("/album/{name}/images", usecase.UploadImages(deps))
+		s.Post("/album", control.CreateAlbum(deps))
+		s.Post("/album/{name}/directory", control.AddDirectory(deps))
+		s.Post("/album/{name}/images", control.UploadImages(deps))
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
-		s.Post("/index/{name}", usecase.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
+		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 
-		s.Delete("/album/{name}/{hash}", usecase.RemoveFromAlbum(deps))
-		s.Post("/album/{name}/{hash}", usecase.AddToAlbum(deps))
+		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
+		s.Post("/album/{name}/{hash}", control.AddToAlbum(deps))
 
-		s.Get("/control/{name}/{id}", usecase.ShowForm(deps))
+		s.Get("/control/{name}/{id}", control.ShowForm(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
