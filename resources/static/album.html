@@ -7,11 +7,13 @@
     <link rel="icon" href="/static/favicon.png" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
     <link rel="stylesheet" href="/static/photoswipe.css">
+    <link rel="stylesheet" href="/static/photoswipe-dynamic-caption-plugin.css">
 
     <script src="/static/jquery-3.6.3.min.js"></script>
     <script src="/static/client.js"></script>
     <script src="/static/photoswipe.umd.min.js"></script>
     <script src="/static/photoswipe-lightbox.umd.min.js"></script>
+    <script src="/static/photoswipe-dynamic-caption-plugin.umd.min.js"></script>
     <script src="/static/blurhash.js"></script>
 
     <meta property="og:title" content="{{.Title}}"/>
@@ -159,6 +161,11 @@
                     a.html('<div class="thumb" style="display:inline-block;background:#333;text-align:center;' + containerStyle + '">' +
                         '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
                         '<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
+                    a.find("img").attr("alt", img.description +
+                        '<div class="control-panel">' +
+                        '<a href="/json-form.html#schema=/schema/image.json&value=/image/'+img.hash+'.json&submitUrl=/image&submitMethod=PUT&title=Edit%20image">edit image</a>' +
+                        '</div>')
+
 
                     $(".gallery").append(a)
                     if (typeof img.blur_hash !== "undefined") {
@@ -179,6 +186,13 @@
                 children: 'a.image',
                 pswpModule: PhotoSwipe
             });
+
+            var captionPlugin = new PhotoSwipeDynamicCaption(lightbox, {
+                mobileLayoutBreakpoint: 700,
+                type: 'auto',
+                mobileCaptionOverlapRatio: 1
+            });
+
             lightbox.init();
 
             openByHash = function (hash) {

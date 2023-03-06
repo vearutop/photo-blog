@@ -102,18 +102,6 @@ func (tr *ThumbRepository) Find(ctx context.Context, imageHash uniq.Hash, width,
 	return row, nil
 }
 
-func (tr *ThumbRepository) PhotoThumbEnsurer() uniq.Ensurer[photo.Thumb] {
-	return tr
-}
-
-func (tr *ThumbRepository) PhotoThumbFinder() uniq.Finder[photo.Thumb] {
-	return tr
-}
-
-func (tr *ThumbRepository) PhotoThumbAdder() uniq.Adder[photo.Thumb] {
-	return tr
-}
-
 func (tr *ThumbRepository) PhotoThumbnailer() photo.Thumbnailer {
 	return tr
 }

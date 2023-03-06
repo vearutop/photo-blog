@@ -32,6 +32,10 @@ type Locator struct {
 
 	PhotoGpsEnsurerProvider
 	PhotoGpsFinderProvider
+
+	TextLabelEnsurerProvider
+	TextLabelFinderProvider
+	TextLabelDeleterProvider
 }
 
 // ServiceConfig gives access to service configuration.

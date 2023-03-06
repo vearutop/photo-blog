@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/domain/text"
 	"path"
 
 	"github.com/bool64/ctxd"
@@ -20,27 +21,31 @@ type getAlbumImagesDeps interface {
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
+	TextLabelFinder() text.LabelFinder
 }
 
 // GetAlbumImages creates use case interactor to get album data.
 func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 	type getAlbumInput struct {
-		Name string `path:"name"`
+		Name   string `path:"name"`
+		Locale string `cookie:"locale" default:"en-US"`
 	}
 
 	type image struct {
-		Name     string      `json:"name"`
-		Hash     string      `json:"hash"`
-		Width    int64       `json:"width"`
-		Height   int64       `json:"height"`
-		BlurHash string      `json:"blur_hash,omitempty"`
-		Gps      *photo.Gps  `json:"gps,omitempty"`
-		Exif     *photo.Exif `json:"exif,omitempty"`
+		Name        string      `json:"name"`
+		Hash        string      `json:"hash"`
+		Width       int64       `json:"width"`
+		Height      int64       `json:"height"`
+		BlurHash    string      `json:"blur_hash,omitempty"`
+		Gps         *photo.Gps  `json:"gps,omitempty"`
+		Exif        *photo.Exif `json:"exif,omitempty"`
+		Description string      `json:"description,omitempty"`
 	}
 
 	type getAlbumOutput struct {
-		Album  photo.Album `json:"album"`
-		Images []image     `json:"images,omitempty"`
+		Album       photo.Album `json:"album"`
+		Description string      `json:"description,omitempty"`
+		Images      []image     `json:"images,omitempty"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *getAlbumOutput) error {
@@ -57,6 +62,10 @@ func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
 		if err != nil {
 			return err
+		}
+
+		if labels, err := deps.TextLabelFinder().Find(ctx, in.Locale, albumHash); err == nil && len(labels) == 1 {
+			out.Description = labels[0].Text
 		}
 
 		out.Album = album
@@ -83,6 +92,16 @@ func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 				img.Exif = &exif
 			} else if !errors.Is(err, status.NotFound) {
 				deps.CtxdLogger().Warn(ctx, "failed to find exif",
+					"hash", i.Hash.String(), "error", err.Error())
+			}
+
+			labels, err := deps.TextLabelFinder().Find(ctx, in.Locale, i.Hash)
+			if err == nil {
+				if len(labels) == 1 {
+					img.Description = labels[0].Text
+				}
+			} else if !errors.Is(err, status.NotFound) {
+				deps.CtxdLogger().Warn(ctx, "failed to find label",
 					"hash", i.Hash.String(), "error", err.Error())
 			}
 

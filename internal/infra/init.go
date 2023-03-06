@@ -98,6 +98,11 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoGpsFinderProvider = gpsRepo
 	l.PhotoGpsEnsurerProvider = gpsRepo
 
+	labelRepo := storage.NewLabelRepository(l.Storage)
+	l.TextLabelFinderProvider = labelRepo
+	l.TextLabelEnsurerProvider = labelRepo
+	l.TextLabelEnsurerProvider = labelRepo
+
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
 	return l, nil

@@ -24,12 +24,12 @@
     /**
      * Create Album
      * Create a named album.
-     * @param {CreateAlbumRequest} req - request parameters.
+     * @param {UsecaseControlCreateAlbumRequest} req - request parameters.
      * @param {PhotoAlbumCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.createAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.usecaseControlCreateAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -273,7 +273,7 @@
      * Add Directory
      * Add a host-local directory of photos to an album (non-recursive).
      * @param {PostAlbumNameDirectoryRequest} req - request parameters.
-     * @param {UsecaseAddDirOutputCallback} onOK
+     * @param {ControlAddDirOutputCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
