@@ -20,6 +20,6 @@ type LabelFinder interface {
 type Label struct {
 	uniq.Head
 
-	Locale string `db:"locale" json:"locale"`
-	Text   string `db:"text" json:"text"`
+	Locale string `db:"locale" json:"locale" title:"Locale" example:"en-US"`
+	Text   string `db:"text" json:"text" formType:"textarea"`
 }

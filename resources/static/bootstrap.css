@@ -260,17 +260,11 @@ th {
     border: 1px solid #ddd !important;
   }
 }
-@font-face {
-  font-family: 'Glyphicons Halflings';
 
-  src: url('../fonts/glyphicons-halflings-regular.eot');
-  src: url('../fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('../fonts/glyphicons-halflings-regular.woff2') format('woff2'), url('../fonts/glyphicons-halflings-regular.woff') format('woff'), url('../fonts/glyphicons-halflings-regular.ttf') format('truetype'), url('../fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
-}
 .glyphicon {
   position: relative;
   top: 1px;
   display: inline-block;
-  font-family: 'Glyphicons Halflings';
   font-style: normal;
   font-weight: normal;
   line-height: 1;
@@ -278,18 +272,19 @@ th {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 .glyphicon-asterisk:before {
   content: "\002a";
 }
 .glyphicon-plus:before {
-  content: "\002b";
+  content: "+";
 }
 .glyphicon-euro:before,
 .glyphicon-eur:before {
   content: "\20ac";
 }
 .glyphicon-minus:before {
-  content: "\2212";
+  content: "-";
 }
 .glyphicon-cloud:before {
   content: "\2601";
@@ -535,10 +530,10 @@ th {
   content: "\e080";
 }
 .glyphicon-plus-sign:before {
-  content: "\e081";
+  content: "+";
 }
 .glyphicon-minus-sign:before {
-  content: "\e082";
+  content: "-";
 }
 .glyphicon-remove-sign:before {
   content: "\e083";

@@ -46,6 +46,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Post("/album/{name}/{hash}", control.AddToAlbum(deps))
 
 		s.Get("/control/{name}/{id}", control.ShowForm(deps))
+		s.Get("/edit/image/{hash}.html", control.EditImage(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
@@ -54,7 +55,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Get("/schema/{name}.json", control.GetSchema(deps))
 
 		s.Put("/album", control.Update(deps, func() uniq.Ensurer[photo.Album] { return deps.PhotoAlbumEnsurer() }))
-		s.Put("/image", control.Update(deps, func() uniq.Ensurer[photo.Image] { return deps.PhotoImageEnsurer() }))
+		s.Put("/image", control.UpdateImage(deps))
 		s.Put("/exif", control.Update(deps, func() uniq.Ensurer[photo.Exif] { return deps.PhotoExifEnsurer() }))
 		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))
 	})

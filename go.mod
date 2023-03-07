@@ -18,8 +18,9 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.2
 	github.com/swaggest/assertjson v1.7.0
-	github.com/swaggest/jsonschema-go v0.3.48
+	github.com/swaggest/jsonschema-go v0.3.49-0.20230307082629-729185382e0e
 	github.com/swaggest/openapi-go v0.2.29
+	github.com/swaggest/refl v1.1.0
 	github.com/swaggest/rest v0.2.42
 	github.com/swaggest/swgui v1.6.0
 	github.com/swaggest/usecase v1.2.1
@@ -92,7 +93,6 @@ require (
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/swaggest/form/v5 v5.0.2 // indirect
-	github.com/swaggest/refl v1.1.0 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vearutop/dynhist-go v1.2.0 // indirect
@@ -125,3 +125,7 @@ require (
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
+
+//replace github.com/swaggest/jsonschema-go => /home/vearutop/gohack/github.com/swaggest/jsonschema-go
+
+//replace modernc.org/sqlite => /home/vearutop/gohack/modernc.org/sqlite

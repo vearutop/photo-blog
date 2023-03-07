@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/usecase/control"
 	"io/fs"
 	"net/http"
 	"time"
@@ -163,6 +164,7 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 
 func setupSchemaRepo(r *schema.Repository) error {
 	return firstFail(
+		r.AddSchema("update-image-input", control.UpdateImageInput{}),
 		r.AddSchema("album", photo.Album{}),
 		r.AddSchema("image", photo.Image{}),
 		r.AddSchema("gps", photo.Gps{}),
