@@ -6,7 +6,6 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"github.com/vearutop/photo-blog/internal/domain/text"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
@@ -15,10 +14,10 @@ type updateImageDeps interface {
 }
 
 type UpdateImageInput struct {
-	Hash         uniq.Hash    `json:"hash" formType:"hidden"`
-	Exif         *photo.Exif  `json:"exif,omitempty"`
-	Gps          *photo.Gps   `json:"gps,omitempty"`
-	Descriptions []text.Label `json:"descriptions,omitempty"`
+	Hash uniq.Hash   `json:"hash" formType:"hidden"`
+	Exif *photo.Exif `json:"exif,omitempty"`
+	Gps  *photo.Gps  `json:"gps,omitempty"`
+	//Descriptions []text.Label `json:"descriptions,omitempty"`
 }
 
 // UpdateImage creates use case interactor to update entity data.

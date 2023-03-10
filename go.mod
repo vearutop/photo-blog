@@ -18,7 +18,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.2
 	github.com/swaggest/assertjson v1.7.0
-	github.com/swaggest/jsonschema-go v0.3.49-0.20230307082629-729185382e0e
+	github.com/swaggest/jsonschema-go v0.3.49-0.20230309233611-691f7149b2cd
 	github.com/swaggest/openapi-go v0.2.29
 	github.com/swaggest/refl v1.1.0
 	github.com/swaggest/rest v0.2.42

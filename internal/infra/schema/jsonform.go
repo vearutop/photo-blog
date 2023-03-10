@@ -2,10 +2,9 @@ package schema
 
 import (
 	"fmt"
-	"reflect"
-
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/refl"
+	"strings"
 )
 
 func SetupJSONSchemaReflector(r *jsonschema.Reflector) {
@@ -52,13 +51,18 @@ func NewRepository(reflector *jsonschema.Reflector) *Repository {
 func (r *Repository) AddSchema(name string, value any) error {
 	fs := FormSchema{}
 
-	schema, err := r.reflector.Reflect(value, jsonschema.InlineRefs, jsonschema.InterceptProperty(
-		func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
-			fi := FormItem{
-				Key: name,
+	schema, err := r.reflector.Reflect(value, jsonschema.InlineRefs, jsonschema.InterceptProp(
+		func(params jsonschema.InterceptPropParams) error {
+			if params.PropertySchema.HasType(jsonschema.Object) {
+				return nil
 			}
 
-			if err := refl.PopulateFieldsFromTags(&fi, field.Tag); err != nil {
+			fi := FormItem{
+				Key: strings.Join(append(params.Path[1:], params.Name), "."),
+			}
+
+			println(fi.Key)
+			if err := refl.PopulateFieldsFromTags(&fi, params.Field.Tag); err != nil {
 				return err
 			}
 
