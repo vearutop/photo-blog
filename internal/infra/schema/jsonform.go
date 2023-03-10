@@ -61,6 +61,8 @@ func (r *Repository) AddSchema(name string, value any) error {
 				Key: strings.Join(append(params.Path[1:], params.Name), "."),
 			}
 
+			fi.Key = strings.ReplaceAll(fi.Key, ".[]", "[]")
+
 			println(fi.Key)
 			if err := refl.PopulateFieldsFromTags(&fi, params.Field.Tag); err != nil {
 				return err
