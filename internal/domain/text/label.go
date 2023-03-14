@@ -2,6 +2,7 @@ package text
 
 import (
 	"context"
+
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 

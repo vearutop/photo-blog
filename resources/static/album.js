@@ -137,21 +137,26 @@ function loadAlbum(albumName) {
             lightbox.loadAndOpen(idxByHash[hash], {gallery: document.querySelector('.gallery')});
         }
 
-        if (window.location.hash) {
-            var hashname = window.location.hash.substring(1);
+        var imgHash = window.location.pathname.match(/photo-(.+)\.html/)
 
-            if (idxByHash[hashname]) {
-                window.openByHash(hashname)
+        if (imgHash !== null) {
+            imgHash = imgHash[1]
+        } else {
+            imgHash = window.location.hash.substring(1);
+        }
+
+        if (imgHash !== "") {
+            if (idxByHash[imgHash] !== undefined) {
+                window.openByHash(imgHash)
             }
         }
 
         lightbox.on('change', function () {
-            window.location.hash = '#' + hashByIdx[lightbox.pswp.currSlide.index]
+            history.pushState("", document.title, "/" + albumName + "/photo-" + hashByIdx[lightbox.pswp.currSlide.index] + ".html");
         })
 
         lightbox.on('close', function () {
-            history.pushState("", document.title, window.location.pathname
-                + window.location.search);
+            history.pushState("", document.title, "/" + albumName + "/");
         })
 
         if (gpsBounds.minLat != null) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/vearutop/photo-blog/internal/usecase/control"
 	"io/fs"
 	"net/http"
 	"time"
@@ -22,6 +21,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
+	"github.com/vearutop/photo-blog/internal/usecase/control"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 

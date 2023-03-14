@@ -10,6 +10,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/resources/static"
 )
 
@@ -30,9 +31,15 @@ func (o *albumPage) Render(tmpl *template.Template) error {
 	return tmpl.Execute(o.writer, o)
 }
 
+type showAlbumAtImageInput struct {
+	showAlbumInput
+	Hash uniq.Hash `path:"hash"`
+}
+
 type showAlbumInput struct {
 	Name    string `path:"name"`
 	hasAuth bool
+	imgHash uniq.Hash
 }
 
 func (i *showAlbumInput) SetRequest(r *http.Request) {
@@ -41,8 +48,21 @@ func (i *showAlbumInput) SetRequest(r *http.Request) {
 	}
 }
 
+func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, albumPage]) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumAtImageInput, out *albumPage) error {
+		in.imgHash = in.Hash
+
+		return up.Invoke(ctx, in.showAlbumInput, out)
+	})
+
+	u.SetTags("Album")
+	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
+
+	return u
+}
+
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps getAlbumImagesDeps) usecase.Interactor {
+func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, albumPage] {
 	tpl, err := static.Assets.ReadFile("album.html")
 	if err != nil {
 		panic(err)
@@ -76,9 +96,13 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.Interactor {
 		out.Title = album.Title
 		out.Name = album.Name
 		out.NonAdmin = !in.hasAuth
-		if album.CoverImage != 0 {
+
+		switch {
+		case in.imgHash != 0:
+			out.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
+		case album.CoverImage != 0:
 			out.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
-		} else {
+		default:
 			out.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
 		}
 

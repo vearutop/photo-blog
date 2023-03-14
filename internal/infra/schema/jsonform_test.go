@@ -1,12 +1,13 @@
 package schema_test
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/swaggest/assertjson"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
-	"testing"
 )
 
 func TestRepository_AddSchema(t *testing.T) {

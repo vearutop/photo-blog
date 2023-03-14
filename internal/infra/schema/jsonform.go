@@ -2,9 +2,10 @@ package schema
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/refl"
-	"strings"
 )
 
 func SetupJSONSchemaReflector(r *jsonschema.Reflector) {
