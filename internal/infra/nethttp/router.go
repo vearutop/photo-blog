@@ -22,6 +22,20 @@ import (
 func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s := brick.NewBaseWebService(deps.BaseLocator)
 
+	s.Wrap(func(handler http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			c, err := r.Cookie("h")
+			if err == nil {
+				var h uniq.Hash
+				if err := h.UnmarshalText([]byte(c.Value)); err == nil {
+					
+				}
+
+				deps.AuthVisitorFinder().FindByHash(r.Context(), uniq.StringHash())
+			}
+		})
+	})
+
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
@@ -58,10 +72,11 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Put("/image", control.UpdateImage(deps))
 		s.Put("/exif", control.Update(deps, func() uniq.Ensurer[photo.Exif] { return deps.PhotoExifEnsurer() }))
 		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))
+
+		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 	})
 
 	s.Get("/album-images/{name}.json", usecase.GetAlbumImages(deps))
-	s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 	s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
 	s.Get("/image/{hash}.jpg", usecase.ShowImage(deps))

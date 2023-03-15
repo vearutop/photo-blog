@@ -104,6 +104,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.TextLabelEnsurerProvider = labelRepo
 	l.TextLabelEnsurerProvider = labelRepo
 
+	visitorRepo := storage.NewVisitorRepository(l.Storage)
+	l.AuthVisitorEnsurerProvider = visitorRepo
+	l.AuthVisitorFinderProvider = visitorRepo
+
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
 	return l, nil

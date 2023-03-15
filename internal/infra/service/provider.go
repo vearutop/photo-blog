@@ -4,6 +4,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/text"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 )
 
 type PhotoAlbumImageAdderProvider interface {
@@ -76,4 +77,12 @@ type TextLabelEnsurerProvider interface {
 
 type TextLabelDeleterProvider interface {
 	TextLabelDeleter() text.LabelDeleter
+}
+
+type AuthVisitorEnsurerProvider interface {
+	AuthVisitorEnsurer() uniq.Ensurer[auth.Visitor]
+}
+
+type AuthVisitorFinderProvider interface {
+	AuthVisitorFinder() uniq.Finder[auth.Visitor]
 }

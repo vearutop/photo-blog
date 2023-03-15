@@ -81,7 +81,7 @@ function loadAlbum(albumName) {
                 }
 
                 if (typeof img.exif !== "undefined") {
-                    img_description += '<a href="#" onclick="$(this).next().toggle();return false;">toggle exif</a><div class="exif" style="display: none">';
+                    img_description += '<a href="#" style="width:170px;display: block" onclick="$(this).next().toggle();return false;">toggle exif</a><div class="exif" style="display: none">';
                     for (var k in img.exif) {
                         if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
                             continue;
@@ -93,7 +93,7 @@ function loadAlbum(albumName) {
                             continue;
                         }
 
-                        img_description += "<br>" + k + ":<br> " + v;
+                        img_description += "<br><br><em>" + k + "</em>:<br> " + v;
                     }
                     img_description += '</div>';
                 }
@@ -102,8 +102,7 @@ function loadAlbum(albumName) {
                 a.html('<div class="thumb" style="display:inline-block;background:#333;text-align:center;' + containerStyle + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
                     '<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
-                // a.find("img").attr("alt", img_description)
-
+                a.find("img").attr("alt", img_description)
 
                 $(".gallery").append(a)
                 if (typeof img.blur_hash !== "undefined") {
