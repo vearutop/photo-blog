@@ -22,19 +22,21 @@ import (
 func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s := brick.NewBaseWebService(deps.BaseLocator)
 
-	s.Wrap(func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c, err := r.Cookie("h")
-			if err == nil {
-				var h uniq.Hash
-				if err := h.UnmarshalText([]byte(c.Value)); err == nil {
-					
-				}
-
-				deps.AuthVisitorFinder().FindByHash(r.Context(), uniq.StringHash())
-			}
-		})
-	})
+	//s.Wrap(func(handler http.Handler) http.Handler {
+	//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	//		var h uniq.Hash
+	//
+	//		c, err := r.Cookie("h")
+	//		if err == nil {
+	//			if err := h.UnmarshalText([]byte(c.Value)); err == nil {
+	//			}
+	//		} else {
+	//
+	//		}
+	//
+	//		r = r.WithContext(ctxd.AddFields(r.Context(), "visitor", h))
+	//	})
+	//})
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)

@@ -3,10 +3,10 @@ module github.com/vearutop/photo-blog
 go 1.19
 
 require (
-	github.com/Masterminds/squirrel v1.5.3
+	github.com/Masterminds/squirrel v1.5.4
 	github.com/bool64/brick v0.2.1-0.20230214002146-8dc75e7f6361
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.25
+	github.com/bool64/dev v0.2.27
 	github.com/bool64/httptestbench v0.1.4
 	github.com/bool64/sqluct v0.1.13-0.20230215230142-1c1a2eed9103
 	github.com/bool64/stats v0.2.2
@@ -21,21 +21,21 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.49-0.20230309233611-691f7149b2cd
 	github.com/swaggest/openapi-go v0.2.29
 	github.com/swaggest/refl v1.1.0
-	github.com/swaggest/rest v0.2.42
-	github.com/swaggest/swgui v1.6.0
+	github.com/swaggest/rest v0.2.44
+	github.com/swaggest/swgui v1.6.2
 	github.com/swaggest/usecase v1.2.1
-	github.com/valyala/fasthttp v1.44.0
+	github.com/valyala/fasthttp v1.45.0
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
-	golang.org/x/crypto v0.6.0
-	modernc.org/sqlite v1.21.0
+	golang.org/x/crypto v0.7.0
+	modernc.org/sqlite v1.20.2
 )
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
-	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bool64/cache v0.4.4 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
@@ -73,10 +73,10 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.13.0 // indirect
@@ -92,7 +92,7 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/swaggest/form/v5 v5.0.2 // indirect
+	github.com/swaggest/form/v5 v5.0.4 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vearutop/dynhist-go v1.2.0 // indirect
@@ -103,19 +103,19 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
 	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	lukechampine.com/uint128 v1.2.0 // indirect
+	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
 	modernc.org/libc v1.22.3 // indirect
@@ -129,3 +129,5 @@ require (
 //replace github.com/swaggest/jsonschema-go => /home/vearutop/gohack/github.com/swaggest/jsonschema-go
 
 //replace modernc.org/sqlite => /home/vearutop/gohack/modernc.org/sqlite
+
+replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick
