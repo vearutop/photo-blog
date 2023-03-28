@@ -28,7 +28,7 @@ require (
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
 	golang.org/x/crypto v0.7.0
-	modernc.org/sqlite v1.20.2
+	modernc.org/sqlite v1.21.0
 )
 
 require (
@@ -37,7 +37,7 @@ require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bool64/cache v0.4.4 // indirect
+	github.com/bool64/cache v0.4.5 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
 	github.com/bool64/godogx v0.1.1 // indirect
 	github.com/bool64/httpmock v0.1.8 // indirect
