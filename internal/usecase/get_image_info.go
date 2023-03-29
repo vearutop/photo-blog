@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -24,9 +25,10 @@ func GetImageInfo(deps getImageInfoDeps) usecase.Interactor {
 		ReadMeta bool      `query:"read_meta" description:"Read meta from original file."`
 	}
 	type imageInfo struct {
-		Image photo.Image `json:"image"`
-		Exif  photo.Exif  `json:"exif"`
-		Gps   *photo.Gps  `json:"gps"`
+		Image       photo.Image `json:"image"`
+		Exif        photo.Exif  `json:"exif"`
+		Gps         *photo.Gps  `json:"gps"`
+		HashDecoded string      `json:"hash_decoded"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getImageInput, out *imageInfo) error {
@@ -36,6 +38,7 @@ func GetImageInfo(deps getImageInfoDeps) usecase.Interactor {
 		}
 
 		out.Image = img
+		out.HashDecoded = strconv.Itoa(int(img.Hash))
 
 		if in.ReadMeta {
 			f, err := os.Open(img.Path)

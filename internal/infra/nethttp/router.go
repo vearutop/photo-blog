@@ -87,6 +87,9 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s.Method(http.MethodGet, "/", ui.Static)
 
 	s.Get("/{name}/", usecase.ShowAlbum(deps))
+	s.Method(http.MethodGet, "/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.Path+"/", http.StatusFound)
+	}))
 	s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
 	s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/bool64/brick"
@@ -144,6 +145,9 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 	switch cfg.DriverName {
 	case "sqlite":
 		migrations = sqlite.Migrations
+		if !strings.Contains(cfg.DSN, "?") {
+			cfg.DSN += "?_time_format=sqlite"
+		}
 	}
 
 	l.CtxdLogger().Info(context.Background(), "setting up storage")

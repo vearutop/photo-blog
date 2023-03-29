@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"time"
+
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type Visitor struct {

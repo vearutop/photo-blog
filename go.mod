@@ -28,7 +28,7 @@ require (
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
 	golang.org/x/crypto v0.7.0
-	modernc.org/sqlite v1.21.0
+	modernc.org/sqlite v1.21.1
 )
 
 require (
@@ -51,7 +51,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
@@ -115,7 +115,7 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	lukechampine.com/uint128 v1.3.0 // indirect
+	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
 	modernc.org/libc v1.22.3 // indirect
@@ -123,11 +123,11 @@ require (
 	modernc.org/memory v1.5.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
-	modernc.org/token v1.1.0 // indirect
+	modernc.org/token v1.0.1 // indirect
 )
 
 //replace github.com/swaggest/jsonschema-go => /home/vearutop/gohack/github.com/swaggest/jsonschema-go
 
 //replace modernc.org/sqlite => /home/vearutop/gohack/modernc.org/sqlite
 
-replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick
+//replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick

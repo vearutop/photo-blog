@@ -72,16 +72,16 @@ function loadAlbum(albumName) {
                     a.attr("style", containerStyle)
                 }
 
-                var img_description = '<div class="control-panel">' +
-                    '<a href="/edit/image/' + img.hash + '.html">edit image</a>' +
-                    '</div>'
+                var img_description =
+                    '<a class="control-panel ctrl-icon edit-ctrl" href="/edit/image/' + img.hash + '.html"></a>'
+
 
                 if (typeof img.description !== "undefined") {
                     img_description += "<br>" + img.description
                 }
 
                 if (typeof img.exif !== "undefined") {
-                    img_description += '<a href="#" style="width:170px;display: block" onclick="$(this).next().toggle();return false;">toggle exif</a><div class="exif" style="display: none">';
+                    img_description += '<a href="#" class="gear-ctrl ctrl-icon" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
                     for (var k in img.exif) {
                         if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
                             continue;
@@ -93,9 +93,9 @@ function loadAlbum(albumName) {
                             continue;
                         }
 
-                        img_description += "<br><br><em>" + k + "</em>:<br> " + v;
+                        img_description += "<tr><th>" + k + "</th><td>" + v + "</td>";
                     }
-                    img_description += '</div>';
+                    img_description += '</table></div>';
                 }
 
                 a.attr("data-pswp-srcset", srcSet)
