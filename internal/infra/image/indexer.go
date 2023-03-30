@@ -127,13 +127,14 @@ func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 }
 
 func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.IndexingFlags) error {
-	exifExists, gpsExists := false, false
+	exifExists, err := i.deps.PhotoExifFinder().Exists(ctx, img.Hash)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "check existing exif")
+	}
 
-	if _, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err == nil {
-		exifExists = true
-		if _, err := i.deps.PhotoGpsFinder().FindByHash(ctx, img.Hash); err == nil {
-			gpsExists = true
-		}
+	gpsExists, err := i.deps.PhotoGpsFinder().Exists(ctx, img.Hash)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "check existing gps")
 	}
 
 	if exifExists && gpsExists && !flags.RebuildExif && !flags.RebuildGps {

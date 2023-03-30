@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/usecase/status"
@@ -45,15 +46,52 @@ func augmentResErr[V any](res V, err error) (V, error) {
 
 type hashedRepo[V any, T interface {
 	*V
+
 	HashPtr() *uniq.Hash
+	CreatedAtPtr() *time.Time
+
 	SetCreatedAt(t time.Time)
 	GetCreatedAt() time.Time
 }] struct {
 	sqluct.StorageOf[V]
 }
 
+func (ir *hashedRepo[V, T]) hashCol() *uniq.Hash {
+	return T(ir.R).HashPtr()
+}
+
+func (ir *hashedRepo[V, T]) hashEq(h uniq.Hash) squirrel.Eq {
+	return ir.Eq(ir.hashCol(), h)
+}
+
+func (ir *hashedRepo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, error) {
+	col := ir.Col(ir.hashCol())
+
+	q := ir.SelectStmt(func(options *sqluct.Options) {
+		options.Columns = []string{col}
+	}).Where(ir.hashEq(hash))
+
+	_, err := ir.Get(ctx, q)
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, augmentErr(err)
+}
+
 func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, error) {
-	q := ir.SelectStmt().Where(ir.Eq(T(ir.R).HashPtr(), hash))
+	q := ir.SelectStmt().Where(ir.hashEq(hash))
+	return augmentResErr(ir.Get(ctx, q))
+}
+
+func (ir *hashedRepo[V, T]) findBaseByHash(ctx context.Context, hash uniq.Hash) (V, error) {
+	q := ir.SelectStmt(func(options *sqluct.Options) {
+		options.Columns = []string{ir.Col(T(ir.R).CreatedAtPtr())}
+	}).Where(ir.hashEq(hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
 
@@ -69,15 +107,19 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) (V, error) {
 		return value, ErrMissingHash
 	}
 
-	if val, err := ir.FindByHash(ctx, h); err == nil {
+	if val, err := ir.findBaseByHash(ctx, h); err == nil {
 		// Update.
 		vv := T(&val)
 		v.SetCreatedAt(vv.GetCreatedAt())
 
-		if _, err := ir.UpdateStmt(value).Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx); err != nil {
+		if _, err := ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx); err != nil {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "update")
 		}
 	} else {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return value, ctxd.WrapError(ctx, augmentErr(err), "find")
+		}
+
 		// Insert.
 		v.SetCreatedAt(time.Now())
 		if _, err := ir.InsertRow(ctx, value); err != nil {
@@ -109,9 +151,9 @@ func (ir *hashedRepo[V, T]) Update(ctx context.Context, value V) error {
 		return ErrMissingHash
 	}
 
-	return augmentReturnErr(ir.UpdateStmt(value).Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx))
+	return augmentReturnErr(ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx))
 }
 
 func (ir *hashedRepo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
-	return augmentReturnErr(ir.DeleteStmt().Where(ir.Eq(T(ir.R).HashPtr(), h)).ExecContext(ctx))
+	return augmentReturnErr(ir.DeleteStmt().Where(ir.hashEq(h)).ExecContext(ctx))
 }

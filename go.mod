@@ -8,7 +8,7 @@ require (
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.27
 	github.com/bool64/httptestbench v0.1.4
-	github.com/bool64/sqluct v0.1.13-0.20230215230142-1c1a2eed9103
+	github.com/bool64/sqluct v0.1.13-0.20230330231220-a5dbcec9ebaa
 	github.com/bool64/stats v0.2.2
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
@@ -131,3 +131,5 @@ require (
 //replace modernc.org/sqlite => /home/vearutop/gohack/modernc.org/sqlite
 
 //replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick
+
+//replace github.com/bool64/sqluct => /Users/vearutop/gohack/github.com/bool64/sqluct

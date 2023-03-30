@@ -11,6 +11,7 @@ type Ensurer[V any] interface {
 
 type Finder[V any] interface {
 	FindByHash(ctx context.Context, hash Hash) (V, error)
+	Exists(ctx context.Context, hash Hash) (bool, error)
 	FindAll(ctx context.Context) ([]V, error)
 }
 
@@ -37,6 +38,10 @@ type Head struct {
 
 func (h *Head) HashPtr() *Hash {
 	return &h.Hash
+}
+
+func (h *Head) CreatedAtPtr() *time.Time {
+	return &h.CreatedAt
 }
 
 func (h *Head) SetCreatedAt(t time.Time) {
