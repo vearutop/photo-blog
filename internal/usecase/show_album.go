@@ -19,6 +19,7 @@ type albumPage struct {
 	Name       string
 	CoverImage string
 	NonAdmin   bool
+	Public     bool
 
 	writer io.Writer
 }
@@ -96,6 +97,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, a
 		out.Title = album.Title
 		out.Name = album.Name
 		out.NonAdmin = !in.hasAuth
+		out.Public = album.Public
 
 		switch {
 		case in.imgHash != 0:

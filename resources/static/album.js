@@ -73,7 +73,7 @@ function loadAlbum(albumName) {
                 }
 
                 var img_description =
-                    '<a class="control-panel ctrl-icon edit-ctrl" href="/edit/image/' + img.hash + '.html"></a>'
+                    '<a class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
 
 
                 if (typeof img.description !== "undefined") {
@@ -81,7 +81,7 @@ function loadAlbum(albumName) {
                 }
 
                 if (typeof img.exif !== "undefined") {
-                    img_description += '<a href="#" class="gear-ctrl ctrl-icon" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
+                    img_description += '<a href="#" class="gear-icon ctrl-btn" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
                     for (var k in img.exif) {
                         if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
                             continue;
