@@ -17,11 +17,12 @@ type addToAlbumDeps interface {
 
 	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
 }
 type albumImageInput struct {
-	Name string    `path:"name"`
-	Hash uniq.Hash `path:"hash"`
+	Name string    `path:"name" description:"Name of destination album to add photo."`
+	Hash uniq.Hash `path:"hash" description:"Hash of an image or album."`
 }
 
 // AddToAlbum creates use case interactor to add a photo to album.
@@ -35,12 +36,21 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 			return err
 		}
 
-		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
+		if images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, in.Hash); err == nil && len(images) > 0 {
+			imgHashes := make([]uniq.Hash, 0, len(images))
+			for _, img := range images {
+				imgHashes = append(imgHashes, img.Hash)
+			}
+
+			return deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, imgHashes...)
+		}
+
+		img, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
 		}
 
-		return deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, image.Hash)
+		return deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, img.Hash)
 	})
 
 	u.SetTags("Album")
