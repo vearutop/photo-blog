@@ -9,6 +9,7 @@ import (
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/pkg/web"
@@ -20,6 +21,7 @@ type editAlbumPageDeps interface {
 	CtxdLogger() ctxd.Logger
 
 	SchemaRepository() *schema.Repository
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 
 // EditAlbum creates use case interactor to show form.
@@ -28,15 +30,7 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 		Hash uniq.Hash `path:"hash"`
 	}
 
-	tpl, err := static.Assets.ReadFile("edit-album.html")
-	if err != nil {
-		panic(err)
-	}
-
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
-	if err != nil {
-		panic(err)
-	}
+	tmpl := must(static.Template("edit-album.html"))
 
 	type pageData struct {
 		AlbumHash string
@@ -51,9 +45,19 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 			return err
 		}
 
+		a, err := deps.PhotoAlbumFinder().FindByHash(ctx, in.Hash)
+		if err != nil {
+			return err
+		}
+
+		aj, err := json.Marshal(a)
+		if err != nil {
+			return err
+		}
+
 		d := pageData{}
 		d.AlbumHash = in.Hash.String()
-		d.Value = `{}`
+		d.Value = template.JS(aj)
 		d.Schema = template.JS(j)
 
 		return out.Render(tmpl, d)

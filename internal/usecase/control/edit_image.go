@@ -28,15 +28,7 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 		Hash uniq.Hash `path:"hash"`
 	}
 
-	tpl, err := static.Assets.ReadFile("edit-image.html")
-	if err != nil {
-		panic(err)
-	}
-
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
-	if err != nil {
-		panic(err)
-	}
+	tmpl := must(static.Template("edit-image.html"))
 
 	type pageData struct {
 		ImageHash string

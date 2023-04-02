@@ -25,14 +25,29 @@
 <script src="/static/client.js"></script>
 <script type="text/javascript">
     var formSchema = {{.Schema}}
-    console.log(formSchema)
+    var value = {{.Value}}
+    console.log(formSchema, value)
+
+    var client = new Backend('');
 
     $('#schema-form').jsonForm({
         schema: formSchema.schema,
         form: formSchema.form,
+        value: value,
         onSubmit: function (errors, values) {
+            $('#res').text("")
+
             console.log(values);
             console.log(errors);
+
+            if (errors) {
+                return
+            }
+
+            client.putAlbum(values, function () {
+                $('#res').text("Submitted.")
+                console.log("done")
+            })
         }
     });
 </script>
