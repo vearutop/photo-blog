@@ -81,7 +81,13 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	th.Hash = i.Hash
 	th.Data = buf.Bytes()
 
-	t.logger.Info(ctx, "thumb done", "elapsed", time.Since(start).String())
+	elapsed := time.Since(start)
+	t.logger.Info(ctx, "thumb done", "elapsed", elapsed.String())
+
+	// TODO: add proper concurrency/rate limiter here to avoid resource overuse on limited systems.
+	if elapsed > time.Second {
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	return th, nil
 }
