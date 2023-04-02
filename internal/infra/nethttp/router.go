@@ -63,6 +63,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 
 		s.Get("/control/{name}/{id}", control.ShowForm(deps))
 		s.Get("/edit/image/{hash}.html", control.EditImage(deps))
+		s.Get("/edit/album/{hash}.html", control.EditAlbum(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))

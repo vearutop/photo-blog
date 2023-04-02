@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Manage album</title>
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+    <link rel="stylesheet" href="/static/pure.css">
+    <link rel="stylesheet" href="/static/pure.css">
+
+</head>
+<body>
+
+<div style="margin:2em" class="pure-u-2-5">
+    <h1>Manage album</h1>
+    <form id="schema-form" class="pure-form"></form>
+    <div id="res" class="alert"></div>
+</div>
+
+<script type="text/javascript" src="/static/jquery-3.6.3.min.js"></script>
+<script type="text/javascript" src="/static/underscore.js"></script>
+<script type="text/javascript" src="/static/jsv.js"></script>
+<script type="text/javascript" src="/static/jsonform.js"></script>
+<script src="/static/client.js"></script>
+<script type="text/javascript">
+    var formSchema = {{.Schema}}
+    console.log(formSchema)
+
+    $('#schema-form').jsonForm({
+        schema: formSchema.schema,
+        form: formSchema.form,
+        onSubmit: function (errors, values) {
+            console.log(values);
+            console.log(errors);
+        }
+    });
+</script>
+</body>
+</html>

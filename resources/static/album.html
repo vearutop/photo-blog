@@ -114,7 +114,7 @@
 <body>
 
 <div style="margin:2em">
-    <h1 id="album-title">{{if not .Public}}<div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div> {{end}}{{.Title}}</h1>
+    <h1 id="album-title">{{if not .Public}}<div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div> {{end}}{{.Title}} <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a></h1>
 
     <div class="gallery"></div>
 
