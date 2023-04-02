@@ -176,7 +176,7 @@ func setupSchemaRepo(r *schema.Repository) error {
 		r.AddSchema("album", photo.Album{}),
 		r.AddSchema("image", photo.Image{}),
 		r.AddSchema("gps", photo.Gps{}),
-		r.AddSchema("exif", photo.Gps{}),
+		r.AddSchema("exif", photo.Exif{}),
 	)
 }
 
