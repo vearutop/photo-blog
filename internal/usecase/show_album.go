@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/vearutop/photo-blog/pkg/web"
 	"html/template"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
 
@@ -51,18 +51,18 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		panic(err)
 	}
 
-	type albumPage struct {
+	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
+	if err != nil {
+		panic(err)
+	}
+
+	type pageData struct {
 		Title      string
 		Name       string
 		CoverImage string
 		NonAdmin   bool
 		Public     bool
 		Hash       string
-	}
-
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
-	if err != nil {
-		panic(err)
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
@@ -85,23 +85,23 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			return errors.New("no images")
 		}
 
-		data := albumPage{}
-		data.Title = album.Title
-		data.Name = album.Name
-		data.NonAdmin = !in.hasAuth
-		data.Public = album.Public
-		data.Hash = album.Hash.String()
+		d := pageData{}
+		d.Title = album.Title
+		d.Name = album.Name
+		d.NonAdmin = !in.hasAuth
+		d.Public = album.Public
+		d.Hash = album.Hash.String()
 
 		switch {
 		case in.imgHash != 0:
-			data.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
+			d.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
 		case album.CoverImage != 0:
-			data.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
+			d.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
 		default:
-			data.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
+			d.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
 		}
 
-		return out.Render(tmpl, data)
+		return out.Render(tmpl, d)
 	})
 
 	u.SetTags("Album")

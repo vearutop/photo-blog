@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"html/template"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
@@ -10,7 +12,6 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
-	"html/template"
 )
 
 type showPanoDeps interface {
