@@ -2,34 +2,16 @@ package usecase
 
 import (
 	"context"
-	"html/template"
-	"io"
-
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
+	"html/template"
 )
-
-type panoPage struct {
-	Title      string
-	Name       string
-	CoverImage string
-	Image      string
-
-	writer io.Writer
-}
-
-func (o *panoPage) SetWriter(w io.Writer) {
-	o.writer = w
-}
-
-func (o *panoPage) Render(tmpl *template.Template) error {
-	return tmpl.Execute(o.writer, o)
-}
 
 type showPanoDeps interface {
 	StatsTracker() stats.Tracker
@@ -54,7 +36,14 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 		panic(err)
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in getPanoInput, out *panoPage) error {
+	type pageData struct {
+		Title      string
+		Name       string
+		CoverImage string
+		Image      string
+	}
+
+	u := usecase.NewInteractor(func(ctx context.Context, in getPanoInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_pano", 1)
 		deps.CtxdLogger().Info(ctx, "showing pano", "name", in.Name)
 
@@ -63,12 +52,13 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 			return err
 		}
 
-		out.Title = album.Title
-		out.Name = album.Name
-		out.CoverImage = "/thumb/1200w/" + in.Hash.String() + ".jpg"
-		out.Image = "/image/" + in.Hash.String() + ".jpg"
+		d := pageData{}
+		d.Title = album.Title
+		d.Name = album.Name
+		d.CoverImage = "/thumb/1200w/" + in.Hash.String() + ".jpg"
+		d.Image = "/image/" + in.Hash.String() + ".jpg"
 
-		return out.Render(tmpl)
+		return out.Render(tmpl, d)
 	})
 
 	u.SetTags("Pano")

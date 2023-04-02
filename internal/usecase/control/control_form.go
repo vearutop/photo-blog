@@ -3,34 +3,16 @@ package control
 import (
 	"context"
 	"encoding/json"
-	"html/template"
-	"io"
-
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
+	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
+	"html/template"
 )
-
-type formPage struct {
-	EntityName string
-	Title      string
-	Schema     template.JS
-	Value      template.JS
-
-	writer io.Writer
-}
-
-func (o *formPage) SetWriter(w io.Writer) {
-	o.writer = w
-}
-
-func (o *formPage) Render(tmpl *template.Template) error {
-	return tmpl.Execute(o.writer, o)
-}
 
 type getFormDeps interface {
 	StatsTracker() stats.Tracker
@@ -56,7 +38,14 @@ func ShowForm(deps getFormDeps) usecase.Interactor {
 		panic(err)
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in getFormInput, out *formPage) error {
+	type pageData struct {
+		EntityName string
+		Title      string
+		Schema     template.JS
+		Value      template.JS
+	}
+
+	u := usecase.NewInteractor(func(ctx context.Context, in getFormInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_form", 1)
 		deps.CtxdLogger().Info(ctx, "showing form", "name", in.Name)
 
@@ -66,11 +55,12 @@ func ShowForm(deps getFormDeps) usecase.Interactor {
 			return err
 		}
 
-		out.EntityName = in.Name
-		out.Value = `{}`
-		out.Schema = template.JS(j)
+		d := pageData{}
+		d.EntityName = in.Name
+		d.Value = `{}`
+		d.Schema = template.JS(j)
 
-		return out.Render(tmpl)
+		return out.Render(tmpl, d)
 	})
 
 	u.SetTags("Control Panel")

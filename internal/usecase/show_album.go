@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/vearutop/photo-blog/pkg/web"
 	"html/template"
-	"io"
 	"net/http"
 
 	"github.com/swaggest/usecase"
@@ -13,24 +13,6 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/resources/static"
 )
-
-type albumPage struct {
-	Title      string
-	Name       string
-	CoverImage string
-	NonAdmin   bool
-	Public     bool
-
-	writer io.Writer
-}
-
-func (o *albumPage) SetWriter(w io.Writer) {
-	o.writer = w
-}
-
-func (o *albumPage) Render(tmpl *template.Template) error {
-	return tmpl.Execute(o.writer, o)
-}
 
 type showAlbumAtImageInput struct {
 	showAlbumInput
@@ -49,8 +31,8 @@ func (i *showAlbumInput) SetRequest(r *http.Request) {
 	}
 }
 
-func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, albumPage]) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumAtImageInput, out *albumPage) error {
+func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumAtImageInput, out *web.Page) error {
 		in.imgHash = in.Hash
 
 		return up.Invoke(ctx, in.showAlbumInput, out)
@@ -63,10 +45,19 @@ func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, albumPage]) usec
 }
 
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, albumPage] {
+func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
 	tpl, err := static.Assets.ReadFile("album.html")
 	if err != nil {
 		panic(err)
+	}
+
+	type albumPage struct {
+		Title      string
+		Name       string
+		CoverImage string
+		NonAdmin   bool
+		Public     bool
+		Hash       string
 	}
 
 	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
@@ -74,7 +65,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, a
 		panic(err)
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *albumPage) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
@@ -94,21 +85,23 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, a
 			return errors.New("no images")
 		}
 
-		out.Title = album.Title
-		out.Name = album.Name
-		out.NonAdmin = !in.hasAuth
-		out.Public = album.Public
+		data := albumPage{}
+		data.Title = album.Title
+		data.Name = album.Name
+		data.NonAdmin = !in.hasAuth
+		data.Public = album.Public
+		data.Hash = album.Hash.String()
 
 		switch {
 		case in.imgHash != 0:
-			out.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
+			data.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
 		case album.CoverImage != 0:
-			out.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
+			data.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
 		default:
-			out.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
+			data.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
 		}
 
-		return out.Render(tmpl)
+		return out.Render(tmpl, data)
 	})
 
 	u.SetTags("Album")
