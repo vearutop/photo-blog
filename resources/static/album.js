@@ -20,11 +20,10 @@ function loadAlbum(albumName) {
     }, function (result) {
         var hashByIdx = {}
         var idxByHash = {}
+        var idx = 0
 
         for (var i = 0; i < result.images.length; i++) {
             var img = result.images[i]
-            hashByIdx[i] = img.hash
-            idxByHash[img.hash] = i
 
             if (typeof img.gps != 'undefined') {
                 gpsMarkers.push(img.gps)
@@ -50,11 +49,18 @@ function loadAlbum(albumName) {
             }
 
             if (typeof img.exif == "undefined" || img.exif.projection_type === "") {
+                // console.log("img", i, idx, img.hash, img)
+
+                hashByIdx[idx] = img.hash
+                idxByHash[img.hash] = idx
+                idx++
+
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
                 a.attr("class", "image")
                 a.attr("href", "/image/" + img.hash + ".jpg")
                 a.attr("target", "_blank")
+                a.attr("data-idx", i)
 
                 var srcSet = "/thumb/300w/" + img.hash + ".jpg 300w" +
                     ", /thumb/600w/" + img.hash + ".jpg 600w" +
@@ -82,12 +88,17 @@ function loadAlbum(albumName) {
 
                 if (typeof img.exif !== "undefined") {
                     img_description += '<a href="#" class="gear-icon ctrl-btn" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
-                    for (var k in img.exif) {
+
+                    var exif = img.exif
+
+                    exif["file_name"] = img.name
+
+                    for (var k in exif) {
                         if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
                             continue;
                         }
 
-                        var v = img.exif[k]
+                        var v = exif[k]
 
                         if (!v) {
                             continue;
@@ -118,6 +129,9 @@ function loadAlbum(albumName) {
             }
         }
 
+        // console.log("idxByHash", idxByHash)
+        // console.log("hashByIdx", hashByIdx)
+
         var lightbox = new PhotoSwipeLightbox({
             gallery: '.gallery',
             children: 'a.image',
@@ -133,6 +147,7 @@ function loadAlbum(albumName) {
         lightbox.init();
 
         window.openByHash = function (hash) {
+            // console.log("openByHash", hash, idxByHash[hash])
             lightbox.loadAndOpen(idxByHash[hash], {gallery: document.querySelector('.gallery')});
         }
 
@@ -144,6 +159,8 @@ function loadAlbum(albumName) {
             imgHash = window.location.hash.substring(1);
         }
 
+        // console.log("imgHash", imgHash)
+
         if (imgHash !== "") {
             if (idxByHash[imgHash] !== undefined) {
                 window.openByHash(imgHash)
@@ -151,7 +168,8 @@ function loadAlbum(albumName) {
         }
 
         lightbox.on('change', function () {
-            history.pushState("", document.title, "/" + albumName + "/photo-" + hashByIdx[lightbox.pswp.currSlide.index] + ".html");
+            // console.log("change", lightbox.pswp, lightbox.pswp.currIndex, hashByIdx[lightbox.pswp.currIndex])
+            history.pushState("", document.title, "/" + albumName + "/photo-" + hashByIdx[lightbox.pswp.currIndex] + ".html");
         })
 
         lightbox.on('close', function () {
