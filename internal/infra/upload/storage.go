@@ -7,4 +7,5 @@ type Storage struct {
 }
 
 func (s *Storage) ReceiveFile(up *multipart.FileHeader) error {
+	panic("implement me!")
 }

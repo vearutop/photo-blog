@@ -13,6 +13,7 @@ import (
 	"github.com/godogx/dbsteps"
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -25,16 +26,22 @@ func TestFeatures(t *testing.T) {
 	test.RunFeatures(t, "", &cfg, func(tc *test.Context) (*brick.BaseLocator, http.Handler) {
 		cfg.ServiceName = service.Name
 
-		sl, err := infra.NewServiceLocator(cfg)
+		sl, err := infra.NewServiceLocator(cfg, false)
 		require.NoError(t, err)
 
 		tc.Database.Instances[dbsteps.Default] = dbsteps.Instance{
 			Tables: map[string]interface{}{
-				storage.GreetingsTable: new(storage.GreetingRow),
+				storage.AlbumTable:      new(photo.Album),
+				storage.AlbumImageTable: new(storage.AlbumImage),
+				storage.ImageTable:      new(photo.Image),
+				storage.ExifTable:       new(photo.Exif),
+				storage.GpsTable:        new(photo.Gps),
 			},
 		}
 
-		return sl.BaseLocator, nethttp.NewRouter(sl)
+		tc.Concurrency = 10
+
+		return sl.BaseLocator, nethttp.NewRouter(sl, cfg)
 	})
 }
 
@@ -47,12 +54,12 @@ func BenchmarkGreetings(b *testing.B) {
 
 	require.NoError(b, config.Load("", &cfg, config.WithOptionalEnvFiles(".env.integration-test")))
 
-	sl, err := infra.NewServiceLocator(cfg)
+	sl, err := infra.NewServiceLocator(cfg, false)
 	if err != nil {
 		b.Skip(err)
 	}
 
-	router := nethttp.NewRouter(sl)
+	router := nethttp.NewRouter(sl, cfg)
 
 	srv := httptest.NewServer(router)
 	defer srv.Close()
@@ -76,12 +83,12 @@ func BenchmarkGreetingsSQLite(b *testing.B) {
 
 	require.NoError(b, config.Load("", &cfg, config.WithOptionalEnvFiles(".env.sqlite")))
 
-	sl, err := infra.NewServiceLocator(cfg)
+	sl, err := infra.NewServiceLocator(cfg, false)
 	if err != nil {
 		b.Skip(err)
 	}
 
-	router := nethttp.NewRouter(sl)
+	router := nethttp.NewRouter(sl, cfg)
 
 	srv := httptest.NewServer(router)
 	defer srv.Close()

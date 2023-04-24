@@ -54,6 +54,10 @@ func (r *Repository) AddSchema(name string, value any) error {
 
 	schema, err := r.reflector.Reflect(value, jsonschema.InlineRefs, jsonschema.InterceptProp(
 		func(params jsonschema.InterceptPropParams) error {
+			if !params.Processed {
+				return nil
+			}
+
 			if params.PropertySchema.HasType(jsonschema.Object) {
 				return nil
 			}
