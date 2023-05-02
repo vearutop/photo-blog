@@ -27,7 +27,7 @@ type addDirectoryDeps interface {
 }
 
 // AddDirectory creates use case interactor to add directory of photos to an album.
-func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
+func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlbumInput, struct{}]) usecase.Interactor {
 	type addDirInput struct {
 		Path string `formData:"path"`
 		Name string `path:"name" description:"Album name."`
@@ -84,7 +84,6 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 
 					imgHashes = append(imgHashes, img.Hash)
 				}
-
 			}
 		}
 
@@ -96,6 +95,10 @@ func AddDirectory(deps addDirectoryDeps) usecase.Interactor {
 					return err
 				}
 			}
+		}
+
+		if err := indexer.Invoke(ctx, indexAlbumInput{Name: in.Name}, nil); err != nil {
+			errs = append(errs, err.Error())
 		}
 
 		if len(errs) > 0 {

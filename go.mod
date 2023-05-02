@@ -17,18 +17,18 @@ require (
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.2
-	github.com/swaggest/assertjson v1.8.0
-	github.com/swaggest/jsonschema-go v0.3.50
+	github.com/swaggest/assertjson v1.8.1
+	github.com/swaggest/jsonschema-go v0.3.51
 	github.com/swaggest/openapi-go v0.2.30
 	github.com/swaggest/refl v1.1.0
-	github.com/swaggest/rest v0.2.45
+	github.com/swaggest/rest v0.2.48
 	github.com/swaggest/swgui v1.6.2
 	github.com/swaggest/usecase v1.2.1
-	github.com/valyala/fasthttp v1.46.0
+	github.com/valyala/fasthttp v1.47.0
 	github.com/vearutop/statigz v1.2.0
 	go.opencensus.io v0.24.0
 	golang.org/x/crypto v0.8.0
-	modernc.org/sqlite v1.22.0
+	modernc.org/sqlite v1.22.1
 )
 
 require (
@@ -40,7 +40,7 @@ require (
 	github.com/bool64/cache v0.4.5 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
 	github.com/bool64/godogx v0.1.1 // indirect
-	github.com/bool64/httpmock v0.1.8 // indirect
+	github.com/bool64/httpmock v0.1.10 // indirect
 	github.com/bool64/logz v1.1.0 // indirect
 	github.com/bool64/prom-stats v0.1.3 // indirect
 	github.com/bool64/shared v0.1.5 // indirect
@@ -118,7 +118,7 @@ require (
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
-	modernc.org/libc v1.22.4 // indirect
+	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
 	modernc.org/opt v0.1.3 // indirect

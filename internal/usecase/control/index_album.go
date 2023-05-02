@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -26,15 +27,19 @@ type indexAlbumDeps interface {
 	PhotoImageFinder() uniq.Finder[photo.Image]
 }
 
-var indexInProgress int64
+var (
+	// indexLock prevents concurrent indexing to avoid extra load and extra work.
+	indexLock       sync.Mutex
+	indexInProgress int64
+)
+
+type indexAlbumInput struct {
+	Name string `path:"name" description:"Album name, use '-' for all images and albums."`
+	photo.IndexingFlags
+}
 
 // IndexAlbum creates use case interactor to index album.
-func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
-	type indexAlbumInput struct {
-		Name string `path:"name" description:"Album name, use '-' for all images and albums."`
-		photo.IndexingFlags
-	}
-
+func IndexAlbum(deps indexAlbumDeps) usecase.IOInteractorOf[indexAlbumInput, struct{}] {
 	u := usecase.NewInteractor(func(ctx context.Context, in indexAlbumInput, out *struct{}) (err error) {
 		deps.StatsTracker().Add(ctx, "index_album", 1)
 		deps.CtxdLogger().Info(ctx, "indexing album", "name", in.Name)
@@ -77,6 +82,9 @@ func IndexAlbum(deps indexAlbumDeps) usecase.Interactor {
 			float64(atomic.AddInt64(&indexInProgress, int64(len(images)))))
 
 		go func() {
+			indexLock.Lock()
+			defer indexLock.Unlock()
+
 			ctx := detachedContext{parent: ctx}
 			for _, img := range images {
 				ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))

@@ -52,7 +52,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		}
 
 		s.Post("/album", control.CreateAlbum(deps))
-		s.Post("/album/{name}/directory", control.AddDirectory(deps))
+		s.Post("/album/{name}/directory", control.AddDirectory(deps, control.IndexAlbum(deps)))
 		s.Post("/album/{name}/images", control.UploadImages(deps))
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
