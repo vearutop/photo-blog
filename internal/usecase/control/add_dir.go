@@ -66,7 +66,8 @@ func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlb
 		)
 
 		for _, name := range names {
-			if strings.HasSuffix(strings.ToLower(name), ".jpg") {
+			lName := strings.ToLower(name)
+			if strings.HasSuffix(lName, ".jpg") || strings.HasSuffix(lName, ".jpeg") {
 				d := photo.Image{Path: path.Join(in.Path, name)}
 				if img, err := deps.PhotoImageEnsurer().Ensure(ctx, d); err != nil {
 					errs = append(errs, name+": "+err.Error())

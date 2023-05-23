@@ -50,7 +50,7 @@ func (r *AlbumRepository) FindImages(ctx context.Context, albumHash uniq.Hash) (
 			r.i.Fmt("%s ON %s = %s AND %s = ?",
 				r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
 			albumHash,
-		).OrderByClause(r.i.Ref(&r.i.R.Path))
+		).OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 
 	return augmentResErr(r.i.List(ctx, q))
 }

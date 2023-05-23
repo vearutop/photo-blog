@@ -2,6 +2,7 @@
 package nethttp
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/bool64/brick"
@@ -98,6 +99,12 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
 	s.Handle("/json-form.html", ui.Static)
+
+	s.Method(http.MethodGet, "/foooo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		println("AAAA!", r.URL.Host, r.URL.Path)
+	}))
+
+	log.Print()
 
 	return s
 }

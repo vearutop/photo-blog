@@ -76,6 +76,17 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure exif", "error", err)
 	}
 
+	if img.TakenAt == nil {
+		if exif, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to find exif", "error", err)
+		} else {
+			img.TakenAt = exif.Digitized
+			if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
+				return ctxd.WrapError(ctx, err, "update image")
+			}
+		}
+	}
+
 	i.ensureThumbs(ctx, img)
 	i.ensureBlurHash(ctx, img)
 
