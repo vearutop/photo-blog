@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -23,7 +24,7 @@ func (s *showImageInput) SetRequest(r *http.Request) {
 	s.req = r
 }
 
-func ShowImage(deps showImageDeps) usecase.Interactor {
+func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in showImageInput, out *usecase.OutputWithEmbeddedWriter) error {
 		rw, ok := out.Writer.(http.ResponseWriter)
 		if !ok {
@@ -33,6 +34,11 @@ func ShowImage(deps showImageDeps) usecase.Interactor {
 		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
+		}
+
+		p := image.Path
+		if useAvif {
+			p = p[0:strings.LastIndex(p, ".")] + ".avif"
 		}
 
 		http.ServeFile(rw, in.req, image.Path)

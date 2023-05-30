@@ -73,6 +73,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
+	if err = l.Storage.DB().Get(&l.Config, "SELECT settings FROM app"); err != nil {
+		return nil, err
+	}
+
 	ir := storage.NewImageRepository(l.Storage)
 	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
 	l.PhotoImageUpdaterProvider = ir
@@ -177,6 +181,7 @@ func setupSchemaRepo(r *schema.Repository) error {
 		r.AddSchema("image", photo.Image{}),
 		r.AddSchema("gps", photo.Gps{}),
 		r.AddSchema("exif", photo.Exif{}),
+		r.AddSchema("settings", service.Settings{}),
 	)
 }
 

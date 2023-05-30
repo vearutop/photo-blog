@@ -25,7 +25,7 @@ type uploadPhotosDeps interface {
 	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
 	PhotoImageIndexer() photo.ImageIndexer
 
-	ServiceConfig() service.Config
+	ServiceSettings() service.Settings
 }
 
 func UploadImages(deps uploadPhotosDeps) usecase.Interactor {
@@ -35,7 +35,7 @@ func UploadImages(deps uploadPhotosDeps) usecase.Interactor {
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in photoFiles, out *struct{}) error {
-		albumDir := path.Join(deps.ServiceConfig().PhotosStorage, in.Name)
+		albumDir := path.Join(deps.ServiceSettings().UploadStorage, in.Name)
 
 		if err := os.MkdirAll(albumDir, 0o600); err != nil {
 			return err

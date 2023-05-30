@@ -49,3 +49,7 @@ func (l *Locator) ServiceConfig() Config {
 func (l *Locator) SchemaRepository() *schema.Repository {
 	return l.SchemaRepo
 }
+
+func (l *Locator) ServiceSettings() Settings {
+	return l.Config.Settings
+}

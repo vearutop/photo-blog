@@ -2,7 +2,6 @@
 package nethttp
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/bool64/brick"
@@ -62,7 +61,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
 		s.Post("/album/{name}/{hash}", control.AddToAlbum(deps))
 
-		s.Get("/control/{name}/{id}", control.ShowForm(deps))
+		s.Get("/control/form", control.ShowForm(deps))
 		s.Get("/edit/image/{hash}.html", control.EditImage(deps))
 		s.Get("/edit/album/{hash}.html", control.EditAlbum(deps))
 
@@ -70,6 +69,8 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
 		s.Get("/exif/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Exif] { return deps.PhotoExifFinder() }))
 		s.Get("/gps/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Gps] { return deps.PhotoGpsFinder() }))
+		s.Get("/settings.json", control.GetSettings(deps))
+		s.Put("/settings.json", control.UpdateSettings(deps))
 		s.Get("/schema/{name}.json", control.GetSchema(deps))
 
 		s.Put("/album", control.Update(deps, func() uniq.Ensurer[photo.Album] { return deps.PhotoAlbumEnsurer() }))
@@ -83,10 +84,11 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s.Get("/album-images/{name}.json", usecase.GetAlbumImages(deps))
 	s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
-	s.Get("/image/{hash}.jpg", usecase.ShowImage(deps))
+	s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
+	s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 	s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 
-	s.Method(http.MethodGet, "/", ui.Static)
+	s.Get("/", usecase.ShowMain(deps))
 
 	s.Get("/{name}/", usecase.ShowAlbum(deps))
 	s.Method(http.MethodGet, "/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,12 +101,6 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
 	s.Handle("/json-form.html", ui.Static)
-
-	s.Method(http.MethodGet, "/foooo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		println("AAAA!", r.URL.Host, r.URL.Path)
-	}))
-
-	log.Print()
 
 	return s
 }

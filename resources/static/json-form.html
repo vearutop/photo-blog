@@ -23,9 +23,9 @@
 <script type="text/javascript" src="/static/jsonform.js"></script>
 <script src="/static/client.js"></script>
 <script type="text/javascript">
-    var hash = window.location.hash.substring(1);
+    var query = window.location.search.substring(1);
 
-    var params = hash.split('&').reduce(function (res, item) {
+    var params = query.split('&').reduce(function (res, item) {
         var parts = item.split('=');
         res[parts[0]] = decodeURIComponent(parts[1]);
         return res;
@@ -39,6 +39,13 @@
 
     if (params.schema !== null && params.value !== null) {
         send(params.schema, "GET", null, 200, function (schema) {
+            console.log("SCHEMA:", schema)
+
+            if (!params.title) {
+                $("#title").text(schema.schema.title)
+                document.title = schema.schema.title
+            }
+
             send(params.value, "GET", null, 200, function (value) {
                 $('#schema-form').jsonForm({
                     schema: schema.schema,

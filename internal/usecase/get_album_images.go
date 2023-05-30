@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 	"path"
 
 	"github.com/bool64/ctxd"
@@ -22,6 +23,7 @@ type getAlbumImagesDeps interface {
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 	TextLabelFinder() text.LabelFinder
+	ServiceSettings() service.Settings
 }
 
 // GetAlbumImages creates use case interactor to get album data.

@@ -25,8 +25,8 @@ type getFormDeps interface {
 // ShowForm creates use case interactor to show form.
 func ShowForm(deps getFormDeps) usecase.Interactor {
 	type getFormInput struct {
-		Name string    `path:"name"`
-		ID   uniq.Hash `path:"id"`
+		Schema string    `query:"schema"`
+		ID     uniq.Hash `query:"id"`
 	}
 
 	tpl, err := static.Assets.ReadFile("form.html")
@@ -48,16 +48,16 @@ func ShowForm(deps getFormDeps) usecase.Interactor {
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getFormInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_form", 1)
-		deps.CtxdLogger().Info(ctx, "showing form", "name", in.Name)
+		deps.CtxdLogger().Info(ctx, "showing form", "schema", in.Schema)
 
-		s := deps.SchemaRepository().Schema(in.Name)
+		s := deps.SchemaRepository().Schema(in.Schema)
 		j, err := json.Marshal(s)
 		if err != nil {
 			return err
 		}
 
 		d := pageData{}
-		d.EntityName = in.Name
+		d.EntityName = in.Schema
 		d.Value = `{}`
 		d.Schema = template.JS(j)
 
