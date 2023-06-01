@@ -1,4 +1,4 @@
-function loadAlbum(albumName) {
+function loadAlbum(albumName, mapTiles, mapAttribution) {
     "use strict";
 
     var gpsBounds = {
@@ -8,6 +8,13 @@ function loadAlbum(albumName) {
         maxLng: null
     };
 
+    if (mapTiles == "") {
+        mapTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+    }
+
+    if (mapAttribution == "") {
+        mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }
 
     /**
      * @type {Array<PhotoGps>}
@@ -184,10 +191,10 @@ function loadAlbum(albumName) {
                 [gpsBounds.minLat, gpsBounds.minLng],
                 [gpsBounds.maxLat, gpsBounds.maxLng]
             ]);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer(mapTiles, {
                 maxZoom: 19,
                 // detectRetina: true,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: mapAttribution
             }).addTo(map);
 
             for (var i = 0; i < gpsMarkers.length; i++) {

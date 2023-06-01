@@ -7,7 +7,10 @@ import (
 )
 
 type Settings struct {
-	UploadStorage string `split_words:"true" default:"./photo-blog-data/" json:"upload_storage" title:"Upload Storage" description:"Path to directory where uploaded files are stored."`
+	SiteTitle      string `json:"site_title" title:"Title" description:"The title of this site."`
+	MapTiles       string `json:"map_tiles" title:"Map Tiles" description:"URL to custom map tiles." example:"https://retina-tiles.p.rapidapi.com/local/osm{r}/v1/{z}/{x}/{y}.png?rapidapi-key=YOUR-RAPIDAPI-KEY"`
+	MapAttribution string `json:"map_attribution" title:"Map Attribution" description:"Map tiles attribution."`
+	UploadStorage  string `split_words:"true" default:"./photo-blog-data/" json:"upload_storage" title:"Upload Storage" description:"Path to directory where uploaded files are stored."`
 }
 
 func (s *Settings) Scan(src any) error {

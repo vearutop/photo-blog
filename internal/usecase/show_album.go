@@ -63,6 +63,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		NonAdmin   bool
 		Public     bool
 		Hash       string
+
+		MapTiles       string
+		MapAttribution string
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
@@ -91,6 +94,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.NonAdmin = !in.hasAuth
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
+
+		d.MapTiles = deps.ServiceSettings().MapTiles
+		d.MapAttribution = deps.ServiceSettings().MapAttribution
 
 		switch {
 		case in.imgHash != 0:

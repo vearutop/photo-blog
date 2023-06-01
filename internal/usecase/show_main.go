@@ -50,6 +50,7 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 
 		d := pageData{}
 
+		d.Title = deps.ServiceSettings().SiteTitle
 		d.NonAdmin = !auth.IsAdmin(ctx)
 
 		list, err := deps.PhotoAlbumFinder().FindAll(ctx)
@@ -71,6 +72,18 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 			images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, a.Hash)
 			if err != nil {
 				return err
+			}
+
+			if a.CoverImage != 0 {
+				for i, img := range images {
+					if img.Hash == a.CoverImage {
+						img0 := images[0]
+
+						images[0] = img
+						images[i] = img0
+						break
+					}
+				}
 			}
 
 			if len(images) > 4 {
