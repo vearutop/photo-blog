@@ -7,6 +7,26 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 )
 
+func maybeAuth(hash, salt string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, pass, ok := r.BasicAuth()
+			if ok {
+				h := auth.Hash(auth.HashInput{
+					Pass: pass,
+					Salt: auth.Salt(salt),
+				})
+
+				if h == hash {
+					r = r.WithContext(auth.SetAdmin(r.Context()))
+				}
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // basicAuth implements a simple middleware handler for adding basic http auth to a route.
 func basicAuth(realm string, hash, salt string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

@@ -88,7 +88,17 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 	s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 
-	s.Get("/", usecase.ShowMain(deps))
+	s.Group(func(r chi.Router) {
+		s := fork(s, r)
+
+		if cfg.AdminPassHash != "" {
+			adminAuth := maybeAuth(cfg.AdminPassHash, cfg.AdminPassSalt)
+
+			s.Use(adminAuth)
+		}
+
+		s.Get("/", usecase.ShowMain(deps))
+	})
 
 	s.Get("/{name}/", usecase.ShowAlbum(deps))
 	s.Method(http.MethodGet, "/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

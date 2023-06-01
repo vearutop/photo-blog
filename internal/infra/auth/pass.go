@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"math"
@@ -14,6 +15,20 @@ import (
 func Hash(in HashInput) string {
 	key := argon2.Key([]byte(in.Pass), []byte(in.Salt), 3, 32*1024, 4, 32)
 	return base64.RawStdEncoding.EncodeToString(key)
+}
+
+type ctxKey struct{}
+
+func SetAdmin(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ctxKey{}, true)
+}
+
+func IsAdmin(ctx context.Context) bool {
+	if ctx.Value(ctxKey{}) != nil {
+		return true
+	}
+
+	return false
 }
 
 type Salt string
