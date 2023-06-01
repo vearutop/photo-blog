@@ -3,8 +3,9 @@ package usecase
 import (
 	"context"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"html/template"
-	"net/http"
+	"sort"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -14,12 +15,6 @@ import (
 
 type showMainInput struct {
 	hasAuth bool
-}
-
-func (i *showMainInput) SetRequest(r *http.Request) {
-	if r.Header.Get("Authorization") != "" {
-		i.hasAuth = true
-	}
 }
 
 // ShowMain creates use case interactor to show album.
@@ -34,6 +29,11 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 		panic(err)
 	}
 
+	type album struct {
+		photo.Album
+		Images []photo.Image
+	}
+
 	type pageData struct {
 		Title      string
 		Name       string
@@ -41,7 +41,7 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 		NonAdmin   bool
 		Public     bool
 		Hash       string
-		Albums     []photo.Album
+		Albums     []album
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
@@ -50,17 +50,38 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 
 		d := pageData{}
 
+		d.NonAdmin = !auth.IsAdmin(ctx)
+
 		list, err := deps.PhotoAlbumFinder().FindAll(ctx)
 		if err != nil {
 			return err
 		}
 
+		sort.Slice(list, func(i, j int) bool {
+			return list[i].CreatedAt.After(list[j].CreatedAt)
+		})
+
 		for _, a := range list {
-			if !a.Public {
-				continue
+			if !a.Public || a.Name == "" {
+				if d.NonAdmin {
+					continue
+				}
 			}
 
-			d.Albums = append(d.Albums, a)
+			images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, a.Hash)
+			if err != nil {
+				return err
+			}
+
+			if len(images) > 4 {
+				images = images[:4]
+			}
+
+			aa := album{}
+			aa.Album = a
+			aa.Images = images
+
+			d.Albums = append(d.Albums, aa)
 		}
 
 		//album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
