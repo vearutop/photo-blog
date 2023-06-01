@@ -116,17 +116,14 @@
 <div style="margin:2em">
     <h1 id="album-title">{{.Title}} <a class="control-panel ctrl-btn gear-icon" href="/json-form.html?schema=/schema/settings.json&value=/settings.json&submitUrl=/settings.json&submitMethod=PUT"></a></h1>
 
-    {{range $a := .Albums}}
-    <a href="/{{$a.Name}}/">{{$a.Title}}</a>
+    {{range $k, $a := .Albums}}
+    <h3><a href="/{{$a.Name}}/">{{if not $a.Public}}<div class="ctrl-btn lock-icon" title="URL required to access this album, please share responsibly."></div> {{end}} {{$a.Title}}</a></h3>
+        {{range $i := .Images}}
+            <img style="width: 300px" src="/thumb/300w/{{$i.Hash}}.jpg" srcset="/thumb/600w/{{$i.Hash}}.jpg 2x" />
+        {{end}}
     {{end}}
 
     <div class="gallery"></div>
-
-    <div class="gallery-pano" style="display:none">
-        <h2>Panoramas</h2>
-
-    </div>
-
 </div>
 
 

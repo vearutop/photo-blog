@@ -37,14 +37,14 @@
         onSubmit: function (errors, values) {
             $('#res').text("")
 
-            console.log(values);
-            console.log(errors);
+            console.log("VALUES", values);
+            console.log("ERRORS", errors);
 
             if (errors) {
                 return
             }
 
-            client.putAlbum(values, function () {
+            client.putAlbum({body: values}, function () {
                 $('#res').text("Submitted.")
                 console.log("done")
             })

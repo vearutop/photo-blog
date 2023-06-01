@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: devel go1.21-b94dc384 Sat Mar 4 00:00:01 2023 +0000
+     * Version: Version: dev, GoVersion: go1.20.2
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -22,14 +22,60 @@
      */
 
     /**
+     * Show Main
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.showMain = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Create Album
      * Create a named album.
-     * @param {UsecaseControlCreateAlbumRequest} req - request parameters.
+     * @param {PostAlbumRequest} req - request parameters.
      * @param {PhotoAlbumCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.usecaseControlCreateAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.postAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -64,21 +110,13 @@
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
-        var formData = new FormData();
-        if (typeof req.coverImage !== 'undefined') {
-            formData.append('cover_image', req.coverImage);
-        }
-        if (typeof req.name !== 'undefined') {
-            formData.append('name', req.name);
-        }
-        if (typeof req.public !== 'undefined') {
-            formData.append('public', req.public);
-        }
-        if (typeof req.title !== 'undefined') {
-            formData.append('title', req.title);
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
         }
 
-        x.send(formData);
+        x.send();
     };
 
     /**
@@ -123,21 +161,13 @@
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
-        var formData = new FormData();
-        if (typeof req.coverImage !== 'undefined') {
-            formData.append('cover_image', req.coverImage);
-        }
-        if (typeof req.name !== 'undefined') {
-            formData.append('name', req.name);
-        }
-        if (typeof req.public !== 'undefined') {
-            formData.append('public', req.public);
-        }
-        if (typeof req.title !== 'undefined') {
-            formData.append('title', req.title);
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
         }
 
-        x.send(formData);
+        x.send();
     };
 
     /**
@@ -488,12 +518,12 @@
 
     /**
      * Show Form
-     * @param {GetControlNameIdRequest} req - request parameters.
+     * @param {GetControlFormRequest} req - request parameters.
      * @param {RawCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.getControlNameId = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.getControlForm = function (req, onOK, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -521,9 +551,107 @@
             }
         };
 
-        var url = this.baseURL + '/control/' + encodeURIComponent(req.name) +
-        '/' + encodeURIComponent(req.id) +
-        '?';
+        var url = this.baseURL + '/control/form?';
+        if (req.schema != null) {
+            url += 'schema=' + encodeURIComponent(req.schema) + '&';
+        }
+        if (req.id != null) {
+            url += 'id=' + encodeURIComponent(req.id) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Edit Album
+     * @param {GetEditAlbumHashHtmlRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getEditAlbumHashHtml = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/edit/album/' + encodeURIComponent(req.hash) +
+        '.html?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Edit Image
+     * @param {GetEditImageHashHtmlRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getEditImageHashHtml = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/edit/image/' + encodeURIComponent(req.hash) +
+        '.html?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
@@ -731,7 +859,7 @@
     };
 
     /**
-     * Update photo.Image
+     * Update Image
      * @param {PutImageRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
@@ -809,6 +937,41 @@
         if (req.readMeta != null) {
             url += 'read_meta=' + encodeURIComponent(req.readMeta) + '&';
         }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Image
+     * @param {GetImageHashAvifRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.getImageHashAvif = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/image/' + encodeURIComponent(req.hash) +
+        '.avif?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
@@ -1044,6 +1207,85 @@
     };
 
     /**
+     * Get Settings
+     * @param {Object} req - request parameters.
+     * @param {ServiceSettingsCallback} onOK
+     */
+    Backend.prototype.getSettingsJson = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings.json?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Update Settings
+     * @param {PutSettingsJsonRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.putSettingsJson = function (req, onNoContent, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings.json?';
+        url = url.slice(0, -1);
+
+        x.open("PUT", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
      * Show Thumb
      * @param {GetThumbSizeHashJpgRequest} req - request parameters.
      * @param {RawCallback} onOK
@@ -1163,6 +1405,54 @@
 
         var url = this.baseURL + '/' + encodeURIComponent(req.name) +
         '/pano-' + encodeURIComponent(req.hash) +
+        '.html?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Album At Image
+     * @param {GetNamePhotoHashHtmlRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getNamePhotoHashHtml = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/' + encodeURIComponent(req.name) +
+        '/photo-' + encodeURIComponent(req.hash) +
         '.html?';
         url = url.slice(0, -1);
 

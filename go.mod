@@ -125,11 +125,3 @@ require (
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
-
-//replace github.com/swaggest/jsonschema-go => /home/vearutop/gohack/github.com/swaggest/jsonschema-go
-
-//replace modernc.org/sqlite => /home/vearutop/gohack/modernc.org/sqlite
-
-//replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick
-
-//replace github.com/bool64/sqluct => /Users/vearutop/gohack/github.com/bool64/sqluct
