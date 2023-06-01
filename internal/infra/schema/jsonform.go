@@ -82,6 +82,15 @@ func (r *Repository) AddSchema(name string, value any) error {
 		return fmt.Errorf("reflecting %s schema: %w", name, err)
 	}
 
+	// Complying with Draft 3.
+	for _, name := range schema.Required {
+		if prop, ok := schema.Properties[name]; ok {
+			prop.TypeObject.WithExtraPropertiesItem("required", true)
+		}
+	}
+
+	schema.Required = nil
+
 	fs.Form = append(fs.Form, FormItem{FormType: "submit", FormTitle: "Submit"})
 	fs.Schema = schema
 	r.schemas[name] = fs
