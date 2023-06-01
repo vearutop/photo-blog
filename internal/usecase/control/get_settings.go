@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 )

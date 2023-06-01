@@ -2,10 +2,10 @@ package control
 
 import (
 	"context"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
 // UpdateSettings creates use case interactor to update settings.

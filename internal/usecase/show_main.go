@@ -2,13 +2,13 @@ package usecase
 
 import (
 	"context"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"html/template"
 	"sort"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )

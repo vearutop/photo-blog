@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 	"path"
 
 	"github.com/bool64/ctxd"
@@ -13,6 +12,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/text"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
 type getAlbumImagesDeps interface {
