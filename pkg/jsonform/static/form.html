@@ -34,7 +34,7 @@
         $("#title").text(params.title)
         document.title = params.title
     }
-    console.log("HASH PARAMS:", params)
+    console.log("QUERY PARAMS:", params)
 
     if (params.schema !== null && params.value !== null) {
         send(params.schema, "GET", null, 200, function (schema) {
