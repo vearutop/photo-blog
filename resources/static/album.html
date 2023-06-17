@@ -18,7 +18,7 @@
     <script src="/static/blurhash.js"></script>
     <script src="/static/album.js"></script>
 
-    <meta property="og:title" content="{{.Title}}"/>
+    <meta property="og:title" content="{{.OGTitle}}"/>
     <meta property="og:type" content="website"/>
     <meta property="og:image" content="{{.CoverImage}}"/>
 
@@ -41,7 +41,7 @@
 <body class="dark-mode">
 
 <div style="margin:2em">
-    <h1 id="album-title"><a href="/">&larr;</a> {{if not .Public}}<div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div> {{end}}{{.Title}} <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a></h1>
+    <h1 id="album-title"><a href="/#{{.Name}}">&larr;</a> {{if not .Public}}<div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div> {{end}}{{.Title}} <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a></h1>
 
     <div class="gallery"></div>
 

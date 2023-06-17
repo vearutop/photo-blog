@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -58,6 +59,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 	type pageData struct {
 		Title      string
+		OGTitle    string
 		Name       string
 		CoverImage string
 		NonAdmin   bool
@@ -90,6 +92,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d := pageData{}
 		d.Title = album.Title
+		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(images))
 		d.Name = album.Name
 		d.NonAdmin = !in.hasAuth
 		d.Public = album.Public
