@@ -3,6 +3,7 @@ package control
 import (
 	"context"
 	"encoding/json"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
 	"html/template"
 
 	"github.com/bool64/ctxd"
@@ -11,7 +12,6 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -20,7 +20,7 @@ type editAlbumPageDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 
-	SchemaRepository() *schema.Repository
+	SchemaRepository() *jsonform.Repository
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 

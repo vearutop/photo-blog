@@ -2,14 +2,14 @@ package service
 
 import (
 	"github.com/bool64/brick"
-	"github.com/vearutop/photo-blog/internal/infra/schema"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
 )
 
 // Locator defines application resources.
 type Locator struct {
 	*brick.BaseLocator
 
-	SchemaRepo *schema.Repository
+	SchemaRepo *jsonform.Repository
 
 	Config Config
 
@@ -46,7 +46,7 @@ func (l *Locator) ServiceConfig() Config {
 	return l.Config
 }
 
-func (l *Locator) SchemaRepository() *schema.Repository {
+func (l *Locator) SchemaRepository() *jsonform.Repository {
 	return l.SchemaRepo
 }
 
