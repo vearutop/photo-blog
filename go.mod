@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bool64/brick v0.2.1-0.20230214002146-8dc75e7f6361
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.27
+	github.com/bool64/dev v0.2.28
 	github.com/bool64/httptestbench v0.1.4
 	github.com/bool64/sqluct v0.1.13-0.20230330231220-a5dbcec9ebaa
 	github.com/bool64/stats v0.2.2
@@ -25,7 +25,7 @@ require (
 	github.com/swaggest/swgui v1.6.2
 	github.com/swaggest/usecase v1.2.1
 	github.com/valyala/fasthttp v1.47.0
-	github.com/vearutop/statigz v1.2.0
+	github.com/vearutop/statigz v1.3.1-0.20230619080202-3993e6666456
 	go.opencensus.io v0.24.0
 	golang.org/x/crypto v0.9.0
 	modernc.org/sqlite v1.22.1

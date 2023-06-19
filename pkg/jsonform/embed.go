@@ -8,8 +8,8 @@ import (
 var (
 	// FS holds embedded static assets.
 	//
-	//go:embed ./static/*.*
+	//go:embed static/*
 	staticAssets embed.FS
 
-	staticServer = statigz.FileServer(staticAssets)
+	staticServer = statigz.FileServer(staticAssets, statigz.FSPrefix("static"))
 )

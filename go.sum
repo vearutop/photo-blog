@@ -83,6 +83,7 @@ github.com/bool64/dev v0.2.4/go.mod h1:cTHiTDNc8EewrQPy3p1obNilpMpdmlUesDkFTF2zR
 github.com/bool64/dev v0.2.25/go.mod h1:iJbh1y/HkunEPhgebWRNcs8wfGq7sjvJ6W5iabL8ACg=
 github.com/bool64/dev v0.2.27 h1:mFT+B74mFVgUeUmm/EbfM6ELPA55lEXBjQ/AOHCwCOc=
 github.com/bool64/dev v0.2.27/go.mod h1:iJbh1y/HkunEPhgebWRNcs8wfGq7sjvJ6W5iabL8ACg=
+github.com/bool64/dev v0.2.28/go.mod h1:iJbh1y/HkunEPhgebWRNcs8wfGq7sjvJ6W5iabL8ACg=
 github.com/bool64/godogx v0.1.1 h1:iAwnix6HQgl7A5BAJ4mMvWbhR721GHNxeAAKFEjrWO4=
 github.com/bool64/godogx v0.1.1/go.mod h1:qydmzRfimgYTmNEvpnc+SJNkmdjpPoPavYQoSn2rjoY=
 github.com/bool64/httpmock v0.1.10 h1:cP+JS+nuIe47uwSheiKtoesziyacxbvWfOVo1zczbek=
@@ -535,6 +536,8 @@ github.com/vearutop/gooselite v0.1.1 h1:C2CoI2Attj63yNsaEug9OVPRM5eeJlzqlZIbq4Za
 github.com/vearutop/gooselite v0.1.1/go.mod h1:7DgIIzvRsv10pvQrCt4dV4pOR9OBGw+n//TViMeLLIo=
 github.com/vearutop/statigz v1.2.0 h1:GGBHsDF3KnJBE6UmhvYdRg58ok9boQX/R+nUGRWPMXM=
 github.com/vearutop/statigz v1.2.0/go.mod h1:jqlOPvLAdiQktMtYAkyguI3Ee0FA26iXKeEx2pS5l88=
+github.com/vearutop/statigz v1.3.1-0.20230619080202-3993e6666456 h1:G9A3Gklrr7lwM8BPx8Jpo8aqLuImRgP82PJ0u3DIcYY=
+github.com/vearutop/statigz v1.3.1-0.20230619080202-3993e6666456/go.mod h1:LYTolBLiz9oJISwiVKnOQoIwhO1LWX1A7OECawGS8XE=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yosuke-furukawa/json5 v0.1.2-0.20201207051438-cf7bb3f354ff h1:7YqG491bE4vstXRz1lD38rbSgbXnirvROz1lZiOnPO8=
 github.com/yosuke-furukawa/json5 v0.1.2-0.20201207051438-cf7bb3f354ff/go.mod h1:sw49aWDqNdRJ6DYUtIQiaA3xyj2IL9tjeNYmX2ixwcU=
