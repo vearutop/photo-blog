@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/docker/go-units"
 	"html/template"
 	"net/http"
 
@@ -66,6 +67,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		Public     bool
 		Hash       string
 
+		Count     int
+		TotalSize string
+
 		MapTiles       string
 		MapAttribution string
 	}
@@ -90,6 +94,11 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			return errors.New("no images")
 		}
 
+		var totalSize int64
+		for _, i := range images {
+			totalSize += i.Size
+		}
+
 		d := pageData{}
 		d.Title = album.Title
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(images))
@@ -97,6 +106,8 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.NonAdmin = !in.hasAuth
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
+		d.Count = len(images)
+		d.TotalSize = units.HumanSize(float64(totalSize))
 
 		d.MapTiles = deps.ServiceSettings().MapTiles
 		d.MapAttribution = deps.ServiceSettings().MapAttribution
