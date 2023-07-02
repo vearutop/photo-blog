@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/vearutop/photo-blog/pkg/jsonform"
 	"log"
 	"net/http"
@@ -27,11 +28,12 @@ func (us userStatus) Enum() []interface{} {
 // A demo app that receives data from http and stores it in db
 
 type user struct {
-	FirstName string     `json:"firstName" minLength:"3"`
-	LastName  string     `json:"lastName" minLength:"3"`
-	Locale    string     `json:"locale" enum:"ru-RU,en-US"`
-	Age       int        `json:"age" minimum:"1"`
-	Status    userStatus `json:"status"`
+	FirstName string     `json:"firstName" required:"true" title:"First name" minLength:"3"`
+	LastName  string     `json:"lastName" required:"true" title:"Last name" minLength:"3"`
+	Locale    string     `json:"locale" title:"User locale" enum:"ru-RU,en-US"`
+	Age       int        `json:"age" title:"Age" minimum:"1"`
+	Status    userStatus `json:"status" title:"Status"`
+	Bio       string     `json:"bio" title:"Bio" description:"A brief description of the person." formType:"textarea"`
 }
 
 func (user) Title() string {
@@ -50,8 +52,20 @@ func (r *userRepo) create(u user) {
 	r.st = append(r.st, u)
 }
 
+func (r *userRepo) update(i int, u user) {
+	r.st[i] = u
+}
+
 func (r userRepo) list() []user {
 	return r.st
+}
+
+func (r userRepo) get(i int) (user, error) {
+	if i > len(r.st) {
+		return user{}, errors.New("user not found")
+	}
+
+	return r.st[i], nil
 }
 
 func createUser(ur userRepo) usecase.Interactor {
@@ -99,7 +113,16 @@ func main() {
 	jf := jsonform.NewRepository(&s.OpenAPICollector.Reflector().Reflector)
 	_ = jf.AddSchema("user", user{})
 
-	s.Mount("/json-form/", jf.NewHandler("/json-form/"))
+	jf.Mount(s, "/json-form/")
+
+	s.Method(http.MethodGet, "/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`
+<a href="/json-form/form.html?title=Edit%20user&amp;schema=user-schema.json&amp;value=/users/1.json">Edit user</a>
+
+<a href="/json-form/form.html?title=Create%20user&amp;schemaUrl=user-schema.json&amp;submitUrl=/user&amp;submitMethod=POST">Create user</a>
+
+`))
+	}))
 
 	// Start server.
 	log.Println("SwaggerUI docs at http://localhost:8011/docs")

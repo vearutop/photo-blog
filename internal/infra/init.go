@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
 	"io/fs"
 	"net/http"
 	"strings"
@@ -51,7 +52,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	})
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
-	l.SchemaRepo = schema.NewRepository(&l.OpenAPI.Reflector().Reflector)
+	l.SchemaRepo = jsonform.NewRepository(&l.OpenAPI.Reflector().Reflector)
 	if err := setupSchemaRepo(l.SchemaRepo); err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 	return nil
 }
 
-func setupSchemaRepo(r *schema.Repository) error {
+func setupSchemaRepo(r *jsonform.Repository) error {
 	return firstFail(
 		r.AddSchema("update-image-input", control.UpdateImageInput{}),
 		r.AddSchema("album", photo.Album{}),

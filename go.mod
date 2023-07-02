@@ -8,7 +8,7 @@ require (
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.28
 	github.com/bool64/httptestbench v0.1.4
-	github.com/bool64/sqluct v0.1.13-0.20230330231220-a5dbcec9ebaa
+	github.com/bool64/sqluct v0.2.0
 	github.com/bool64/stats v0.2.2
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
@@ -17,19 +17,19 @@ require (
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.8.1
-	github.com/swaggest/jsonschema-go v0.3.51
+	github.com/swaggest/jsonschema-go v0.3.52
 	github.com/swaggest/openapi-go v0.2.30
 	github.com/swaggest/refl v1.1.0
-	github.com/swaggest/rest v0.2.48
-	github.com/swaggest/swgui v1.6.2
+	github.com/swaggest/rest v0.2.52
+	github.com/swaggest/swgui v1.6.3
 	github.com/swaggest/usecase v1.2.1
-	github.com/valyala/fasthttp v1.47.0
+	github.com/valyala/fasthttp v1.48.0
 	github.com/vearutop/statigz v1.3.1-0.20230619080202-3993e6666456
 	go.opencensus.io v0.24.0
-	golang.org/x/crypto v0.9.0
-	modernc.org/sqlite v1.22.1
+	golang.org/x/crypto v0.10.0
+	modernc.org/sqlite v1.23.1
 )
 
 require (
@@ -41,7 +41,7 @@ require (
 	github.com/bool64/cache v0.4.5 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
 	github.com/bool64/godogx v0.1.1 // indirect
-	github.com/bool64/httpmock v0.1.10 // indirect
+	github.com/bool64/httpmock v0.1.13 // indirect
 	github.com/bool64/logz v1.1.0 // indirect
 	github.com/bool64/prom-stats v0.1.3 // indirect
 	github.com/bool64/shared v0.1.5 // indirect
@@ -74,10 +74,10 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/klauspost/compress v1.16.5 // indirect
+	github.com/klauspost/compress v1.16.6 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.13.0 // indirect
@@ -104,12 +104,12 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/tools v0.8.0 // indirect
+	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/net v0.11.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/tools v0.10.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
 	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
 	google.golang.org/grpc v1.53.0 // indirect
@@ -117,11 +117,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
-	modernc.org/cc/v3 v3.40.0 // indirect
-	modernc.org/ccgo/v3 v3.16.13 // indirect
-	modernc.org/libc v1.22.5 // indirect
-	modernc.org/mathutil v1.5.0 // indirect
-	modernc.org/memory v1.5.0 // indirect
+	modernc.org/cc/v3 v3.41.0 // indirect
+	modernc.org/ccgo/v3 v3.16.14 // indirect
+	modernc.org/libc v1.24.1 // indirect
+	modernc.org/mathutil v1.6.0 // indirect
+	modernc.org/memory v1.6.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect

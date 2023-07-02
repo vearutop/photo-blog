@@ -1,23 +1,36 @@
 package jsonform
 
 import (
+	"context"
 	"github.com/swaggest/rest/web"
+	"github.com/swaggest/usecase"
+	"github.com/swaggest/usecase/status"
 	"net/http"
 )
 
-func (r *Repository) NewHandler(prefix string) http.Handler {
-	return http.StripPrefix(prefix, staticServer)
-}
-
-type handler struct {
-	r *Repository
+func (r *Repository) Handler() http.Handler {
+	return nil
 }
 
 func (r *Repository) Mount(s *web.Service, prefix string) {
-	s.Get(prefix + "/{name}-schema.json")
+	s.Get(prefix+"{name}-schema.json", r.GetSchema())
 	s.Mount(prefix, http.StripPrefix(prefix, staticServer))
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (r *Repository) GetSchema() usecase.Interactor {
+	type schemaReq struct {
+		Name string `path:"name"`
+	}
 
+	u := usecase.NewInteractor[schemaReq, FormSchema](func(ctx context.Context, input schemaReq, output *FormSchema) error {
+		if fs, found := r.schemas[input.Name]; found {
+			*output = fs
+
+			return nil
+		}
+
+		return status.NotFound
+	})
+
+	return u
 }
