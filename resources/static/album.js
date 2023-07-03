@@ -184,7 +184,8 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
         })
 
         lightbox.on('close', function () {
-            history.pushState("", document.title, "/" + albumName + "/");
+            history.back()
+            // history.pushState("", document.title, "/" + albumName + "/");
         })
 
         if (showMap && gpsBounds.minLat !== null) {
