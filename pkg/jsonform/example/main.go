@@ -94,6 +94,23 @@ func listUsers(ur userRepo) usecase.Interactor {
 	return u
 }
 
+func getUser(ur userRepo) usecase.Interactor {
+	type getUserInput struct {
+		ID int `path:"id"`
+	}
+
+	u := usecase.NewInteractor(func(ctx context.Context, input struct{}, output *[]user) (err error) {
+		*output = ur.list()
+
+		return err
+	})
+	// Describe use case interactor.
+	u.SetTitle("List Users")
+	u.SetExpectedErrors(status.InvalidArgument)
+
+	return u
+}
+
 func main() {
 	ur := userRepo{}
 	s := web.DefaultService()
