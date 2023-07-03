@@ -1,5 +1,9 @@
-function loadAlbum(albumName, mapTiles, mapAttribution) {
+function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
     "use strict";
+
+    if (albumName === "") {
+        return;
+    }
 
     var gpsBounds = {
         minLat: null,
@@ -183,7 +187,7 @@ function loadAlbum(albumName, mapTiles, mapAttribution) {
             history.pushState("", document.title, "/" + albumName + "/");
         })
 
-        if (gpsBounds.minLat != null) {
+        if (showMap && gpsBounds.minLat !== null) {
             $(".gallery").append('<div id="map"></div>')
 
             $('#map').show()

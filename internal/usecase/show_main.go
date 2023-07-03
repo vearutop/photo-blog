@@ -41,6 +41,7 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 		NonAdmin   bool
 		Public     bool
 		Hash       string
+		Featured   string
 		Albums     []album
 	}
 
@@ -52,6 +53,18 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 
 		d.Title = deps.ServiceSettings().SiteTitle
 		d.NonAdmin = !auth.IsAdmin(ctx)
+		d.Featured = deps.ServiceSettings().FeaturedAlbumName
+
+		if d.Featured != "" {
+			fa, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(d.Featured))
+			if err != nil {
+				return err
+			}
+
+			if fa.CoverImage != 0 {
+				d.CoverImage = "/thumb/1200w/" + fa.CoverImage.String() + ".jpg"
+			}
+		}
 
 		list, err := deps.PhotoAlbumFinder().FindAll(ctx)
 		if err != nil {
@@ -72,6 +85,10 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 			images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, a.Hash)
 			if err != nil {
 				return err
+			}
+
+			if len(images) == 0 && d.NonAdmin {
+				continue
 			}
 
 			if a.CoverImage != 0 {

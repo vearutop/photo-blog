@@ -23,6 +23,7 @@ type AlbumImageFinder interface {
 
 type AlbumSettings struct {
 	GpxTracksHashes []uniq.Hash `json:"gpx_tracks_hashes,omitempty"`
+	NewestFirst     bool        `json:"newest_first" title:"Newest first" description:"Show newest images at the top."`
 }
 
 func (s *AlbumSettings) Scan(src any) error {

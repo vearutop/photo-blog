@@ -110,6 +110,10 @@ func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 			out.Images = append(out.Images, img)
 		}
 
+		if album.Settings.NewestFirst {
+			reverse(out.Images)
+		}
+
 		return nil
 	})
 
@@ -117,4 +121,10 @@ func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u
+}
+
+func reverse[S ~[]E, E any](s S) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
 }

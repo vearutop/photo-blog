@@ -81,3 +81,10 @@ body.dark-mode {
 .dark-mode a:visited { color: #6498b6; }
 .dark-mode a:hover { color: #ffffff; }
 .dark-mode a:active { color: #ff4040; text-decoration:none; font-weight:normal; }
+
+/* hide extra images on main page on mobile devices */
+@media (max-width: 576px) {
+    .img1, .img2, .img3  {
+        display: none;
+    }
+}
