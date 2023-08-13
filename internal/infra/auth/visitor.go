@@ -67,6 +67,7 @@ func VisitorMiddleware(logger ctxd.Logger) func(handler http.Handler) http.Handl
 					"user_agent", r.Header.Get("User-Agent"),
 					"referer", r.Header.Get("Referer"),
 					"remote_addr", r.RemoteAddr,
+					"forwarded_for", r.Header.Get("X-Forwarded-For"),
 				)
 			}
 

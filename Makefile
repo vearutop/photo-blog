@@ -54,6 +54,6 @@ js-client:
 	@swac js-client ./resources/static/openapi.json --out ./resources/static/ --client-name Backend
 
 deploy: build-linux
-	@scp -C ./bin/photo-blog ubuntu@facepa.ml:photo-blog.new
-	@ssh ubuntu@facepa.ml "./photo-blog.new -migrate -conf photo-blog.env"
-	@ssh ubuntu@facepa.ml "killall photo-blog;sleep 1;mv ./photo-blog ./photo-blog.old;mv ./photo-blog.new ./photo-blog;screen -dmS photo-blog ./photo-blog -conf photo-blog.env"
+	@scp -C ./bin/photo-blog ubuntu@p1cs.1337.cx:photo-blog.new
+	@ssh ubuntu@p1cs.1337.cx "./photo-blog.new -migrate -conf photo-blog.env"
+	@ssh ubuntu@p1cs.1337.cx "killall photo-blog;sleep 1;mv ./photo-blog ./photo-blog.old;mv ./photo-blog.new ./photo-blog;screen -dmS photo-blog ./photo-blog -conf photo-blog.env"
