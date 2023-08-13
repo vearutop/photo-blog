@@ -2,6 +2,7 @@ package jsonform
 
 import (
 	"embed"
+
 	"github.com/vearutop/statigz"
 )
 

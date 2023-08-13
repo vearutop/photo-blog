@@ -1,13 +1,13 @@
 package jsonform_test
 
 import (
-	"github.com/vearutop/photo-blog/pkg/jsonform"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/swaggest/assertjson"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
 )
 
 func TestRepository_AddSchema(t *testing.T) {

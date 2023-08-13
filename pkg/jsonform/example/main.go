@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/vearutop/photo-blog/pkg/jsonform"
 	"log"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 	swgui "github.com/swaggest/swgui/v4emb"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
 	_ "modernc.org/sqlite"
 )
 

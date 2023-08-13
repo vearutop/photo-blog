@@ -46,7 +46,7 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getPanoInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_pano", 1)
-		deps.CtxdLogger().Info(ctx, "showing pano", "name", in.Name)
+		deps.CtxdLogger().Info(ctx, "showing pano", "album", in.Name, "pano", in.Hash)
 
 		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 		if err != nil {

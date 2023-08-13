@@ -2,10 +2,11 @@ package jsonform
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/swaggest/rest/web"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
-	"net/http"
 )
 
 func (r *Repository) Handler() http.Handler {

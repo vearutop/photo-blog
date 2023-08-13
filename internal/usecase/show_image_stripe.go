@@ -2,12 +2,12 @@ package usecase
 
 import (
 	"context"
-	"github.com/swaggest/usecase"
 	"net/http"
+
+	"github.com/swaggest/usecase"
 )
 
-type showImageStripeDeps interface {
-}
+type showImageStripeDeps interface{}
 
 type showImageStripeInput struct {
 	Name  string `path:"name" title:"Album name"`

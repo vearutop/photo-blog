@@ -4,16 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/vearutop/photo-blog/pkg/jsonform"
+	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
+	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
+	"github.com/bool64/zapctxd"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -24,6 +27,8 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
+	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 
@@ -32,9 +37,11 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l := &service.Locator{}
 	l.Config = cfg
 
+	ctx := context.Background()
+
 	defer func() {
 		if err != nil && l != nil && l.LoggerProvider != nil {
-			l.CtxdLogger().Error(context.Background(), err.Error())
+			l.CtxdLogger().Error(ctx, err.Error())
 		}
 	}()
 
@@ -78,6 +85,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
+	if err = setupAccessLog(l); err != nil {
+		return nil, err
+	}
+
 	ir := storage.NewImageRepository(l.Storage)
 	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
 	l.PhotoImageUpdaterProvider = ir
@@ -116,7 +127,41 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
+	l.CtxdLogger().Important(ctx, "service locator initialized successfully")
+
 	return l, nil
+}
+
+func setupAccessLog(l *service.Locator) error {
+	cfg := l.Config
+
+	if cfg.Settings.AccessLogFile == "" {
+		l.AccessLogger = ctxd.NoOpLogger{}
+	} else {
+		f, err := os.OpenFile(cfg.Settings.AccessLogFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+		if err != nil {
+			return fmt.Errorf("access log: %w", err)
+		}
+
+		al := zapctxd.New(zapctxd.Config{
+			Level:  zap.InfoLevel,
+			Output: f,
+		})
+
+		l.OnShutdown("access-log", func() {
+			if err := al.ZapLogger().Sync(); err != nil {
+				l.CtxdLogger().Error(context.Background(), "failed to sync access log", "error", err)
+			}
+
+			if err := f.Close(); err != nil {
+				l.CtxdLogger().Error(context.Background(), "failed to close access log file", "error", err)
+			}
+		})
+
+		l.AccessLogger = al
+	}
+
+	return nil
 }
 
 func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, error) {

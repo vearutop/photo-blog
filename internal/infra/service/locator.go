@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/bool64/brick"
+	"github.com/bool64/ctxd"
 	"github.com/vearutop/photo-blog/pkg/jsonform"
 )
 
@@ -9,7 +10,8 @@ import (
 type Locator struct {
 	*brick.BaseLocator
 
-	SchemaRepo *jsonform.Repository
+	SchemaRepo   *jsonform.Repository
+	AccessLogger ctxd.Logger
 
 	Config Config
 
@@ -39,6 +41,8 @@ type Locator struct {
 
 	AuthVisitorEnsurerProvider
 	AuthVisitorFinderProvider
+
+	AccessLogProvider
 }
 
 // ServiceConfig gives access to service configuration.
@@ -52,4 +56,8 @@ func (l *Locator) SchemaRepository() *jsonform.Repository {
 
 func (l *Locator) ServiceSettings() Settings {
 	return l.Config.Settings
+}
+
+func (l *Locator) AccessLog() ctxd.Logger {
+	return l.AccessLogger
 }

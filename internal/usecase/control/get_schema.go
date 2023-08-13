@@ -2,12 +2,12 @@ package control
 
 import (
 	"context"
-	"github.com/vearutop/photo-blog/pkg/jsonform"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/pkg/jsonform"
 )
 
 type getSchemaDeps interface {

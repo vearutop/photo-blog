@@ -2,6 +2,7 @@
 package nethttp
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/bool64/brick"
@@ -12,6 +13,7 @@ import (
 	"github.com/swaggest/rest/web"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/usecase"
@@ -21,22 +23,7 @@ import (
 // NewRouter creates an instance of router filled with handlers and docs.
 func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s := brick.NewBaseWebService(deps.BaseLocator)
-
-	//s.Wrap(func(handler http.Handler) http.Handler {
-	//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	//		var h uniq.Hash
-	//
-	//		c, err := r.Cookie("h")
-	//		if err == nil {
-	//			if err := h.UnmarshalText([]byte(c.Value)); err == nil {
-	//			}
-	//		} else {
-	//
-	//		}
-	//
-	//		r = r.WithContext(ctxd.AddFields(r.Context(), "visitor", h))
-	//	})
-	//})
+	deps.CtxdLogger().Important(context.Background(), "initializing router")
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
@@ -82,35 +69,48 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	})
 
 	s.Get("/album-images/{name}.json", usecase.GetAlbumImages(deps))
-	s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 
-	s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
-	s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
-	s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
-
+	// Visitors access log.
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
-		if cfg.AdminPassHash != "" {
-			adminAuth := maybeAuth(cfg.AdminPassHash, cfg.AdminPassSalt)
-
-			s.Use(adminAuth)
+		if deps.Config.Settings.TagVisitors {
+			s.Use(auth.VisitorMiddleware(deps.AccessLog()))
 		}
 
-		s.Get("/", usecase.ShowMain(deps))
+		s.Get("/{name}/", usecase.ShowAlbum(deps))
+		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
+		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
+		s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
+
+		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
+		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
+		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
+
+		s.Group(func(r chi.Router) {
+			s := fork(s, r)
+
+			if cfg.AdminPassHash != "" {
+				adminAuth := maybeAuth(cfg.AdminPassHash, cfg.AdminPassSalt)
+
+				s.Use(adminAuth)
+			}
+
+			s.Get("/", usecase.ShowMain(deps))
+		})
 	})
 
-	s.Get("/{name}/", usecase.ShowAlbum(deps))
+	// Redirecting `/my-album` to `/my-album/`.
 	s.Method(http.MethodGet, "/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.URL.Path+"/", http.StatusFound)
 	}))
-	s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
-	s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 
 	s.Post("/make-pass-hash", usecase.MakePassHash())
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
 	s.Handle("/json-form.html", ui.Static)
+
+	deps.CtxdLogger().Important(context.Background(), "router initialized successfully")
 
 	return s
 }

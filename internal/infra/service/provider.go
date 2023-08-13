@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/bool64/ctxd"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/text"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -85,4 +86,8 @@ type AuthVisitorEnsurerProvider interface {
 
 type AuthVisitorFinderProvider interface {
 	AuthVisitorFinder() uniq.Finder[auth.Visitor]
+}
+
+type AccessLogProvider interface {
+	AccessLog() ctxd.Logger
 }
