@@ -15,15 +15,15 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/docker/go-units v0.5.0
 	github.com/dsoprea/go-exif/v3 v3.0.1
-	github.com/go-chi/chi/v5 v5.0.8
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/jsonschema-go v0.3.58
 	github.com/swaggest/openapi-go v0.2.39
-	github.com/swaggest/refl v1.2.0
-	github.com/swaggest/rest v0.2.52
+	github.com/swaggest/refl v1.2.1
+	github.com/swaggest/rest v0.2.57
 	github.com/swaggest/swgui v1.7.2
 	github.com/swaggest/usecase v1.2.1
 	github.com/valyala/fasthttp v1.48.0
