@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/docker/go-units"
 	"github.com/swaggest/usecase"
@@ -59,13 +60,14 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 	}
 
 	type pageData struct {
-		Title      string
-		OGTitle    string
-		Name       string
-		CoverImage string
-		NonAdmin   bool
-		Public     bool
-		Hash       string
+		Title       string
+		Description template.HTML
+		OGTitle     string
+		Name        string
+		CoverImage  string
+		NonAdmin    bool
+		Public      bool
+		Hash        string
 
 		Count     int
 		TotalSize string
@@ -101,6 +103,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d := pageData{}
 		d.Title = album.Title
+		d.Description = template.HTML(strings.ReplaceAll(album.Settings.Description, "\n", "<br />"))
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(images))
 		d.Name = album.Name
 		d.NonAdmin = !in.hasAuth

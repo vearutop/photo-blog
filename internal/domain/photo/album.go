@@ -22,6 +22,7 @@ type AlbumImageFinder interface {
 }
 
 type AlbumSettings struct {
+	Description     string      `json:"description,omitempty" formType:"textarea" description:"Description of an album, can contain HTML."`
 	GpxTracksHashes []uniq.Hash `json:"gpx_tracks_hashes,omitempty"`
 	NewestFirst     bool        `json:"newest_first" title:"Newest first" description:"Show newest images at the top."`
 }
@@ -49,7 +50,7 @@ func (s AlbumSettings) Value() (driver.Value, error) {
 
 type Album struct {
 	uniq.Head
-	Title      string        `db:"title" json:"title" title:"Title" formType:"textarea" description:"Title of an album."`
+	Title      string        `db:"title" json:"title" title:"Title" description:"Title of an album."`
 	Name       string        `db:"name" json:"name" title:"Name" required:"true" description:"A slug value that is used in album URL."`
 	Public     bool          `db:"public" json:"public" inlineTitle:"Album is public." noTitle:"true" title:"Public" description:"Makes album visible in the main page."`
 	CoverImage uniq.Hash     `db:"cover_image" json:"cover_image,omitempty" title:"Cover Image" description:"Hash Id of image to use as a cover."`
