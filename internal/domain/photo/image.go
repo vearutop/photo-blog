@@ -17,9 +17,7 @@ type IndexingFlags struct {
 }
 
 type Image struct {
-	uniq.Head
-	Size     int64      `db:"size" json:"size"`
-	Path     string     `db:"path" json:"path"`
+	uniq.File
 	Width    int64      `db:"width" json:"width"`
 	Height   int64      `db:"height" json:"height"`
 	BlurHash string     `db:"blurhash" json:"blurhash"`

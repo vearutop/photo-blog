@@ -91,3 +91,11 @@ type AuthVisitorFinderProvider interface {
 type AccessLogProvider interface {
 	AccessLog() ctxd.Logger
 }
+
+type PhotoGpxEnsurerProvider interface {
+	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
+}
+
+type PhotoGpxFinderProvider interface {
+	PhotoGpxFinder() uniq.Finder[photo.Gpx]
+}

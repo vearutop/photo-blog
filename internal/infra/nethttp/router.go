@@ -86,6 +86,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
 		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
+		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
 
 		s.Group(func(r chi.Router) {
 			s := fork(s, r)

@@ -35,6 +35,9 @@ type Locator struct {
 	PhotoGpsEnsurerProvider
 	PhotoGpsFinderProvider
 
+	PhotoGpxEnsurerProvider
+	PhotoGpxFinderProvider
+
 	TextLabelEnsurerProvider
 	TextLabelFinderProvider
 	TextLabelDeleterProvider

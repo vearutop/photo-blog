@@ -3,40 +3,33 @@ package usecase
 import (
 	"context"
 	"errors"
-	"net/http"
-	"strings"
-
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"net/http"
 )
 
-type showImageDeps interface {
-	PhotoImageFinder() uniq.Finder[photo.Image]
+type dlGpxDeps interface {
+	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 }
 
-func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
+func DownloadGpx(deps dlGpxDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in hashInPath, out *usecase.OutputWithEmbeddedWriter) error {
 		rw, ok := out.Writer.(http.ResponseWriter)
 		if !ok {
 			return errors.New("missing http.ResponseWriter")
 		}
 
-		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
+		gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
 		}
 
-		p := image.Path
-		if useAvif {
-			p = p[0:strings.LastIndex(p, ".")] + ".avif"
-		}
-
-		http.ServeFile(rw, in.req, image.Path)
+		http.ServeFile(rw, in.req, gpx.Path)
 
 		return nil
 	})
-	u.SetTags("Image")
+	u.SetTags("Gpx")
 
 	return u
 }

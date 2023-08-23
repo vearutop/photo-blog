@@ -2,17 +2,15 @@ package control
 
 import (
 	"context"
-	"os"
-	"path"
-	"strings"
-	"sync/atomic"
-
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"os"
+	"path"
+	"strings"
 )
 
 type addDirectoryDeps interface {
@@ -20,10 +18,13 @@ type addDirectoryDeps interface {
 	CtxdLogger() ctxd.Logger
 
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	PhotoAlbumEnsurer() uniq.Ensurer[photo.Album]
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
 
 	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
 	PhotoImageIndexer() photo.ImageIndexer
+
+	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
 }
 
 // AddDirectory creates use case interactor to add directory of photos to an album.
@@ -62,29 +63,41 @@ func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlb
 
 		var (
 			imgHashes []uniq.Hash
+			gpxHashes []uniq.Hash
 			errs      []string
 		)
 
 		for _, name := range names {
 			lName := strings.ToLower(name)
 			if strings.HasSuffix(lName, ".jpg") || strings.HasSuffix(lName, ".jpeg") {
-				d := photo.Image{Path: path.Join(in.Path, name)}
+				d := photo.Image{}
+				if err := d.SetPath(ctx, path.Join(in.Path, name)); err != nil {
+					errs = append(errs, in.Path+": "+err.Error())
+
+					continue
+				}
+
 				if img, err := deps.PhotoImageEnsurer().Ensure(ctx, d); err != nil {
 					errs = append(errs, name+": "+err.Error())
 				} else {
-					go func() {
-						deps.StatsTracker().Set(ctx, "indexing_images_pending",
-							float64(atomic.AddInt64(&indexInProgress, 1)))
-						ctx := detachedContext{parent: ctx}
-						if err := deps.PhotoImageIndexer().Index(ctx, img, photo.IndexingFlags{}); err != nil {
-							deps.CtxdLogger().Error(ctx, "failed to index image", "error", err)
-						}
-						deps.StatsTracker().Set(ctx, "indexing_images_pending",
-							float64(atomic.AddInt64(&indexInProgress, -1)))
-					}()
-
 					imgHashes = append(imgHashes, img.Hash)
 				}
+			}
+
+			if strings.HasSuffix(lName, ".gpx") {
+				d := photo.Gpx{}
+				if err := d.SetPath(ctx, path.Join(in.Path, name)); err != nil {
+					errs = append(errs, name+": "+err.Error())
+
+					continue
+				}
+
+				if d, err := deps.PhotoGpxEnsurer().Ensure(ctx, d); err != nil {
+					errs = append(errs, name+": "+err.Error())
+				} else {
+					gpxHashes = append(gpxHashes, d.Hash)
+				}
+
 			}
 		}
 
@@ -95,6 +108,25 @@ func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlb
 				} else {
 					return err
 				}
+			}
+		}
+
+		if len(gpxHashes) > 0 {
+			for _, h := range gpxHashes {
+				found := false
+				for _, hh := range a.Settings.GpxTracksHashes {
+					if h == hh {
+						found = true
+						break
+					}
+				}
+				if !found {
+					a.Settings.GpxTracksHashes = append(a.Settings.GpxTracksHashes, h)
+				}
+			}
+
+			if _, err := deps.PhotoAlbumEnsurer().Ensure(ctx, a); err != nil {
+				return err
 			}
 		}
 

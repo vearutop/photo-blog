@@ -2,10 +2,20 @@ package usecase
 
 import (
 	"context"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"io"
 	"net/http"
 	"time"
 )
+
+type hashInPath struct {
+	Hash uniq.Hash `path:"hash"`
+	req  *http.Request
+}
+
+func (s *hashInPath) SetRequest(r *http.Request) {
+	s.req = r
+}
 
 type TextBody struct {
 	t   string

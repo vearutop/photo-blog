@@ -90,7 +90,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	}
 
 	ir := storage.NewImageRepository(l.Storage)
-	l.PhotoImageEnsurerProvider = image.NewHasher(ir, l.CtxdLogger())
+	l.PhotoImageEnsurerProvider = ir
 	l.PhotoImageUpdaterProvider = ir
 	l.PhotoImageFinderProvider = ir
 
@@ -115,6 +115,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	gpsRepo := storage.NewGpsRepository(l.Storage)
 	l.PhotoGpsFinderProvider = gpsRepo
 	l.PhotoGpsEnsurerProvider = gpsRepo
+
+	gpxRepo := storage.NewGpxRepository(l.Storage)
+	l.PhotoGpxFinderProvider = gpxRepo
+	l.PhotoGpxEnsurerProvider = gpxRepo
 
 	labelRepo := storage.NewLabelRepository(l.Storage)
 	l.TextLabelFinderProvider = labelRepo
