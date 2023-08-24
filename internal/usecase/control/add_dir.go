@@ -92,6 +92,14 @@ func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlb
 					continue
 				}
 
+				if err := d.Index(); err != nil {
+					errs = append(errs, name+": "+err.Error())
+
+					continue
+				}
+
+				deps.CtxdLogger().Info(ctx, "gpx", "settings", d.Settings.Val)
+
 				if d, err := deps.PhotoGpxEnsurer().Ensure(ctx, d); err != nil {
 					errs = append(errs, name+": "+err.Error())
 				} else {
