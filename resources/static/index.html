@@ -48,7 +48,7 @@
     {{range $k, $a := .Albums}}
     <h3 id="{{$a.Name}}">{{if not $a.Public}}<div class="ctrl-btn lock-icon" title="URL required to access this album, please share responsibly."></div> {{end}} <a href="/{{$a.Name}}/">{{$a.Title}}</a></h3>
         {{range $k, $i := .Images}}
-            <img class="img{{$k}}" style="width: 300px" src="/thumb/300w/{{$i.Hash}}.jpg" srcset="/thumb/600w/{{$i.Hash}}.jpg 2x" />
+            <img class="img{{$k}}" style="height: 200px" src="/thumb/200h/{{$i.Hash}}.jpg" srcset="/thumb/400h/{{$i.Hash}}.jpg 2x" />
         {{end}}
     {{end}}
 

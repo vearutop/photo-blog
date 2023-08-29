@@ -68,7 +68,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 	})
 
-	s.Get("/album-images/{name}.json", usecase.GetAlbumImages(deps))
+	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))
 
 	// Visitors access log.
 	s.Group(func(r chi.Router) {

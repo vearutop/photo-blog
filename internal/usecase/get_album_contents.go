@@ -24,10 +24,11 @@ type getAlbumImagesDeps interface {
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 	TextLabelFinder() text.LabelFinder
 	ServiceSettings() service.Settings
+	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 }
 
-// GetAlbumImages creates use case interactor to get album data.
-func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
+// GetAlbumContents creates use case interactor to get album data.
+func GetAlbumContents(deps getAlbumImagesDeps) usecase.Interactor {
 	type getAlbumInput struct {
 		Name   string `path:"name"`
 		Locale string `cookie:"locale" default:"en-US"`
@@ -44,10 +45,16 @@ func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 		Description string      `json:"description,omitempty"`
 	}
 
+	type track struct {
+		Hash uniq.Hash `json:"hash"`
+		photo.GpxSettings
+	}
+
 	type getAlbumOutput struct {
 		Album       photo.Album `json:"album"`
 		Description string      `json:"description,omitempty"`
 		Images      []image     `json:"images,omitempty"`
+		Tracks      []track     `json:"tracks,omitempty"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *getAlbumOutput) error {
@@ -68,6 +75,24 @@ func GetAlbumImages(deps getAlbumImagesDeps) usecase.Interactor {
 
 		if labels, err := deps.TextLabelFinder().Find(ctx, in.Locale, albumHash); err == nil && len(labels) == 1 {
 			out.Description = labels[0].Text
+		}
+
+		for _, h := range album.Settings.GpxTracksHashes {
+			gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, h)
+			if err != nil {
+				return err
+			}
+
+			s := gpx.Settings.Val
+
+			if s.Name == "" {
+				s.Name = path.Base(gpx.Path)
+			}
+
+			out.Tracks = append(out.Tracks, track{
+				Hash:        h,
+				GpxSettings: s,
+			})
 		}
 
 		out.Album = album

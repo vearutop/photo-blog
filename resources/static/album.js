@@ -8,8 +8,8 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
     var gpsBounds = {
         minLat: null,
         maxLat: null,
-        minLng: null,
-        maxLng: null
+        minLon: null,
+        maxLon: null
     };
 
     if (mapTiles == "") {
@@ -21,34 +21,37 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
     }
 
     /**
-     * @type {Array<PhotoGps>}
+     * @type {Array<PhotoImage>}
      */
     var gpsMarkers = []
     var client = new Backend('');
 
-    client.getAlbumImagesNameJson({
+    client.getAlbumContentsNameJson({
         name: albumName
     }, function (result) {
         var hashByIdx = {}
         var idxByHash = {}
         var idx = 0
 
+        if (typeof result.images === 'undefined') {
+            result.images = [];
+        }
         for (var i = 0; i < result.images.length; i++) {
             var img = result.images[i]
 
             if (typeof img.gps != 'undefined') {
-                gpsMarkers.push(img.gps)
+                gpsMarkers.push(img)
                 if (gpsBounds.maxLat == null) {
                     gpsBounds.maxLat = img.gps.latitude
                     gpsBounds.minLat = img.gps.latitude
-                    gpsBounds.maxLng = img.gps.longitude
-                    gpsBounds.minLng = img.gps.longitude
+                    gpsBounds.maxLon = img.gps.longitude
+                    gpsBounds.minLon = img.gps.longitude
                 } else {
-                    if (img.gps.longitude > gpsBounds.maxLng) {
-                        gpsBounds.maxLng = img.gps.longitude
+                    if (img.gps.longitude > gpsBounds.maxLon) {
+                        gpsBounds.maxLon = img.gps.longitude
                     }
-                    if (img.gps.longitude < gpsBounds.minLng) {
-                        gpsBounds.minLng = img.gps.longitude
+                    if (img.gps.longitude < gpsBounds.minLon) {
+                        gpsBounds.minLon = img.gps.longitude
                     }
                     if (img.gps.latitude > gpsBounds.maxLat) {
                         gpsBounds.maxLat = img.gps.latitude
@@ -140,8 +143,35 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
             }
         }
 
-        // console.log("idxByHash", idxByHash)
-        // console.log("hashByIdx", hashByIdx)
+        if (typeof result.tracks === 'undefined') {
+            result.tracks = [];
+        }
+
+        for (var i = 0; i < result.tracks.length; i++) {
+            var gpx = result.tracks[i];
+
+            console.log("GPX", gpx);
+
+            if (gpsBounds.maxLat == null) {
+                gpsBounds.maxLat = gpx.maxLat
+                gpsBounds.minLat = gpx.minLat
+                gpsBounds.maxLon = gpx.maxLon
+                gpsBounds.minLon = gpx.minLon
+            } else {
+                if (gpx.maxLon > gpsBounds.maxLon) {
+                    gpsBounds.maxLon = gpx.maxLon
+                }
+                if (gpx.minLon < gpsBounds.minLon) {
+                    gpsBounds.minLon = gpx.minLon
+                }
+                if (gpx.maxLat > gpsBounds.maxLat) {
+                    gpsBounds.maxLat = gpx.maxLat
+                }
+                if (gpx.minLat < gpsBounds.minLat) {
+                    gpsBounds.minLat = gpx.minLat
+                }
+            }
+        }
 
         var lightbox = new PhotoSwipeLightbox({
             gallery: '.gallery',
@@ -178,23 +208,35 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
             }
         }
 
+        var historyBack = 0;
+
         lightbox.on('change', function () {
+            historyBack++;
             // console.log("change", lightbox.pswp, lightbox.pswp.currIndex, hashByIdx[lightbox.pswp.currIndex])
             history.pushState("", document.title, "/" + albumName + "/photo-" + hashByIdx[lightbox.pswp.currIndex] + ".html");
         })
 
         lightbox.on('close', function () {
-            history.back()
+            while (historyBack > 0) {
+                history.back();
+                historyBack--;
+            }
             // history.pushState("", document.title, "/" + albumName + "/");
         })
 
         if (showMap && gpsBounds.minLat !== null) {
+            console.log("GPS BOUNDS", gpsBounds);
+
+            var overlayMaps = {};
+
             $(".gallery").append('<div id="map"></div>')
 
             $('#map').show()
-            var map = L.map('map').fitBounds([
-                [gpsBounds.minLat, gpsBounds.minLng],
-                [gpsBounds.maxLat, gpsBounds.maxLng]
+            var map = L.map('map', {
+                fullscreenControl: true,
+            }).fitBounds([
+                [gpsBounds.minLat, gpsBounds.minLon],
+                [gpsBounds.maxLat, gpsBounds.maxLon]
             ]);
             L.tileLayer(mapTiles, {
                 maxZoom: 19,
@@ -202,26 +244,46 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
                 attribution: mapAttribution
             }).addTo(map);
 
+            var images = []
             for (var i = 0; i < gpsMarkers.length; i++) {
-                var m = gpsMarkers[i]
-                L.marker([m.latitude, m.longitude],
+                var img = gpsMarkers[i]
+                var m = img.gps
+                var w = 300
+                if (img.height > img.width) {
+                    w = Math.round(w * img.width / img.height)
+                }
+                images.push(L.marker([m.latitude, m.longitude],
                     {
                         icon: L.icon({
-                            iconUrl: '/thumb/300w/' + m.hash + '.jpg',
+                            iconUrl: '/thumb/200h/' + m.hash + '.jpg',
                             iconSize: [40],
                             className: 'image-marker'
                         })
                     })
-                    .addTo(map)
                     .bindPopup(
                         L.popup()
                             .setContent(
                                 '<p>Pos: ' + m.latitude.toFixed(6) + ',' + m.longitude.toFixed(6) + ', Alt: ' + m.altitude + 'm</p>' +
                                 '<a href="#" onclick="openByHash(\'' + m.hash + '\');return false">' +
-                                '<img style="width: 300px" src="/thumb/300w/' + m.hash + '.jpg" srcset="/thumb/600w/' + m.hash + '.jpg 2x" /></a>'
+                                '<img style="width: ' + w + 'px" src="/thumb/200h/' + m.hash + '.jpg" srcset="/thumb/400h/' + m.hash + '.jpg 2x" /></a>'
                             )
                     )
+                    .addTo(map)
+                )
             }
+
+            overlayMaps["Photos"] = L.layerGroup(images);
+
+            // GPX rendering.
+            for (var i = 0; i < result.tracks.length; i++) {
+                var gpx = result.tracks[i];
+
+                var gpxLayer = omnivore.gpx('/track/' + gpx.hash + '.gpx');
+                gpxLayer.bindPopup(gpx.name).addTo(map);
+                overlayMaps[gpx.name] = gpxLayer
+            }
+
+            L.control.layers({}, overlayMaps).addTo(map);
         }
     }, function (error) {
 

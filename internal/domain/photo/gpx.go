@@ -10,10 +10,11 @@ import (
 )
 
 type GpxSettings struct {
-	MinLat float64 `json:"min_lat"`
-	MinLon float64 `json:"min_lon"`
-	MaxLat float64 `json:"max_lat"`
-	MaxLon float64 `json:"max_lon"`
+	Name   string  `json:"name,omitempty"`
+	MinLat float64 `json:"minLat"`
+	MinLon float64 `json:"minLon"`
+	MaxLat float64 `json:"maxLat"`
+	MaxLon float64 `json:"maxLon"`
 }
 
 func (s *GpxSettings) Scan(src any) error {
