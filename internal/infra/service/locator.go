@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/bool64/brick"
 	"github.com/bool64/ctxd"
-	"github.com/vearutop/photo-blog/pkg/jsonform"
+	"github.com/swaggest/jsonform-go"
 )
 
 // Locator defines application resources.

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"io/fs"
 	"net/http"
 	"os"
@@ -17,17 +18,15 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
+	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
-	"github.com/vearutop/photo-blog/internal/usecase/control"
-	"github.com/vearutop/photo-blog/pkg/jsonform"
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
@@ -60,7 +59,11 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
 	l.SchemaRepo = jsonform.NewRepository(&l.OpenAPI.Reflector().Reflector)
-	if err := setupSchemaRepo(l.SchemaRepo); err != nil {
+	if err := l.SchemaRepo.Add(
+		service.Settings{},
+		photo.Album{},
+		photo.Image{},
+	); err != nil {
 		return nil, err
 	}
 
@@ -218,27 +221,6 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 				l.CtxdLogger().Warn(ctx, "sql failed",
 					"stmt", stmt, "args", args, "error", err.Error())
 			}
-		}
-	}
-
-	return nil
-}
-
-func setupSchemaRepo(r *jsonform.Repository) error {
-	return firstFail(
-		r.AddSchema("update-image-input", control.UpdateImageInput{}),
-		r.AddSchema("album", photo.Album{}),
-		r.AddSchema("image", photo.Image{}),
-		r.AddSchema("gps", photo.Gps{}),
-		r.AddSchema("exif", photo.Exif{}),
-		r.AddSchema("settings", service.Settings{}),
-	)
-}
-
-func firstFail(errs ...error) error {
-	for _, err := range errs {
-		if err != nil {
-			return err
 		}
 	}
 

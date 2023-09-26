@@ -21,8 +21,9 @@ body.dark-mode {
 }
 
 .exif {
-    position: absolute;
-    right: 10px;
+    position: fixed;
+    top: 10px;
+    left: 10px;
     background: #222;
     padding: 10px;
     width: fit-content;

@@ -2,18 +2,14 @@ package control
 
 import (
 	"context"
-	"encoding/json"
-	"html/template"
-
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
+	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/pkg/jsonform"
-	"github.com/vearutop/photo-blog/pkg/web"
-	"github.com/vearutop/photo-blog/resources/static"
+	"net/http"
 )
 
 type editAlbumPageDeps interface {
@@ -30,37 +26,19 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 		Hash uniq.Hash `path:"hash"`
 	}
 
-	tmpl := must(static.Template("edit-album.html"))
-
-	type pageData struct {
-		AlbumHash string
-		Schema    template.JS
-		Value     template.JS
-	}
-
-	u := usecase.NewInteractor(func(ctx context.Context, in editAlbumInput, out *web.Page) error {
-		s := deps.SchemaRepository().Schema("album")
-		j, err := json.Marshal(s)
-		if err != nil {
-			return err
-		}
-
+	u := usecase.NewInteractor(func(ctx context.Context, in editAlbumInput, out *usecase.OutputWithEmbeddedWriter) error {
 		a, err := deps.PhotoAlbumFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return err
 		}
 
-		aj, err := json.Marshal(a)
-		if err != nil {
-			return err
-		}
-
-		d := pageData{}
-		d.AlbumHash = in.Hash.String()
-		d.Value = template.JS(aj)
-		d.Schema = template.JS(j)
-
-		return out.Render(tmpl, d)
+		return deps.SchemaRepository().Render(out.Writer, jsonform.Page{}, jsonform.Form{
+			Title:         "Manage Album",
+			SubmitURL:     "/album",
+			SubmitMethod:  http.MethodPut,
+			SuccessStatus: http.StatusNoContent,
+			Value:         a,
+		})
 	})
 
 	u.SetTags("Control Panel")

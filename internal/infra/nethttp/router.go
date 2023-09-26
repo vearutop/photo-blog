@@ -48,9 +48,9 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
 		s.Post("/album/{name}/{hash}", control.AddToAlbum(deps))
 
-		s.Get("/control/form", control.ShowForm(deps))
 		s.Get("/edit/image/{hash}.html", control.EditImage(deps))
 		s.Get("/edit/album/{hash}.html", control.EditAlbum(deps))
+		s.Get("/edit/settings.html", control.EditSettings(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
@@ -58,7 +58,6 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Get("/gps/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Gps] { return deps.PhotoGpsFinder() }))
 		s.Get("/settings.json", control.GetSettings(deps))
 		s.Put("/settings.json", control.UpdateSettings(deps))
-		s.Get("/schema/{name}.json", control.GetSchema(deps))
 
 		s.Put("/album", control.Update(deps, func() uniq.Ensurer[photo.Album] { return deps.PhotoAlbumEnsurer() }))
 		s.Put("/image", control.UpdateImage(deps))
@@ -109,7 +108,8 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 	s.Post("/make-pass-hash", usecase.MakePassHash())
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
-	s.Handle("/json-form.html", ui.Static)
+
+	deps.SchemaRepo.Mount(s, "/json-form/")
 
 	deps.CtxdLogger().Important(context.Background(), "router initialized successfully")
 
