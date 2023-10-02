@@ -64,7 +64,11 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Put("/exif", control.Update(deps, func() uniq.Ensurer[photo.Exif] { return deps.PhotoExifEnsurer() }))
 		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))
 
+		s.Delete("/album/{name}", control.DeleteAlbum(deps))
+
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
+
+		s.Get("/login", control.Login())
 	})
 
 	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))

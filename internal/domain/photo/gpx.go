@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
 	"github.com/bool64/sqluct"
 	"github.com/tkrajina/gpxgo/gpx"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"

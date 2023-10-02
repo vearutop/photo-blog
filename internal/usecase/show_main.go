@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"html/template"
+	"math"
 	"sort"
 
 	"github.com/swaggest/usecase"
@@ -75,6 +76,8 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 			return list[i].CreatedAt.After(list[j].CreatedAt)
 		})
 
+		aspectRatio := 3.0 / 2.0
+
 		for _, a := range list {
 			if !a.Public || a.Name == "" {
 				if d.NonAdmin {
@@ -91,6 +94,8 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 				continue
 			}
 
+			res := make([]photo.Image, 0, 4)
+
 			if a.CoverImage != 0 {
 				for i, img := range images {
 					if img.Hash == a.CoverImage {
@@ -103,44 +108,29 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 				}
 			}
 
-			if len(images) > 4 {
-				images = images[:4]
+			for _, img := range images {
+				ar := float64(img.Width) / float64(img.Height)
+
+				if math.Abs(ar-aspectRatio) > 1e-2 {
+					continue
+				}
+
+				res = append(res, img)
+				if len(res) >= 4 {
+					break
+				}
+			}
+
+			if len(res) == 0 && d.NonAdmin {
+				continue
 			}
 
 			aa := album{}
 			aa.Album = a
-			aa.Images = images
+			aa.Images = res
 
 			d.Albums = append(d.Albums, aa)
 		}
-
-		//album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//if len(images) == 0 {
-		//	return errors.New("no images")
-		//}
-		//
-		//d := pageData{}
-		//d.Title = album.Title
-		//d.Name = album.Name
-		//d.NonAdmin = !in.hasAuth
-		//d.Public = album.Public
-		//d.Hash = album.Hash.String()
-		//
-		//switch {
-		//case album.CoverImage != 0:
-		//	d.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
-		//default:
-		//	d.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
-		//}
 
 		return out.Render(tmpl, d)
 	})

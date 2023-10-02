@@ -3,10 +3,11 @@ package usecase
 import (
 	"context"
 	"errors"
+	"net/http"
+
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"net/http"
 )
 
 type dlGpxDeps interface {

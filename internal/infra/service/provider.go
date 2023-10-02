@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/bool64/ctxd"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/text"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -26,6 +25,10 @@ type PhotoAlbumEnsurerProvider interface {
 
 type PhotoAlbumUpdaterProvider interface {
 	PhotoAlbumUpdater() uniq.Updater[photo.Album]
+}
+
+type PhotoAlbumDeleterProvider interface {
+	PhotoAlbumDeleter() uniq.Deleter[photo.Album]
 }
 
 type PhotoAlbumFinderProvider interface {
@@ -86,10 +89,6 @@ type AuthVisitorEnsurerProvider interface {
 
 type AuthVisitorFinderProvider interface {
 	AuthVisitorFinder() uniq.Finder[auth.Visitor]
-}
-
-type AccessLogProvider interface {
-	AccessLog() ctxd.Logger
 }
 
 type PhotoGpxEnsurerProvider interface {

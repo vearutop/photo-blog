@@ -2,11 +2,12 @@ package control
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/service"
-	"net/http"
 )
 
 // EditSettings creates use case interactor to show form.

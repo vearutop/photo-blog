@@ -2,11 +2,12 @@ package uniq
 
 import (
 	"context"
-	"github.com/bool64/ctxd"
-	"github.com/cespare/xxhash/v2"
 	"io"
 	"os"
 	"time"
+
+	"github.com/bool64/ctxd"
+	"github.com/cespare/xxhash/v2"
 )
 
 type File struct {

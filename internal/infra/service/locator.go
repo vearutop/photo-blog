@@ -17,7 +17,9 @@ type Locator struct {
 
 	PhotoAlbumEnsurerProvider
 	PhotoAlbumUpdaterProvider
+	PhotoAlbumDeleterProvider
 	PhotoAlbumFinderProvider
+
 	PhotoAlbumImageAdderProvider
 	PhotoAlbumImageFinderProvider
 	PhotoAlbumImageDeleterProvider
@@ -38,14 +40,13 @@ type Locator struct {
 	PhotoGpxEnsurerProvider
 	PhotoGpxFinderProvider
 
+	// TODO: remove these?
 	TextLabelEnsurerProvider
 	TextLabelFinderProvider
 	TextLabelDeleterProvider
 
 	AuthVisitorEnsurerProvider
 	AuthVisitorFinderProvider
-
-	AccessLogProvider
 }
 
 // ServiceConfig gives access to service configuration.

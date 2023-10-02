@@ -137,7 +137,7 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
                 a.attr("href", "/" + albumName + "/pano-" + img.hash + ".html")
-                a.html('<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" />')
+                a.html('<img alt="" src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
 
                 $(".gallery-pano").show().append(a)
             }

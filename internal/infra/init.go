@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"io/fs"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -21,6 +21,7 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -101,6 +102,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoAlbumEnsurerProvider = ar
 	l.PhotoAlbumUpdaterProvider = ar
 	l.PhotoAlbumFinderProvider = ar
+	l.PhotoAlbumDeleterProvider = ar
 	l.PhotoAlbumImageAdderProvider = ar
 	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
@@ -126,7 +128,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	labelRepo := storage.NewLabelRepository(l.Storage)
 	l.TextLabelFinderProvider = labelRepo
 	l.TextLabelEnsurerProvider = labelRepo
-	l.TextLabelEnsurerProvider = labelRepo
+	l.TextLabelDeleterProvider = labelRepo
 
 	visitorRepo := storage.NewVisitorRepository(l.Storage)
 	l.AuthVisitorEnsurerProvider = visitorRepo
@@ -134,9 +136,40 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
+	if err := checkMissing(l); err != nil {
+		return nil, err
+	}
+
 	l.CtxdLogger().Important(ctx, "service locator initialized successfully")
 
 	return l, nil
+}
+
+func checkMissing(l interface{}) error {
+	v := reflect.ValueOf(l)
+
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return errors.New("struct expected")
+	}
+
+	var missing []string
+
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		if f.IsZero() {
+			missing = append(missing, v.Type().Field(i).Name)
+		}
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("missing: %v", missing)
+	}
+
+	return nil
 }
 
 func setupAccessLog(l *service.Locator) error {

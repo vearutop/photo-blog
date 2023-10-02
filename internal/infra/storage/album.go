@@ -111,3 +111,7 @@ func (r *AlbumRepository) PhotoAlbumFinder() uniq.Finder[photo.Album] {
 func (r *AlbumRepository) PhotoAlbumUpdater() uniq.Updater[photo.Album] {
 	return r
 }
+
+func (r *AlbumRepository) PhotoAlbumDeleter() uniq.Deleter[photo.Album] {
+	return r
+}
