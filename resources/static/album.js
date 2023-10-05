@@ -1,4 +1,12 @@
-function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
+/**
+ *
+ * @param {String} albumName
+ * @param {String} mapTiles
+ * @param {String} mapAttribution
+ * @param {Boolean} showMap
+ * @param {UsecaseGetAlbumOutputCallback} albumData
+ */
+function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
     "use strict";
 
     if (albumName === "") {
@@ -26,9 +34,11 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
     var gpsMarkers = []
     var client = new Backend('');
 
-    client.getAlbumContentsNameJson({
-        name: albumName
-    }, function (result) {
+    /**
+     *
+     * @param {UsecaseGetAlbumOutputCallback} result
+     */
+    function renderAlbum(result) {
         var hashByIdx = {}
         var idxByHash = {}
         var idx = 0
@@ -285,9 +295,21 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap) {
 
             L.control.layers({}, overlayMaps).addTo(map);
         }
-    }, function (error) {
+    }
 
-    }, function (error) {
 
-    })
+    if (albumData != null) {
+        renderAlbum(albumData)
+    } else {
+        client.getAlbumContentsNameJson({
+            name: albumName
+        }, renderAlbum, function (error) {
+
+        }, function (error) {
+
+        })
+    }
+
+
+
 }

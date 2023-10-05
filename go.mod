@@ -23,6 +23,7 @@ require (
 	github.com/swaggest/jsonform-go v0.1.1-0.20230926233616-bda43b521c49
 	github.com/swaggest/jsonschema-go v0.3.60
 	github.com/swaggest/openapi-go v0.2.39
+	github.com/swaggest/refl v1.3.0
 	github.com/swaggest/rest v0.2.58
 	github.com/swaggest/swgui v1.7.3
 	github.com/swaggest/usecase v1.2.1
@@ -96,7 +97,6 @@ require (
 	github.com/shurcooL/httpgzip v0.0.0-20230704072819-d1585fc322fa // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/swaggest/form/v5 v5.1.1 // indirect
-	github.com/swaggest/refl v1.2.1 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vearutop/dynhist-go v1.2.3 // indirect

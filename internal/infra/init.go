@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
 	"github.com/swaggest/jsonform-go"
+	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -136,40 +136,13 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
-	if err := checkMissing(l); err != nil {
+	if err := refl.NoEmptyFields(l); err != nil {
 		return nil, err
 	}
 
 	l.CtxdLogger().Important(ctx, "service locator initialized successfully")
 
 	return l, nil
-}
-
-func checkMissing(l interface{}) error {
-	v := reflect.ValueOf(l)
-
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Struct {
-		return errors.New("struct expected")
-	}
-
-	var missing []string
-
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		if f.IsZero() {
-			missing = append(missing, v.Type().Field(i).Name)
-		}
-	}
-
-	if len(missing) > 0 {
-		return fmt.Errorf("missing: %v", missing)
-	}
-
-	return nil
 }
 
 func setupAccessLog(l *service.Locator) error {

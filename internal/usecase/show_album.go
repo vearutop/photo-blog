@@ -11,7 +11,6 @@ import (
 	"github.com/docker/go-units"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -48,7 +47,7 @@ func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) useca
 }
 
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
+func ShowAlbum(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbumInput, getAlbumOutput]) usecase.IOInteractorOf[showAlbumInput, web.Page] {
 	tpl, err := static.Assets.ReadFile("album.html")
 	if err != nil {
 		panic(err)
@@ -69,51 +68,65 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		Public      bool
 		Hash        string
 
+		Images    []Image
+		Panoramas []Image
+
 		Count     int
 		TotalSize string
 
 		MapTiles       string
 		MapAttribution string
+
+		AlbumData getAlbumOutput
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		albumHash := photo.AlbumHash(in.Name)
+		cont := getAlbumOutput{}
 
-		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
-		if err != nil {
+		if err := contents.Invoke(ctx, getAlbumInput{
+			Name: in.Name,
+		}, &cont); err != nil {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
-		if err != nil {
-			return err
-		}
-
-		if len(images) == 0 {
+		if len(cont.Images) == 0 {
 			return errors.New("no images")
 		}
 
-		var totalSize int64
-		for _, i := range images {
-			totalSize += i.Size
-		}
+		album := cont.Album
 
 		d := pageData{}
 		d.Title = album.Title
 		d.Description = template.HTML(strings.ReplaceAll(album.Settings.Description, "\n", "<br />"))
-		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(images))
+		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.Name = album.Name
 		d.NonAdmin = !in.hasAuth
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
-		d.Count = len(images)
-		d.TotalSize = units.HumanSize(float64(totalSize))
+		d.Count = len(cont.Images)
+		d.AlbumData = cont
 
 		d.MapTiles = deps.ServiceSettings().MapTiles
 		d.MapAttribution = deps.ServiceSettings().MapAttribution
+
+		var totalSize int64
+		for _, img := range cont.Images {
+			if img.Exif == nil || img.BlurHash == "" {
+				continue
+			}
+
+			if img.Exif.ProjectionType == "" {
+				d.Images = append(d.Images, img)
+			} else {
+				d.Panoramas = append(d.Panoramas, img)
+			}
+
+			totalSize += img.size
+		}
+		d.TotalSize = units.HumanSize(float64(totalSize))
 
 		switch {
 		case in.imgHash != 0:
@@ -121,7 +134,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		case album.CoverImage != 0:
 			d.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
 		default:
-			d.CoverImage = "/thumb/1200w/" + images[0].Hash.String() + ".jpg"
+			d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
 		}
 
 		return out.Render(tmpl, d)

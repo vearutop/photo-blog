@@ -27,36 +27,37 @@ type getAlbumImagesDeps interface {
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 }
 
+type getAlbumInput struct {
+	Name   string `path:"name"`
+	Locale string `cookie:"locale" default:"en-US"`
+}
+
+type Image struct {
+	Name        string      `json:"name"`
+	Hash        string      `json:"hash"`
+	Width       int64       `json:"width"`
+	Height      int64       `json:"height"`
+	BlurHash    string      `json:"blur_hash,omitempty"`
+	Gps         *photo.Gps  `json:"gps,omitempty"`
+	Exif        *photo.Exif `json:"exif,omitempty"`
+	Description string      `json:"description,omitempty"`
+	size        int64
+}
+
+type track struct {
+	Hash uniq.Hash `json:"hash"`
+	photo.GpxSettings
+}
+
+type getAlbumOutput struct {
+	Album       photo.Album `json:"album"`
+	Description string      `json:"description,omitempty"`
+	Images      []Image     `json:"images,omitempty"`
+	Tracks      []track     `json:"tracks,omitempty"`
+}
+
 // GetAlbumContents creates use case interactor to get album data.
-func GetAlbumContents(deps getAlbumImagesDeps) usecase.Interactor {
-	type getAlbumInput struct {
-		Name   string `path:"name"`
-		Locale string `cookie:"locale" default:"en-US"`
-	}
-
-	type image struct {
-		Name        string      `json:"name"`
-		Hash        string      `json:"hash"`
-		Width       int64       `json:"width"`
-		Height      int64       `json:"height"`
-		BlurHash    string      `json:"blur_hash,omitempty"`
-		Gps         *photo.Gps  `json:"gps,omitempty"`
-		Exif        *photo.Exif `json:"exif,omitempty"`
-		Description string      `json:"description,omitempty"`
-	}
-
-	type track struct {
-		Hash uniq.Hash `json:"hash"`
-		photo.GpxSettings
-	}
-
-	type getAlbumOutput struct {
-		Album       photo.Album `json:"album"`
-		Description string      `json:"description,omitempty"`
-		Images      []image     `json:"images,omitempty"`
-		Tracks      []track     `json:"tracks,omitempty"`
-	}
-
+func GetAlbumContents(deps getAlbumImagesDeps) usecase.IOInteractorOf[getAlbumInput, getAlbumOutput] {
 	u := usecase.NewInteractor(func(ctx context.Context, in getAlbumInput, out *getAlbumOutput) error {
 		deps.StatsTracker().Add(ctx, "get_album_images", 1)
 		deps.CtxdLogger().Info(ctx, "getting album images", "name", in.Name)
@@ -96,14 +97,15 @@ func GetAlbumContents(deps getAlbumImagesDeps) usecase.Interactor {
 		}
 
 		out.Album = album
-		out.Images = make([]image, 0, len(images))
+		out.Images = make([]Image, 0, len(images))
 		for _, i := range images {
-			img := image{
+			img := Image{
 				Name:     path.Base(i.Path),
 				Hash:     i.Hash.String(),
 				Width:    i.Width,
 				Height:   i.Height,
 				BlurHash: i.BlurHash,
+				size:     i.Size,
 			}
 
 			gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)

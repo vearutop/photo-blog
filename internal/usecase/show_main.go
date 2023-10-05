@@ -19,7 +19,7 @@ type showMainInput struct {
 }
 
 // ShowMain creates use case interactor to show album.
-func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
+func ShowMain(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbumInput, getAlbumOutput]) usecase.IOInteractorOf[showMainInput, web.Page] {
 	tpl, err := static.Assets.ReadFile("index.html")
 	if err != nil {
 		panic(err)
@@ -36,14 +36,15 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 	}
 
 	type pageData struct {
-		Title      string
-		Name       string
-		CoverImage string
-		NonAdmin   bool
-		Public     bool
-		Hash       string
-		Featured   string
-		Albums     []album
+		Title             string
+		Name              string
+		CoverImage        string
+		NonAdmin          bool
+		Public            bool
+		Hash              string
+		Featured          string
+		FeaturedAlbumData getAlbumOutput
+		Albums            []album
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
@@ -65,6 +66,16 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 			if fa.CoverImage != 0 {
 				d.CoverImage = "/thumb/1200w/" + fa.CoverImage.String() + ".jpg"
 			}
+
+			cont := getAlbumOutput{}
+
+			if err := contents.Invoke(ctx, getAlbumInput{
+				Name: d.Featured,
+			}, &cont); err != nil {
+				return err
+			}
+
+			d.FeaturedAlbumData = cont
 		}
 
 		list, err := deps.PhotoAlbumFinder().FindAll(ctx)

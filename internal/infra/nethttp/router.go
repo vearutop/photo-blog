@@ -71,7 +71,8 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 		s.Get("/login", control.Login())
 	})
 
-	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))
+	acu := usecase.GetAlbumContents(deps)
+	s.Get("/album-contents/{name}.json", acu)
 
 	// Visitors access log.
 	s.Group(func(r chi.Router) {
@@ -81,9 +82,9 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 			s.Use(auth.VisitorMiddleware(deps.AccessLog()))
 		}
 
-		s.Get("/{name}/", usecase.ShowAlbum(deps))
+		s.Get("/{name}/", usecase.ShowAlbum(deps, acu))
 		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
-		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
+		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps, acu)))
 		s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
@@ -100,7 +101,7 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 				s.Use(adminAuth)
 			}
 
-			s.Get("/", usecase.ShowMain(deps))
+			s.Get("/", usecase.ShowMain(deps, acu))
 		})
 	})
 
