@@ -134,20 +134,22 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			continue
 		}
 
-		gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)
-		if err == nil {
-			img.Gps = &gps
-		} else if !errors.Is(err, status.NotFound) {
-			deps.CtxdLogger().Warn(ctx, "failed to find gps",
-				"hash", i.Hash.String(), "error", err.Error())
-		}
+		if !preview {
+			gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)
+			if err == nil {
+				img.Gps = &gps
+			} else if !errors.Is(err, status.NotFound) {
+				deps.CtxdLogger().Warn(ctx, "failed to find gps",
+					"hash", i.Hash.String(), "error", err.Error())
+			}
 
-		exif, err := deps.PhotoExifFinder().FindByHash(ctx, i.Hash)
-		if err == nil {
-			img.Exif = &exif
-		} else if !errors.Is(err, status.NotFound) {
-			deps.CtxdLogger().Warn(ctx, "failed to find exif",
-				"hash", i.Hash.String(), "error", err.Error())
+			exif, err := deps.PhotoExifFinder().FindByHash(ctx, i.Hash)
+			if err == nil {
+				img.Exif = &exif
+			} else if !errors.Is(err, status.NotFound) {
+				deps.CtxdLogger().Warn(ctx, "failed to find exif",
+					"hash", i.Hash.String(), "error", err.Error())
+			}
 		}
 
 		out.Images = append(out.Images, img)
