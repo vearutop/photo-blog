@@ -3,14 +3,35 @@ body.dark-mode {
     color: #ddd;
 }
 
+.main {
+    margin: 0 2em 2em;
+}
+
 .image-marker {
     border-radius: 20%;
 }
 
-.thumb canvas {
-    position: absolute;
+.thumb {
+    display: inline-block;
+    text-align: center;
+    background: #333;
+}
+
+.thumb, a.image, .thumb canvas {
     width: 300px;
     height: 200px;
+}
+
+.thumb.landscape img {
+    width: 100%;
+}
+
+.thumb.portrait img {
+    height: 100%;
+}
+
+.thumb canvas {
+    position: absolute;
     z-index: 1;
     display: block;
 }
@@ -82,14 +103,27 @@ body.dark-mode {
     grid-column: 1 / -1;
 }
 
-.dark-mode a:link { color: lightskyblue; }
-.dark-mode a:visited { color: #6498b6; }
-.dark-mode a:hover { color: #ffffff; }
-.dark-mode a:active { color: #ff4040; text-decoration:none; font-weight:normal; }
+.dark-mode a:link {
+    color: lightskyblue;
+}
+
+.dark-mode a:visited {
+    color: #6498b6;
+}
+
+.dark-mode a:hover {
+    color: #ffffff;
+}
+
+.dark-mode a:active {
+    color: #ff4040;
+    text-decoration: none;
+    font-weight: normal;
+}
 
 /* hide extra images on main page on mobile devices */
 @media (max-width: 576px) {
-    .img1, .img2, .img3  {
+    .img1, .img2, .img3 {
         display: none;
     }
 }

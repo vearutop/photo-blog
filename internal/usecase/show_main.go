@@ -5,7 +5,10 @@ import (
 	"html/template"
 	"math"
 	"sort"
+	"strconv"
+	"time"
 
+	"github.com/bool64/cache"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -19,7 +22,7 @@ type showMainInput struct {
 }
 
 // ShowMain creates use case interactor to show album.
-func ShowMain(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbumInput, getAlbumOutput]) usecase.IOInteractorOf[showMainInput, web.Page] {
+func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
 	tpl, err := static.Assets.ReadFile("index.html")
 	if err != nil {
 		panic(err)
@@ -28,11 +31,6 @@ func ShowMain(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbumI
 	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
 	if err != nil {
 		panic(err)
-	}
-
-	type album struct {
-		photo.Album
-		Images []photo.Image
 	}
 
 	type pageData struct {
@@ -44,103 +42,109 @@ func ShowMain(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbumI
 		Hash              string
 		Featured          string
 		FeaturedAlbumData getAlbumOutput
-		Albums            []album
+		Albums            []getAlbumOutput
 	}
+
+	c := cache.NewFailoverOf[pageData](func(cfg *cache.FailoverConfigOf[pageData]) {
+		cfg.BackendConfig.TimeToLive = 5 * time.Minute
+	})
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_main", 1)
 		deps.CtxdLogger().Info(ctx, "showing main")
 
-		d := pageData{}
+		d, err := c.Get(ctx, []byte("main"+strconv.FormatBool(auth.IsAdmin(ctx))), func(ctx context.Context) (pageData, error) {
+			d := pageData{}
 
-		d.Title = deps.ServiceSettings().SiteTitle
-		d.NonAdmin = !auth.IsAdmin(ctx)
-		d.Featured = deps.ServiceSettings().FeaturedAlbumName
+			d.Title = deps.ServiceSettings().SiteTitle
+			d.NonAdmin = !auth.IsAdmin(ctx)
+			d.Featured = deps.ServiceSettings().FeaturedAlbumName
 
-		if d.Featured != "" {
-			fa, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(d.Featured))
+			if d.Featured != "" {
+				fa, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(d.Featured))
+				if err != nil {
+					return d, err
+				}
+
+				if fa.CoverImage != 0 {
+					d.CoverImage = "/thumb/1200w/" + fa.CoverImage.String() + ".jpg"
+				}
+
+				cont, err := getAlbumContents(ctx, deps, d.Featured, false)
+				if err != nil {
+					return d, err
+				}
+
+				d.FeaturedAlbumData = cont
+			}
+
+			list, err := deps.PhotoAlbumFinder().FindAll(ctx)
 			if err != nil {
-				return err
+				return d, err
 			}
 
-			if fa.CoverImage != 0 {
-				d.CoverImage = "/thumb/1200w/" + fa.CoverImage.String() + ".jpg"
-			}
+			sort.Slice(list, func(i, j int) bool {
+				return list[i].CreatedAt.After(list[j].CreatedAt)
+			})
 
-			cont := getAlbumOutput{}
+			aspectRatio := 3.0 / 2.0
 
-			if err := contents.Invoke(ctx, getAlbumInput{
-				Name: d.Featured,
-			}, &cont); err != nil {
-				return err
-			}
+			for _, a := range list {
+				if !a.Public || a.Name == "" {
+					if d.NonAdmin {
+						continue
+					}
+				}
 
-			d.FeaturedAlbumData = cont
-		}
+				cont, err := getAlbumContents(ctx, deps, a.Name, true)
+				if err != nil {
+					return d, err
+				}
 
-		list, err := deps.PhotoAlbumFinder().FindAll(ctx)
-		if err != nil {
-			return err
-		}
-
-		sort.Slice(list, func(i, j int) bool {
-			return list[i].CreatedAt.After(list[j].CreatedAt)
-		})
-
-		aspectRatio := 3.0 / 2.0
-
-		for _, a := range list {
-			if !a.Public || a.Name == "" {
-				if d.NonAdmin {
+				if len(cont.Images) == 0 && d.NonAdmin {
 					continue
 				}
-			}
 
-			images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, a.Hash)
-			if err != nil {
-				return err
-			}
+				res := make([]Image, 0, 4)
 
-			if len(images) == 0 && d.NonAdmin {
-				continue
-			}
+				if a.CoverImage != 0 {
+					for i, img := range cont.Images {
+						if img.Hash == a.CoverImage.String() {
+							img0 := cont.Images[0]
 
-			res := make([]photo.Image, 0, 4)
+							cont.Images[0] = img
+							cont.Images[i] = img0
+							break
+						}
+					}
+				}
 
-			if a.CoverImage != 0 {
-				for i, img := range images {
-					if img.Hash == a.CoverImage {
-						img0 := images[0]
+				for _, img := range cont.Images {
+					ar := float64(img.Width) / float64(img.Height)
 
-						images[0] = img
-						images[i] = img0
+					if math.Abs(ar-aspectRatio) > 1e-2 {
+						continue
+					}
+
+					res = append(res, img)
+					if len(res) >= 4 {
 						break
 					}
 				}
-			}
 
-			for _, img := range images {
-				ar := float64(img.Width) / float64(img.Height)
-
-				if math.Abs(ar-aspectRatio) > 1e-2 {
+				if len(res) == 0 && d.NonAdmin {
 					continue
 				}
 
-				res = append(res, img)
-				if len(res) >= 4 {
-					break
-				}
+				cont.Images = res
+
+				d.Albums = append(d.Albums, cont)
 			}
 
-			if len(res) == 0 && d.NonAdmin {
-				continue
-			}
-
-			aa := album{}
-			aa.Album = a
-			aa.Images = res
-
-			d.Albums = append(d.Albums, aa)
+			return d, nil
+		})
+		if err != nil {
+			return err
 		}
 
 		return out.Render(tmpl, d)

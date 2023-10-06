@@ -55,6 +55,28 @@ func (r *AlbumRepository) FindImages(ctx context.Context, albumHash uniq.Hash) (
 	return augmentResErr(r.i.List(ctx, q))
 }
 
+func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]photo.Image, error) {
+	q := r.i.SelectStmt().
+		InnerJoin(
+			r.i.Fmt("%s ON %s = %s AND %s = ?",
+				r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
+			albumHash,
+		)
+
+	// Take cover image first.
+	if coverImage != 0 {
+		q = q.OrderByClause(r.i.Fmt("%s = ? DESC", &r.i.R.Hash), coverImage)
+	}
+
+	// Take 3:2 aspect ratio first.
+	q = q.OrderByClause(r.i.Fmt("ROUND(ABS(100.0*%s/%s-150)) ASC", &r.i.R.Width, &r.i.R.Height))
+
+	q = q.OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+	q = q.Limit(limit)
+
+	return augmentResErr(r.i.List(ctx, q))
+}
+
 func (r *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
 	q := r.SelectStmt().
 		Where(r.Eq(&r.R.Name, name)).

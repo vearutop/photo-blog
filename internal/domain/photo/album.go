@@ -19,6 +19,7 @@ type AlbumImageDeleter interface {
 
 type AlbumImageFinder interface {
 	FindImages(ctx context.Context, albumHash uniq.Hash) ([]Image, error)
+	FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]Image, error)
 }
 
 type AlbumSettings struct {

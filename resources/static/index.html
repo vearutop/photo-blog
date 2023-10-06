@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/static/favicon.png" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?2">
     <link rel="stylesheet" href="/static/photoswipe.css">
     <link rel="stylesheet" href="/static/photoswipe-dynamic-caption-plugin.css">
 
@@ -46,19 +46,32 @@
 </head>
 <body class="dark-mode">
 
-<div style="margin:2em">
-        <h1 id="album-title">{{.Title}}</h1>
+<div class="main">
+    <h1 id="album-title">{{.Title}}</h1>
 
-    <div class="gallery grid"></div>
+    <div id="featured" class="grid"></div>
+    <script>
+        loadAlbum({
+            albumName: "{{.Featured}}",
+            gallery: "#featured",
+            baseUrl: "/",
+            albumData: {{.FeaturedAlbumData}},
+        });
+    </script>
 
     {{range $k, $a := .Albums}}
-    <h3 id="{{$a.Name}}">{{if not $a.Public}}
+    <h3 id="{{$a.Album.Name}}">{{if not $a.Album.Public}}
         <div class="ctrl-btn lock-icon" title="URL required to access this album, please share responsibly."></div>
-        {{end}} <a href="/{{$a.Name}}/">{{$a.Title}}</a></h3>
-    {{range $k, $i := .Images}}
-    <img class="img{{$k}}" style="height: 200px" src="/thumb/200h/{{$i.Hash}}.jpg"
-         srcset="/thumb/400h/{{$i.Hash}}.jpg 2x"/>
-    {{end}}
+        {{end}} <a href="/{{$a.Album.Name}}/">{{$a.Album.Title}}</a></h3>
+    <div id="a{{$a.Album.Hash}}"></div>
+    <script>
+        loadAlbum({
+            albumName: "{{$a.Album.Name}}",
+            gallery: "#a{{$a.Album.Hash}}",
+            baseUrl: "/",
+            albumData: {{$a}},
+        });
+    </script>
     {{end}}
 
     <div style="margin-top: 30px">
@@ -66,10 +79,6 @@
         <a title="Log out" class="control-panel ctrl-btn lock-icon" href="#logout" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')"></a>
         <a title="Log in" class="not-control-panel ctrl-btn unlock-icon" href="/login"></a>
     </div>
-
-    <script>
-        loadAlbum("{{.Featured}}", '', '', false, {{.FeaturedAlbumData}});
-    </script>
 </div>
 
 </body>

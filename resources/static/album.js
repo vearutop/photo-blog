@@ -1,15 +1,50 @@
+(function () {
+    if (screen.width > 576 || screen.width == 0) {
+        return
+    }
+
+
+    var styles = `
+@media screen and (orientation:portrait) {
+    .main {
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .thumb, a.image, .thumb canvas {
+        width: ` + screen.width + `px;
+        height: `+Math.trunc(screen.width/1.5)+`px;
+    }
+}
+`
+
+    var styleSheet = document.createElement("style")
+    styleSheet.innerText = styles
+    document.head.appendChild(styleSheet)
+})()
+
+
+/**
+ * @typedef loadAlbumParams
+ * @type {Object}
+ * @property {String} albumName
+ * @property {String} mapTiles
+ * @property {String} mapAttribution
+ * @property {Boolean} showMap
+ * @property {UsecaseGetAlbumOutputCallback} albumData
+ * @property {String} gallery - CSS selector for gallery container
+ * @property {String} galleryPano - CSS selector for gallery panoramas container
+ * @property {String} baseUrl - base address to set on image close
+ */
+
+
 /**
  *
- * @param {String} albumName
- * @param {String} mapTiles
- * @param {String} mapAttribution
- * @param {Boolean} showMap
- * @param {UsecaseGetAlbumOutputCallback} albumData
+ * @param {loadAlbumParams} params
  */
-function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
+function loadAlbum(params) {
     "use strict";
 
-    if (albumName === "") {
+    if (params.albumName === "") {
         return;
     }
 
@@ -20,12 +55,20 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
         maxLon: null
     };
 
-    if (mapTiles == "") {
-        mapTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+    if (params.mapTiles == "") {
+        params.mapTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
     }
 
-    if (mapAttribution == "") {
-        mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    if (params.mapAttribution == "") {
+        params.mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }
+
+    if (params.gallery == "") {
+        params.gallery = "#gallery"
+    }
+
+    if (params.gallery == "") {
+        params.gallery = "#gallery-pano"
     }
 
     /**
@@ -33,6 +76,11 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
      */
     var gpsMarkers = []
     var client = new Backend('');
+
+    var originalPath = params.baseUrl;
+    if (originalPath == "") {
+        originalPath = window.location.toString();
+    }
 
     /**
      *
@@ -73,8 +121,6 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
             }
 
             if (typeof img.exif == "undefined" || img.exif.projection_type === "") {
-                // console.log("img", i, idx, img.hash, img)
-
                 hashByIdx[idx] = img.hash
                 idxByHash[img.hash] = idx
                 idx++
@@ -91,15 +137,11 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
                     ", /thumb/1200w/" + img.hash + ".jpg 1200w" +
                     ", /thumb/2400w/" + img.hash + ".jpg 2400w"
 
-                var containerStyle = ""
 
                 if (img.width > 0 && img.height > 0) {
                     srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
                     a.attr("data-pswp-width", img.width)
                     a.attr("data-pswp-height", img.height)
-                    // containerStyle = "height:200px;width:"+ Math.round(img.width * 200 / img.height) + "px"
-                    containerStyle = "height:200px;width:300px"
-                    a.attr("style", containerStyle)
                 }
 
                 var img_description =
@@ -133,23 +175,30 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
                     img_description += '</table></div>';
                 }
 
+                var landscape = ""
+                if (img.width / img.height >= 1.5) {
+                    landscape = " landscape"
+                } else {
+                    landscape = " portrait"
+                }
+
                 a.attr("data-pswp-srcset", srcSet)
-                a.html('<div class="thumb" style="display:inline-block;background:#333;text-align:center;' + containerStyle + '">' +
+                a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
                     '<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
                 a.find("img").attr("alt", img_description)
 
-                $(".gallery").append(a)
+                $(params.gallery).append(a)
                 if (typeof img.blur_hash !== "undefined") {
                     blurHash(img.blur_hash, document.getElementById('bh-' + img.hash))
                 }
             } else {
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
-                a.attr("href", "/" + albumName + "/pano-" + img.hash + ".html")
+                a.attr("href", "/" + params.albumName + "/pano-" + img.hash + ".html")
                 a.html('<img alt="" src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
 
-                $(".gallery-pano").show().append(a)
+                $(params.galleryPano).show().append(a)
             }
         }
 
@@ -184,7 +233,7 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
         }
 
         var lightbox = new PhotoSwipeLightbox({
-            gallery: '.gallery',
+            gallery: params.gallery,
             children: 'a.image',
             pswpModule: PhotoSwipe
         });
@@ -199,7 +248,7 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
 
         window.openByHash = function (hash) {
             // console.log("openByHash", hash, idxByHash[hash])
-            lightbox.loadAndOpen(idxByHash[hash], {gallery: document.querySelector('.gallery')});
+            lightbox.loadAndOpen(idxByHash[hash], {gallery: document.querySelector(params.gallery)});
         }
 
         var imgHash = window.location.pathname.match(/photo-(.+)\.html/)
@@ -218,28 +267,21 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
             }
         }
 
-        var historyBack = 0;
-
         lightbox.on('change', function () {
-            historyBack++;
             // console.log("change", lightbox.pswp, lightbox.pswp.currIndex, hashByIdx[lightbox.pswp.currIndex])
-            history.pushState("", document.title, "/" + albumName + "/photo-" + hashByIdx[lightbox.pswp.currIndex] + ".html");
+            history.pushState("", document.title, "/" + params.albumName + "/photo-" + hashByIdx[lightbox.pswp.currIndex] + ".html");
         })
 
         lightbox.on('close', function () {
-            while (historyBack > 0) {
-                history.back();
-                historyBack--;
-            }
-            // history.pushState("", document.title, "/" + albumName + "/");
+            history.pushState("", document.title, originalPath);
         })
 
-        if (showMap && gpsBounds.minLat !== null) {
+        if (params.showMap && gpsBounds.minLat !== null) {
             console.log("GPS BOUNDS", gpsBounds);
 
             var overlayMaps = {};
 
-            $(".gallery").append('<div id="map"></div>')
+            $(params.gallery).append('<div id="map"></div>')
 
             $('#map').show()
             var map = L.map('map', {
@@ -248,10 +290,10 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
                 [gpsBounds.minLat, gpsBounds.minLon],
                 [gpsBounds.maxLat, gpsBounds.maxLon]
             ]);
-            L.tileLayer(mapTiles, {
+            L.tileLayer(params.mapTiles, {
                 maxZoom: 19,
                 // detectRetina: true,
-                attribution: mapAttribution
+                attribution: params.mapAttribution
             }).addTo(map);
 
             var images = []
@@ -298,18 +340,17 @@ function loadAlbum(albumName, mapTiles, mapAttribution, showMap, albumData) {
     }
 
 
-    if (albumData != null) {
-        renderAlbum(albumData)
+    if (params.albumData != null) {
+        renderAlbum(params.albumData)
     } else {
         client.getAlbumContentsNameJson({
-            name: albumName
+            name: params.albumName
         }, renderAlbum, function (error) {
 
         }, function (error) {
 
         })
     }
-
 
 
 }

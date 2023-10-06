@@ -47,7 +47,7 @@ func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) useca
 }
 
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbumInput, getAlbumOutput]) usecase.IOInteractorOf[showAlbumInput, web.Page] {
+func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
 	tpl, err := static.Assets.ReadFile("album.html")
 	if err != nil {
 		panic(err)
@@ -84,11 +84,8 @@ func ShowAlbum(deps getAlbumImagesDeps, contents usecase.IOInteractorOf[getAlbum
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		cont := getAlbumOutput{}
-
-		if err := contents.Invoke(ctx, getAlbumInput{
-			Name: in.Name,
-		}, &cont); err != nil {
+		cont, err := getAlbumContents(ctx, deps, in.Name, false)
+		if err != nil {
 			return err
 		}
 

@@ -45,7 +45,7 @@
 </head>
 <body class="dark-mode">
 
-<div style="margin: 0 2em 2em;">
+<div class="main">
     <h1 id="album-title" style="display: inline-block; margin-right: 50px;">
         <a href="/#{{.Name}}">&larr;</a> {{if not .Public}}
         <div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div>
@@ -61,9 +61,9 @@
         {{.Description}}
     </div>
 
-    <div class="gallery"></div>
+    <div id="gallery"></div>
 
-    <div class="gallery-pano" style="display:none">
+    <div id="gallery-pano" style="display:none">
         <h2>Panoramas</h2>
 
     </div>
@@ -71,7 +71,16 @@
 
 
 <script>
-    loadAlbum("{{.Name}}", '{{.MapTiles}}', '{{.MapAttribution}}', true, {{.AlbumData}});
+    loadAlbum({
+        albumName: '{{.Name}}',
+        mapTiles: '{{.MapTiles}}',
+        mapAttribution: '{{.MapAttribution}}',
+        showMap: true,
+        gallery: "#gallery",
+        galleryPano: "#gallery-pano",
+        baseUrl: "/{{.Name}}/",
+        albumData: {{.AlbumData}},
+    });
 </script>
 </body>
 </html>
