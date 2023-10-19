@@ -4,6 +4,7 @@ package nethttp
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/bool64/brick"
 	"github.com/go-chi/chi/v5"
@@ -16,14 +17,16 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
 )
 
 // NewRouter creates an instance of router filled with handlers and docs.
-func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
+func NewRouter(deps *service.Locator) http.Handler {
 	s := brick.NewBaseWebService(deps.BaseLocator)
 	deps.CtxdLogger().Important(context.Background(), "initializing router")
+	cfg := deps.Config
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
@@ -36,6 +39,14 @@ func NewRouter(deps *service.Locator, cfg service.Config) http.Handler {
 				return nil
 			}))
 			s.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(s.OpenAPICollector, "Admin", "Admin access"))
+		}
+
+		if cfg.Settings.WebDAVStorage != "" {
+			for _, m := range strings.Split("OPTIONS, MKCOL, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT", ", ") {
+				chi.RegisterMethod(m)
+			}
+
+			s.Mount("/webdav/", webdav.NewHandler(cfg.Settings.WebDAVStorage, deps.CtxdLogger()))
 		}
 
 		s.Post("/album", control.CreateAlbum(deps))

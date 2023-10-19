@@ -88,6 +88,12 @@ func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, 
 	return augmentResErr(ir.Get(ctx, q))
 }
 
+func (ir *hashedRepo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]V, error) {
+	q := ir.SelectStmt().Where(ir.Eq(ir.hashCol(), hashes))
+
+	return augmentResErr(ir.List(ctx, q))
+}
+
 func (ir *hashedRepo[V, T]) findBaseByHash(ctx context.Context, hash uniq.Hash) (V, error) {
 	q := ir.SelectStmt(func(options *sqluct.Options) {
 		options.Columns = []string{ir.Col(T(ir.R).CreatedAtPtr())}

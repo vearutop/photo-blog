@@ -63,7 +63,7 @@
     <h3 id="{{$a.Album.Name}}">{{if not $a.Album.Public}}
         <div class="ctrl-btn lock-icon" title="URL required to access this album, please share responsibly."></div>
         {{end}} <a href="/{{$a.Album.Name}}/">{{$a.Album.Title}}</a></h3>
-    <div id="a{{$a.Album.Hash}}"></div>
+    <div id="a{{$a.Album.Hash}}" class="grid preview"></div>
     <script>
         loadAlbum({
             albumName: "{{$a.Album.Name}}",

@@ -25,7 +25,7 @@ func main() {
 			log.Fatalf("failed to init service: %v", err)
 		}
 
-		return sl.BaseLocator, nethttp.NewRouter(sl, cfg)
+		return sl.BaseLocator, nethttp.NewRouter(sl)
 	}, func(o *brick.StartOptions) {
 		if migrate != nil && *migrate {
 			o.NoHTTP = true

@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"html/template"
-	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -87,8 +86,6 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 				return list[i].CreatedAt.After(list[j].CreatedAt)
 			})
 
-			aspectRatio := 3.0 / 2.0
-
 			for _, a := range list {
 				if !a.Public || a.Name == "" {
 					if d.NonAdmin {
@@ -104,39 +101,6 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 				if len(cont.Images) == 0 && d.NonAdmin {
 					continue
 				}
-
-				res := make([]Image, 0, 4)
-
-				if a.CoverImage != 0 {
-					for i, img := range cont.Images {
-						if img.Hash == a.CoverImage.String() {
-							img0 := cont.Images[0]
-
-							cont.Images[0] = img
-							cont.Images[i] = img0
-							break
-						}
-					}
-				}
-
-				for _, img := range cont.Images {
-					ar := float64(img.Width) / float64(img.Height)
-
-					if math.Abs(ar-aspectRatio) > 1e-2 {
-						continue
-					}
-
-					res = append(res, img)
-					if len(res) >= 4 {
-						break
-					}
-				}
-
-				if len(res) == 0 && d.NonAdmin {
-					continue
-				}
-
-				cont.Images = res
 
 				d.Albums = append(d.Albums, cont)
 			}

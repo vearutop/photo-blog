@@ -12,7 +12,7 @@
     }
     .thumb, a.image, .thumb canvas {
         width: ` + screen.width + `px;
-        height: `+Math.trunc(screen.width/1.5)+`px;
+        height: ` + Math.trunc(screen.width / 1.5) + `px;
     }
 }
 `
@@ -127,7 +127,11 @@ function loadAlbum(params) {
 
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
-                a.attr("class", "image")
+                if (i < 4) {
+                    a.attr("class", "image img" + i)
+                } else {
+                    a.attr("class", "image")
+                }
                 a.attr("href", "/image/" + img.hash + ".jpg")
                 a.attr("target", "_blank")
                 a.attr("data-idx", i)

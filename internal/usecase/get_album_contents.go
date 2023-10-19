@@ -161,3 +161,104 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 
 	return out, nil
 }
+
+func getAlbumContents2(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
+	albumHash := photo.AlbumHash(name)
+
+	album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
+	if err != nil {
+		return out, err
+	}
+
+	var images []photo.Image
+
+	if preview {
+		images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)
+		if err != nil {
+			return out, err
+		}
+	} else {
+		images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
+		if err != nil {
+			return out, err
+		}
+	}
+
+	for _, h := range album.Settings.GpxTracksHashes {
+		gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, h)
+		if err != nil {
+			return out, err
+		}
+
+		s := gpx.Settings.Val
+
+		if s.Name == "" {
+			s.Name = path.Base(gpx.Path)
+		}
+
+		out.Tracks = append(out.Tracks, track{
+			Hash:        h,
+			GpxSettings: s,
+		})
+	}
+
+	out.Album = album
+	out.Images = make([]Image, 0, len(images))
+	hashes := make([]uniq.Hash, 0, len(images))
+	imgByHash := make(map[uniq.Hash]Image, len(images))
+
+	for _, i := range images {
+		// Skip unprocessed images.
+		if i.Width == 0 {
+			continue
+		}
+
+		img := Image{
+			Name:     path.Base(i.Path),
+			Hash:     i.Hash.String(),
+			Width:    i.Width,
+			Height:   i.Height,
+			BlurHash: i.BlurHash,
+			size:     i.Size,
+		}
+
+		hashes = append(hashes, i.Hash)
+		imgByHash[i.Hash] = img
+	}
+
+	if !preview {
+		gps, err := deps.PhotoGpsFinder().FindByHashes(ctx, hashes...)
+		if err == nil {
+			for _, v := range gps {
+				img := imgByHash[v.Hash]
+				img.Gps = &v
+				imgByHash[v.Hash] = img
+			}
+		} else if !errors.Is(err, status.NotFound) {
+			deps.CtxdLogger().Warn(ctx, "failed to find gps",
+				"hashes", hashes, "error", err.Error())
+		}
+
+		exif, err := deps.PhotoExifFinder().FindByHashes(ctx, hashes...)
+		if err == nil {
+			for _, v := range exif {
+				img := imgByHash[v.Hash]
+				img.Exif = &v
+				imgByHash[v.Hash] = img
+			}
+		} else if !errors.Is(err, status.NotFound) {
+			deps.CtxdLogger().Warn(ctx, "failed to find exif",
+				"hashes", hashes, "error", err.Error())
+		}
+	}
+
+	for _, h := range hashes {
+		out.Images = append(out.Images, imgByHash[h])
+	}
+
+	if album.Settings.NewestFirst {
+		reverse(out.Images)
+	}
+
+	return out, nil
+}
