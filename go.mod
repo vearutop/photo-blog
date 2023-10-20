@@ -20,7 +20,6 @@ require (
 	github.com/godogx/dbsteps v0.1.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.8.4
-	github.com/studio-b12/gowebdav v0.9.0
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/jsonform-go v0.1.1-0.20230926233616-bda43b521c49
 	github.com/swaggest/jsonschema-go v0.3.60
