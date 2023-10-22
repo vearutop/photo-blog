@@ -2,9 +2,7 @@ package service
 
 import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"github.com/vearutop/photo-blog/internal/domain/text"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/auth"
 )
 
 type PhotoAlbumImageAdderProvider interface {
@@ -69,26 +67,6 @@ type PhotoGpsEnsurerProvider interface {
 
 type PhotoGpsFinderProvider interface {
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
-}
-
-type TextLabelFinderProvider interface {
-	TextLabelFinder() text.LabelFinder
-}
-
-type TextLabelEnsurerProvider interface {
-	TextLabelEnsurer() text.LabelEnsurer
-}
-
-type TextLabelDeleterProvider interface {
-	TextLabelDeleter() text.LabelDeleter
-}
-
-type AuthVisitorEnsurerProvider interface {
-	AuthVisitorEnsurer() uniq.Ensurer[auth.Visitor]
-}
-
-type AuthVisitorFinderProvider interface {
-	AuthVisitorFinder() uniq.Finder[auth.Visitor]
 }
 
 type PhotoGpxEnsurerProvider interface {

@@ -125,15 +125,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoGpxFinderProvider = gpxRepo
 	l.PhotoGpxEnsurerProvider = gpxRepo
 
-	labelRepo := storage.NewLabelRepository(l.Storage)
-	l.TextLabelFinderProvider = labelRepo
-	l.TextLabelEnsurerProvider = labelRepo
-	l.TextLabelDeleterProvider = labelRepo
-
-	visitorRepo := storage.NewVisitorRepository(l.Storage)
-	l.AuthVisitorEnsurerProvider = visitorRepo
-	l.AuthVisitorFinderProvider = visitorRepo
-
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 
 	if err := refl.NoEmptyFields(l); err != nil {
