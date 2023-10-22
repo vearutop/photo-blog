@@ -330,12 +330,95 @@ function loadAlbum(params) {
 
             overlayMaps["Photos"] = L.layerGroup(images);
 
+            /////////////////////////
             // GPX rendering.
+
+            function getDarkColor() {
+                var color = '#';
+                for (var i = 0; i < 6; i++) {
+                    color += Math.floor(Math.random() * 12).toString(16);
+                }
+                return color;
+            }
+
+            var toRad = Math.PI/180
+
+            // distance returns 2D distance between two points in meters.
+            function distance(lat1, lon1, lat2, lon2) {
+                var dLat = toRad * (lat1 - lat2)
+                var dLon = toRad * (lon1 - lon2)
+
+                var a = Math.pow(Math.sin(dLat/2), 2) + Math.pow(Math.sin(dLon/2), 2)*Math.cos(toRad * lat1)*Math.cos(toRad * lat2)
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+
+                return 6371000 * c
+            }
+
+            function gpxPopupHandler(name) {
+                return function(e) {
+                    var popup = e.popup;
+                    var points = e.layer._latlngs
+
+                    var lat = popup.getLatLng().lat
+                    var lon = popup.getLatLng().lng
+
+                    var shortest = null
+                    var ptIdx = []
+                    for (var i = 0; i < points.length; i++) {
+                        var pt = points[i]
+
+                        if (pt instanceof Array) {
+                            for (var j = 0; j < pt.length; j++) {
+                                var pt2 = pt[j]
+
+                                var dist = distance(lat, lon, pt2.lat, pt2.lng)
+
+                                if (shortest === null || shortest > dist) {
+                                    shortest = dist
+                                    ptIdx = [i, j]
+                                }
+                            }
+
+                            continue
+                        }
+
+                        var dist = distance(lat, lon, pt.lat, pt.lng)
+
+                        if (shortest === null || shortest > dist) {
+                            shortest = dist
+                            ptIdx = [i]
+                        }
+                    }
+
+                    var ts
+
+                    if (ptIdx.length == 1) {
+                        ts = e.layer.feature.properties.coordTimes[ptIdx[0]]
+                    }
+
+                    if (ptIdx.length == 2) {
+                        ts = e.layer.feature.properties.coordTimes[ptIdx[0]][ptIdx[1]]
+                    }
+
+                    popup.setContent(name + "<br />" + lat.toFixed(8) + ", " + lon.toFixed(8) + "<br />" +
+                        ts + "<br /> (dist to nearest timestamp " + Math.round(shortest) + " meters)");
+                }
+            }
+
             for (var i = 0; i < result.tracks.length; i++) {
+                var customLayer = L.geoJson(null, {
+                    style: function () {
+                        return {color: getDarkColor()};
+                    }
+                });
+
                 var gpx = result.tracks[i];
 
-                var gpxLayer = omnivore.gpx('/track/' + gpx.hash + '.gpx');
+                var gpxLayer = omnivore.gpx('/track/' + gpx.hash + '.gpx', null, customLayer);
+
                 gpxLayer.bindPopup(gpx.name).addTo(map);
+                gpxLayer.on('popupopen', gpxPopupHandler(gpx.name));
+
                 overlayMaps[gpx.name] = gpxLayer
             }
 
