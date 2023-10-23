@@ -2,8 +2,10 @@ package service
 
 import (
 	"github.com/bool64/brick"
+	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/jsonform-go"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
 // Locator defines application resources.
@@ -12,6 +14,7 @@ type Locator struct {
 
 	SchemaRepo   *jsonform.Repository
 	AccessLogger ctxd.Logger
+	MapCache     *cache.FailoverOf[photo.MapTile]
 
 	Config Config
 
@@ -39,6 +42,8 @@ type Locator struct {
 
 	PhotoGpxEnsurerProvider
 	PhotoGpxFinderProvider
+
+	TxtRendererProvider
 }
 
 // ServiceConfig gives access to service configuration.

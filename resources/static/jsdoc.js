@@ -20,11 +20,19 @@
  */
 
 /**
+ * @typedef PhotoChronoText
+ * @type {Object}
+ * @property {String} text - TextText, can contain HTML.
+ * @property {String} time - TimestampIn RFC 3339 format, e.g. 2020-01-01T01:02:03Z.
+ */
+
+/**
  * @typedef PhotoAlbumSettings
  * @type {Object}
- * @property {String} description - Description of an album, can contain HTML.
- * @property {Array<String>} gpx_tracks_hashes
+ * @property {String} description - DescriptionDescription of an album, can contain HTML.
+ * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
  * @property {Boolean} newest_first - Newest firstShow newest images at the top.
+ * @property {Array<PhotoChronoText>} texts - Chronological texts.
  */
 
 /**
@@ -138,6 +146,12 @@
  */
 
 /**
+ * @typedef DeleteAlbumNameRequest
+ * @type {Object}
+ * @property {String} name - Name of album to delete.
+ */
+
+/**
  * @typedef GetAlbumNameZipRequest
  * @type {Object}
  * @property {String} name
@@ -194,13 +208,6 @@
  */
 
 /**
- * @typedef GetControlFormRequest
- * @type {Object}
- * @property {String} schema
- * @property {String} id
- */
-
-/**
  * @typedef GetEditAlbumHashHtmlRequest
  * @type {Object}
  * @property {String} hash
@@ -247,18 +254,8 @@
  */
 
 /**
- * @typedef TextLabel
- * @type {Object}
- * @property {String} created_at - Created AtTimestamp of creation.
- * @property {String} hash - Hash IdUnique hash value.
- * @property {String} locale - Locale.
- * @property {String} text
- */
-
-/**
  * @typedef ControlUpdateImageInput
  * @type {Object}
- * @property {Array<TextLabel>} descriptions
  * @property {PhotoExif} exif
  * @property {PhotoGps} gps
  * @property {String} hash
@@ -337,20 +334,13 @@
  */
 
 /**
- * @typedef PostMakePassHashRequest
+ * @typedef GetJsonFormNameSchemaJsonRequest
  * @type {Object}
- * @property {String} pass
- * @property {String} salt
+ * @property {('service.settings'|'photo.album'|'photo.image')} name
  */
 
 /**
- * @typedef GetSchemaNameJsonRequest
- * @type {Object}
- * @property {String} name
- */
-
-/**
- * @typedef JsonformFormItem
+ * @typedef JsonformGoFormItem
  * @type {Object}
  * @property {String} activeClass - Button mode for radio buttons.
  * @property {String} append
@@ -359,6 +349,7 @@
  * @property {String} htmlClass
  * @property {Object.<String,String>} htmlMetaData
  * @property {String} inlinetitle
+ * @property {Array<JsonformGoFormItem>} items
  * @property {String} key
  * @property {Boolean} notitle
  * @property {String} placeholder
@@ -370,15 +361,22 @@
  */
 
 /**
- * @typedef JsonformFormSchema
+ * @typedef JsonformGoFormSchema
  * @type {Object}
- * @property {Array<JsonformFormItem>} form
+ * @property {Array<JsonformGoFormItem>} form
  * @property {*} schema
  */
 
 /**
- * @callback JsonformFormSchemaCallback
- * @param {JsonformFormSchema} value
+ * @callback JsonformGoFormSchemaCallback
+ * @param {JsonformGoFormSchema} value
+ */
+
+/**
+ * @typedef PostMakePassHashRequest
+ * @type {Object}
+ * @property {String} pass
+ * @property {String} salt
  */
 
 /**
@@ -392,6 +390,7 @@
  * @property {String} site_title - TitleThe title of this site.
  * @property {Boolean} tag_visitors - Tag unique visitorsUnique visitors would be tagged with cookies.
  * @property {String} upload_storage - Upload storagePath to directory where uploaded files are stored.
+ * @property {String} webdav_storage - WebDAV storagePath to directory with WebDAV access.
  */
 
 /**

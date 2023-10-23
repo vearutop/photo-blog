@@ -95,6 +95,15 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		album := cont.Album
 
+		for i, t := range album.Settings.Texts {
+			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
+			if err != nil {
+				return err
+			}
+
+			album.Settings.Texts[i] = t
+		}
+
 		d := pageData{}
 		d.Title = album.Title
 		d.Description = template.HTML(strings.ReplaceAll(album.Settings.Description, "\n", "<br />"))
@@ -107,6 +116,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.AlbumData = cont
 
 		d.MapTiles = deps.ServiceSettings().MapTiles
+		if deps.ServiceSettings().MapCache {
+			d.MapTiles = "/map-tile/{r}/{z}/{x}/{y}.png"
+		}
+
 		d.MapAttribution = deps.ServiceSettings().MapAttribution
 
 		var totalSize int64

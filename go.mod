@@ -18,12 +18,14 @@ require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/godogx/dbsteps v0.1.2
+	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.9.0
-	github.com/swaggest/jsonform-go v0.1.1-0.20230926233616-bda43b521c49
-	github.com/swaggest/jsonschema-go v0.3.60
-	github.com/swaggest/openapi-go v0.2.39
+	github.com/swaggest/jsonform-go v0.1.1-0.20231022211947-64445151ed46
+	github.com/swaggest/jsonschema-go v0.3.62
+	github.com/swaggest/openapi-go v0.2.41
 	github.com/swaggest/refl v1.3.0
 	github.com/swaggest/rest v0.2.58
 	github.com/swaggest/swgui v1.7.3
@@ -31,10 +33,12 @@ require (
 	github.com/tkrajina/gpxgo v1.3.0
 	github.com/valyala/fasthttp v1.50.0
 	github.com/vearutop/statigz v1.4.0
+	github.com/yuin/goldmark v1.5.6
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.13.0
-	golang.org/x/net v0.14.0
+	golang.org/x/crypto v0.14.0
+	golang.org/x/net v0.17.0
+	golang.org/x/text v0.13.0
 	modernc.org/sqlite v1.25.0
 )
 
@@ -43,6 +47,7 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
 	github.com/bool64/godogx v0.1.1 // indirect
@@ -70,6 +75,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -109,8 +115,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577 // indirect

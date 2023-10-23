@@ -14,6 +14,7 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
+	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
@@ -28,6 +29,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
+	"github.com/vearutop/photo-blog/pkg/txt"
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
@@ -126,6 +128,16 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoGpxEnsurerProvider = gpxRepo
 
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
+
+	l.MapCache = brick.MakeCacheOf[photo.MapTile](l.BaseLocator, "map-tiles", 7*24*time.Hour,
+		func(cfg *cache.FailoverConfigOf[photo.MapTile]) {
+			cfg.BackendConfig.CountSoftLimit = 1000
+			cfg.BackendConfig.DeleteExpiredJobInterval = time.Hour
+			cfg.BackendConfig.DeleteExpiredAfter = 2 * time.Hour
+		},
+	)
+
+	l.TxtRendererProvider = txt.NewRenderer()
 
 	if err := refl.NoEmptyFields(l); err != nil {
 		return nil, err

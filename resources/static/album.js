@@ -84,9 +84,11 @@ function loadAlbum(params) {
 
     /**
      *
-     * @param {UsecaseGetAlbumOutputCallback} result
+     * @param {UsecaseGetAlbumOutput} result
      */
     function renderAlbum(result) {
+        console.log("RESULT", result)
+
         var hashByIdx = {}
         var idxByHash = {}
         var idx = 0
@@ -94,6 +96,9 @@ function loadAlbum(params) {
         if (typeof result.images === 'undefined') {
             result.images = [];
         }
+
+        var prevImgTime = null
+
         for (var i = 0; i < result.images.length; i++) {
             var img = result.images[i]
 
@@ -157,6 +162,28 @@ function loadAlbum(params) {
                 }
 
                 if (typeof img.exif !== "undefined") {
+                    var ts = Date.parse(img.exif.digitized)
+
+                    if (result.album.settings.texts) {
+                        for (var ti = 0; ti < result.album.settings.texts.length; ti++) {
+                            var t = result.album.settings.texts[ti]
+
+                            var tt = Date.parse(t.time)
+
+                            if (tt > ts) {
+                                continue
+                            }
+
+                            if (prevImgTime !== null && tt < prevImgTime) {
+                                continue
+                            }
+
+                            $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5'>"+t.text+"</div></div>")
+                        }
+                    }
+
+                    prevImgTime = ts
+
                     img_description += '<a href="#" class="gear-icon ctrl-btn" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
 
                     var exif = img.exif
@@ -341,21 +368,21 @@ function loadAlbum(params) {
                 return color;
             }
 
-            var toRad = Math.PI/180
+            var toRad = Math.PI / 180
 
             // distance returns 2D distance between two points in meters.
             function distance(lat1, lon1, lat2, lon2) {
                 var dLat = toRad * (lat1 - lat2)
                 var dLon = toRad * (lon1 - lon2)
 
-                var a = Math.pow(Math.sin(dLat/2), 2) + Math.pow(Math.sin(dLon/2), 2)*Math.cos(toRad * lat1)*Math.cos(toRad * lat2)
-                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+                var a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(toRad * lat1) * Math.cos(toRad * lat2)
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
                 return 6371000 * c
             }
 
             function gpxPopupHandler(name) {
-                return function(e) {
+                return function (e) {
                     var popup = e.popup;
                     var points = e.layer._latlngs
 

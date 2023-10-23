@@ -23,6 +23,8 @@ type getAlbumImagesDeps interface {
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 	ServiceSettings() service.Settings
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
+
+	service.TxtRendererProvider
 }
 
 type getAlbumInput struct {

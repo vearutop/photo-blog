@@ -20,6 +20,8 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
+	"github.com/vearutop/photo-blog/pkg/txt"
+	"golang.org/x/text/language"
 )
 
 // NewRouter creates an instance of router filled with handlers and docs.
@@ -92,6 +94,36 @@ func NewRouter(deps *service.Locator) http.Handler {
 			s.Use(auth.VisitorMiddleware(deps.AccessLog()))
 		}
 
+		if len(deps.Config.Settings.Languages) > 0 {
+			languages := deps.Config.Settings.Languages
+			var tags []language.Tag
+			for i, l := range languages {
+				t := language.MustParse(l)
+				tags = append(tags, t)
+				deps.CtxdLogger().Info(context.Background(), "adding language",
+					"lang", t.String(), "idx", i)
+			}
+			matcher := language.NewMatcher(tags)
+
+			s.Use(func(handler http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					lang, _ := r.Cookie("lang")
+					accept := r.Header.Get("Accept-Language")
+					tag, i := language.MatchStrings(matcher, lang.String(), accept)
+					deps.CtxdLogger().Debug(context.Background(), "matching language",
+						"lang", tag.String(),
+						"idx", i,
+						"cookie", lang,
+						"accept", accept,
+					)
+
+					ctx := txt.WithLanguage(r.Context(), languages[i])
+
+					handler.ServeHTTP(w, r.WithContext(ctx))
+				})
+			})
+		}
+
 		s.Get("/{name}/", usecase.ShowAlbum(deps))
 		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
@@ -119,6 +151,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 	s.Method(http.MethodGet, "/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.URL.Path+"/", http.StatusFound)
 	}))
+
+	s.Get("/map-tile/{r}/{z}/{x}/{y}.png", usecase.MapTile(deps))
 
 	s.Post("/make-pass-hash", usecase.MakePassHash())
 

@@ -163,6 +163,8 @@ func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.I
 		return ctxd.WrapError(ctx, err, "read image meta")
 	}
 
+	exifQuirks(&m.Exif)
+
 	m.Exif.Hash = img.Hash
 	if _, err := i.deps.PhotoExifEnsurer().Ensure(ctx, m.Exif); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to store image meta",
@@ -178,4 +180,10 @@ func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.I
 	}
 
 	return nil
+}
+
+func exifQuirks(exif *photo.Exif) {
+	if exif.CameraModel == "SM-C200" {
+		exif.ProjectionType = "equirectangular"
+	}
 }

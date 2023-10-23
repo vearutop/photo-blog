@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
 type PhotoAlbumImageAdderProvider interface {
@@ -75,4 +76,8 @@ type PhotoGpxEnsurerProvider interface {
 
 type PhotoGpxFinderProvider interface {
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
+}
+
+type TxtRendererProvider interface {
+	TxtRenderer() *txt.Renderer
 }

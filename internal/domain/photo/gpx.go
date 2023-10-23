@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/bool64/sqluct"
 	"github.com/tkrajina/gpxgo/gpx"
@@ -84,4 +85,9 @@ func (g *Gpx) Index() error {
 	g.Settings.Val = s
 
 	return nil
+}
+
+type MapTile struct {
+	Data       []byte
+	ModifiedAt time.Time
 }

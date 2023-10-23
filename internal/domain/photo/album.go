@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
@@ -22,10 +23,16 @@ type AlbumImageFinder interface {
 	FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]Image, error)
 }
 
+type ChronoText struct {
+	Time time.Time `json:"time" title:"Timestamp" description:"In RFC 3339 format, e.g. 2020-01-01T01:02:03Z"`
+	Text string    `json:"text" title:"Text" formType:"textarea" description:"Text, can contain HTML."`
+}
+
 type AlbumSettings struct {
-	Description     string      `json:"description,omitempty" formType:"textarea" description:"Description of an album, can contain HTML."`
-	GpxTracksHashes []uniq.Hash `json:"gpx_tracks_hashes,omitempty"`
-	NewestFirst     bool        `json:"newest_first" title:"Newest first" description:"Show newest images at the top."`
+	Description     string       `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an album, can contain HTML."`
+	GpxTracksHashes []uniq.Hash  `json:"gpx_tracks_hashes,omitempty" title:"GPX track hashes"`
+	NewestFirst     bool         `json:"newest_first" title:"Newest first" description:"Show newest images at the top."`
+	Texts           []ChronoText `json:"texts,omitempty" title:"Chronological texts"`
 }
 
 func (s *AlbumSettings) Scan(src any) error {
