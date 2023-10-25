@@ -2,12 +2,13 @@ package usecase
 
 import (
 	"context"
+	"github.com/bool64/cache"
 	"html/template"
 	"sort"
 	"strconv"
 	"time"
 
-	"github.com/bool64/cache"
+	"github.com/bool64/brick"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -21,8 +22,14 @@ type showMainInput struct {
 	hasAuth bool
 }
 
+type showMainDeps interface {
+	getAlbumImagesDeps
+
+	CacheInvalidationIndex() *cache.InvalidationIndex
+}
+
 // ShowMain creates use case interactor to show album.
-func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
+func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
 	tpl, err := static.Assets.ReadFile("index.html")
 	if err != nil {
 		panic(err)
@@ -46,16 +53,18 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 		Albums            []getAlbumOutput
 	}
 
-	c := cache.NewFailoverOf[pageData](func(cfg *cache.FailoverConfigOf[pageData]) {
-		cfg.BackendConfig.TimeToLive = 5 * time.Minute
-	})
+	cacheName := "main-page"
+	c := brick.MakeCacheOf[pageData](deps, cacheName, time.Hour)
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_main", 1)
 		deps.CtxdLogger().Info(ctx, "showing main")
 
-		d, err := c.Get(ctx, []byte("main"+strconv.FormatBool(auth.IsAdmin(ctx))), func(ctx context.Context) (pageData, error) {
+		cacheKey := []byte("main" + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx))
+		d, err := c.Get(ctx, cacheKey, func(ctx context.Context) (pageData, error) {
 			d := pageData{}
+
+			invalidationLabels := []string{"service-settings"}
 
 			d.Title = deps.ServiceSettings().SiteTitle
 			d.Lang = txt.Language(ctx)
@@ -78,6 +87,8 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 				}
 
 				d.FeaturedAlbumData = cont
+
+				invalidationLabels = append(invalidationLabels, "album/"+d.Featured)
 			}
 
 			list, err := deps.PhotoAlbumFinder().FindAll(ctx)
@@ -106,7 +117,10 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 				}
 
 				d.Albums = append(d.Albums, cont)
+				invalidationLabels = append(invalidationLabels, "album/"+cont.Album.Name)
 			}
+
+			deps.CacheInvalidationIndex().AddLabels(cacheName, cacheKey, invalidationLabels...)
 
 			return d, nil
 		})

@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -17,6 +18,9 @@ func UpdateSettings(deps *service.Locator) usecase.Interactor {
 		}
 
 		deps.Config.Settings = in
+		if _, err := deps.CacheInvalidationIndex().InvalidateByLabels(ctx, "service-settings"); err != nil {
+			return fmt.Errorf("invalidate cache: %w", err)
+		}
 
 		return nil
 	})

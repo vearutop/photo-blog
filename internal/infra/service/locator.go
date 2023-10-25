@@ -55,6 +55,7 @@ func (l *Locator) SchemaRepository() *jsonform.Repository {
 	return l.SchemaRepo
 }
 
+// ServiceSettings give access to dynamic service settings.
 func (l *Locator) ServiceSettings() Settings {
 	return l.Config.Settings
 }
