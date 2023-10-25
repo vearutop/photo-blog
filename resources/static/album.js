@@ -178,7 +178,7 @@ function loadAlbum(params) {
                                 continue
                             }
 
-                            $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5'>"+t.text+"</div></div>")
+                            $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5'>" + t.text + "</div></div>")
                         }
                     }
 
@@ -307,6 +307,11 @@ function loadAlbum(params) {
             history.pushState("", document.title, originalPath);
         })
 
+        var thumbSize = "200h"
+        if (window.devicePixelRatio > 1) {
+            thumbSize = "400h"
+        }
+
         if (params.showMap && gpsBounds.minLat !== null) {
             console.log("GPS BOUNDS", gpsBounds);
 
@@ -338,7 +343,7 @@ function loadAlbum(params) {
                 images.push(L.marker([m.latitude, m.longitude],
                     {
                         icon: L.icon({
-                            iconUrl: '/thumb/200h/' + m.hash + '.jpg',
+                            iconUrl: '/thumb/' + thumbSize + '/' + m.hash + '.jpg',
                             iconSize: [40],
                             className: 'image-marker'
                         })

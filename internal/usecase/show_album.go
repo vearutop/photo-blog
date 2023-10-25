@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 
 	"github.com/docker/go-units"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -60,6 +60,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 	type pageData struct {
 		Title       string
+		Lang        string
 		Description template.HTML
 		OGTitle     string
 		Name        string
@@ -104,9 +105,14 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			album.Settings.Texts[i] = t
 		}
 
+		album.Title = deps.TxtRenderer().MustRenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
+			o.StripTags = true
+		})
+
 		d := pageData{}
 		d.Title = album.Title
-		d.Description = template.HTML(strings.ReplaceAll(album.Settings.Description, "\n", "<br />"))
+		d.Lang = txt.Language(ctx)
+		d.Description = template.HTML(deps.TxtRenderer().MustRenderLang(ctx, album.Settings.Description))
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.Name = album.Name
 		d.NonAdmin = !in.hasAuth

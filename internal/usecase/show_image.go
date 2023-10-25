@@ -32,6 +32,8 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 			p = p[0:strings.LastIndex(p, ".")] + ".avif"
 		}
 
+		rw.Header().Set("Cache-Control", "max-age=31536000")
+
 		http.ServeFile(rw, in.req, image.Path)
 
 		return nil

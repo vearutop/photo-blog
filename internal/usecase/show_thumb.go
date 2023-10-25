@@ -44,6 +44,8 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 			return ctxd.WrapError(ctx, err, "getting thumbnail")
 		}
 
+		rw.Header().Set("Cache-Control", "max-age=31536000")
+
 		http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont.ReadSeeker())
 
 		return nil

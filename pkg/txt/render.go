@@ -48,9 +48,11 @@ func WithLanguage(ctx context.Context, lang string) context.Context {
 }
 
 func Language(ctx context.Context) string {
-	lang, _ := ctx.Value(langCtxKey{}).(string)
+	if lang, ok := ctx.Value(langCtxKey{}).(string); ok {
+		return lang
+	}
 
-	return lang
+	return "en"
 }
 
 type RenderOptions struct {
@@ -93,7 +95,22 @@ func (r *Renderer) Render(source string, opts ...func(o *RenderOptions)) (string
 		res = r.strict.Sanitize(res)
 	}
 
-	return res, nil
+	return strings.TrimSpace(res), nil
+}
+
+func (r *Renderer) MustRenderLang(ctx context.Context, source string, opts ...func(o *RenderOptions)) string {
+	s, err := r.Render(source, func(o *RenderOptions) {
+		o.Lang = Language(ctx)
+
+		for _, opt := range opts {
+			opt(o)
+		}
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return s
 }
 
 func (r *Renderer) RenderLang(ctx context.Context, source string, opts ...func(o *RenderOptions)) (string, error) {
