@@ -12,6 +12,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
 type getAlbumImagesDeps interface {
@@ -117,6 +118,27 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			Hash:        h,
 			GpxSettings: s,
 		})
+	}
+
+	for i, t := range album.Settings.Texts {
+		t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
+		if err != nil {
+			return out, err
+		}
+
+		album.Settings.Texts[i] = t
+	}
+
+	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
+		o.StripTags = true
+	})
+	if err != nil {
+		return out, err
+	}
+
+	album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description)
+	if err != nil {
+		return out, err
 	}
 
 	out.Album = album

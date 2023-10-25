@@ -12,6 +12,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -34,6 +35,7 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 
 	type pageData struct {
 		Title             string
+		Lang              string
 		Name              string
 		CoverImage        string
 		NonAdmin          bool
@@ -56,6 +58,7 @@ func ShowMain(deps getAlbumImagesDeps) usecase.IOInteractorOf[showMainInput, web
 			d := pageData{}
 
 			d.Title = deps.ServiceSettings().SiteTitle
+			d.Lang = txt.Language(ctx)
 			d.NonAdmin = !auth.IsAdmin(ctx)
 			d.Featured = deps.ServiceSettings().FeaturedAlbumName
 

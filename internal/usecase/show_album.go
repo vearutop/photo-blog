@@ -96,23 +96,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		album := cont.Album
 
-		for i, t := range album.Settings.Texts {
-			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
-			if err != nil {
-				return err
-			}
-
-			album.Settings.Texts[i] = t
-		}
-
-		album.Title = deps.TxtRenderer().MustRenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
-			o.StripTags = true
-		})
-
 		d := pageData{}
 		d.Title = album.Title
 		d.Lang = txt.Language(ctx)
-		d.Description = template.HTML(deps.TxtRenderer().MustRenderLang(ctx, album.Settings.Description))
+		d.Description = template.HTML(album.Settings.Description)
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.Name = album.Name
 		d.NonAdmin = !in.hasAuth
