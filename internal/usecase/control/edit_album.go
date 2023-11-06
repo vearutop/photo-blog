@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"html/template"
 	"net/http"
 
 	"github.com/bool64/ctxd"
@@ -33,13 +34,25 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 			return err
 		}
 
-		return deps.SchemaRepository().Render(out.Writer, jsonform.Page{}, jsonform.Form{
-			Title:         "Manage Album",
-			SubmitURL:     "/album",
-			SubmitMethod:  http.MethodPut,
-			SuccessStatus: http.StatusNoContent,
-			Value:         a,
-		})
+		return deps.SchemaRepository().Render(
+			out.Writer,
+			jsonform.Page{
+				AppendHTMLHead: `
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/client.js"></script>
+    <script src="/static/album.js"></script>
+`,
+				AppendHTML: template.HTML(`
+<hr /><button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
+`),
+			},
+			jsonform.Form{
+				Title:         "Manage Album",
+				SubmitURL:     "/album",
+				SubmitMethod:  http.MethodPut,
+				SuccessStatus: http.StatusNoContent,
+				Value:         a,
+			})
 	})
 
 	u.SetTags("Control Panel")

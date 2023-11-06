@@ -528,6 +528,8 @@ github.com/swaggest/form/v5 v5.1.1 h1:ct6/rOQBGrqWUQ0FUv3vW5sHvTUb31AwTUWj947N6c
 github.com/swaggest/form/v5 v5.1.1/go.mod h1:X1hraaoONee20PMnGNLQpO32f9zbQ0Czfm7iZThuEKg=
 github.com/swaggest/jsonform-go v0.1.1-0.20231106143749-4d1d572d76d5 h1:Bgd1BB7tMncLfKhfmeSuVCtT0qkiTh8wepbgsbEScHU=
 github.com/swaggest/jsonform-go v0.1.1-0.20231106143749-4d1d572d76d5/go.mod h1:e4uSi6/rGBjrZKJuWPnclT47YbF398zm3oQc47gO8j8=
+github.com/swaggest/jsonform-go v0.1.1-0.20231106223458-f35205b2358b h1:uUjycSt0FJfK6XMiuPFVghfSHq5FrLa0fECNe9vXMfI=
+github.com/swaggest/jsonform-go v0.1.1-0.20231106223458-f35205b2358b/go.mod h1:e4uSi6/rGBjrZKJuWPnclT47YbF398zm3oQc47gO8j8=
 github.com/swaggest/jsonschema-go v0.3.62 h1:eIE0aRklWa2eLJg2L/zqyWpKvgUPbq2oKOtrJGJkPH0=
 github.com/swaggest/jsonschema-go v0.3.62/go.mod h1:DYuKqdpms/edvywsX6p1zHXCZkdwB28wRaBdFCe3Duw=
 github.com/swaggest/openapi-go v0.2.42 h1:pM/1WRIyU3JV9YUXqPEn6JLmc8CaEgSe507uV0RVPy4=

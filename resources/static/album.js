@@ -1,3 +1,30 @@
+/**
+ * @param {XMLHttpRequest} x
+ */
+function onAlbumCreated(x) {
+    /**
+     * @type {PhotoAlbum}
+     */
+    var a = JSON.parse(x.responseText)
+    window.location = "/edit/album/" + a.hash + ".html"
+}
+
+function deleteAlbum(name) {
+    if (!window.confirm("Deleted album can not be restored")) {
+        return
+    }
+
+    var b = new Backend('');
+    b.deleteAlbumName({
+        name: name,
+    }, function (x) {
+        alert("Album deleted, you'll be redirected to main page")
+        window.location = "/"
+    }, function (x) {
+        alert("Failed to delete album: " + x.error)
+    })
+}
+
 (function () {
     if (screen.width > 576 || screen.width == 0) {
         return

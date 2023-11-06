@@ -61,6 +61,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
 		s.Post("/album/{name}/{hash}", control.AddToAlbum(deps))
 
+		s.Get("/add-album.html", control.AddAlbum(deps))
+
 		s.Get("/edit/image/{hash}.html", control.EditImage(deps))
 		s.Get("/edit/album/{hash}.html", control.EditAlbum(deps))
 		s.Get("/edit/settings.html", control.EditSettings(deps))

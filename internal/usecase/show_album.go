@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -87,11 +86,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		cont, err := getAlbumContents(ctx, deps, in.Name, false)
 		if err != nil {
-			return err
-		}
-
-		if len(cont.Images) == 0 {
-			return errors.New("no images")
+			return fmt.Errorf("get album contents: %w", err)
 		}
 
 		album := cont.Album
@@ -136,8 +131,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			d.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
 		case album.CoverImage != 0:
 			d.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
-		default:
+		case len(cont.Images) > 0:
 			d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
+			//default:
+			//	d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
 		}
 
 		return out.Render(tmpl, d)
