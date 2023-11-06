@@ -12,8 +12,8 @@ import (
 
 type File struct {
 	Head
-	Size int64  `db:"size" json:"size"`
-	Path string `db:"path" json:"path"`
+	Size int64  `db:"size" title:"File Size" json:"size" readOnly:"true"`
+	Path string `db:"path" title:"File Path" json:"path" readOnly:"true"`
 }
 
 func (v *File) SetPath(ctx context.Context, path string) (err error) {

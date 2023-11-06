@@ -164,3 +164,13 @@ qu’après m’avoir lu.</p>
 </tbody>
 </table>`, strings.TrimSpace(s), s)
 }
+
+func TestRenderer_Render_stripTags(t *testing.T) {
+	r := txt.NewRenderer()
+	s, err := r.Render(`Devil's Bridge`, func(o *txt.RenderOptions) {
+		o.StripTags = true
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "Devil's Bridge", s)
+}

@@ -2,6 +2,8 @@ package control
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -20,6 +22,8 @@ type editImagePageDeps interface {
 
 	SchemaRepository() *jsonform.Repository
 	PhotoImageFinder() uniq.Finder[photo.Image]
+	PhotoExifFinder() uniq.Finder[photo.Exif]
+	PhotoGpsFinder() uniq.Finder[photo.Gps]
 }
 
 // EditImage creates use case interactor to show form.
@@ -31,24 +35,50 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in editImageInput, out *usecase.OutputWithEmbeddedWriter) error {
 		img, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
-			return err
+			return fmt.Errorf("find image: %w", err)
 		}
 
-		return deps.SchemaRepository().Render(out.Writer, jsonform.Page{
-			PrependHTML: template.HTML(`
+		exif, err := deps.PhotoExifFinder().FindByHash(ctx, in.Hash)
+		if err != nil {
+			return fmt.Errorf("find exif: %w", err)
+		}
+
+		gps, err := deps.PhotoGpsFinder().FindByHash(ctx, in.Hash)
+		if err != nil && !errors.Is(err, status.NotFound) {
+			return fmt.Errorf("find gps: %w", err)
+		}
+
+		return deps.SchemaRepository().Render(out.Writer,
+			jsonform.Page{
+				Title: "Manage Photo",
+				PrependHTML: template.HTML(`
 <div style="margin:2em" class="pure-u-2-5">
     <h1>Manage photo</h1>
-    <img alt="" src="/thumb/400h/` + img.Hash.String() + `.jpg" />
-    <form id="schema-form" class="pure-form"></form>
-    <div id="res" class="alert"></div>
+    <img alt="" style="width:100%" src="/thumb/600w/` + img.Hash.String() + `.jpg" />
 </div>`),
-		}, jsonform.Form{
-			Title:         "Manage Photo",
-			SubmitURL:     "/album",
-			SubmitMethod:  http.MethodPut,
-			SuccessStatus: http.StatusNoContent,
-			Value:         img,
-		})
+			},
+			jsonform.Form{
+				Title:         "Exif",
+				SubmitURL:     "/exif",
+				SubmitMethod:  http.MethodPut,
+				SuccessStatus: http.StatusNoContent,
+				Value:         exif,
+			},
+			jsonform.Form{
+				Title:         "Image",
+				SubmitURL:     "/image",
+				SubmitMethod:  http.MethodPut,
+				SuccessStatus: http.StatusNoContent,
+				Value:         img,
+			},
+			jsonform.Form{
+				Title:         "GPS",
+				SubmitURL:     "/gps",
+				SubmitMethod:  http.MethodPut,
+				SuccessStatus: http.StatusNoContent,
+				Value:         gps,
+			},
+		)
 	})
 
 	u.SetTags("Control Panel")

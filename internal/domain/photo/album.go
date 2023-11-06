@@ -31,7 +31,7 @@ type ChronoText struct {
 type AlbumSettings struct {
 	Description     string       `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an album, can contain HTML."`
 	GpxTracksHashes []uniq.Hash  `json:"gpx_tracks_hashes,omitempty" title:"GPX track hashes"`
-	NewestFirst     bool         `json:"newest_first" title:"Newest first" description:"Show newest images at the top."`
+	NewestFirst     bool         `json:"newest_first,omitempty" title:"Newest first" description:"Show newest images at the top."`
 	Texts           []ChronoText `json:"texts,omitempty" title:"Chronological texts"`
 }
 

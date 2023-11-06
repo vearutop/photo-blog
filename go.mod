@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bool64/brick v0.2.2-0.20231025204446-4eec0fbe47fa
-	github.com/bool64/cache v0.4.6
+	github.com/bool64/cache v0.4.7-0.20231025204044-1fcc717eabf8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.31
 	github.com/bool64/httptestbench v0.1.4
@@ -23,11 +23,11 @@ require (
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.9.0
-	github.com/swaggest/jsonform-go v0.1.1-0.20231022211947-64445151ed46
+	github.com/swaggest/jsonform-go v0.1.1-0.20231106143749-4d1d572d76d5
 	github.com/swaggest/jsonschema-go v0.3.62
-	github.com/swaggest/openapi-go v0.2.41
+	github.com/swaggest/openapi-go v0.2.42
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.58
+	github.com/swaggest/rest v0.2.59
 	github.com/swaggest/swgui v1.7.4
 	github.com/swaggest/usecase v1.2.1
 	github.com/tkrajina/gpxgo v1.3.0

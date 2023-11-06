@@ -95,48 +95,50 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		if err != nil {
 			return out, err
 		}
+
+		album.Settings = photo.AlbumSettings{}
 	} else {
 		images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
 		if err != nil {
 			return out, err
 		}
-	}
 
-	for _, h := range album.Settings.GpxTracksHashes {
-		gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, h)
+		for _, h := range album.Settings.GpxTracksHashes {
+			gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, h)
+			if err != nil {
+				return out, err
+			}
+
+			s := gpx.Settings.Val
+
+			if s.Name == "" {
+				s.Name = path.Base(gpx.Path)
+			}
+
+			out.Tracks = append(out.Tracks, track{
+				Hash:        h,
+				GpxSettings: s,
+			})
+		}
+
+		for i, t := range album.Settings.Texts {
+			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
+			if err != nil {
+				return out, err
+			}
+
+			album.Settings.Texts[i] = t
+		}
+
+		album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description)
 		if err != nil {
 			return out, err
 		}
-
-		s := gpx.Settings.Val
-
-		if s.Name == "" {
-			s.Name = path.Base(gpx.Path)
-		}
-
-		out.Tracks = append(out.Tracks, track{
-			Hash:        h,
-			GpxSettings: s,
-		})
-	}
-
-	for i, t := range album.Settings.Texts {
-		t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
-		if err != nil {
-			return out, err
-		}
-
-		album.Settings.Texts[i] = t
 	}
 
 	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
 		o.StripTags = true
 	})
-	if err != nil {
-		return out, err
-	}
-
-	album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description)
 	if err != nil {
 		return out, err
 	}

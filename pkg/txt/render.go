@@ -93,6 +93,7 @@ func (r *Renderer) Render(source string, opts ...func(o *RenderOptions)) (string
 
 	if o.StripTags {
 		res = r.strict.Sanitize(res)
+		res = html.UnescapeString(res)
 	}
 
 	return strings.TrimSpace(res), nil

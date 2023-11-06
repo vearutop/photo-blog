@@ -66,7 +66,9 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 
 			invalidationLabels := []string{"service-settings"}
 
-			d.Title = deps.ServiceSettings().SiteTitle
+			d.Title = deps.TxtRenderer().MustRenderLang(ctx, deps.ServiceSettings().SiteTitle, func(o *txt.RenderOptions) {
+				o.StripTags = true
+			})
 			d.Lang = txt.Language(ctx)
 			d.NonAdmin = !auth.IsAdmin(ctx)
 			d.Featured = deps.ServiceSettings().FeaturedAlbumName

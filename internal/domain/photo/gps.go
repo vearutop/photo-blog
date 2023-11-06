@@ -9,8 +9,8 @@ import (
 type Gps struct {
 	uniq.Head
 
-	Altitude  float64   `db:"altitude" json:"altitude"`
-	Longitude float64   `db:"longitude" json:"longitude"`
-	Latitude  float64   `db:"latitude" json:"latitude"`
-	GpsTime   time.Time `db:"time" json:"time"`
+	Altitude  float64   `db:"altitude" title:"Altitude" json:"altitude"`
+	Longitude float64   `db:"longitude" title:"Longitude" json:"longitude"`
+	Latitude  float64   `db:"latitude" title:"Latitude" json:"latitude"`
+	GpsTime   time.Time `db:"time" title:"GPS Timestamp" json:"time"`
 }

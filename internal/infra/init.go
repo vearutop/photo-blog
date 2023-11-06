@@ -62,13 +62,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	schema.SetupOpenapiCollector(l.OpenAPI)
 	l.SchemaRepo = jsonform.NewRepository(&l.OpenAPI.Reflector().Reflector)
-	if err := l.SchemaRepo.Add(
-		service.Settings{},
-		photo.Album{},
-		photo.Image{},
-	); err != nil {
-		return nil, err
-	}
 
 	if docsMode {
 		return l, nil
