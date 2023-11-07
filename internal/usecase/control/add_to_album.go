@@ -9,6 +9,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 type addToAlbumDeps interface {
@@ -19,6 +20,8 @@ type addToAlbumDeps interface {
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
+
+	DepCache() *dep.Cache
 }
 type albumImageInput struct {
 	Name string    `path:"name" description:"Name of destination album to add photo."`
@@ -50,7 +53,13 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 			return err
 		}
 
-		return deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, img.Hash)
+		err = deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, img.Hash)
+
+		if err == nil {
+			err = deps.DepCache().AlbumChanged(ctx, album.Name)
+		}
+
+		return err
 	})
 
 	u.SetTags("Album")

@@ -133,8 +133,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			d.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
 		case len(cont.Images) > 0:
 			d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
-			//default:
-			//	d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
 		}
 
 		return out.Render(tmpl, d)

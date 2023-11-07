@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"github.com/bool64/cache"
 	"html/template"
 	"sort"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -25,7 +25,7 @@ type showMainInput struct {
 type showMainDeps interface {
 	getAlbumImagesDeps
 
-	CacheInvalidationIndex() *cache.InvalidationIndex
+	DepCache() *dep.Cache
 }
 
 // ShowMain creates use case interactor to show album.
@@ -64,7 +64,8 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		d, err := c.Get(ctx, cacheKey, func(ctx context.Context) (pageData, error) {
 			d := pageData{}
 
-			invalidationLabels := []string{"service-settings"}
+			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
+			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 
 			d.Title = deps.TxtRenderer().MustRenderLang(ctx, deps.ServiceSettings().SiteTitle, func(o *txt.RenderOptions) {
 				o.StripTags = true
@@ -90,7 +91,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 
 				d.FeaturedAlbumData = cont
 
-				invalidationLabels = append(invalidationLabels, "album/"+d.Featured)
+				deps.DepCache().AlbumDependency(cacheName, cacheKey, d.Featured)
 			}
 
 			list, err := deps.PhotoAlbumFinder().FindAll(ctx)
@@ -119,10 +120,8 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 				}
 
 				d.Albums = append(d.Albums, cont)
-				invalidationLabels = append(invalidationLabels, "album/"+cont.Album.Name)
+				deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
 			}
-
-			deps.CacheInvalidationIndex().AddLabels(cacheName, cacheKey, invalidationLabels...)
 
 			return d, nil
 		})

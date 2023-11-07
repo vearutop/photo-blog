@@ -2,7 +2,6 @@ package control
 
 import (
 	"context"
-	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"html/template"
 	"math/rand"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 // AddAlbum creates use case interactor to show form.

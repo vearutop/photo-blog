@@ -8,12 +8,15 @@ import (
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 type updateEntityDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
+	DepCache() *dep.Cache
 }
 
 // Update creates use case interactor to update entity data.
@@ -25,7 +28,15 @@ func Update[V any](deps updateEntityDeps, ensurer func() uniq.Ensurer[V]) usecas
 		deps.StatsTracker().Add(ctx, "update_"+t, 1)
 		deps.CtxdLogger().Info(ctx, "updating "+t, "value", in)
 
-		return stripVal(ensurer().Ensure(ctx, in))
+		err = stripVal(ensurer().Ensure(ctx, in))
+
+		if err == nil {
+			if a, ok := any(in).(photo.Album); ok {
+				err = deps.DepCache().AlbumChanged(ctx, a.Name)
+			}
+		}
+
+		return err
 	})
 
 	u.SetTitle("Update " + t)

@@ -75,7 +75,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Put("/settings.json", control.UpdateSettings(deps))
 
 		s.Put("/album", control.Update(deps, func() uniq.Ensurer[photo.Album] { return deps.PhotoAlbumEnsurer() }))
-		//s.Put("/image", control.UpdateImage(deps))
+		// s.Put("/image", control.UpdateImage(deps))
 		s.Put("/image", control.Update(deps, func() uniq.Ensurer[photo.Image] { return deps.PhotoImageEnsurer() }))
 		s.Put("/exif", control.Update(deps, func() uniq.Ensurer[photo.Exif] { return deps.PhotoExifEnsurer() }))
 		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))

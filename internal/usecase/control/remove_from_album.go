@@ -9,6 +9,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 type removeFromAlbumDeps interface {
@@ -18,6 +19,8 @@ type removeFromAlbumDeps interface {
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoAlbumImageDeleter() photo.AlbumImageDeleter
+
+	DepCache() *dep.Cache
 }
 
 // RemoveFromAlbum creates use case interactor to delete a photo from album.
@@ -44,7 +47,7 @@ func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
 			}
 		}
 
-		return nil
+		return deps.DepCache().AlbumChanged(ctx, in.Name)
 	})
 
 	u.SetTags("Album")

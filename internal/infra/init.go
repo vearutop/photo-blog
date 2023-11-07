@@ -14,7 +14,6 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
-	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
@@ -22,7 +21,7 @@ import (
 	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -121,16 +120,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoGpxEnsurerProvider = gpxRepo
 
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
-
-	l.MapCache = brick.MakeCacheOf[photo.MapTile](l.BaseLocator, "map-tiles", 7*24*time.Hour,
-		func(cfg *cache.FailoverConfigOf[photo.MapTile]) {
-			cfg.BackendConfig.CountSoftLimit = 1000
-			cfg.BackendConfig.DeleteExpiredJobInterval = time.Hour
-			cfg.BackendConfig.DeleteExpiredAfter = 2 * time.Hour
-		},
-	)
-
 	l.TxtRendererProvider = txt.NewRenderer()
+	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex())
 
 	if err := refl.NoEmptyFields(l); err != nil {
 		return nil, err

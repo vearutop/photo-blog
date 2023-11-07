@@ -9,12 +9,14 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 type createAlbumDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 	PhotoAlbumEnsurer() uniq.Ensurer[photo.Album] // See storage.AlbumRepository.
+	DepCache() *dep.Cache
 }
 
 // CreateAlbum creates use case interactor to add directory of photos.
@@ -26,6 +28,10 @@ func CreateAlbum(deps createAlbumDeps) usecase.Interactor {
 		in.Hash = uniq.StringHash(in.Name)
 
 		*out, err = deps.PhotoAlbumEnsurer().Ensure(ctx, in)
+
+		if err == nil {
+			err = deps.DepCache().AlbumListChanged(ctx)
+		}
 
 		return err
 	})

@@ -12,6 +12,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 type addDirectoryDeps interface {
@@ -26,6 +27,8 @@ type addDirectoryDeps interface {
 	PhotoImageIndexer() photo.ImageIndexer
 
 	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
+
+	DepCache() *dep.Cache
 }
 
 // AddDirectory creates use case interactor to add directory of photos to an album.
@@ -147,7 +150,11 @@ func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlb
 			return ctxd.NewError(ctx, "there were errors", "errors", errs)
 		}
 
-		return nil
+		if err == nil {
+			err = deps.DepCache().AlbumChanged(ctx, a.Name)
+		}
+
+		return err
 	})
 
 	u.SetDescription("Add a host-local directory of photos to an album (non-recursive).")

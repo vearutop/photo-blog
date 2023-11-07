@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bool64/brick"
+	"github.com/bool64/cache"
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -25,13 +27,21 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 		Y      string `path:"y"`
 	}
 
+	mapCache := brick.MakeCacheOf[photo.MapTile](deps, "map-tiles", 7*24*time.Hour,
+		func(cfg *cache.FailoverConfigOf[photo.MapTile]) {
+			cfg.BackendConfig.CountSoftLimit = 1000
+			cfg.BackendConfig.DeleteExpiredJobInterval = time.Hour
+			cfg.BackendConfig.DeleteExpiredAfter = 2 * time.Hour
+		},
+	)
+
 	return usecase.NewInteractor(func(ctx context.Context, input mapTileID, output *usecase.OutputWithEmbeddedWriter) error {
 		rw, ok := output.Writer.(http.ResponseWriter)
 		if !ok {
 			return errors.New("missing http.ResponseWriter")
 		}
 
-		t, err := deps.MapCache.Get(ctx, []byte(input.Retina+"/"+input.Zoom+"/"+input.X+"/"+input.Y),
+		t, err := mapCache.Get(ctx, []byte(input.Retina+"/"+input.Zoom+"/"+input.X+"/"+input.Y),
 			func(ctx context.Context) (photo.MapTile, error) {
 				u := deps.ServiceSettings().MapTiles
 				if u == "" {

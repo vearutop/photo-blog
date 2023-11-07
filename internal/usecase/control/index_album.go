@@ -13,6 +13,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"go.opencensus.io/trace"
 )
 
@@ -25,6 +26,8 @@ type indexAlbumDeps interface {
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoImageIndexer() photo.ImageIndexer
 	PhotoImageFinder() uniq.Finder[photo.Image]
+
+	DepCache() *dep.Cache
 }
 
 var (
@@ -95,6 +98,8 @@ func IndexAlbum(deps indexAlbumDeps) usecase.IOInteractorOf[indexAlbumInput, str
 					float64(atomic.AddInt64(&indexInProgress, -1)))
 				done(&err)
 			}
+
+			_ = deps.DepCache().AlbumChanged(ctx, in.Name)
 		}()
 
 		return nil

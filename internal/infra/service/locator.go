@@ -2,10 +2,9 @@ package service
 
 import (
 	"github.com/bool64/brick"
-	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/jsonform-go"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 // Locator defines application resources.
@@ -14,7 +13,8 @@ type Locator struct {
 
 	SchemaRepo   *jsonform.Repository
 	AccessLogger ctxd.Logger
-	MapCache     *cache.FailoverOf[photo.MapTile]
+
+	DepCacheInstance *dep.Cache
 
 	Config Config
 
@@ -62,4 +62,8 @@ func (l *Locator) ServiceSettings() Settings {
 
 func (l *Locator) AccessLog() ctxd.Logger {
 	return l.AccessLogger
+}
+
+func (l *Locator) DepCache() *dep.Cache {
+	return l.DepCacheInstance
 }
