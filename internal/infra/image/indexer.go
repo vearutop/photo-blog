@@ -2,8 +2,13 @@ package image
 
 import (
 	"context"
+	"github.com/bool64/brick/opencensus"
+	"github.com/bool64/stats"
+	"go.opencensus.io/trace"
 	"image/jpeg"
 	"os"
+	"sync/atomic"
+	"time"
 
 	"github.com/bool64/ctxd"
 	blurhash "github.com/buckket/go-blurhash"
@@ -13,6 +18,7 @@ import (
 
 type indexerDeps interface {
 	CtxdLogger() ctxd.Logger
+	StatsTracker() stats.Tracker
 
 	PhotoThumbnailer() photo.Thumbnailer
 
@@ -26,17 +32,40 @@ type indexerDeps interface {
 }
 
 func NewIndexer(deps indexerDeps) *Indexer {
-	return &Indexer{
-		deps: deps,
+	i := &Indexer{
+		deps:  deps,
+		queue: make(chan indexJob, 10000),
 	}
+
+	go i.consume()
+
+	return i
 }
 
 type Indexer struct {
-	deps indexerDeps
+	deps      indexerDeps
+	queue     chan indexJob
+	queueSize int64
 }
 
 func (i *Indexer) PhotoImageIndexer() photo.ImageIndexer {
 	return i
+}
+
+func (i *Indexer) consume() {
+	for j := range i.queue {
+		qs := atomic.AddInt64(&i.queueSize, -1)
+		i.deps.StatsTracker().Set(context.Background(), "indexing_images_pending", float64(qs))
+
+		if j.cb != nil {
+			j.cb(j.ctx)
+			continue
+		}
+
+		if err := i.Index(j.ctx, j.img, j.flags); err != nil {
+			i.deps.CtxdLogger().Error(j.ctx, "failed to index image", "img", j.img, "error", err, "flags", j.flags)
+		}
+	}
 }
 
 func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
@@ -49,7 +78,34 @@ func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
 	}
 }
 
+type indexJob struct {
+	ctx   context.Context
+	img   photo.Image
+	flags photo.IndexingFlags
+	cb    func(ctx context.Context)
+}
+
+func (i *Indexer) QueueCallback(ctx context.Context, cb func(ctx context.Context)) {
+	atomic.AddInt64(&i.queueSize, 1)
+	i.queue <- indexJob{
+		ctx: detachedContext{parent: ctx},
+		cb:  cb,
+	}
+}
+
+func (i *Indexer) QueueIndex(ctx context.Context, img photo.Image, flags photo.IndexingFlags) {
+	atomic.AddInt64(&i.queueSize, 1)
+	i.queue <- indexJob{
+		ctx:   detachedContext{parent: ctx},
+		img:   img,
+		flags: flags,
+	}
+}
+
 func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
+	ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))
+	defer done(&err)
+
 	ctx = ctxd.AddFields(ctx, "img", img)
 
 	if img.Width == 0 {
@@ -186,4 +242,25 @@ func exifQuirks(exif *photo.Exif) {
 	if exif.CameraModel == "SM-C200" {
 		exif.ProjectionType = "equirectangular"
 	}
+}
+
+// detachedContext exposes parent values, but suppresses parent cancellation.
+type detachedContext struct {
+	parent context.Context //nolint:containedctx // This wrapping is here on purpose.
+}
+
+func (d detachedContext) Deadline() (deadline time.Time, ok bool) {
+	return time.Time{}, false
+}
+
+func (d detachedContext) Done() <-chan struct{} {
+	return nil
+}
+
+func (d detachedContext) Err() error {
+	return nil
+}
+
+func (d detachedContext) Value(key interface{}) interface{} {
+	return d.parent.Value(key)
 }

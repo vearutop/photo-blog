@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -36,12 +37,22 @@ func augmentErr(err error) error {
 	return err
 }
 
-func augmentReturnErr[V any](_ V, err error) error {
-	return augmentErr(err)
+func augmentReturnErr[V any](res V, err error) error {
+	err = augmentErr(err)
+	if err != nil {
+		err = fmt.Errorf("find %T: %w", res, err)
+	}
+
+	return err
 }
 
 func augmentResErr[V any](res V, err error) (V, error) {
-	return res, augmentErr(err)
+	err = augmentErr(err)
+	if err != nil {
+		err = fmt.Errorf("find %T: %w", res, err)
+	}
+
+	return res, err
 }
 
 type hashedRepo[V any, T interface {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -44,8 +45,13 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 		}
 
 		gps, err := deps.PhotoGpsFinder().FindByHash(ctx, in.Hash)
-		if err != nil && !errors.Is(err, status.NotFound) {
-			return fmt.Errorf("find gps: %w", err)
+		if err != nil {
+			if !errors.Is(err, status.NotFound) {
+				return fmt.Errorf("find gps: %w", err)
+			}
+
+			gps.Hash = in.Hash
+			gps.GpsTime = time.Now()
 		}
 
 		return deps.SchemaRepository().Render(out.Writer,

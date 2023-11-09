@@ -2,11 +2,8 @@ package control
 
 import (
 	"context"
-	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/bool64/brick/opencensus"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
@@ -14,7 +11,6 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
-	"go.opencensus.io/trace"
 )
 
 type indexAlbumDeps interface {
@@ -29,12 +25,6 @@ type indexAlbumDeps interface {
 
 	DepCache() *dep.Cache
 }
-
-var (
-	// indexLock prevents concurrent indexing to avoid extra load and extra work.
-	indexLock       sync.Mutex
-	indexInProgress int64
-)
 
 type indexAlbumInput struct {
 	Name string `path:"name" description:"Album name, use '-' for all images and albums."`
@@ -81,26 +71,13 @@ func IndexAlbum(deps indexAlbumDeps) usecase.IOInteractorOf[indexAlbumInput, str
 			}
 		}
 
-		deps.StatsTracker().Set(ctx, "indexing_images_pending",
-			float64(atomic.AddInt64(&indexInProgress, int64(len(images)))))
+		for _, img := range images {
+			deps.PhotoImageIndexer().QueueIndex(ctx, img, in.IndexingFlags)
+		}
 
-		go func() {
-			indexLock.Lock()
-			defer indexLock.Unlock()
-
-			ctx := detachedContext{parent: ctx}
-			for _, img := range images {
-				ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))
-				if err := deps.PhotoImageIndexer().Index(ctx, img, in.IndexingFlags); err != nil {
-					deps.CtxdLogger().Error(ctx, "failed to index image", "error", err)
-				}
-				deps.StatsTracker().Set(ctx, "indexing_images_pending",
-					float64(atomic.AddInt64(&indexInProgress, -1)))
-				done(&err)
-			}
-
+		deps.PhotoImageIndexer().QueueCallback(ctx, func(ctx context.Context) {
 			_ = deps.DepCache().AlbumChanged(ctx, in.Name)
-		}()
+		})
 
 		return nil
 	})

@@ -9,6 +9,8 @@ import (
 
 type ImageIndexer interface {
 	Index(ctx context.Context, image Image, flags IndexingFlags) error
+	QueueIndex(ctx context.Context, img Image, flags IndexingFlags)
+	QueueCallback(ctx context.Context, cb func(ctx context.Context))
 }
 
 type IndexingFlags struct {

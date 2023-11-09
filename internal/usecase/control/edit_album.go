@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"github.com/vearutop/photo-blog/internal/infra/upload"
 	"html/template"
 	"net/http"
 
@@ -34,18 +35,22 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 			return err
 		}
 
-		return deps.SchemaRepository().Render(
-			out.Writer,
-			jsonform.Page{
-				AppendHTMLHead: `
+		p := jsonform.Page{
+			AppendHTMLHead: `
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
     <script src="/static/album.js"></script>
+    <link rel="stylesheet" href="/static/tus/uppy.min.css">
+    <script src="/static/tus/uppy.legacy.min.js"></script>
+
 `,
-				AppendHTML: template.HTML(`
+			PrependHTML: upload.TusAlbumHTMLButton(a.Name),
+			AppendHTML: template.HTML(`
 <hr /><button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
 `),
-			},
+		}
+
+		return deps.SchemaRepository().Render(out.Writer, p,
 			jsonform.Form{
 				Title:         "Manage Album",
 				SubmitURL:     "/album",

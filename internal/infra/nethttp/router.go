@@ -3,6 +3,7 @@ package nethttp
 
 import (
 	"context"
+	"github.com/vearutop/photo-blog/internal/infra/upload"
 	"net/http"
 	"strings"
 
@@ -81,6 +82,10 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))
 
 		s.Delete("/album/{name}", control.DeleteAlbum(deps))
+
+		if err := upload.MountTus(s, deps); err != nil {
+			panic(err)
+		}
 
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 

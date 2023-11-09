@@ -2,6 +2,7 @@
 package ui
 
 import (
+	"io/fs"
 	"net/http"
 	"os"
 
@@ -17,7 +18,7 @@ var Static http.Handler
 func init() {
 	if _, err := os.Stat("./resources/static"); err == nil {
 		// path/to/whatever exists
-		Static = http.FileServer(http.Dir("./resources/static"))
+		Static = statigz.FileServer(os.DirFS("./resources/static").(fs.ReadDirFS))
 	} else {
 		Static = statigz.FileServer(static.Assets, brotli.AddEncoding, statigz.EncodeOnInit)
 	}

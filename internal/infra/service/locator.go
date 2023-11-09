@@ -5,6 +5,7 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/files"
 )
 
 // Locator defines application resources.
@@ -14,7 +15,8 @@ type Locator struct {
 	SchemaRepo   *jsonform.Repository
 	AccessLogger ctxd.Logger
 
-	DepCacheInstance *dep.Cache
+	DepCacheInstance       *dep.Cache
+	FilesProcessorInstance *files.Processor
 
 	Config Config
 
@@ -66,4 +68,8 @@ func (l *Locator) AccessLog() ctxd.Logger {
 
 func (l *Locator) DepCache() *dep.Cache {
 	return l.DepCacheInstance
+}
+
+func (l *Locator) FilesProcessor() *files.Processor {
+	return l.FilesProcessorInstance
 }

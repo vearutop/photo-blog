@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/vearutop/photo-blog/internal/infra/files"
 	"io/fs"
 	"net/http"
 	"os"
@@ -83,6 +84,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
+	if err = setupUploadStorage(l.Config.Settings.UploadStorage); err != nil {
+		return nil, err
+	}
+
 	if err = setupAccessLog(l); err != nil {
 		return nil, err
 	}
@@ -122,6 +127,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 	l.TxtRendererProvider = txt.NewRenderer()
 	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex())
+
+	l.FilesProcessorInstance = files.NewProcessor(l)
 
 	if err := refl.NoEmptyFields(l); err != nil {
 		return nil, err
@@ -214,6 +221,28 @@ func setupStorage(l *service.Locator, cfg database.Config) error {
 				l.CtxdLogger().Warn(ctx, "sql failed",
 					"stmt", stmt, "args", args, "error", err.Error())
 			}
+		}
+	}
+
+	return nil
+}
+
+func setupUploadStorage(p string) error {
+	if p == "" {
+		return nil
+	}
+
+	// Create temporary directory for TUS uploads.
+	p = strings.TrimSuffix(p, "/") + "/temp"
+
+	if _, err := os.Stat(p); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			// Try to create upload directory if it does not exist.
+			err = os.MkdirAll(p, 0700)
+		}
+
+		if err != nil {
+			return fmt.Errorf("init upload storage %s: %w", p, err)
 		}
 	}
 

@@ -23,7 +23,7 @@ require (
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.9.0
-	github.com/swaggest/jsonform-go v0.1.1-0.20231106223458-f35205b2358b
+	github.com/swaggest/jsonform-go v0.1.1-0.20231109153143-d9cbc9bbfc99
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/swaggest/openapi-go v0.2.42
 	github.com/swaggest/refl v1.3.0

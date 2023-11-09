@@ -158,3 +158,10 @@ body.dark-mode {
         width: 100%;
     }
 }
+
+/* hide extra images on main page on mobile devices */
+@media (max-width: 1200px) {
+    .preview .img3 {
+        display: none;
+    }
+}

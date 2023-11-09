@@ -21,7 +21,6 @@ const (
 type AlbumImage struct {
 	AlbumHash uniq.Hash `db:"album_hash"`
 	ImageHash uniq.Hash `db:"image_hash"`
-	Weight    int       `db:"weight"`
 }
 
 func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepository {
