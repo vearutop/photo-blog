@@ -93,12 +93,12 @@
 /**
  * @typedef PhotoGps
  * @type {Object}
- * @property {Number} altitude
+ * @property {Number} altitude - Altitude.
  * @property {String} created_at - Created AtTimestamp of creation.
  * @property {String} hash - Hash IdUnique hash value.
- * @property {Number} latitude
- * @property {Number} longitude
- * @property {String} time
+ * @property {Number} latitude - Latitude.
+ * @property {Number} longitude - Longitude.
+ * @property {String} time - GPS Timestamp.
  */
 
 /**
@@ -254,17 +254,30 @@
  */
 
 /**
- * @typedef ControlUpdateImageInput
+ * @typedef PhotoImageSettings
  * @type {Object}
- * @property {PhotoExif} exif
- * @property {PhotoGps} gps
- * @property {String} hash
+ * @property {String} description - DescriptionDescription of an image, can contain HTML.
+ */
+
+/**
+ * @typedef PhotoImage
+ * @type {Object}
+ * @property {String} blurhash - BlurHash.
+ * @property {String} created_at - Created AtTimestamp of creation.
+ * @property {Boolean} has_avif - Has AVIF ImageEnables serving HDR image.
+ * @property {String} hash - Hash IdUnique hash value.
+ * @property {Number} height - Height, px.
+ * @property {String} path - File Path.
+ * @property {PhotoImageSettings} settings
+ * @property {Number} size - File Size.
+ * @property {?String} taken_at - Taken At.
+ * @property {Number} width - Width, px.
  */
 
 /**
  * @typedef PutImageRequest
  * @type {Object}
- * @property {ControlUpdateImageInput} body
+ * @property {PhotoImage} body
  */
 
 /**
@@ -272,20 +285,6 @@
  * @type {Object}
  * @property {Boolean} readMeta - Read meta from original file.
  * @property {String} hash
- */
-
-/**
- * @typedef PhotoImage
- * @type {Object}
- * @property {String} blurhash
- * @property {String} created_at - Created AtTimestamp of creation.
- * @property {Boolean} has_avif
- * @property {String} hash - Hash IdUnique hash value.
- * @property {Number} height
- * @property {String} path
- * @property {Number} size
- * @property {?String} taken_at
- * @property {Number} width
  */
 
 /**
@@ -336,7 +335,7 @@
 /**
  * @typedef GetJsonFormNameSchemaJsonRequest
  * @type {Object}
- * @property {('service.settings'|'photo.album'|'photo.image')} name
+ * @property {('')} name
  */
 
 /**
@@ -380,12 +379,23 @@
  */
 
 /**
+ * @typedef GetMapTileRZXYPngRequest
+ * @type {Object}
+ * @property {String} r
+ * @property {String} z
+ * @property {String} x
+ * @property {String} y
+ */
+
+/**
  * Settings
  * @typedef ServiceSettings
  * @type {Object}
  * @property {String} access_log_file - Path to access logWhen not empty, requests to albums and photos will be logged.
  * @property {String} featured_album_name - Featured album nameThe name of an album to show on the main page.
+ * @property {?Array<String>} languages - LanguagesSupported content languages.
  * @property {String} map_attribution - Map attributionMap tiles attribution.
+ * @property {Boolean} map_cache - Map cacheEnable local cache of map tiles.
  * @property {String} map_tiles - Map tilesURL to custom map tiles.
  * @property {String} site_title - TitleThe title of this site.
  * @property {Boolean} tag_visitors - Tag unique visitorsUnique visitors would be tagged with cookies.

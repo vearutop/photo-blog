@@ -41,7 +41,11 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 
 		exif, err := deps.PhotoExifFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
-			return fmt.Errorf("find exif: %w", err)
+			if !errors.Is(err, status.NotFound) {
+				return fmt.Errorf("find exif: %w", err)
+			}
+
+			exif.Hash = in.Hash
 		}
 
 		gps, err := deps.PhotoGpsFinder().FindByHash(ctx, in.Hash)
@@ -56,7 +60,10 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 
 		return deps.SchemaRepository().Render(out.Writer,
 			jsonform.Page{
-				Title: "Manage Photo",
+				Title: "Edit Photo Details",
+				AppendHTMLHead: `
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+`,
 				PrependHTML: template.HTML(`
 <div style="margin:2em" class="pure-u-2-5">
     <h1>Manage photo</h1>

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 	"image"
 	"image/jpeg"
 	"io"
@@ -18,13 +19,19 @@ import (
 	"go.opencensus.io/trace"
 )
 
-func NewThumbnailer(logger ctxd.Logger) *Thumbnailer {
-	return &Thumbnailer{logger: logger}
+type ThumbnailerDeps interface {
+	CtxdLogger() ctxd.Logger
+	ServiceSettings() service.Settings
+}
+
+func NewThumbnailer(deps ThumbnailerDeps) *Thumbnailer {
+	return &Thumbnailer{deps: deps}
 }
 
 type Thumbnailer struct {
-	mu     sync.Mutex
-	logger ctxd.Logger
+	deps ThumbnailerDeps
+
+	mu sync.Mutex
 }
 
 type thumbCtxKey struct{}
@@ -47,7 +54,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 
 	start := time.Now()
 	ctx = ctxd.AddFields(ctx, "img", i.Path, "size", size)
-	t.logger.Info(ctx, "starting thumb")
+	t.deps.CtxdLogger().Info(ctx, "starting thumb")
 
 	ctx, finish := opencensus.AddSpan(ctx,
 		trace.StringAttribute("path", i.Path),
@@ -79,10 +86,29 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	th.Width = w
 	th.Height = h
 	th.Hash = i.Hash
-	th.Data = buf.Bytes()
+
+	if len(buf.Bytes()) > 1e6 {
+		dir := t.deps.ServiceSettings().UploadStorage + "/thumb/" + i.Hash.String()[:1] + "/"
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			filePath := dir + i.Hash.String() + ".jpg"
+
+			if err := os.WriteFile(filePath, buf.Bytes(), 0600); err == nil {
+				th.FilePath = filePath
+			} else {
+				t.deps.CtxdLogger().Error(ctx, "failed to write thumb file",
+					"error", err, "filePath", filePath)
+			}
+		} else {
+			t.deps.CtxdLogger().Error(ctx, "failed to ensure dir", "error", err, "dir", dir)
+		}
+	}
+
+	if th.FilePath == "" {
+		th.Data = buf.Bytes()
+	}
 
 	elapsed := time.Since(start)
-	t.logger.Info(ctx, "thumb done", "elapsed", elapsed.String())
+	t.deps.CtxdLogger().Info(ctx, "thumb done", "elapsed", elapsed.String())
 
 	// TODO: add proper concurrency/rate limiter here to avoid resource overuse on limited systems.
 	if elapsed > time.Second {

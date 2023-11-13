@@ -2,6 +2,7 @@ package upload
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/web"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 )
 
 func MountTus(s *web.Service, deps TusHandlerDeps) error {
@@ -22,9 +24,10 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 	composer := tusd.NewStoreComposer()
 	store.UseIn(composer)
 	tusHandler, err := tusd.NewHandler(tusd.Config{
-		BasePath:              "https://p1cs.1337.cx/files",
-		StoreComposer:         composer,
-		NotifyCompleteUploads: true,
+		BasePath:                "/files",
+		RespectForwardedHeaders: true,
+		StoreComposer:           composer,
+		NotifyCompleteUploads:   true,
 	})
 	if err != nil {
 		return err
@@ -37,8 +40,18 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 		}
 	}()
 
-	s.Mount("/files/", http.StripPrefix("/files/", tusHandler))
-	s.Method(http.MethodPost, "/files", http.StripPrefix("/files", tusHandler))
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.CtxdLogger().Info(r.Context(), "request headers", r.Header)
+
+		if strings.HasPrefix(r.Header.Get("Origin"), "https://") {
+			r.TLS = &tls.ConnectionState{}
+		}
+
+		tusHandler.ServeHTTP(w, r)
+	})
+
+	s.Mount("/files/", http.StripPrefix("/files/", h))
+	s.Method(http.MethodPost, "/files", http.StripPrefix("/files", h))
 
 	return nil
 }

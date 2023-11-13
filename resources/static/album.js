@@ -25,6 +25,22 @@ function deleteAlbum(name) {
     })
 }
 
+function removeImage(albumName, imageHash) {
+    if (!window.confirm("This photo is about to be removed from the album")) {
+        return
+    }
+
+    var b = new Backend('');
+    b.deleteAlbumNameHash({
+        name: albumName,
+        hash: imageHash,
+    }, function (x) {
+        alert("Photo is removed from the album")
+    }, function (x) {
+        alert("Failed to remove photo from the album: " + x.error)
+    })
+}
+
 (function () {
     if (screen.width > 576 || screen.width == 0) {
         return
@@ -181,12 +197,9 @@ function loadAlbum(params) {
                 }
 
                 var img_description =
-                    '<a class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
+                    '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>' +
+                    '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\''+params.albumName+'\',\''+img.hash+'\')"></a>'
 
-
-                if (typeof img.description !== "undefined") {
-                    img_description += "<br>" + img.description
-                }
 
                 if (typeof img.exif !== "undefined") {
                     var ts = Date.parse(img.exif.digitized)
@@ -211,7 +224,7 @@ function loadAlbum(params) {
 
                     prevImgTime = ts
 
-                    img_description += '<a href="#" class="gear-icon ctrl-btn" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
+                    img_description += '<a href="#" class="camera-icon ctrl-btn" title="Technical details" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
 
                     var exif = img.exif
 
@@ -231,6 +244,10 @@ function loadAlbum(params) {
                         img_description += "<tr><th>" + k + "</th><td>" + v + "</td>";
                     }
                     img_description += '</table></div>';
+                }
+
+                if (img.description) {
+                    img_description += '<div>' + img.description + '</div>';
                 }
 
                 var landscape = ""
@@ -367,6 +384,11 @@ function loadAlbum(params) {
                 if (img.height > img.width) {
                     w = Math.round(w * img.width / img.height)
                 }
+                var text = '<p>Pos: ' + m.latitude.toFixed(6) + ',' + m.longitude.toFixed(6) + ', Alt: ' + m.altitude + 'm</p>'
+                if (img.description) {
+                    text += '<div>' + img.description + '</div>'
+                }
+
                 images.push(L.marker([m.latitude, m.longitude],
                     {
                         icon: L.icon({
@@ -378,7 +400,7 @@ function loadAlbum(params) {
                     .bindPopup(
                         L.popup()
                             .setContent(
-                                '<p>Pos: ' + m.latitude.toFixed(6) + ',' + m.longitude.toFixed(6) + ', Alt: ' + m.altitude + 'm</p>' +
+                                text +
                                 '<a href="#" onclick="openByHash(\'' + m.hash + '\');return false">' +
                                 '<img style="width: ' + w + 'px" src="/thumb/200h/' + m.hash + '.jpg" srcset="/thumb/400h/' + m.hash + '.jpg 2x" /></a>'
                             )
@@ -414,9 +436,27 @@ function loadAlbum(params) {
             }
 
             function gpxPopupHandler(name) {
-                return function (e) {
+                return function(e) {
+                    console.log(e)
+
                     var popup = e.popup;
-                    var points = e.layer._latlngs
+
+                    var feat = e.layer.feature
+                    console.log("feat", feat)
+
+                    var res =  name + "<br />"
+                    if (feat.properties.desc) {
+                        res += feat.properties.desc + "<br />"
+                    }
+
+                    if (feat.geometry.type === "Point") {
+                        res += feat.geometry.coordinates[1].toFixed(8) + ", " + feat.geometry.coordinates[0].toFixed(8)
+
+                        popup.setContent(res);
+                        return
+                    }
+
+                    var points = e.layer._latlngs || []
 
                     var lat = popup.getLatLng().lat
                     var lon = popup.getLatLng().lng
@@ -449,6 +489,10 @@ function loadAlbum(params) {
                         }
                     }
 
+                    if (typeof e.layer.feature.properties.coordTimes === 'undefined') {
+                        popup.setContent(res);
+                    }
+
                     var ts
 
                     if (ptIdx.length == 1) {
@@ -459,8 +503,9 @@ function loadAlbum(params) {
                         ts = e.layer.feature.properties.coordTimes[ptIdx[0]][ptIdx[1]]
                     }
 
-                    popup.setContent(name + "<br />" + lat.toFixed(8) + ", " + lon.toFixed(8) + "<br />" +
-                        ts + "<br /> (dist to nearest timestamp " + Math.round(shortest) + " meters)");
+                    res += lat.toFixed(8) + ", " + lon.toFixed(8) + "<br />" +
+                        ts + "<br /> (dist to nearest timestamp " + Math.round(shortest) + " meters)"
+                    popup.setContent(res);
                 }
             }
 
@@ -482,6 +527,7 @@ function loadAlbum(params) {
             }
 
             L.control.layers({}, overlayMaps).addTo(map);
+            L.control.locate({}).addTo(map);
         }
     }
 

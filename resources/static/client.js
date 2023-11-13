@@ -68,6 +68,52 @@
     };
 
     /**
+     * Add Album
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getAddAlbumHtml = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/add-album.html?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Create Album
      * Create a named album.
      * @param {PostAlbumRequest} req - request parameters.
@@ -888,7 +934,7 @@
     };
 
     /**
-     * Update Image
+     * Update photo.Image
      * @param {PutImageRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
@@ -1261,6 +1307,44 @@
         }
 
         x.send(formData);
+    };
+
+    /**
+     * Map Tile
+     * @param {GetMapTileRZXYPngRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.getMapTileRZXYPng = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/map-tile/' + encodeURIComponent(req.r) +
+        '/' + encodeURIComponent(req.z) +
+        '/' + encodeURIComponent(req.x) +
+        '/' + encodeURIComponent(req.y) +
+        '.png?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
     };
 
     /**

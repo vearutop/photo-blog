@@ -18,9 +18,10 @@ type Thumbnailer interface {
 
 type Thumb struct {
 	uniq.Head
-	Width  uint   `db:"width"`
-	Height uint   `db:"height"`
-	Data   []byte `db:"data"`
+	Width    uint   `db:"width"`
+	Height   uint   `db:"height"`
+	Data     []byte `db:"data"`
+	FilePath string `db:"file_path"`
 }
 
 func (t Thumb) ReadSeeker() io.ReadSeeker {

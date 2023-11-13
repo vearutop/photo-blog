@@ -147,12 +147,13 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 	out.Images = make([]Image, 0, len(images))
 	for _, i := range images {
 		img := Image{
-			Name:     path.Base(i.Path),
-			Hash:     i.Hash.String(),
-			Width:    i.Width,
-			Height:   i.Height,
-			BlurHash: i.BlurHash,
-			size:     i.Size,
+			Name:        path.Base(i.Path),
+			Hash:        i.Hash.String(),
+			Width:       i.Width,
+			Height:      i.Height,
+			BlurHash:    i.BlurHash,
+			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description),
+			size:        i.Size,
 		}
 
 		// Skip unprocessed images.
@@ -240,12 +241,13 @@ func getAlbumContents2(ctx context.Context, deps getAlbumImagesDeps, name string
 		}
 
 		img := Image{
-			Name:     path.Base(i.Path),
-			Hash:     i.Hash.String(),
-			Width:    i.Width,
-			Height:   i.Height,
-			BlurHash: i.BlurHash,
-			size:     i.Size,
+			Name:        path.Base(i.Path),
+			Hash:        i.Hash.String(),
+			Width:       i.Width,
+			Height:      i.Height,
+			BlurHash:    i.BlurHash,
+			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description),
+			size:        i.Size,
 		}
 
 		hashes = append(hashes, i.Hash)

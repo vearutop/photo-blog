@@ -98,6 +98,12 @@ func NewRouter(deps *service.Locator) http.Handler {
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
+		if cfg.AdminPassHash != "" {
+			adminAuth := maybeAuth(cfg.AdminPassHash, cfg.AdminPassSalt)
+
+			s.Use(adminAuth)
+		}
+
 		if deps.Config.Settings.TagVisitors {
 			s.Use(auth.VisitorMiddleware(deps.AccessLog()))
 		}
@@ -132,9 +138,12 @@ func NewRouter(deps *service.Locator) http.Handler {
 			})
 		}
 
+		s.Get("/", usecase.ShowMain(deps))
 		s.Get("/{name}/", usecase.ShowAlbum(deps))
-		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
+
+		s.Get("/poi/photos-{name}.gpx", usecase.DownloadImagesPoiGpx(deps))
+		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 		s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
@@ -142,17 +151,6 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
 
-		s.Group(func(r chi.Router) {
-			s := fork(s, r)
-
-			if cfg.AdminPassHash != "" {
-				adminAuth := maybeAuth(cfg.AdminPassHash, cfg.AdminPassSalt)
-
-				s.Use(adminAuth)
-			}
-
-			s.Get("/", usecase.ShowMain(deps))
-		})
 	})
 
 	// Redirecting `/my-album` to `/my-album/`.

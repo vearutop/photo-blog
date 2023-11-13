@@ -37,6 +37,7 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 
 		p := jsonform.Page{
 			AppendHTMLHead: `
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
     <script src="/static/album.js"></script>
@@ -44,7 +45,8 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
     <script src="/static/tus/uppy.legacy.min.js"></script>
 
 `,
-			PrependHTML: upload.TusAlbumHTMLButton(a.Name),
+			PrependHTML: template.HTML(`<a style="margin-left: 2em" href ="/`+a.Name+`">Back to album</a> `) +
+				upload.TusAlbumHTMLButton(a.Name),
 			AppendHTML: template.HTML(`
 <hr /><button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
 `),
@@ -52,7 +54,7 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 
 		return deps.SchemaRepository().Render(out.Writer, p,
 			jsonform.Form{
-				Title:         "Manage Album",
+				Title:         "Edit Album Details",
 				SubmitURL:     "/album",
 				SubmitMethod:  http.MethodPut,
 				SuccessStatus: http.StatusNoContent,

@@ -3,16 +3,15 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"html/template"
-	"net/http"
-
 	"github.com/docker/go-units"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
+	"html/template"
 )
 
 type showAlbumAtImageInput struct {
@@ -22,14 +21,7 @@ type showAlbumAtImageInput struct {
 
 type showAlbumInput struct {
 	Name    string `path:"name"`
-	hasAuth bool
 	imgHash uniq.Hash
-}
-
-func (i *showAlbumInput) SetRequest(r *http.Request) {
-	if r.Header.Get("Authorization") != "" {
-		i.hasAuth = true
-	}
 }
 
 func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) usecase.Interactor {
@@ -97,7 +89,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Description = template.HTML(album.Settings.Description)
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.Name = album.Name
-		d.NonAdmin = !in.hasAuth
+		d.NonAdmin = !auth.IsAdmin(ctx)
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
