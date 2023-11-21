@@ -2,7 +2,6 @@ package control
 
 import (
 	"context"
-	"github.com/vearutop/photo-blog/internal/infra/upload"
 	"html/template"
 	"net/http"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/upload"
 )
 
 type editAlbumPageDeps interface {

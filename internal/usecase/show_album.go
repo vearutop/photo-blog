@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"html/template"
+
 	"github.com/docker/go-units"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -11,7 +13,6 @@ import (
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
-	"html/template"
 )
 
 type showAlbumAtImageInput struct {

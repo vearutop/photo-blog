@@ -5,12 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/tkrajina/gpxgo/gpx"
-	"net/http"
-	"time"
 )
 
 type dlImagesPoiGpxInput struct {
@@ -20,7 +21,6 @@ type dlImagesPoiGpxInput struct {
 
 // ShowAlbum creates use case interactor to show album.
 func DownloadImagesPoiGpx(deps getAlbumImagesDeps) usecase.Interactor {
-
 	u := usecase.NewInteractor(func(ctx context.Context, in dlImagesPoiGpxInput, out *usecase.OutputWithEmbeddedWriter) error {
 		rw, ok := out.Writer.(http.ResponseWriter)
 		if !ok {
