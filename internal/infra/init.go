@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/vearutop/photo-blog/internal/infra/files"
 	"io/fs"
 	"net/http"
 	"os"
@@ -23,6 +22,7 @@ import (
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -238,7 +238,7 @@ func setupUploadStorage(p string) error {
 	if _, err := os.Stat(p); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// Try to create upload directory if it does not exist.
-			err = os.MkdirAll(p, 0700)
+			err = os.MkdirAll(p, 0o700)
 		}
 
 		if err != nil {

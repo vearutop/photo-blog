@@ -4,17 +4,18 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"html/template"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/web"
 	"github.com/tus/tusd/v2/pkg/filestore"
 	tusd "github.com/tus/tusd/v2/pkg/handler"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/service"
-	"html/template"
-	"net/http"
-	"os"
-	"path"
-	"strings"
 )
 
 func MountTus(s *web.Service, deps TusHandlerDeps) error {
@@ -77,7 +78,7 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 	}
 
 	albumPath := path.Join(deps.ServiceSettings().UploadStorage, albumName)
-	if err := os.MkdirAll(albumPath, 0700); err != nil {
+	if err := os.MkdirAll(albumPath, 0o700); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to create album directory", "error", err)
 
 		return

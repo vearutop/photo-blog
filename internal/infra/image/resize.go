@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 	"image"
 	"image/jpeg"
 	"io"
@@ -16,6 +15,7 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 	"go.opencensus.io/trace"
 )
 
@@ -89,10 +89,10 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 
 	if len(buf.Bytes()) > 1e6 {
 		dir := t.deps.ServiceSettings().UploadStorage + "/thumb/" + i.Hash.String()[:1] + "/"
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
 			filePath := dir + i.Hash.String() + ".jpg"
 
-			if err := os.WriteFile(filePath, buf.Bytes(), 0600); err == nil {
+			if err := os.WriteFile(filePath, buf.Bytes(), 0o600); err == nil {
 				th.FilePath = filePath
 			} else {
 				t.deps.CtxdLogger().Error(ctx, "failed to write thumb file",
