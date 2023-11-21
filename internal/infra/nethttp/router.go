@@ -3,7 +3,6 @@ package nethttp
 
 import (
 	"context"
-	"github.com/vearutop/photo-blog/internal/infra/upload"
 	"net/http"
 	"strings"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/upload"
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
@@ -150,7 +150,6 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
-
 	})
 
 	// Redirecting `/my-album` to `/my-album/`.

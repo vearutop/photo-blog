@@ -1,20 +1,28 @@
 package nethttp
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/bool64/cache"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 )
+
+var authCache = cache.NewFailoverOf[string](func(cfg *cache.FailoverConfigOf[string]) {
+	cfg.BackendConfig.CountSoftLimit = 1000
+})
 
 func maybeAuth(hash, salt string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, pass, ok := r.BasicAuth()
 			if ok {
-				h := auth.Hash(auth.HashInput{
-					Pass: pass,
-					Salt: auth.Salt(salt),
+				h, _ := authCache.Get(r.Context(), []byte(pass), func(ctx context.Context) (string, error) {
+					return auth.Hash(auth.HashInput{
+						Pass: pass,
+						Salt: auth.Salt(salt),
+					}), nil
 				})
 
 				if h == hash {
@@ -37,9 +45,11 @@ func basicAuth(realm string, hash, salt string) func(next http.Handler) http.Han
 				return
 			}
 
-			h := auth.Hash(auth.HashInput{
-				Pass: pass,
-				Salt: auth.Salt(salt),
+			h, _ := authCache.Get(r.Context(), []byte(pass), func(ctx context.Context) (string, error) {
+				return auth.Hash(auth.HashInput{
+					Pass: pass,
+					Salt: auth.Salt(salt),
+				}), nil
 			})
 
 			if h != hash {
