@@ -14,6 +14,7 @@ require (
 	github.com/bool64/zapctxd v1.1.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
+	github.com/corona10/goimagehash v1.1.0
 	github.com/docker/go-units v0.5.0
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/go-chi/chi/v5 v5.0.10

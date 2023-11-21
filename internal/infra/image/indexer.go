@@ -2,18 +2,19 @@ package image
 
 import (
 	"context"
-	"github.com/bool64/brick/opencensus"
-	"github.com/bool64/stats"
-	"go.opencensus.io/trace"
 	"image/jpeg"
 	"os"
 	"sync/atomic"
 	"time"
 
+	"github.com/bool64/brick/opencensus"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/stats"
 	blurhash "github.com/buckket/go-blurhash"
+	"github.com/corona10/goimagehash"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"go.opencensus.io/trace"
 )
 
 type indexerDeps interface {
@@ -144,17 +145,18 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	}
 
 	i.ensureThumbs(ctx, img)
-	i.ensureBlurHash(ctx, img)
+	i.ensureBlurHash(ctx, &img)
+	i.ensurePHash(ctx, &img)
 
 	return nil
 }
 
-func (i *Indexer) ensureBlurHash(ctx context.Context, img photo.Image) {
-	if img.BlurHash != "" {
+func (i *Indexer) ensurePHash(ctx context.Context, img *photo.Image) {
+	if img.PHash != 0 {
 		return
 	}
 
-	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, "300w")
+	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, *img, "300w")
 	if err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to get thumbnail",
 			"error", err.Error(), "size", "300w")
@@ -163,7 +165,41 @@ func (i *Indexer) ensureBlurHash(ctx context.Context, img photo.Image) {
 
 	j, err := jpeg.Decode(th.ReadSeeker())
 	if err != nil {
-		i.deps.CtxdLogger().Error(ctx, "failed decode thumbnail",
+		i.deps.CtxdLogger().Error(ctx, "failed to decode thumbnail",
+			"error", err.Error())
+		return
+	}
+
+	h, err := goimagehash.PerceptionHash(j)
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to encode perception hash",
+			"error", err.Error())
+		return
+	}
+
+	img.PHash = uniq.Hash(h.GetHash())
+
+	if err := i.deps.PhotoImageUpdater().Update(ctx, *img); err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to save image",
+			"error", err.Error())
+	}
+}
+
+func (i *Indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
+	if img.BlurHash != "" {
+		return
+	}
+
+	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, *img, "300w")
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to get thumbnail",
+			"error", err.Error(), "size", "300w")
+		return
+	}
+
+	j, err := jpeg.Decode(th.ReadSeeker())
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to decode thumbnail",
 			"error", err.Error())
 		return
 	}
@@ -177,7 +213,7 @@ func (i *Indexer) ensureBlurHash(ctx context.Context, img photo.Image) {
 
 	img.BlurHash = bh
 
-	if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
+	if err := i.deps.PhotoImageUpdater().Update(ctx, *img); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to save image",
 			"error", err.Error())
 	}
