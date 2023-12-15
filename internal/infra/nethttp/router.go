@@ -165,6 +165,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 	deps.SchemaRepo.Mount(s, "/json-form/")
 
+	s.Get("/og.html", usecase.OG(deps))
+
 	deps.CtxdLogger().Important(context.Background(), "router initialized successfully")
 
 	return s
