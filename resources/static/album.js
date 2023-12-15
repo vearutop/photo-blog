@@ -41,6 +41,14 @@ function removeImage(albumName, imageHash) {
     })
 }
 
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen()
+    } else {
+        $('html')[0].requestFullscreen()
+    }
+}
+
 (function () {
     if (screen.width > 576 || screen.width == 0) {
         return
@@ -142,6 +150,11 @@ function loadAlbum(params) {
 
         var prevImgTime = null
 
+        var fullscreenSupported = false
+        if (typeof document.exitFullscreen  == 'function') {
+            fullscreenSupported = true
+        }
+
         for (var i = 0; i < result.images.length; i++) {
             var img = result.images[i]
 
@@ -223,6 +236,10 @@ function loadAlbum(params) {
                     }
 
                     prevImgTime = ts
+
+                    if (fullscreenSupported) {
+                        img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'
+                    }
 
                     img_description += '<a href="#" class="camera-icon ctrl-btn" title="Technical details" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
 
