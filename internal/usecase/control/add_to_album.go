@@ -23,40 +23,45 @@ type addToAlbumDeps interface {
 
 	DepCache() *dep.Cache
 }
-type albumImageInput struct {
-	Name string    `path:"name" description:"Name of destination album to add photo."`
-	Hash uniq.Hash `path:"hash" description:"Hash of an image or album."`
+type addToAlbumInput struct {
+	DstAlbumName string    `path:"name" description:"Name of destination album to add photo."`
+	SrcImageHash uniq.Hash `json:"image_hash,omitempty" title:"Image Hash" description:"Hash of an image to add to album."`
+	SrcAlbumName string    `json:"album_name,omitempty" title:"Source Album Name" description:"Name of a source album to add photos from."`
 }
 
-// AddToAlbum creates use case interactor to add a photo to album.
+// AddToAlbum creates use case interactor to add a single photo or photos from an album to another album.
 func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in albumImageInput, out *struct{}) error {
-		deps.StatsTracker().Add(ctx, "remove_from_album", 1)
-		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.Name, "hash", in.Hash)
+	u := usecase.NewInteractor(func(ctx context.Context, in addToAlbumInput, out *struct{}) error {
+		deps.StatsTracker().Add(ctx, "add_to_album", 1)
+		deps.CtxdLogger().Info(ctx, "adding to album", "name", in.DstAlbumName, "hash", in.SrcImageHash)
 
-		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
+		dstAlbum, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.DstAlbumName))
 		if err != nil {
 			return err
 		}
 
-		if images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, in.Hash); err == nil && len(images) > 0 {
-			imgHashes := make([]uniq.Hash, 0, len(images))
-			for _, img := range images {
-				imgHashes = append(imgHashes, img.Hash)
+		if in.SrcAlbumName != "" {
+			if images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.SrcAlbumName)); err == nil && len(images) > 0 {
+				imgHashes := make([]uniq.Hash, 0, len(images))
+				for _, img := range images {
+					imgHashes = append(imgHashes, img.Hash)
+				}
+
+				return deps.PhotoAlbumImageAdder().AddImages(ctx, dstAlbum.Hash, imgHashes...)
+			}
+		}
+
+		if in.SrcImageHash != 0 {
+			img, err := deps.PhotoImageFinder().FindByHash(ctx, in.SrcImageHash)
+			if err != nil {
+				return err
 			}
 
-			return deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, imgHashes...)
+			err = deps.PhotoAlbumImageAdder().AddImages(ctx, dstAlbum.Hash, img.Hash)
 		}
-
-		img, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
-		if err != nil {
-			return err
-		}
-
-		err = deps.PhotoAlbumImageAdder().AddImages(ctx, album.Hash, img.Hash)
 
 		if err == nil {
-			err = deps.DepCache().AlbumChanged(ctx, album.Name)
+			err = deps.DepCache().AlbumChanged(ctx, dstAlbum.Name)
 		}
 
 		return err

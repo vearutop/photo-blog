@@ -34,7 +34,7 @@ type Time struct {
 
 type Head struct {
 	Time
-	Hash Hash `db:"hash" formType:"hidden" json:"hash" description:"Unique hash value." title:"Hash Id"`
+	Hash Hash `db:"hash" formType:"hidden" json:"hash" description:"Unique hash value." title:"ImageHash Id"`
 }
 
 func (h *Head) HashPtr() *Hash {

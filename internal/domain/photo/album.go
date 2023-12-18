@@ -59,9 +59,9 @@ func (s AlbumSettings) Value() (driver.Value, error) {
 type Album struct {
 	uniq.Head
 	Title      string        `db:"title" json:"title" formType:"textarea" title:"Title" description:"Title of an album."`
-	Name       string        `db:"name" json:"name" title:"Name" required:"true" readOnly:"true" description:"A slug value that is used in album URL."`
+	Name       string        `db:"name" json:"name" title:"DstAlbumName" required:"true" readOnly:"true" description:"A slug value that is used in album URL."`
 	Public     bool          `db:"public" json:"public" inlineTitle:"Album is public." noTitle:"true" title:"Public" description:"Makes album visible in the main page."`
-	CoverImage uniq.Hash     `db:"cover_image" json:"cover_image,omitempty" title:"Cover Image" description:"Hash Id of image to use as a cover."`
+	CoverImage uniq.Hash     `db:"cover_image" json:"cover_image,omitempty" title:"Cover Image" description:"ImageHash Id of image to use as a cover."`
 	Settings   AlbumSettings `db:"settings" json:"settings" title:"Settings" description:"Additional parameters for an album."`
 }
 

@@ -352,6 +352,52 @@
     };
 
     /**
+     * Add To Album
+     * @param {PostAlbumNameRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.postAlbumName = function (req, onNoContent, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
      * Download Album
      * @param {GetAlbumNameZipRequest} req - request parameters.
      * @param {RawCallback} onOK
@@ -514,48 +560,6 @@
         url = url.slice(0, -1);
 
         x.open("DELETE", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-
-        x.send();
-    };
-
-    /**
-     * Add To Album
-     * @param {PostAlbumNameHashRequest} req - request parameters.
-     * @param {RawCallback} onNoContent
-     * @param {RestErrResponseCallback} onInternalServerError
-     */
-    Backend.prototype.postAlbumNameHash = function (req, onNoContent, onInternalServerError) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
-                    }
-                    break;
-                case 500:
-                    if (typeof (onInternalServerError) === 'function') {
-                        onInternalServerError(JSON.parse(x.responseText));
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
-        '/' + encodeURIComponent(req.hash) +
-        '?';
-        url = url.slice(0, -1);
-
-        x.open("POST", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
@@ -1337,6 +1341,87 @@
         '/' + encodeURIComponent(req.x) +
         '/' + encodeURIComponent(req.y) +
         '.png?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.getOgHtml = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Download Images Poi Gpx
+     * @param {GetPoiPhotosNameGpxRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.getPoiPhotosNameGpx = function (req, onOK, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/poi/photos-' + encodeURIComponent(req.name) +
+        '.gpx?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);

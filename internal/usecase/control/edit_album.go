@@ -59,7 +59,15 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 				SubmitMethod:  http.MethodPut,
 				SuccessStatus: http.StatusNoContent,
 				Value:         a,
-			})
+			},
+			jsonform.Form{
+				Title:         "Copy Images From Another Album",
+				SubmitURL:     "/album/" + a.Name,
+				SubmitMethod:  http.MethodPost,
+				SuccessStatus: http.StatusNoContent,
+				Value:         addToAlbumInput{},
+			},
+		)
 	})
 
 	u.SetTags("Control Panel")

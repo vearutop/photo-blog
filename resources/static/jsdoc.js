@@ -38,10 +38,10 @@
 /**
  * @typedef PhotoAlbum
  * @type {Object}
- * @property {String} cover_image - Cover ImageHash Id of image to use as a cover.
+ * @property {String} cover_image - Cover ImageImageHash Id of image to use as a cover.
  * @property {String} created_at - Created AtTimestamp of creation.
- * @property {String} hash - Hash IdUnique hash value.
- * @property {String} name - NameA slug value that is used in album URL.
+ * @property {String} hash - ImageHash IdUnique hash value.
+ * @property {String} name - DstAlbumNameA slug value that is used in album URL.
  * @property {Boolean} public - PublicMakes album visible in the main page.
  * @property {PhotoAlbumSettings} settings
  * @property {String} title - TitleTitle of an album.
@@ -82,7 +82,7 @@
  * @property {Number} exposure_time_sec - Exposure (sec.).
  * @property {Number} f_number - Aperture.
  * @property {Number} focal_length - Focal length.
- * @property {String} hash - Hash IdUnique hash value.
+ * @property {String} hash - ImageHash IdUnique hash value.
  * @property {Number} iso_speed - ISO.
  * @property {String} lens_model - Lens.
  * @property {String} projection_type - Projection.
@@ -95,7 +95,7 @@
  * @type {Object}
  * @property {Number} altitude - Altitude.
  * @property {String} created_at - Created AtTimestamp of creation.
- * @property {String} hash - Hash IdUnique hash value.
+ * @property {String} hash - ImageHash IdUnique hash value.
  * @property {Number} latitude - Latitude.
  * @property {Number} longitude - Longitude.
  * @property {String} time - GPS Timestamp.
@@ -152,6 +152,20 @@
  */
 
 /**
+ * @typedef ControlAddToAlbumInput
+ * @type {Object}
+ * @property {String} album_name - Source Album NameName of a source album to add photos from.
+ * @property {String} image_hash - Image HashHash of an image to add to album.
+ */
+
+/**
+ * @typedef PostAlbumNameRequest
+ * @type {Object}
+ * @property {String} name - Name of destination album to add photo.
+ * @property {ControlAddToAlbumInput} body
+ */
+
+/**
  * @typedef GetAlbumNameZipRequest
  * @type {Object}
  * @property {String} name
@@ -179,21 +193,14 @@
  * @typedef PostAlbumNameImagesRequest
  * @type {Object}
  * @property {String} name
- * @property {?Array<?File|?Blob>} photos
+ * @property {Array<File|Blob>} photos
  */
 
 /**
  * @typedef DeleteAlbumNameHashRequest
  * @type {Object}
- * @property {String} name - Name of destination album to add photo.
- * @property {String} hash - Hash of an image or album.
- */
-
-/**
- * @typedef PostAlbumNameHashRequest
- * @type {Object}
- * @property {String} name - Name of destination album to add photo.
- * @property {String} hash - Hash of an image or album.
+ * @property {String} name - Name of album to remove image from.
+ * @property {String} hash - Hash of an image to remove from album.
  */
 
 /**
@@ -265,9 +272,10 @@
  * @property {String} blurhash - BlurHash.
  * @property {String} created_at - Created AtTimestamp of creation.
  * @property {Boolean} has_avif - Has AVIF ImageEnables serving HDR image.
- * @property {String} hash - Hash IdUnique hash value.
+ * @property {String} hash - ImageHash IdUnique hash value.
  * @property {Number} height - Height, px.
  * @property {String} path - File Path.
+ * @property {String} phash - PerceptionHash.
  * @property {PhotoImageSettings} settings
  * @property {Number} size - File Size.
  * @property {?String} taken_at - Taken At.
@@ -385,6 +393,12 @@
  * @property {String} z
  * @property {String} x
  * @property {String} y
+ */
+
+/**
+ * @typedef GetPoiPhotosNameGpxRequest
+ * @type {Object}
+ * @property {String} name
  */
 
 /**

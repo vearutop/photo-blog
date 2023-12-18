@@ -23,13 +23,18 @@ type removeFromAlbumDeps interface {
 	DepCache() *dep.Cache
 }
 
+type removeFromAlbumInput struct {
+	AlbumName string    `path:"name" description:"Name of album to remove image from."`
+	ImageHash uniq.Hash `path:"hash" description:"Hash of an image to remove from album."`
+}
+
 // RemoveFromAlbum creates use case interactor to delete a photo from album.
 func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in albumImageInput, out *struct{}) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in removeFromAlbumInput, out *struct{}) error {
 		deps.StatsTracker().Add(ctx, "remove_from_album", 1)
-		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.Name, "hash", in.Hash)
+		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.AlbumName, "hash", in.ImageHash)
 
-		albumHash := photo.AlbumHash(in.Name)
+		albumHash := photo.AlbumHash(in.AlbumName)
 
 		_, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
 		if err != nil {
@@ -42,12 +47,12 @@ func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
 		}
 
 		for _, img := range images {
-			if img.Hash == in.Hash {
+			if img.Hash == in.ImageHash {
 				return deps.PhotoAlbumImageDeleter().DeleteImages(ctx, albumHash, img.Hash)
 			}
 		}
 
-		return deps.DepCache().AlbumChanged(ctx, in.Name)
+		return deps.DepCache().AlbumChanged(ctx, in.AlbumName)
 	})
 
 	u.SetTags("Album")
