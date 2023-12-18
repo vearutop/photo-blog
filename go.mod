@@ -33,7 +33,7 @@ require (
 	github.com/swaggest/swgui v1.7.5
 	github.com/swaggest/usecase v1.3.0
 	github.com/tkrajina/gpxgo v1.3.1
-	github.com/tus/tusd/v2 v2.2.0
+	github.com/tus/tusd/v2 v2.2.1
 	github.com/valyala/fasthttp v1.51.0
 	github.com/vearutop/statigz v1.4.0
 	github.com/yuin/goldmark v1.6.0
@@ -42,7 +42,7 @@ require (
 	golang.org/x/crypto v0.16.0
 	golang.org/x/net v0.19.0
 	golang.org/x/text v0.14.0
-	modernc.org/sqlite v1.27.0
+	modernc.org/sqlite v1.28.0
 )
 
 require (
@@ -80,7 +80,7 @@ require (
 	github.com/golang/geo v0.0.0-20230421003525-6adc56603217 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.4.0 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.4 // indirect
@@ -124,7 +124,7 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/tools v0.15.0 // indirect
+	golang.org/x/tools v0.16.1 // indirect
 	google.golang.org/api v0.152.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
 	google.golang.org/grpc v1.59.0 // indirect
@@ -134,7 +134,7 @@ require (
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.41.0 // indirect
 	modernc.org/ccgo/v3 v3.16.15 // indirect
-	modernc.org/libc v1.34.9 // indirect
+	modernc.org/libc v1.37.6 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect
 	modernc.org/opt v0.1.3 // indirect
