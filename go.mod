@@ -31,7 +31,7 @@ require (
 	github.com/swaggest/refl v1.3.0
 	github.com/swaggest/rest v0.2.60
 	github.com/swaggest/swgui v1.7.5
-	github.com/swaggest/usecase v1.3.0
+	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.3.1
 	github.com/tus/tusd/v2 v2.2.1
 	github.com/valyala/fasthttp v1.51.0

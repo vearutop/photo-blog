@@ -40,6 +40,7 @@ func Update[V any](deps updateEntityDeps, ensurer func() uniq.Ensurer[V]) usecas
 	})
 
 	u.SetTitle("Update " + t)
+	u.SetName("control.Update[" + t + "]")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

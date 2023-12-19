@@ -36,6 +36,7 @@ func Get[V any](deps getEntityDeps, finder func() uniq.Finder[V]) usecase.Intera
 	})
 
 	u.SetTitle("Get " + t)
+	u.SetName("control.Get[" + t + "]")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

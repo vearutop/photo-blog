@@ -63,6 +63,7 @@ type Album struct {
 	Public     bool          `db:"public" json:"public" inlineTitle:"Album is public." noTitle:"true" title:"Public" description:"Makes album visible in the main page."`
 	CoverImage uniq.Hash     `db:"cover_image" json:"cover_image,omitempty" title:"Cover Image" description:"ImageHash Id of image to use as a cover."`
 	Settings   AlbumSettings `db:"settings" json:"settings" title:"Settings" description:"Additional parameters for an album."`
+	_          struct{}      `title:"The Album"`
 }
 
 func AlbumHash(name string) uniq.Hash {

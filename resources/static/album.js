@@ -15,7 +15,7 @@ function deleteAlbum(name) {
     }
 
     var b = new Backend('');
-    b.deleteAlbumName({
+    b.controlDeleteAlbum({
         name: name,
     }, function (x) {
         alert("Album deleted, you'll be redirected to main page")
@@ -25,17 +25,31 @@ function deleteAlbum(name) {
     })
 }
 
+function addToFeatured(imageHash) {
+    var b = new Backend('');
+    b.controlAddToAlbum({
+        name: "featured",
+        body: {
+            image_hash: imageHash
+        }
+    }, function (){
+        // alert("Done")
+    }, function (x) {
+        alert("Failed: " + x.error)
+    })
+}
+
 function removeImage(albumName, imageHash) {
-    if (!window.confirm("This photo is about to be removed from the album")) {
+    if (!window.confirm("This photo is about to be removed from the album '" + albumName + "'")) {
         return
     }
 
     var b = new Backend('');
-    b.deleteAlbumNameHash({
+    b.controlRemoveFromAlbum({
         name: albumName,
         hash: imageHash,
     }, function (x) {
-        alert("Photo is removed from the album")
+        // alert("Photo is removed from the album")
     }, function (x) {
         alert("Failed to remove photo from the album: " + x.error)
     })
@@ -46,6 +60,12 @@ function toggleFullscreen() {
         document.exitFullscreen()
     } else {
         $('html')[0].requestFullscreen()
+    }
+}
+
+function exitFullscreen() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen()
     }
 }
 
@@ -151,7 +171,7 @@ function loadAlbum(params) {
         var prevImgTime = null
 
         var fullscreenSupported = false
-        if (typeof document.exitFullscreen  == 'function') {
+        if (typeof document.exitFullscreen == 'function') {
             fullscreenSupported = true
         }
 
@@ -211,7 +231,8 @@ function loadAlbum(params) {
 
                 var img_description =
                     '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>' +
-                    '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\''+params.albumName+'\',\''+img.hash+'\')"></a>'
+                    '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\''+img.hash+'\');return false"></a>' +
+                    '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\'' + params.albumName + '\',\'' + img.hash + '\')"></a>'
 
 
                 if (typeof img.exif !== "undefined") {
@@ -366,6 +387,7 @@ function loadAlbum(params) {
 
         lightbox.on('close', function () {
             history.pushState("", document.title, originalPath);
+            exitFullscreen();
         })
 
         var thumbSize = "200h"
@@ -453,7 +475,7 @@ function loadAlbum(params) {
             }
 
             function gpxPopupHandler(name) {
-                return function(e) {
+                return function (e) {
                     console.log(e)
 
                     var popup = e.popup;
@@ -461,7 +483,7 @@ function loadAlbum(params) {
                     var feat = e.layer.feature
                     console.log("feat", feat)
 
-                    var res =  name + "<br />"
+                    var res = name + "<br />"
                     if (feat.properties.desc) {
                         res += feat.properties.desc + "<br />"
                     }
@@ -552,12 +574,12 @@ function loadAlbum(params) {
     if (params.albumData != null) {
         renderAlbum(params.albumData)
     } else {
-        client.getAlbumContentsNameJson({
+        client.getAlbumContents({
             name: params.albumName
         }, renderAlbum, function (error) {
-
+            alert("Bad request: " + error.error)
         }, function (error) {
-
+            alert("Failed: " + error.error)
         })
     }
 

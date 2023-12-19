@@ -41,15 +41,9 @@ func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
+		err = deps.PhotoAlbumImageDeleter().DeleteImages(ctx, albumHash, in.ImageHash)
 		if err != nil {
 			return err
-		}
-
-		for _, img := range images {
-			if img.Hash == in.ImageHash {
-				return deps.PhotoAlbumImageDeleter().DeleteImages(ctx, albumHash, img.Hash)
-			}
 		}
 
 		return deps.DepCache().AlbumChanged(ctx, in.AlbumName)
