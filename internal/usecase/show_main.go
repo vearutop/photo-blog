@@ -104,6 +104,10 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			})
 
 			for _, a := range list {
+				if a.Hidden {
+					continue
+				}
+
 				if !a.Public || a.Name == "" {
 					if d.NonAdmin {
 						continue

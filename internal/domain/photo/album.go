@@ -61,6 +61,7 @@ type Album struct {
 	Title      string        `db:"title" json:"title" formType:"textarea" title:"Title" description:"Title of an album."`
 	Name       string        `db:"name" json:"name" title:"Name" required:"true" readOnly:"true" description:"A slug value that is used in album URL."`
 	Public     bool          `db:"public" json:"public" inlineTitle:"Album is public." noTitle:"true" title:"Public" description:"Makes album visible in the main page."`
+	Hidden     bool          `db:"hidden" json:"hidden" inlineTitle:"Album is hidden." noTitle:"true" title:"Hidden" description:"Makes album invisible in the main page list."`
 	CoverImage uniq.Hash     `db:"cover_image" json:"cover_image,omitempty" title:"Cover Image" description:"ImageHash Id of image to use as a cover."`
 	Settings   AlbumSettings `db:"settings" json:"settings" title:"Settings" description:"Additional parameters for an album."`
 	_          struct{}      `title:"The Album"`

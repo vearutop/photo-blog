@@ -55,7 +55,9 @@
 
     <div style="display: inline-block;position: relative; top: -0.35em">
         <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a>
+        {{if .Count}}
         <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos</a>
+        {{end}}
     </div>
 
     <div>

@@ -1,6 +1,6 @@
 [x] Improve lightbox captions
 [x] Apply defaults to settings
-[ ] Create "hidden" albums
+[x] Create "hidden" albums
 [ ] Create featured by default
 [x] Remove AVIF, app table
 [ ] Create help pages
@@ -10,3 +10,4 @@
 [ ] Custom favicon
 [ ] Custom page heading
 [ ] Custom files upload
+[ ] Add control to hide image details (global and per album)
