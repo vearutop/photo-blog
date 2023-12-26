@@ -20,6 +20,8 @@ import (
 	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
@@ -138,6 +140,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
+	if err := ensureFeaturedAlbum(l); err != nil {
+		return nil, err
+	}
+
 	l.CtxdLogger().Important(ctx, "service locator initialized successfully")
 
 	return l, nil
@@ -235,6 +241,36 @@ func setupUploadStorage(p string) error {
 		if err != nil {
 			return fmt.Errorf("init upload storage %s: %w", p, err)
 		}
+	}
+
+	return nil
+}
+
+func ensureFeaturedAlbum(l *service.Locator) error {
+	featured := l.Settings().Appearance().FeaturedAlbumName
+	if featured == "" {
+		return nil
+	}
+
+	ctx := context.Background()
+
+	exists, err := l.PhotoAlbumFinder().Exists(ctx, uniq.StringHash(featured))
+	if err != nil {
+		return fmt.Errorf("featured exists: %w", err)
+	}
+
+	if exists {
+		return nil
+	}
+
+	a := photo.Album{}
+	a.Title = "Featured Photos"
+	a.Name = featured
+	a.Hash = uniq.StringHash(featured)
+	a.Hidden = true
+
+	if _, err = l.PhotoAlbumEnsurer().Ensure(ctx, a); err != nil {
+		return fmt.Errorf("create featured: %w", err)
 	}
 
 	return nil

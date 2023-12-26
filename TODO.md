@@ -1,7 +1,7 @@
 [x] Improve lightbox captions
 [x] Apply defaults to settings
 [x] Create "hidden" albums
-[ ] Create featured by default
+[x] Create featured by default
 [x] Remove AVIF, app table
 [ ] Create help pages
 [ ] Fix file thumbnails
