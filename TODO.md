@@ -4,7 +4,7 @@
 [x] Create featured by default
 [x] Remove AVIF, app table
 [x] Create help page
-[ ] Fix "Log out" with forced redirect
+[x] Fix "Log out" with forced redirect
 [x] Fix file thumbnails
 [ ] Improve UX for 360 projection toggle
 [ ] Switch dark/light schemas
