@@ -4,11 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"net/url"
+	"reflect"
 	"strings"
 	"sync"
 
+	"github.com/swaggest/form/v5"
+	"github.com/swaggest/refl"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 )
 
 type Repository interface {
@@ -41,13 +45,21 @@ func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
 	ctx := context.Background()
 
 	return &m, errs(
-		m.r.Get(ctx, "security", &m.security),
-		m.r.Get(ctx, "appearance", &m.appearance),
+		m.get(ctx, "security", &m.security),
+		m.get(ctx, "appearance", &m.appearance),
 		m.appearance.change(),
-		m.r.Get(ctx, "maps", &m.maps),
-		m.r.Get(ctx, "visitors", &m.visitors),
-		m.r.Get(ctx, "storage", &m.storage),
+		m.get(ctx, "maps", &m.maps),
+		m.get(ctx, "visitors", &m.visitors),
+		m.get(ctx, "storage", &m.storage),
 	)
+}
+
+func (m *Manager) get(ctx context.Context, name string, value any) error {
+	if err := m.r.Get(ctx, name, value); errors.Is(err, status.NotFound) {
+		return applyDefaults(value)
+	} else {
+		return err
+	}
 }
 
 func (m *Manager) set(ctx context.Context, name string, value any) error {
@@ -76,4 +88,48 @@ func errs(es ...error) error {
 	}
 
 	return errors.New(strings.Join(s, ", "))
+}
+
+func applyDefaults(input any) error {
+	defaults := url.Values{}
+	defaultValDecoder := form.NewDecoder()
+	defaultValDecoder.SetNamespacePrefix("[")
+	defaultValDecoder.SetNamespaceSuffix("]")
+	defaultValDecoder.RegisterTagNameFunc(func(field reflect.StructField) string {
+		return field.Name
+	})
+
+	refl.WalkFieldsRecursively(reflect.ValueOf(input), func(v reflect.Value, sf reflect.StructField, path []reflect.StructField) {
+		var key string
+
+		for _, p := range path {
+			if p.Anonymous {
+				continue
+			}
+
+			if key == "" {
+				key = p.Name
+			} else {
+				key += "[" + p.Name + "]"
+			}
+		}
+
+		if key == "" {
+			key = sf.Name
+		} else {
+			key += "[" + sf.Name + "]"
+		}
+
+		if d, ok := sf.Tag.Lookup("default"); ok {
+			defaults[key] = []string{d}
+		}
+	})
+
+	if len(defaults) == 0 {
+		return nil
+	}
+
+	dec := defaultValDecoder
+
+	return dec.Decode(input, defaults)
 }
