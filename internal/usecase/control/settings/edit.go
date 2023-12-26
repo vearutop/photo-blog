@@ -36,7 +36,6 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 		return deps.SchemaRepository().Render(out.Writer,
 			jsonform.Page{
 				AppendHTMLHead: `
-    <link rel="icon" href="/static/favicon.png" type="image/png"/>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/tus/uppy.min.css">
     <script src="/static/tus/uppy.legacy.min.js"></script>

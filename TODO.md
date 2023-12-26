@@ -7,7 +7,7 @@
 [x] Fix file thumbnails
 [ ] Improve UX for 360 projection toggle
 [ ] Switch dark/light schemas
-[ ] Custom favicon
+[x] Custom favicon
 [x] Custom page heading
 [x] Custom files upload
 [ ] Add control to hide image details (global and per album)

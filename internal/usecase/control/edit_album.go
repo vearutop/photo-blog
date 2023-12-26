@@ -12,6 +12,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/upload"
 )
 
@@ -21,6 +22,7 @@ type editAlbumPageDeps interface {
 
 	SchemaRepository() *jsonform.Repository
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	Settings() settings.Values
 }
 
 // EditAlbum creates use case interactor to show form.
@@ -37,7 +39,6 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 
 		p := jsonform.Page{
 			AppendHTMLHead: `
-    <link rel="icon" href="/static/favicon.png" type="image/png"/>
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
     <script src="/static/album.js"></script>

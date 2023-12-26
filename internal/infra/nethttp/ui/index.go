@@ -8,11 +8,10 @@ import (
 
 	"github.com/vearutop/photo-blog/resources/static"
 	"github.com/vearutop/statigz"
-	"github.com/vearutop/statigz/brotli"
 )
 
 // Static serves static assets.
-var Static http.Handler
+var Static *statigz.Server
 
 //nolint:gochecknoinits
 func init() {
@@ -20,7 +19,7 @@ func init() {
 		// path/to/whatever exists
 		Static = statigz.FileServer(os.DirFS("./resources/static").(fs.ReadDirFS))
 	} else {
-		Static = statigz.FileServer(static.Assets, brotli.AddEncoding, statigz.EncodeOnInit)
+		Static = statigz.FileServer(static.Assets)
 	}
 }
 

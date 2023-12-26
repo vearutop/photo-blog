@@ -61,9 +61,6 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 		return deps.SchemaRepository().Render(out.Writer,
 			jsonform.Page{
 				Title: "Edit Photo Details",
-				AppendHTMLHead: `
-    <link rel="icon" href="/static/favicon.png" type="image/png"/>
-`,
 				PrependHTML: template.HTML(`
 <div style="margin:2em" class="pure-u-2-5">
     <h1>Manage photo</h1>

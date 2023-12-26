@@ -142,6 +142,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
 
 		s.Get("/site/{file}", usecase.ServeSiteFile(deps))
+		s.Get("/favicon.ico", usecase.ServeFavicon(deps))
 	})
 
 	// Redirecting `/my-album` to `/my-album/`.
