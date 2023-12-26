@@ -8,9 +8,14 @@ import (
 )
 
 type Appearance struct {
-	SiteTitle         string   `json:"site_title" title:"Title" description:"The title of this site."`
-	FeaturedAlbumName string   `split_words:"true" default:"featured" json:"featured_album_name" title:"Featured album name" description:"The name of an album to show on the main page."`
-	Languages         []string `json:"languages" title:"Languages" description:"Supported content languages."`
+	SiteTitle  string `json:"site_title" title:"Title" formType:"textarea" description:"The title of this site."`
+	SiteHead   string `json:"site_head" title:"HTML Head" formType:"textarea" description:"Injected at the end of page &lt;html&gt;&lt;head&gt; element."`
+	SiteHeader string `json:"site_header" title:"Header" formType:"textarea" description:"Injected at page start."`
+	SiteFooter string `json:"site_footer" title:"Footer" formType:"textarea" description:"Injected at page end."`
+
+	FeaturedAlbumName string `split_words:"true" default:"featured" json:"featured_album_name" title:"Featured album name" description:"The name of an album to show on the main page."`
+
+	Languages []string `json:"languages" title:"Languages" description:"Supported content languages."`
 
 	languageMatcher language.Matcher
 }

@@ -130,6 +130,10 @@ func (r *Renderer) filterLang(htmlDoc string, lang string) (string, error) {
 		return "", fmt.Errorf("parse html %q: %w", htmlDoc, err)
 	}
 
+	if doc == nil || doc.FirstChild == nil || doc.FirstChild.LastChild == nil {
+		return htmlDoc, nil
+	}
+
 	var remove []*html.Node
 
 	var f func(*html.Node)

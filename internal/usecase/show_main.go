@@ -44,7 +44,11 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 	}
 
 	type pageData struct {
-		Title             string
+		Title  string
+		Head   template.HTML
+		Header template.HTML
+		Footer template.HTML
+
 		Lang              string
 		Name              string
 		CoverImage        string
@@ -71,9 +75,16 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 
-			d.Title = deps.TxtRenderer().MustRenderLang(ctx, deps.Settings().Appearance().SiteTitle, func(o *txt.RenderOptions) {
+			r := deps.TxtRenderer()
+			a := deps.Settings().Appearance()
+			d.Title = r.MustRenderLang(ctx, a.SiteTitle, func(o *txt.RenderOptions) {
 				o.StripTags = true
 			})
+
+			d.Head = template.HTML(r.MustRenderLang(ctx, a.SiteHead))
+			d.Header = template.HTML(r.MustRenderLang(ctx, a.SiteHeader))
+			d.Footer = template.HTML(r.MustRenderLang(ctx, a.SiteFooter))
+
 			d.Lang = txt.Language(ctx)
 			d.NonAdmin = !auth.IsAdmin(ctx)
 			d.Secure = !deps.Settings().Security().Disabled()

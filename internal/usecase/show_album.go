@@ -51,7 +51,11 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 	}
 
 	type pageData struct {
-		Title       string
+		Title  string
+		Head   template.HTML
+		Header template.HTML
+		Footer template.HTML
+
 		Lang        string
 		Description template.HTML
 		OGTitle     string
@@ -86,6 +90,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d := pageData{}
 		d.Title = album.Title
+
 		d.Lang = txt.Language(ctx)
 		d.Description = template.HTML(album.Settings.Description)
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
@@ -95,6 +100,12 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
+
+		r := deps.TxtRenderer()
+		a := deps.Settings().Appearance()
+		d.Head = template.HTML(r.MustRenderLang(ctx, a.SiteHead))
+		d.Header = template.HTML(r.MustRenderLang(ctx, a.SiteHeader))
+		d.Footer = template.HTML(r.MustRenderLang(ctx, a.SiteFooter))
 
 		maps := deps.Settings().Maps()
 
