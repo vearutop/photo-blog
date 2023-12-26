@@ -298,8 +298,9 @@ function loadAlbum(params) {
                 a.attr("data-pswp-srcset", srcSet)
                 a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                    '<img alt="" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
-                a.find("img").attr("alt", img_description)
+                    '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
+
+                a.append('<div class="pswp-caption-content">' + img_description + '</div>')
 
                 $(params.gallery).append(a)
                 if (typeof img.blur_hash !== "undefined") {
