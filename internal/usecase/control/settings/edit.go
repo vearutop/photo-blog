@@ -9,6 +9,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/upload"
 )
 
 type editSettingsDeps interface {
@@ -34,8 +35,17 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 
 		return deps.SchemaRepository().Render(out.Writer,
 			jsonform.Page{
-				Title:       "Settings",
-				PrependHTML: `<div style="margin: 2em"><a href="/">Back to main page</a></div> <script>function formSaved(x, ctx) { $(ctx.result).html('Saved.') } </script>`,
+				AppendHTMLHead: `
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/tus/uppy.min.css">
+    <script src="/static/tus/uppy.legacy.min.js"></script>
+
+`,
+				Title: "Settings",
+				PrependHTML: `<a style="margin-left: 2em" href ="/">Back to main page</a> ` +
+					upload.TusUploadsButton() +
+					`<script>function formSaved(x, ctx) { $(ctx.result).html('Saved.') } </script>`,
 			},
 			form("Appearance", "/settings/appearance.json", deps.Settings().Appearance()),
 			form("Maps", "/settings/maps.json", deps.Settings().Maps()),

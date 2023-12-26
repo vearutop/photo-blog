@@ -9,7 +9,7 @@
 [ ] Switch dark/light schemas
 [ ] Custom favicon
 [ ] Custom page heading
-[ ] Custom files upload
+[x] Custom files upload
 [ ] Add control to hide image details (global and per album)
 [ ] Disable "http request complete" logs, or move to debug
 [ ] Make "dashboard" page

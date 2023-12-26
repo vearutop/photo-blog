@@ -58,27 +58,31 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 }
 
 func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
-	ctx := context.Background()
+	ctx := event.Context
 	deps.CtxdLogger().Info(ctx, "upload finished", "event", event)
 	storagePath := deps.ServiceConfig().StoragePath
 
 	defer func() {
 		if err := os.Remove(storagePath + "temp/" + event.Upload.ID + ".info"); err != nil {
-			deps.CtxdLogger().Error(ctx, "failed to remove uploaded info", "error", err)
+			if !errors.Is(err, os.ErrNotExist) {
+				deps.CtxdLogger().Error(ctx, "failed to remove uploaded info", "error", err)
+			}
 		}
 		if err := os.Remove(storagePath + "temp/" + event.Upload.ID); err != nil {
-			deps.CtxdLogger().Error(ctx, "failed to remove uploaded file", "error", err)
+			if !errors.Is(err, os.ErrNotExist) {
+				deps.CtxdLogger().Error(ctx, "failed to remove uploaded file", "error", err)
+			}
 		}
 	}()
 
 	albumName := event.HTTPRequest.Header.Get("X-Album-Name")
-	if albumName == "" {
-		deps.CtxdLogger().Error(ctx, "no album name in upload", "event", event)
+	if albumName == "" { // Upload to /site.
+		siteUpload(ctx, deps, event)
 
 		return
 	}
 
-	albumPath := path.Join(storagePath, albumName)
+	albumPath := path.Join(storagePath, "album", albumName)
 	if err := os.MkdirAll(albumPath, 0o700); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to create album directory", "error", err)
 
@@ -87,7 +91,7 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 
 	filePath := path.Join(albumPath, event.Upload.MetaData["filename"])
 	if err := os.Rename(event.Upload.Storage["Path"], filePath); err != nil {
-		deps.CtxdLogger().Error(ctx, "failed to create album directory", "error", err)
+		deps.CtxdLogger().Error(ctx, "failed to move uploaded file", "error", err)
 
 		return
 	}
@@ -103,10 +107,48 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 	}
 }
 
+func siteUpload(ctx context.Context, deps TusHandlerDeps, event tusd.HookEvent) {
+	dir := path.Join(deps.ServiceConfig().StoragePath, "site")
+
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		deps.CtxdLogger().Error(ctx, "failed to create site directory", "error", err)
+
+		return
+	}
+
+	filePath := path.Join(dir, event.Upload.MetaData["filename"])
+	if err := os.Rename(event.Upload.Storage["Path"], filePath); err != nil {
+		deps.CtxdLogger().Error(ctx, "failed to move uploaded file", "error", err)
+
+		return
+	}
+}
+
 type TusHandlerDeps interface {
 	CtxdLogger() ctxd.Logger
 	ServiceConfig() service.Config
 	FilesProcessor() *files.Processor
+}
+
+func TusUploadsButton() template.HTML {
+	return `
+<button style="margin: 2em" class="btn btn-secondary" id="uppyModalOpener">Upload site files</button>
+<script>
+    {
+        const { Dashboard, Tus } = Uppy
+        const uppy = new Uppy.Uppy({ debug: true, autoProceed: false })
+            .use(Dashboard, { 
+				trigger: '#uppyModalOpener', 
+				note: 'These files would be available with "/site/<name.ext>" HTTP(s) links.', 
+				proudlyDisplayPoweredByUppy: false,
+			})
+            .use(Tus, { 
+				endpoint: window.location.protocol + '//' + window.location.host + '/files',
+				chunkSize: 900000, // 900K to fit in 1MiB default client_max_body_size of nginx.
+			})
+    }
+</script>
+`
 }
 
 func TusAlbumHTMLButton(albumName string) template.HTML {

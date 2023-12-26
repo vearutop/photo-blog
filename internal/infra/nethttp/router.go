@@ -140,6 +140,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
+
+		s.Get("/site/{file}", usecase.ServeSiteFile(deps))
 	})
 
 	// Redirecting `/my-album` to `/my-album/`.
