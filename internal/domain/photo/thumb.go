@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -25,7 +28,25 @@ type Thumb struct {
 }
 
 func (t Thumb) ReadSeeker() io.ReadSeeker {
+	if t.FilePath != "" {
+		return nil
+	}
+
 	return bytes.NewReader(t.Data)
+}
+
+func (t Thumb) JPEG() (image.Image, error) {
+	if t.FilePath != "" {
+		f, err := os.Open(t.FilePath)
+		if err != nil {
+			return nil, fmt.Errorf("open file %q for jpeg decoding: %w", t.FilePath, err)
+		}
+		defer f.Close()
+
+		return jpeg.Decode(f)
+	}
+
+	return jpeg.Decode(t.ReadSeeker())
 }
 
 type ThumbSize string

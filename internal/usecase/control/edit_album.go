@@ -48,7 +48,8 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 			PrependHTML: template.HTML(`<a style="margin-left: 2em" href ="/`+a.Name+`">Back to album</a> `) +
 				upload.TusAlbumHTMLButton(a.Name),
 			AppendHTML: template.HTML(`
-<hr /><button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
+<hr />
+<button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
 `),
 		}
 

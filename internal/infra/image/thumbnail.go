@@ -88,8 +88,8 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	th.Hash = i.Hash
 
 	if len(buf.Bytes()) > 1e5 {
-		dir := t.deps.ServiceConfig().StoragePath + "thumb/" + i.Hash.String()[:1] + "/"
-		if err := os.MkdirAll(dir, 0o700); err != nil {
+		dir := t.deps.ServiceConfig().StoragePath + "thumb/" + string(size) + "/" + i.Hash.String()[:1] + "/"
+		if err := os.MkdirAll(dir, 0o700); err == nil {
 			filePath := dir + i.Hash.String() + ".jpg"
 
 			if err := os.WriteFile(filePath, buf.Bytes(), 0o600); err == nil {
@@ -121,7 +121,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
 	lt := largerThumbFromContext(ctx)
 	if lt != nil && (lt.Width > w || lt.Height > h) {
-		img, err := jpeg.Decode(lt.ReadSeeker())
+		img, err := lt.JPEG()
 		if err != nil {
 			return nil, fmt.Errorf("decoding larger thumb: %w", err)
 		}

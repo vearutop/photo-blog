@@ -163,7 +163,7 @@ func (i *Indexer) ensurePHash(ctx context.Context, img *photo.Image) {
 		return
 	}
 
-	j, err := jpeg.Decode(th.ReadSeeker())
+	j, err := th.JPEG()
 	if err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to decode thumbnail",
 			"error", err.Error())
@@ -197,7 +197,7 @@ func (i *Indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
 		return
 	}
 
-	j, err := jpeg.Decode(th.ReadSeeker())
+	j, err := th.JPEG()
 	if err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to decode thumbnail",
 			"error", err.Error())
