@@ -252,7 +252,7 @@ function loadAlbum(params) {
                                 continue
                             }
 
-                            $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5'>" + t.text + "</div></div>")
+                            $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
                         }
                     }
 

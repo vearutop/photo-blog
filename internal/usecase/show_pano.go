@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"html/template"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -27,12 +26,7 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 		Hash uniq.Hash `path:"hash"`
 	}
 
-	tpl, err := static.Assets.ReadFile("pano.html")
-	if err != nil {
-		panic(err)
-	}
-
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
+	tmpl, err := static.Template("pano.html")
 	if err != nil {
 		panic(err)
 	}

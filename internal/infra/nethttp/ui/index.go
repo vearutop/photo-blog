@@ -3,7 +3,6 @@ package ui
 
 import (
 	"io/fs"
-	"net/http"
 	"os"
 
 	"github.com/vearutop/photo-blog/resources/static"
@@ -21,11 +20,4 @@ func init() {
 	} else {
 		Static = statigz.FileServer(static.Assets)
 	}
-}
-
-// Index serves index page of the application.
-func Index() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Static.ServeHTTP(w, r)
-	})
 }

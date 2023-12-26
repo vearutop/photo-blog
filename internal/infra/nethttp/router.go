@@ -22,6 +22,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
 	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
+	"github.com/vearutop/photo-blog/internal/usecase/help"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"golang.org/x/text/language"
 )
@@ -90,6 +91,9 @@ func NewRouter(deps *service.Locator) http.Handler {
 		}
 
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
+
+		s.Get("/help/", help.Index(deps))
+		s.Get("/help/{file}", help.ServeFile(deps))
 
 		s.Get("/login", control.Login())
 	})

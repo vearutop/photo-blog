@@ -58,12 +58,7 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Appea
 
 // ShowMain creates use case interactor to show album.
 func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
-	tpl, err := static.Assets.ReadFile("index.html")
-	if err != nil {
-		panic(err)
-	}
-
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
+	tmpl, err := static.Template("index.html")
 	if err != nil {
 		panic(err)
 	}

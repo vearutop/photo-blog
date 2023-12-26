@@ -216,3 +216,7 @@ a.ctrl-btn:hover {
         display: none;
     }
 }
+
+.some-text {
+    max-width: 600px;
+}

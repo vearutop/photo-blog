@@ -21,8 +21,8 @@ type editSettingsDeps interface {
 // Edit creates use case interactor to show form.
 func Edit(deps editSettingsDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *usecase.OutputWithEmbeddedWriter) error {
-		form := func(title, url string, value any) jsonform.Form {
-			return jsonform.Form{
+		form := func(title, url string, value any, options ...func(f *jsonform.Form)) jsonform.Form {
+			f := jsonform.Form{
 				Title:         title,
 				SubmitURL:     url,
 				SubmitMethod:  http.MethodPost,
@@ -31,6 +31,12 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 				SubmitText:    "Save",
 				OnSuccess:     `formSaved`,
 			}
+
+			for _, o := range options {
+				o(&f)
+			}
+
+			return f
 		}
 
 		return deps.SchemaRepository().Render(out.Writer,
@@ -50,6 +56,17 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 			form("Maps", "/settings/maps.json", deps.Settings().Maps()),
 			form("Visitors", "/settings/visitors.json", deps.Settings().Visitors()),
 			form("Storage", "/settings/storage.json", deps.Settings().Storage()),
+			jsonform.Form{
+				Title: "Set Admin Password",
+				Description: "<p>Add password protection to editing of albums and uploading of images.</p>" +
+					"<p>For local or externally protected instance, password protection can be removed by setting an empty password.</p>" +
+					`<a href="/">Back to main page.</a>`,
+				SubmitURL:     "/settings/password.json",
+				SubmitMethod:  http.MethodPost,
+				SuccessStatus: http.StatusNoContent,
+				Value:         adminPass{},
+				SubmitText:    "Save",
+			},
 		)
 	})
 

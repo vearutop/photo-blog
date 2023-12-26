@@ -9,7 +9,7 @@ import (
 
 type Appearance struct {
 	SiteTitle   string `json:"site_title" title:"Title" formType:"textarea" description:"The title of this site."`
-	SiteFavicon string `json:"site_favicon" title:"Link to favicon." description:"Defaults to /static/favicon.png, you can upload your own and use, for example, /site/favicon.png."`
+	SiteFavicon string `json:"site_favicon" title:"Link to favicon" description:"Defaults to /static/favicon.png, you can upload your own and use, for example, /site/favicon.png."`
 	SiteHead    string `json:"site_head" title:"HTML Head" formType:"textarea" description:"Injected at the end of page &lt;html&gt;&lt;head&gt; element."`
 	SiteHeader  string `json:"site_header" title:"Header" formType:"textarea" description:"Injected at page start."`
 	SiteFooter  string `json:"site_footer" title:"Footer" formType:"textarea" description:"Injected at page end."`
