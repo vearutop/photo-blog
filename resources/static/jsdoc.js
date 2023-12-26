@@ -42,7 +42,7 @@
  * @property {String} cover_image - Cover Image. ImageHash Id of image to use as a cover.
  * @property {String} created_at - Created At. Timestamp of creation.
  * @property {String} hash - ImageHash Id. Unique hash value.
- * @property {String} name - DstAlbumName. A slug value that is used in album URL.
+ * @property {String} name - Name. A slug value that is used in album URL.
  * @property {Boolean} public - Public. Makes album visible in the main page.
  * @property {PhotoAlbumSettings} settings
  * @property {String} title - Title. Title of an album.
@@ -228,6 +228,19 @@
  */
 
 /**
+ * @typedef SettingsAdminPass
+ * @type {Object}
+ * @property {String} password - Password.
+ * @property {String} repeatPassword - Repeat Password.
+ */
+
+/**
+ * @typedef ControlSettingsSetPasswordRequest
+ * @type {Object}
+ * @property {SettingsAdminPass} body
+ */
+
+/**
  * @typedef ControlUpdatePhotoExifRequest
  * @type {Object}
  * @property {PhotoExif} body
@@ -403,18 +416,44 @@
  */
 
 /**
+ * @typedef ServiceAppearanceSettings
+ * @type {Object}
+ * @property {String} site_title - Title. The title of this site.
+ */
+
+/**
+ * @typedef ServiceMapSettings
+ * @type {Object}
+ * @property {String} map_attribution - Map attribution. Map tiles attribution.
+ * @property {Boolean} map_cache - Map cache. Enable local cache of map tiles.
+ * @property {String} map_tiles - Map tiles. URL to custom map tiles.
+ */
+
+/**
+ * @typedef SettingsSecurity
+ * @type {Object}
+ * @property {String} pass_hash
+ * @property {String} pass_salt
+ */
+
+/**
  * Settings
  * @typedef ServiceSettings
  * @type {Object}
+ * @property {Boolean} access_log_disabled
  * @property {String} access_log_file - Path to access log. When not empty, requests to albums and photos will be logged.
+ * @property {ServiceAppearanceSettings} appearance_settings
  * @property {String} featured_album_name - Featured album name. The name of an album to show on the main page.
  * @property {?Array<String>} languages - Languages. Supported content languages.
  * @property {String} map_attribution - Map attribution. Map tiles attribution.
  * @property {Boolean} map_cache - Map cache. Enable local cache of map tiles.
+ * @property {ServiceMapSettings} map_settings
  * @property {String} map_tiles - Map tiles. URL to custom map tiles.
+ * @property {SettingsSecurity} security_settings
  * @property {String} site_title - Title. The title of this site.
  * @property {Boolean} tag_visitors - Tag unique visitors. Unique visitors would be tagged with cookies.
  * @property {String} upload_storage - Upload storage. Path to directory where uploaded files are stored.
+ * @property {Boolean} webdav_disabled - Disable WebDAV. Disable WebDAV access to storage.
  * @property {String} webdav_storage - WebDAV storage. Path to directory with WebDAV access.
  */
 

@@ -14,11 +14,15 @@ import (
 
 func main() {
 	var (
-		cfg     service.Config
-		migrate = flag.Bool("migrate", false, "Run migrations and exit.")
+		cfg         service.Config
+		migrate     = flag.Bool("migrate", false, "Run migrations and exit.")
+		storagePath = flag.String("storage-path", "", "Optional path to data storage, defaults to './photo-blog-data/'.")
+		listen      = flag.String("listen", "127.0.0.1:8008", "Address and port to listen to.")
 	)
 
 	brick.Start(&cfg, func(docsMode bool) (*brick.BaseLocator, http.Handler) {
+		cfg.HTTPListenAddr = *listen
+
 		// Initialize application resources.
 		sl, err := infra.NewServiceLocator(cfg, docsMode)
 		if err != nil {
@@ -29,6 +33,10 @@ func main() {
 	}, func(o *brick.StartOptions) {
 		if migrate != nil && *migrate {
 			o.NoHTTP = true
+		}
+
+		if storagePath != nil && *storagePath != "" {
+			cfg.StoragePath = *storagePath
 		}
 	})
 }

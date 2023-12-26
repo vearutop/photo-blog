@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"html/template"
 	"sort"
 	"strconv"
@@ -10,9 +12,9 @@ import (
 	"github.com/bool64/brick"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -26,6 +28,7 @@ type showMainDeps interface {
 	getAlbumImagesDeps
 
 	DepCache() *dep.Cache
+	Settings() settings.Values
 }
 
 // ShowMain creates use case interactor to show album.
@@ -45,6 +48,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		Lang              string
 		Name              string
 		CoverImage        string
+		Secure            bool
 		NonAdmin          bool
 		Public            bool
 		Hash              string
@@ -67,26 +71,22 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 
-			d.Title = deps.TxtRenderer().MustRenderLang(ctx, deps.ServiceSettings().SiteTitle, func(o *txt.RenderOptions) {
+			d.Title = deps.TxtRenderer().MustRenderLang(ctx, deps.Settings().Appearance().SiteTitle, func(o *txt.RenderOptions) {
 				o.StripTags = true
 			})
 			d.Lang = txt.Language(ctx)
 			d.NonAdmin = !auth.IsAdmin(ctx)
-			d.Featured = deps.ServiceSettings().FeaturedAlbumName
+			d.Secure = !deps.Settings().Security().Disabled()
+			d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 			if d.Featured != "" {
-				fa, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(d.Featured))
-				if err != nil {
-					return d, err
-				}
-
-				if fa.CoverImage != 0 {
-					d.CoverImage = "/thumb/1200w/" + fa.CoverImage.String() + ".jpg"
-				}
-
 				cont, err := getAlbumContents(ctx, deps, d.Featured, false)
-				if err != nil {
-					return d, err
+				if err != nil && !errors.Is(err, status.NotFound) {
+					return d, fmt.Errorf("featured: %w", err)
+				}
+
+				if cont.Album.CoverImage != 0 {
+					d.CoverImage = "/thumb/1200w/" + cont.Album.CoverImage.String() + ".jpg"
 				}
 
 				d.FeaturedAlbumData = cont

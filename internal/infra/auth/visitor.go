@@ -9,6 +9,7 @@ import (
 
 	"github.com/bool64/ctxd"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 )
 
 type Visitor struct {
@@ -37,36 +38,38 @@ func VisitorFromContext(ctx context.Context) uniq.Hash {
 	return 0
 }
 
-func VisitorMiddleware(logger ctxd.Logger) func(handler http.Handler) http.Handler {
+func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var h uniq.Hash
+			visitors := cfg.Visitors()
+			isNew := true
 
-			isNew := false
+			if visitors.Tag {
+				var h uniq.Hash
 
-			c, err := r.Cookie("v")
-			if err == nil {
-				_ = h.UnmarshalText([]byte(c.Value))
-			} else if errors.Is(err, http.ErrNoCookie) {
-				h = uniq.Hash(rand.Int())
+				c, err := r.Cookie("v")
+				if err == nil {
+					_ = h.UnmarshalText([]byte(c.Value))
+					isNew = false
+				} else if errors.Is(err, http.ErrNoCookie) {
+					h = uniq.Hash(rand.Int())
 
-				c := http.Cookie{Name: "v", Value: h.String(), HttpOnly: true, MaxAge: 3 * 30 * 86400}
-				http.SetCookie(w, &c)
+					c := http.Cookie{Name: "v", Value: h.String(), HttpOnly: true, MaxAge: 3 * 30 * 86400}
+					http.SetCookie(w, &c)
+				}
 
-				isNew = true
+				if h != 0 {
+					r = r.WithContext(ContextWithVisitor(ctxd.AddFields(r.Context(), "visitor", h), h))
+				}
 			}
 
-			if h != 0 {
-				r = r.WithContext(ContextWithVisitor(ctxd.AddFields(r.Context(), "visitor", h), h))
-			}
-
-			if logger != nil {
+			if logger != nil && visitors.AccessLog {
 				logger.Important(r.Context(), "access",
-					"is_new", isNew,
+					"new_visitor", isNew,
+					"host", r.Host,
 					"url", r.URL.String(),
 					"user_agent", r.Header.Get("User-Agent"),
 					"referer", r.Header.Get("Referer"),
-					"remote_addr", r.RemoteAddr,
 					"forwarded_for", r.Header.Get("X-Forwarded-For"),
 				)
 			}

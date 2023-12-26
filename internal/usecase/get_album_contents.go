@@ -12,6 +12,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
@@ -22,7 +23,7 @@ type getAlbumImagesDeps interface {
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
-	ServiceSettings() service.Settings
+	Settings() settings.Values
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 
 	service.TxtRendererProvider

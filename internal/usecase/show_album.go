@@ -96,12 +96,14 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
 
-		d.MapTiles = deps.ServiceSettings().MapTiles
-		if deps.ServiceSettings().MapCache {
+		maps := deps.Settings().Maps()
+
+		d.MapTiles = maps.Tiles
+		if maps.Cache {
 			d.MapTiles = "/map-tile/{r}/{z}/{x}/{y}.png"
 		}
 
-		d.MapAttribution = deps.ServiceSettings().MapAttribution
+		d.MapAttribution = maps.Attribution
 
 		var totalSize int64
 		for _, img := range cont.Images {

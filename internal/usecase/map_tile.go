@@ -43,7 +43,7 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 
 		t, err := mapCache.Get(ctx, []byte(input.Retina+"/"+input.Zoom+"/"+input.X+"/"+input.Y),
 			func(ctx context.Context) (photo.MapTile, error) {
-				u := deps.ServiceSettings().MapTiles
+				u := deps.Settings().Maps().Tiles
 				if u == "" {
 					u = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 				}

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"io/fs"
 	"net/http"
 	"os"
@@ -14,18 +16,17 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
-	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
-	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
@@ -46,6 +47,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 			l.CtxdLogger().Error(ctx, err.Error())
 		}
 	}()
+
+	cfg.Debug.Middlewares = append(cfg.Debug.Middlewares, auth.BasicAuth("Admin Access", l.Settings))
 
 	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
 	if err != nil {
@@ -76,15 +79,17 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		},
 	)
 
-	if err = setupStorage(l, cfg.Database); err != nil {
+	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex())
+
+	if err = setupUploadStorage(cfg.StoragePath); err != nil {
 		return nil, err
 	}
 
-	if err = l.Storage.DB().Get(&l.Config, "SELECT settings FROM app"); err != nil {
+	if err = setupStorage(l, cfg.StoragePath+"db.sqlite"); err != nil {
 		return nil, err
 	}
 
-	if err = setupUploadStorage(l.Config.Settings.UploadStorage); err != nil {
+	if l.SettingsManagerInstance, err = settings.NewManager(storage.NewSettingsRepository(l.Storage), l.DepCache()); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +111,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
 
-	thumbStorage, err := setupThumbStorage(l, cfg.ThumbStorage)
+	thumbStorage, err := setupThumbStorage(l, cfg.StoragePath+"thumbs.sqlite")
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +131,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 	l.TxtRendererProvider = txt.NewRenderer()
-	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex())
 
 	l.FilesProcessorInstance = files.NewProcessor(l)
 
@@ -142,31 +146,27 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 func setupAccessLog(l *service.Locator) error {
 	cfg := l.Config
 
-	if cfg.Settings.AccessLogFile == "" {
-		l.AccessLogger = ctxd.NoOpLogger{}
-	} else {
-		f, err := os.OpenFile(cfg.Settings.AccessLogFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
-		if err != nil {
-			return fmt.Errorf("access log: %w", err)
+	f, err := os.OpenFile(cfg.StoragePath+"/access.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+	if err != nil {
+		return fmt.Errorf("access log: %w", err)
+	}
+
+	al := zapctxd.New(zapctxd.Config{
+		Level:  zap.InfoLevel,
+		Output: f,
+	})
+
+	l.OnShutdown("access-log", func() {
+		if err := al.ZapLogger().Sync(); err != nil {
+			l.CtxdLogger().Error(context.Background(), "failed to sync access log", "error", err)
 		}
 
-		al := zapctxd.New(zapctxd.Config{
-			Level:  zap.InfoLevel,
-			Output: f,
-		})
+		if err := f.Close(); err != nil {
+			l.CtxdLogger().Error(context.Background(), "failed to close access log file", "error", err)
+		}
+	})
 
-		l.OnShutdown("access-log", func() {
-			if err := al.ZapLogger().Sync(); err != nil {
-				l.CtxdLogger().Error(context.Background(), "failed to sync access log", "error", err)
-			}
-
-			if err := f.Close(); err != nil {
-				l.CtxdLogger().Error(context.Background(), "failed to close access log file", "error", err)
-			}
-		})
-
-		l.AccessLogger = al
-	}
+	l.AccessLogger = al
 
 	return nil
 }
@@ -175,7 +175,7 @@ func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 	cfg := database.Config{}
 	cfg.DriverName = "sqlite"
 	cfg.MaxOpen = 1
-	cfg.DSN = filepath
+	cfg.DSN = filepath + "?_time_format=sqlite"
 	cfg.ApplyMigrations = true
 
 	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
@@ -189,29 +189,20 @@ func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 	return st, nil
 }
 
-func setupStorage(l *service.Locator, cfg database.Config) error {
-	if cfg.DriverName == "" {
-		cfg.DriverName = "sqlite"
-	}
+func setupStorage(l *service.Locator, filepath string) error {
+	cfg := database.Config{}
+	cfg.DriverName = "sqlite"
+	cfg.MaxOpen = 1
+	cfg.DSN = filepath + "?_time_format=sqlite"
+	cfg.ApplyMigrations = true
 
-	var (
-		err        error
-		migrations fs.FS
-	)
-
-	switch cfg.DriverName {
-	case "sqlite":
-		migrations = sqlite.Migrations
-		if !strings.Contains(cfg.DSN, "?") {
-			cfg.DSN += "?_time_format=sqlite"
-		}
-	}
+	var err error
 
 	l.CtxdLogger().Info(context.Background(), "setting up storage")
 	start := time.Now()
-	l.Storage, err = database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), migrations)
+	l.Storage, err = database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), sqlite.Migrations)
 	if err != nil {
-		return err
+		return fmt.Errorf("main db: %w", err)
 	}
 	l.CtxdLogger().Info(context.Background(), "storage setup complete", "elapsed", time.Since(start).String())
 

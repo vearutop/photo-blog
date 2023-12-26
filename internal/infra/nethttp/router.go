@@ -21,6 +21,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
+	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"golang.org/x/text/language"
 )
@@ -34,23 +35,20 @@ func NewRouter(deps *service.Locator) http.Handler {
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
-		if cfg.AdminPassHash != "" {
-			adminAuth := basicAuth("Admin Access", cfg.AdminPassHash, cfg.AdminPassSalt)
-			s.Use(nethttp.AnnotateOpenAPI(s.OpenAPICollector, func(op *openapi3.Operation) error {
-				op.Tags = append(op.Tags, "Control Panel")
+		adminAuth := auth.BasicAuth("Admin Access", deps.Settings)
+		s.Use(nethttp.AnnotateOpenAPI(s.OpenAPICollector, func(op *openapi3.Operation) error {
+			op.Tags = append(op.Tags, "Control Panel")
 
-				return nil
-			}))
-			s.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(s.OpenAPICollector, "Admin", "Admin access"))
+			return nil
+		}))
+		s.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(s.OpenAPICollector, "Admin", "Admin access"))
+
+		// WebDAV server configuration.
+		for _, m := range strings.Split("OPTIONS, MKCOL, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT", ", ") {
+			chi.RegisterMethod(m)
 		}
-
-		if cfg.Settings.WebDAVStorage != "" {
-			for _, m := range strings.Split("OPTIONS, MKCOL, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT", ", ") {
-				chi.RegisterMethod(m)
-			}
-
-			s.Mount("/webdav/", webdav.NewHandler(cfg.Settings.WebDAVStorage, deps.CtxdLogger()))
-		}
+		s.Mount("/webdav/", webdav.NewHandler(cfg.StoragePath, deps.CtxdLogger(), deps.Settings()))
+		// End of WebDAV.
 
 		s.Post("/album", control.CreateAlbum(deps))
 		s.Post("/album/{name}/directory", control.AddDirectory(deps, control.IndexAlbum(deps)))
@@ -66,14 +64,19 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 		s.Get("/edit/image/{hash}.html", control.EditImage(deps))
 		s.Get("/edit/album/{hash}.html", control.EditAlbum(deps))
-		s.Get("/edit/settings.html", control.EditSettings(deps))
+
+		s.Get("/edit/password.html", settings.EditAdminPassword(deps))
+		s.Post("/settings/password.json", settings.SetPassword(deps))
+		s.Get("/edit/settings.html", settings.Edit(deps))
+		s.Post("/settings/appearance.json", settings.SetAppearance(deps))
+		s.Post("/settings/maps.json", settings.SetMaps(deps))
+		s.Post("/settings/visitors.json", settings.SetVisitors(deps))
+		s.Post("/settings/storage.json", settings.SetStorage(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
 		s.Get("/exif/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Exif] { return deps.PhotoExifFinder() }))
 		s.Get("/gps/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Gps] { return deps.PhotoGpsFinder() }))
-		s.Get("/settings.json", control.GetSettings(deps))
-		s.Put("/settings.json", control.UpdateSettings(deps))
 
 		s.Put("/album", control.Update(deps, func() uniq.Ensurer[photo.Album] { return deps.PhotoAlbumEnsurer() }))
 		s.Put("/image", control.Update(deps, func() uniq.Ensurer[photo.Image] { return deps.PhotoImageEnsurer() }))
@@ -97,29 +100,17 @@ func NewRouter(deps *service.Locator) http.Handler {
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
-		if cfg.AdminPassHash != "" {
-			adminAuth := maybeAuth(cfg.AdminPassHash, cfg.AdminPassSalt)
+		adminAuth := auth.MaybeAuth(deps.Settings())
+		s.Use(adminAuth)
 
-			s.Use(adminAuth)
-		}
+		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings()))
 
-		if deps.Config.Settings.TagVisitors {
-			s.Use(auth.VisitorMiddleware(deps.AccessLog()))
-		}
+		// Supported content language matching.
+		s.Use(func(handler http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				matcher, languages := deps.Settings().Appearance().LanguageMatcher()
 
-		if len(deps.Config.Settings.Languages) > 0 {
-			languages := deps.Config.Settings.Languages
-			var tags []language.Tag
-			for i, l := range languages {
-				t := language.MustParse(l)
-				tags = append(tags, t)
-				deps.CtxdLogger().Info(context.Background(), "adding language",
-					"lang", t.String(), "idx", i)
-			}
-			matcher := language.NewMatcher(tags)
-
-			s.Use(func(handler http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if matcher != nil {
 					lang, _ := r.Cookie("lang")
 					accept := r.Header.Get("Accept-Language")
 					tag, i := language.MatchStrings(matcher, lang.String(), accept)
@@ -130,12 +121,12 @@ func NewRouter(deps *service.Locator) http.Handler {
 						"accept", accept,
 					)
 
-					ctx := txt.WithLanguage(r.Context(), languages[i])
+					r = r.WithContext(txt.WithLanguage(r.Context(), languages[i]))
+				}
 
-					handler.ServeHTTP(w, r.WithContext(ctx))
-				})
+				handler.ServeHTTP(w, r)
 			})
-		}
+		})
 
 		s.Get("/", usecase.ShowMain(deps))
 		s.Get("/{name}/", usecase.ShowAlbum(deps))
@@ -157,8 +148,6 @@ func NewRouter(deps *service.Locator) http.Handler {
 	}))
 
 	s.Get("/map-tile/{r}/{z}/{x}/{y}.png", usecase.MapTile(deps))
-
-	s.Post("/make-pass-hash", usecase.MakePassHash())
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
 

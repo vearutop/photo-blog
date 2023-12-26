@@ -21,7 +21,7 @@ import (
 
 type ThumbnailerDeps interface {
 	CtxdLogger() ctxd.Logger
-	ServiceSettings() service.Settings
+	ServiceConfig() service.Config
 }
 
 func NewThumbnailer(deps ThumbnailerDeps) *Thumbnailer {
@@ -87,8 +87,8 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	th.Height = h
 	th.Hash = i.Hash
 
-	if len(buf.Bytes()) > 1e6 {
-		dir := t.deps.ServiceSettings().UploadStorage + "/thumb/" + i.Hash.String()[:1] + "/"
+	if len(buf.Bytes()) > 1e5 {
+		dir := t.deps.ServiceConfig().StoragePath + "thumb/" + i.Hash.String()[:1] + "/"
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			filePath := dir + i.Hash.String() + ".jpg"
 

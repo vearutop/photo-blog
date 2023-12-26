@@ -28,6 +28,7 @@ ifeq ($(DEVGO_PATH),)
 endif
 
 RELEASE_TARGETS ?= linux/amd64
+BUILD_LDFLAGS=-s -w
 
 -include $(DEVGO_PATH)/makefiles/main.mk
 -include $(DEVGO_PATH)/makefiles/lint.mk

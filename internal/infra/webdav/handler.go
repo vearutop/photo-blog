@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"github.com/bool64/ctxd"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"golang.org/x/net/webdav"
 )
 
-func NewHandler(path string, logger ctxd.Logger) *webdav.Handler {
+func NewHandler(path string, logger ctxd.Logger, cfg settings.Values) http.Handler {
 	handler := &webdav.Handler{
 		Prefix:     "/webdav/",
 		FileSystem: webdav.Dir(path),
@@ -26,5 +27,14 @@ func NewHandler(path string, logger ctxd.Logger) *webdav.Handler {
 		},
 	}
 
-	return handler
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !cfg.Storage().WebDAV {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte("WebDAV access is disable by configuration\n"))
+
+			return
+		}
+
+		handler.ServeHTTP(w, r)
+	})
 }

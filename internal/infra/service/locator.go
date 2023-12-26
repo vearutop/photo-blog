@@ -6,6 +6,7 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 )
 
 // Locator defines application resources.
@@ -17,6 +18,8 @@ type Locator struct {
 
 	DepCacheInstance       *dep.Cache
 	FilesProcessorInstance *files.Processor
+
+	SettingsManagerInstance *settings.Manager
 
 	Config Config
 
@@ -57,11 +60,6 @@ func (l *Locator) SchemaRepository() *jsonform.Repository {
 	return l.SchemaRepo
 }
 
-// ServiceSettings give access to dynamic service settings.
-func (l *Locator) ServiceSettings() Settings {
-	return l.Config.Settings
-}
-
 func (l *Locator) AccessLog() ctxd.Logger {
 	return l.AccessLogger
 }
@@ -72,4 +70,12 @@ func (l *Locator) DepCache() *dep.Cache {
 
 func (l *Locator) FilesProcessor() *files.Processor {
 	return l.FilesProcessorInstance
+}
+
+func (l *Locator) SettingsManager() *settings.Manager {
+	return l.SettingsManagerInstance
+}
+
+func (l *Locator) Settings() settings.Values {
+	return l.SettingsManagerInstance
 }

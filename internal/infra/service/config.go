@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/bool64/brick"
-	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
 )
 
@@ -13,11 +12,6 @@ const Name = "photo-blog"
 type Config struct {
 	brick.BaseConfig
 
-	Database      database.Config `split_words:"true"`
-	Jaeger        jaeger.Config   `split_words:"true"`
-	AdminPassHash string          `split_words:"true"`
-	AdminPassSalt string          `split_words:"true"`
-	ThumbStorage  string          `split_words:"true" default:"./photo-blog-thumb.sqlite"`
-
-	Settings Settings `split_words:"true" db:"settings"`
+	StoragePath string        `split_words:"true" default:"./photo-blog-data/"`
+	Jaeger      jaeger.Config `split_words:"true"`
 }

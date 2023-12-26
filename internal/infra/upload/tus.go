@@ -20,7 +20,7 @@ import (
 
 func MountTus(s *web.Service, deps TusHandlerDeps) error {
 	store := filestore.FileStore{
-		Path: deps.ServiceSettings().UploadStorage + "/temp",
+		Path: deps.ServiceConfig().StoragePath + "temp",
 	}
 	composer := tusd.NewStoreComposer()
 	store.UseIn(composer)
@@ -60,12 +60,13 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 	ctx := context.Background()
 	deps.CtxdLogger().Info(ctx, "upload finished", "event", event)
+	storagePath := deps.ServiceConfig().StoragePath
 
 	defer func() {
-		if err := os.Remove(deps.ServiceSettings().UploadStorage + "/temp/" + event.Upload.ID + ".info"); err != nil {
+		if err := os.Remove(storagePath + "temp/" + event.Upload.ID + ".info"); err != nil {
 			deps.CtxdLogger().Error(ctx, "failed to remove uploaded info", "error", err)
 		}
-		if err := os.Remove(deps.ServiceSettings().UploadStorage + "/temp/" + event.Upload.ID); err != nil {
+		if err := os.Remove(storagePath + "temp/" + event.Upload.ID); err != nil {
 			deps.CtxdLogger().Error(ctx, "failed to remove uploaded file", "error", err)
 		}
 	}()
@@ -77,7 +78,7 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 		return
 	}
 
-	albumPath := path.Join(deps.ServiceSettings().UploadStorage, albumName)
+	albumPath := path.Join(storagePath, albumName)
 	if err := os.MkdirAll(albumPath, 0o700); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to create album directory", "error", err)
 
@@ -104,7 +105,7 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 
 type TusHandlerDeps interface {
 	CtxdLogger() ctxd.Logger
-	ServiceSettings() service.Settings
+	ServiceConfig() service.Config
 	FilesProcessor() *files.Processor
 }
 

@@ -5,10 +5,10 @@ go 1.21
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
-	github.com/bool64/brick v0.2.2-0.20231025204446-4eec0fbe47fa
-	github.com/bool64/cache v0.4.7-0.20231025204044-1fcc717eabf8
+	github.com/bool64/brick v0.2.2
+	github.com/bool64/cache v0.4.7
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.32
+	github.com/bool64/dev v0.2.33
 	github.com/bool64/httptestbench v0.1.4
 	github.com/bool64/sqluct v0.2.1
 	github.com/bool64/stats v0.2.2
@@ -18,14 +18,14 @@ require (
 	github.com/corona10/goimagehash v1.1.0
 	github.com/docker/go-units v0.5.0
 	github.com/dsoprea/go-exif/v3 v3.0.1
-	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/chi/v5 v5.0.11
 	github.com/godogx/dbsteps v0.1.2
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.9.0
-	github.com/swaggest/jsonform-go v0.1.1-0.20231109153143-d9cbc9bbfc99
+	github.com/swaggest/jsonform-go v0.1.1-0.20231226002625-89862559c7b7
 	github.com/swaggest/jsonschema-go v0.3.64
 	github.com/swaggest/openapi-go v0.2.44
 	github.com/swaggest/refl v1.3.0
@@ -39,7 +39,7 @@ require (
 	github.com/yuin/goldmark v1.6.0
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
 	golang.org/x/text v0.14.0
 	modernc.org/sqlite v1.28.0
@@ -103,7 +103,7 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/prometheus/statsd_exporter v0.25.0 // indirect
+	github.com/prometheus/statsd_exporter v0.26.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
@@ -114,7 +114,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vearutop/dynhist-go v1.2.3 // indirect
 	github.com/vearutop/gooselite v0.1.1 // indirect
-	github.com/vearutop/lograte v1.1.2 // indirect
+	github.com/vearutop/lograte v1.1.3 // indirect
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yosuke-furukawa/json5 v0.1.2-0.20201207051438-cf7bb3f354ff // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
@@ -126,9 +126,9 @@ require (
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/tools v0.16.1 // indirect
 	google.golang.org/api v0.152.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/grpc v1.59.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
+	google.golang.org/grpc v1.60.1 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
