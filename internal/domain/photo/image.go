@@ -28,7 +28,6 @@ type Image struct {
 	BlurHash string        `db:"blurhash" title:"BlurHash" json:"blurhash" readOnly:"true"`
 	PHash    uniq.Hash     `db:"phash" title:"PerceptionHash" json:"phash" readonly:"true"` // uniq.Hash is used JSON accuracy.
 	TakenAt  *time.Time    `db:"taken_at" title:"Taken At" json:"taken_at"`
-	HasAVIF  bool          `db:"has_avif" title:"Has AVIF Image" description:"Enables serving HDR image." json:"has_avif"`
 	Settings ImageSettings `db:"settings" json:"settings" title:"Settings" description:"Additional parameters for an album."`
 }
 
