@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
-	github.com/bool64/brick v0.2.2
+	github.com/bool64/brick v0.2.3
 	github.com/bool64/cache v0.4.7
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.33
@@ -25,6 +25,7 @@ require (
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/assertjson v1.9.0
+	github.com/swaggest/form/v5 v5.1.1
 	github.com/swaggest/jsonform-go v0.1.1-0.20231226002625-89862559c7b7
 	github.com/swaggest/jsonschema-go v0.3.64
 	github.com/swaggest/openapi-go v0.2.44
@@ -109,7 +110,6 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20230704072819-d1585fc322fa // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/swaggest/form/v5 v5.1.1 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vearutop/dynhist-go v1.2.3 // indirect
@@ -141,3 +141,5 @@ require (
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
+
+replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick

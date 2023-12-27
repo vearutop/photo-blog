@@ -12,7 +12,11 @@
 [x] Custom page heading
 [x] Custom files upload
 [ ] Add control to hide image details (global and per album)
-[ ] Disable "http request complete" logs, or move to debug
+[x] Disable "http request complete" logs, or move to debug
 [ ] Make "dashboard" page
 [ ] Make thumb/image paths portable
-[ ] Localize external CSS/JS
+[x] Localize external CSS/JS
+[ ] Squash SQL migrations
+[ ] Better "Not Found" pages
+[ ] Strip exif?
+[ ] Strip geo?
