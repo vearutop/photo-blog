@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	exif "github.com/dsoprea/go-exif/v3"
+	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	"github.com/evanoberholster/imagemeta"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
@@ -25,6 +26,23 @@ func (m Meta) ExifData() map[string]any {
 func ReadMeta(r io.ReadSeeker) (Meta, error) {
 	res := Meta{}
 
+	if err := readPanoramaAndRatingXMP(r, &res); err != nil {
+		return res, err
+	}
+
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return res, fmt.Errorf("seek: %w", err)
+	}
+
+	if err := readExif(r, &res); err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func readPanoramaAndRatingXMP(r io.Reader, res *Meta) error {
+	//<ns0:xmpmeta xmlns:ns0="adobe:ns:meta/" xmlns:ns2="http://ns.google.com/photos/1.0/panorama/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmptk="SAMSUNG 360CAM">
 	//    <rdf:RDF>
 	//      <rdf:Description rdf:about="">
 	//        <ns2:ProjectionType>equirectangular</ns2:ProjectionType>
@@ -34,17 +52,17 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 	//        <ns2:PoseHeadingDegrees>0.0</ns2:PoseHeadingDegrees>
 	//        <ns2:PosePitchDegrees>2.5</ns2:PosePitchDegrees>
 	//        <ns2:PoseRollDegrees>-0.4</ns2:PoseRollDegrees>
-	//<------><ns2:StitchingSoftware> Samsung Gear 360 Mac </ns2:StitchingSoftware>
+	//	<ns2:StitchingSoftware> Samsung Gear 360 Mac </ns2:StitchingSoftware>
 	//      </rdf:Description>
 	//    </rdf:RDF>
-	//  </ns0:xmpmeta>.
+	//  </ns0:xmpmeta>
 
 	xmp := Span{
 		Start: []byte(":xmpmeta"),
 		End:   []byte(":xmpmeta>"),
 	}
 	if err := FindSpans(r, &xmp); err != nil {
-		return res, fmt.Errorf("find xmp: %w", err)
+		return fmt.Errorf("find xmp: %w", err)
 	}
 
 	if xmp.Found {
@@ -68,32 +86,45 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 		if rs != "" {
 			rating, err := strconv.Atoi(rs)
 			if err != nil {
-				return res, fmt.Errorf("parse xmp rating %q: %w", rs, err)
+				return fmt.Errorf("parse xmp rating %q: %w", rs, err)
 			}
 
 			res.Rating = rating
 		}
 	}
 
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return res, fmt.Errorf("seek: %w", err)
+	return nil
+}
+
+// TODO: check this lib performance and quality.
+func readExif2(r io.ReadSeeker, res *Meta) error {
+	e, err := imagemeta.Decode(r)
+	if err != nil {
+		return err
 	}
 
+	res.CameraMake = e.CameraMake.String()
+	res.CameraModel = e.Model
+
+	return nil
+}
+
+func readExif(r io.Reader, res *Meta) error {
 	rawExif, err := exif.SearchAndExtractExifWithReader(r)
 	if err != nil {
-		return res, fmt.Errorf("search exif: %w", err)
+		return fmt.Errorf("search exif: %w", err)
 	}
 
 	im, err := exifcommon.NewIfdMappingWithStandard()
 	if err != nil {
-		return res, fmt.Errorf("ifd mapping: %w", err)
+		return fmt.Errorf("ifd mapping: %w", err)
 	}
 
 	ti := exif.NewTagIndex()
 
 	_, index, err := exif.Collect(im, ti, rawExif)
 	if err != nil {
-		return res, fmt.Errorf("exif collect: %w", err)
+		return fmt.Errorf("exif collect: %w", err)
 	}
 
 	ifd, err := index.RootIfd.ChildWithIfdPath(exifcommon.IfdGpsInfoStandardIfdIdentity)
@@ -176,10 +207,10 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 
 	err = index.RootIfd.EnumerateTagsRecursively(cb)
 	if err != nil {
-		return res, fmt.Errorf("enumerate tags: %w", err)
+		return fmt.Errorf("enumerate tags: %w", err)
 	}
 
-	return res, nil
+	return nil
 }
 
 func extractExifInt(v any) int {
@@ -334,35 +365,6 @@ func FindSpans(r io.Reader, spans ...*Span) error {
 					pending--
 				}
 			}
-		}
-
-		copy(dbl, buf)
-	}
-}
-
-func find(r io.Reader, search []byte, resLen int) ([]byte, error) {
-	l := 4096
-
-	if l < len(search)+resLen {
-		l = len(search) + resLen
-	}
-
-	dbl := make([]byte, 2*l)
-	buf := make([]byte, l)
-
-	for {
-		_, err := r.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				return nil, nil
-			}
-			return nil, err
-		}
-
-		copy(dbl[l:], buf)
-
-		if i := bytes.Index(dbl, search); i != -1 {
-			return dbl[i:], nil
 		}
 
 		copy(dbl, buf)

@@ -1,14 +1,39 @@
 package image_test
 
 import (
+	"io"
 	"os"
 	"testing"
 
+	"github.com/evanoberholster/imagemeta"
+	"github.com/evanoberholster/imagemeta/xmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/assertjson"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 )
+
+func Test2(t *testing.T) {
+	f, err := os.Open("testdata/23k4cpn0qcqms.jpg")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, f.Close())
+	}()
+
+	e, err := imagemeta.DecodeJPEG(f)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = f.Seek(0, io.SeekStart)
+	require.NoError(t, err)
+
+	x, err := xmp.ParseXmp(f)
+	require.NoError(t, err)
+
+	println(x.Exif.ExifVersion)
+	println(e.CameraMake.String())
+}
 
 func TestReadMeta(t *testing.T) {
 	f, err := os.Open("_testdata/IMG_5612.jpg")

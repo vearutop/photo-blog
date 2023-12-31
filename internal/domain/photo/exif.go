@@ -20,5 +20,5 @@ type Exif struct {
 	CameraModel     string     `db:"camera_model" json:"camera_model" title:"Camera"`
 	Software        string     `db:"software" json:"software" title:"Software"`
 	Digitized       *time.Time `db:"digitized" json:"digitized" title:"Digitized"`
-	ProjectionType  string     `db:"projection_type" json:"projection_type" title:"Projection"`
+	ProjectionType  string     `db:"projection_type" json:"projection_type" title:"Projection" description:"Use 'equirectangular' for 360 panorama."`
 }

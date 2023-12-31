@@ -6,7 +6,7 @@
 [x] Create help page
 [x] Fix "Log out" with forced redirect
 [x] Fix file thumbnails
-[ ] Improve UX for 360 projection toggle
+[x] Improve UX for 360 projection toggle
 [ ] Switch dark/light schemas
 [x] Custom favicon
 [x] Custom page heading
