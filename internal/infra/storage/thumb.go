@@ -3,77 +3,105 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/bool64/ctxd"
+
+	"github.com/Masterminds/squirrel"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"time"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	image "github.com/vearutop/photo-blog/internal/infra/image"
 )
 
 const (
-	// ThumbsTable is the name of the table.
-	ThumbsTable = "thumbs"
+	// ThumbTable is the name of the table.
+	ThumbTable = "thumb"
 )
 
-func NewThumbRepository(storage *sqluct.Storage) *ThumbRepository {
-	tr := &ThumbRepository{}
-
-	tr.storage = storage
-	tr.row = &photo.Thumb{}
-	tr.rf = storage.Ref()
-	tr.rf.AddTableAlias(tr.row, ThumbsTable)
-
-	return tr
+func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer) *ThumbRepository {
+	return &ThumbRepository{
+		upstream: upstream,
+		hashedRepo: hashedRepo[photo.Thumb, *photo.Thumb]{
+			StorageOf: sqluct.Table[photo.Thumb](storage, ThumbTable),
+		},
+	}
 }
 
-// ThumbRepository saves thumbnails to database.
+// ThumbRepository saves images to database.
 type ThumbRepository struct {
-	storage *sqluct.Storage
-	rf      *sqluct.Referencer
-	row     *photo.Thumb
+	upstream photo.Thumbnailer
+	hashedRepo[photo.Thumb, *photo.Thumb]
 }
 
-func (tr *ThumbRepository) Find(ctx context.Context, imageID int, width, height int) (photo.Thumb, error) {
-	row := photo.Thumb{}
+func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
+	th := photo.Thumb{}
 
-	q := tr.storage.SelectStmt(ThumbsTable, row).
-		Where(tr.rf.Fmt("%s = %d", &tr.row.ImageID, imageID))
+	w, h, err := size.WidthHeight()
+	if err != nil {
+		return th, err
+	}
+
+	th, err = tr.Find(ctx, img.Hash, w, h)
+	if err == nil {
+		return th, nil
+	}
+
+	if lt, err := tr.FindLarger(ctx, img.Hash, w, h); err == nil {
+		ctx = image.LargerThumbToContext(ctx, lt)
+	}
+
+	th, err = tr.upstream.Thumbnail(ctx, img, size)
+	if err != nil {
+		return th, err
+	}
+
+	if err := tr.Add(ctx, th); err != nil {
+		return th, augmentErr(err)
+	}
+
+	return th, nil
+}
+
+func (tr *ThumbRepository) FindLarger(ctx context.Context, imageHash uniq.Hash, width, height uint) (photo.Thumb, error) {
+	q := tr.SelectStmt().
+		Where(tr.Eq(&tr.R.Hash, imageHash))
 
 	if width > 0 {
-		q = q.Where(tr.rf.Fmt("%s = %d", &tr.row.Width, width))
+		q = q.Where(squirrel.GtOrEq(tr.Eq(&tr.R.Width, width)))
 	}
 
 	if height > 0 {
-		q = q.Where(tr.rf.Fmt("%s = %d", &tr.row.Height, height))
+		q = q.Where(squirrel.GtOrEq(tr.Eq(&tr.R.Height, height)))
 	}
 
-	if err := tr.storage.Select(ctx, q, &row); err != nil {
-		return photo.Thumb{}, fmt.Errorf("find thumb by image id %q and size %dx%d: %w", imageID, width, height, err)
+	row, err := tr.Get(ctx, q)
+	if err != nil {
+		return photo.Thumb{}, fmt.Errorf("find thumb by image %q and size %dx%d: %w",
+			imageHash, width, height, augmentErr(err))
 	}
 
 	return row, nil
 }
 
-func (tr *ThumbRepository) Add(ctx context.Context, value photo.ThumbValue) (photo.Thumb, error) {
-	r := photo.Thumb{}
-	r.ThumbValue = value
-	r.CreatedAt = time.Now()
+func (tr *ThumbRepository) Find(ctx context.Context, imageHash uniq.Hash, width, height uint) (photo.Thumb, error) {
+	q := tr.SelectStmt().
+		Where(tr.Eq(&tr.R.Hash, imageHash))
 
-	q := tr.storage.InsertStmt(ThumbsTable, r)
-
-	if res, err := tr.storage.Exec(ctx, q); err != nil {
-		return r, ctxd.WrapError(ctx, err, "store thumbnail")
-	} else {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return r, ctxd.WrapError(ctx, err, "get created thumb id")
-		}
-
-		r.ID = int(id)
+	if width > 0 {
+		q = q.Where(tr.Eq(&tr.R.Width, width))
 	}
 
-	return r, nil
+	if height > 0 {
+		q = q.Where(tr.Eq(&tr.R.Height, height))
+	}
+
+	row, err := tr.Get(ctx, q)
+	if err != nil {
+		return photo.Thumb{}, fmt.Errorf("find thumb by image %q and size %dx%d: %w",
+			imageHash, width, height, augmentErr(err))
+	}
+
+	return row, nil
 }
 
-func (tr *ThumbRepository) PhotoThumbAdder() photo.ThumbAdder {
+func (tr *ThumbRepository) PhotoThumbnailer() photo.Thumbnailer {
 	return tr
 }

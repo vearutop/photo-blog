@@ -2,20 +2,82 @@ package service
 
 import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
-type PhotoAlbumAdderProvider interface {
-	PhotoAlbumAdder() photo.AlbumAdder
+type PhotoAlbumImageAdderProvider interface {
+	PhotoAlbumImageAdder() photo.AlbumImageAdder
+}
+
+type PhotoAlbumImageFinderProvider interface {
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
+}
+
+type PhotoAlbumImageDeleterProvider interface {
+	PhotoAlbumImageDeleter() photo.AlbumImageDeleter
+}
+
+type PhotoAlbumEnsurerProvider interface {
+	PhotoAlbumEnsurer() uniq.Ensurer[photo.Album]
+}
+
+type PhotoAlbumUpdaterProvider interface {
+	PhotoAlbumUpdater() uniq.Updater[photo.Album]
+}
+
+type PhotoAlbumDeleterProvider interface {
+	PhotoAlbumDeleter() uniq.Deleter[photo.Album]
 }
 
 type PhotoAlbumFinderProvider interface {
-	PhotoAlbumFinder() photo.AlbumFinder
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 
-type PhotoImageAdderProvider interface {
-	PhotoImageAdder() photo.ImageAdder
+type PhotoImageEnsurerProvider interface {
+	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
 }
 
-type PhotoThumbAdderProvider interface {
-	PhotoThumbAdder() photo.ThumbAdder
+type PhotoImageUpdaterProvider interface {
+	PhotoImageUpdater() uniq.Updater[photo.Image]
+}
+
+type PhotoImageFinderProvider interface {
+	PhotoImageFinder() uniq.Finder[photo.Image]
+}
+
+type PhotoImageIndexerProvider interface {
+	PhotoImageIndexer() photo.ImageIndexer
+}
+
+type PhotoThumbnailerProvider interface {
+	PhotoThumbnailer() photo.Thumbnailer
+}
+
+type PhotoExifEnsurerProvider interface {
+	PhotoExifEnsurer() uniq.Ensurer[photo.Exif]
+}
+
+type PhotoExifFinderProvider interface {
+	PhotoExifFinder() uniq.Finder[photo.Exif]
+}
+
+type PhotoGpsEnsurerProvider interface {
+	PhotoGpsEnsurer() uniq.Ensurer[photo.Gps]
+}
+
+type PhotoGpsFinderProvider interface {
+	PhotoGpsFinder() uniq.Finder[photo.Gps]
+}
+
+type PhotoGpxEnsurerProvider interface {
+	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
+}
+
+type PhotoGpxFinderProvider interface {
+	PhotoGpxFinder() uniq.Finder[photo.Gpx]
+}
+
+type TxtRendererProvider interface {
+	TxtRenderer() *txt.Renderer
 }

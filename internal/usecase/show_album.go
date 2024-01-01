@@ -2,36 +2,138 @@ package usecase
 
 import (
 	"context"
-	"github.com/bool64/ctxd"
-	"github.com/bool64/stats"
+	"errors"
+	"fmt"
+	"html/template"
+
+	"github.com/docker/go-units"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/pkg/web"
+	"github.com/vearutop/photo-blog/resources/static"
 )
 
-type showAlbumDeps interface {
-	StatsTracker() stats.Tracker
-	CtxdLogger() ctxd.Logger
+type showAlbumAtImageInput struct {
+	showAlbumInput
+	Hash uniq.Hash `path:"hash"`
+}
+
+type showAlbumInput struct {
+	Name    string `path:"name"`
+	imgHash uniq.Hash
+}
+
+func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumAtImageInput, out *web.Page) error {
+		in.imgHash = in.Hash
+
+		return up.Invoke(ctx, in.showAlbumInput, out)
+	})
+
+	u.SetTags("Album")
+	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
+
+	return u
 }
 
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps showAlbumDeps) usecase.Interactor {
-	type showAlbumInput struct {
-		ID string `path:"id"`
+func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
+	tmpl, err := static.Template("album.html")
+	if err != nil {
+		panic(err)
 	}
 
-	type helloOutput struct {
-		Message string `json:"message"`
+	notFound := NotFound(deps)
+
+	type pageData struct {
+		pageCommon
+
+		Description template.HTML
+		OGTitle     string
+		Name        string
+		CoverImage  string
+		NonAdmin    bool
+		Public      bool
+		Hash        string
+
+		Images    []Image
+		Panoramas []Image
+
+		Count     int
+		TotalSize string
+
+		MapTiles       string
+		MapAttribution string
+		Featured       string
+
+		AlbumData getAlbumOutput
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *helloOutput) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
-		deps.CtxdLogger().Info(ctx, "showing album", "path", in.ID)
+		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		return nil
+		cont, err := getAlbumContents(ctx, deps, in.Name, false)
+		if err != nil {
+			if errors.Is(err, status.NotFound) {
+				return notFound.Invoke(ctx, struct{}{}, out)
+			}
+
+			return fmt.Errorf("get album contents: %w", err)
+		}
+
+		album := cont.Album
+
+		d := pageData{}
+		d.Title = album.Title
+
+		d.Description = template.HTML(album.Settings.Description)
+		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
+		d.Name = album.Name
+		d.NonAdmin = !auth.IsAdmin(ctx)
+		d.Public = album.Public
+		d.Hash = album.Hash.String()
+		d.Count = len(cont.Images)
+		d.AlbumData = cont
+		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
+
+		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+
+		maps := deps.Settings().Maps()
+
+		d.MapTiles = maps.Tiles
+		if maps.Cache {
+			d.MapTiles = "/map-tile/{r}/{z}/{x}/{y}.png"
+		}
+
+		d.MapAttribution = maps.Attribution
+
+		// TotalSize controls visibility of batch download button.
+		privacy := deps.Settings().Privacy()
+		if !d.NonAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
+			var totalSize int64
+			for _, img := range cont.Images {
+				totalSize += img.size
+			}
+
+			d.TotalSize = units.HumanSize(float64(totalSize))
+		}
+
+		switch {
+		case in.imgHash != 0:
+			d.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
+		case album.CoverImage != 0:
+			d.CoverImage = "/thumb/1200w/" + album.CoverImage.String() + ".jpg"
+		case len(cont.Images) > 0:
+			d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
+		}
+
+		return out.Render(tmpl, d)
 	})
 
-	u.SetDescription("Add a directory of photos as an album (non-recursive).")
-	u.SetTags("Photos")
+	u.SetTags("Album")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u

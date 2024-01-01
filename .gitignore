@@ -10,3 +10,6 @@
 /resources/static/openapi.json
 /data
 /*.sqlite
+/photo-blog-data/
+/photo-blog-access.log
+/local.mk

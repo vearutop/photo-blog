@@ -1,51 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Lang}}">
 <head>
-    <title>Greeter</title>
+    <title>{{.Title}}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon"/>
+    <link rel="icon" href="{{.Favicon}}" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/photoswipe.css">
+    <link rel="stylesheet" href="/static/photoswipe-dynamic-caption-plugin.css">
+
+    <script src="/static/jquery-3.6.3.min.js"></script>
     <script src="/static/client.js"></script>
+    <script src="/static/photoswipe.umd.min.js"></script>
+    <script src="/static/photoswipe-lightbox.umd.min.js"></script>
+    <script src="/static/photoswipe-dynamic-caption-plugin.umd.min.js"></script>
+    <script src="/static/blurhash.js"></script>
+    <script src="/static/album.js"></script>
+
+    <meta property="og:title" content="{{.Title}}"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content="{{.CoverImage}}"/>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+          integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+          crossorigin=""/>
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+            integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+            crossorigin=""></script>
+
+    <style>
+        /*{{if .NonAdmin}}*/
+        .control-panel {
+            display: none !important;
+        }
+        /*{{else}}*/
+        .not-control-panel {
+            display: none !important;
+        }
+        /*{{end}}*/
+    </style>
+{{.Head}}
 </head>
-<body>
+<body class="dark-mode">
+{{.Header}}
 
-<div style="margin:2em">
-    <h1>Greeter</h1>
+<div class="main">
+    <h1>{{.Title}}</h1>
 
-    <form class="pure-form" style="display: inline-block">
-        <fieldset>
-            <legend>A minimalistic web application based on backend API</legend>
-            <input id="name" placeholder="Name"/>
-            <select id="locale" name="locale">
-                <option>en-US</option>
-                <option>ru-RU</option>
-                <option>zz-ZZ</option>
-            </select>
-            <button type="button" id="hello-btn" class="pure-button pure-button-primary">Hello</button>
-        </fieldset>
-    </form>
+    <div id="{{.Featured}}" class="grid"></div>
+    <script>
+        featured = {{.Featured}}
+        loadAlbum({
+            albumName: "{{.Featured}}",
+            gallery: "#{{.Featured}}",
+            baseUrl: "/",
+            albumData: {{.FeaturedAlbumData}},
+        });
+    </script>
+
+    {{range $k, $a := .Albums}}
+    <h3 id="{{$a.Album.Name}}">{{if not $a.Album.Public}}
+        <div class="ctrl-btn lock-icon" title="URL required to access this album, please share responsibly."></div>
+        {{end}} <a href="/{{$a.Album.Name}}/">{{$a.Album.Title}}</a></h3>
+    <div id="a{{$a.Album.Hash}}" class="grid preview"></div>
+    <script>
+        loadAlbum({
+            albumName: "{{$a.Album.Name}}",
+            gallery: "#a{{$a.Album.Hash}}",
+            baseUrl: "/",
+            albumData: {{$a}},
+        });
+    </script>
+    {{end}}
+
+    <div style="margin-top: 30px">
+        <a title="Settings" class="control-panel ctrl-btn gear-icon" href="/edit/settings.html"></a>
+        <a title="Add Album" class="control-panel ctrl-btn film-icon" href="/add-album.html"></a>
+        {{ if .Secure }}
+        <a title="Log out" class="control-panel ctrl-btn lock-icon" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')"></a>
+        {{ if .ShowLoginButton }}
+        <a title="Log in" class="not-control-panel ctrl-btn unlock-icon" href="/login"></a>
+        {{ end }}
+        {{ else }}
+        <a title="Enable Admin Password" class="ctrl-btn alert-icon" href="/edit/password.html"></a>
+        {{ end }}
+        <a title="Help" class="control-panel ctrl-btn help-icon" href="/help/"></a>
+    </div>
 </div>
 
-<script>
-    (function () {
-        "use strict";
-        var client = new Backend('');
-        document.getElementById('hello-btn').addEventListener('click', function () {
-            client.internalUsecaseHelloWorld({
-                name: document.getElementById('name').value,
-                locale: document.getElementById('locale').value
-            }, function (result) {
-                alert(result.message)
-            }, function (badRequest) {
-                alert(badRequest.error + "\n" + JSON.stringify(badRequest.context))
-            }, function (internalServerError) {
-                alert(internalServerError.error + "\n" + JSON.stringify(internalServerError.context))
-            })
-            return false;
-        });
-    })();
-</script>
-
+{{.Footer}}
 </body>
 </html>

@@ -1,4 +1,4 @@
-#GOLANGCI_LINT_VERSION := "v1.50.0" # Optional configuration to pinpoint golangci-lint version.
+#GOLANGCI_LINT_VERSION := "v1.55.2" # Optional configuration to pinpoint golangci-lint version.
 
 # The head of Makefile determines location of dev-go to include standard targets.
 GO ?= go
@@ -28,6 +28,7 @@ ifeq ($(DEVGO_PATH),)
 endif
 
 RELEASE_TARGETS ?= linux/amd64
+BUILD_LDFLAGS=-s -w
 
 -include $(DEVGO_PATH)/makefiles/main.mk
 -include $(DEVGO_PATH)/makefiles/lint.mk
@@ -44,6 +45,13 @@ RELEASE_TARGETS ?= linux/amd64
 test: test-unit test-integration
 
 ## Generate local API JS client
-js-client:
+js-client-docker:
 	@go run . -openapi > ./resources/static/openapi.json
 	@docker run --rm -v "$(PWD)":/code swaggest/swac swac js-client ./resources/static/openapi.json --out ./resources/static/ --client-name Backend
+
+## Generate local API JS client
+js-client:
+	@go run . -openapi > ./resources/static/openapi.json
+	@swac js-client ./resources/static/openapi.json --out ./resources/static/ --client-name Backend
+
+-include local.mk

@@ -2,103 +2,139 @@ package storage
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"time"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 const (
-	// AlbumsTable is the name of the table.
-	AlbumsTable = "albums"
+	// AlbumTable is the name of the table.
+	AlbumTable = "album"
 
-	// AlbumImagesTable is the name of the table.
-	AlbumImagesTable = "album_images"
+	// AlbumImageTable is the name of the table.
+	AlbumImageTable = "album_image"
 )
 
 // AlbumImage describes database mapping.
 type AlbumImage struct {
-	AlbumID int `db:"album_id"`
-	ImageID int `db:"image_id"`
+	AlbumHash uniq.Hash `db:"album_hash"`
+	ImageHash uniq.Hash `db:"image_hash"`
 }
 
-func NewAlbumRepository(storage *sqluct.Storage) *AlbumRepository {
-	ar := &AlbumRepository{}
-	ar.storage = storage
+func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepository {
+	ai := sqluct.Table[AlbumImage](storage, AlbumImageTable)
+	ir.Referencer.AddTableAlias(ai.R, AlbumImageTable)
 
-	ar.row = &photo.Album{}
-	ar.rf = storage.Ref()
-	ar.rf.AddTableAlias(ar.row, AlbumsTable)
-
-	return ar
+	return &AlbumRepository{
+		hashedRepo: hashedRepo[photo.Album, *photo.Album]{
+			StorageOf: sqluct.Table[photo.Album](storage, AlbumTable),
+		},
+		ai: ai,
+		i:  ir,
+	}
 }
 
-// AlbumRepository saves albums to database.
+// AlbumRepository saves images to database.
 type AlbumRepository struct {
-	storage *sqluct.Storage
-	rf      *sqluct.Referencer
-	row     *photo.Album
+	hashedRepo[photo.Album, *photo.Album]
+	ai sqluct.StorageOf[AlbumImage]
+	i  *ImageRepository
 }
 
-func (ar *AlbumRepository) Add(ctx context.Context, data photo.AlbumData) (photo.Album, error) {
-	r := photo.Album{}
-	r.AlbumData = data
-	r.CreatedAt = time.Now()
+func (r *AlbumRepository) FindImages(ctx context.Context, albumHash uniq.Hash) ([]photo.Image, error) {
+	q := r.i.SelectStmt().
+		InnerJoin(
+			r.i.Fmt("%s ON %s = %s AND %s = ?",
+				r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
+			albumHash,
+		).OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 
-	q := ar.storage.InsertStmt(AlbumsTable, r)
+	return augmentResErr(r.i.List(ctx, q))
+}
 
-	if res, err := ar.storage.Exec(ctx, q); err != nil {
-		return r, ctxd.WrapError(ctx, err, "store album")
-	} else {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return r, ctxd.WrapError(ctx, err, "get created album id")
-		}
+func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]photo.Image, error) {
+	q := r.i.SelectStmt().
+		InnerJoin(
+			r.i.Fmt("%s ON %s = %s AND %s = ?",
+				r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
+			albumHash,
+		)
 
-		r.ID = int(id)
+	// Take cover image first.
+	if coverImage != 0 {
+		q = q.OrderByClause(r.i.Fmt("%s = ? DESC", &r.i.R.Hash), coverImage)
 	}
 
-	return r, nil
+	// Take 3:2 aspect ratio first.
+	q = q.OrderByClause(r.i.Fmt("ROUND(ABS(100.0*%s/%s-150)) ASC", &r.i.R.Width, &r.i.R.Height))
+
+	q = q.OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+	q = q.Limit(limit)
+
+	q = q.Where(r.i.Fmt("%s != ''", &r.i.R.BlurHash))
+
+	return augmentResErr(r.i.List(ctx, q))
 }
 
-func (ar *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
-	row := photo.Album{}
+func (r *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
+	q := r.SelectStmt().
+		Where(r.Eq(&r.R.Name, name)).
+		Limit(1)
 
-	q := ar.storage.SelectStmt(AlbumsTable, row).
-		Where(ar.rf.Fmt("%s = %s", &ar.row.Name, name))
-
-	if err := ar.storage.Select(ctx, q, &row); err != nil {
-		return photo.Album{}, fmt.Errorf("find album by name %q: %w", name, err)
-	}
-
-	return row, nil
+	return augmentResErr(r.Get(ctx, q))
 }
 
-func (ar *AlbumRepository) AddImages(ctx context.Context, albumID int, imageIDs ...int) error {
-	rows := make([]AlbumImage, 0, len(imageIDs))
+func (r *AlbumRepository) DeleteImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error {
+	return augmentReturnErr(r.ai.DeleteStmt().
+		Where(r.ai.Eq(&r.ai.R.AlbumHash, albumHash)).
+		Where(r.ai.Eq(&r.ai.R.ImageHash, imageHashes)).
+		ExecContext(ctx))
+}
 
-	for _, imageID := range imageIDs {
+func (r *AlbumRepository) AddImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error {
+	rows := make([]AlbumImage, 0, len(imageHashes))
+
+	for _, imageHash := range imageHashes {
 		ai := AlbumImage{}
-		ai.ImageID = imageID
-		ai.AlbumID = albumID
+		ai.ImageHash = imageHash
+		ai.AlbumHash = albumHash
 
 		rows = append(rows, ai)
 	}
 
-	q := ar.storage.InsertStmt(AlbumImagesTable, rows)
-
-	if _, err := ar.storage.Exec(ctx, q); err != nil {
-		return ctxd.WrapError(ctx, err, "store album images")
+	if _, err := r.ai.InsertRows(ctx, rows, sqluct.InsertIgnore); err != nil {
+		return ctxd.WrapError(ctx, augmentErr(err), "store album images", "rows", rows)
 	}
 
 	return nil
 }
 
-func (ar *AlbumRepository) PhotoAlbumAdder() photo.AlbumAdder {
-	return ar
+func (r *AlbumRepository) PhotoAlbumImageAdder() photo.AlbumImageAdder {
+	return r
 }
 
-func (ar *AlbumRepository) PhotoAlbumFinder() photo.AlbumFinder {
-	return ar
+func (r *AlbumRepository) PhotoAlbumImageDeleter() photo.AlbumImageDeleter {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumImageFinder() photo.AlbumImageFinder {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumEnsurer() uniq.Ensurer[photo.Album] {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumFinder() uniq.Finder[photo.Album] {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumUpdater() uniq.Updater[photo.Album] {
+	return r
+}
+
+func (r *AlbumRepository) PhotoAlbumDeleter() uniq.Deleter[photo.Album] {
+	return r
 }

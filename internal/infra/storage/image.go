@@ -1,50 +1,37 @@
 package storage
 
 import (
-	"context"
-	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"time"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 const (
-	// ImagesTable is the name of the table.
-	ImagesTable = "images"
+	// ImageTable is the name of the table.
+	ImageTable = "image"
 )
 
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 	return &ImageRepository{
-		storage: storage,
+		hashedRepo: hashedRepo[photo.Image, *photo.Image]{
+			StorageOf: sqluct.Table[photo.Image](storage, ImageTable),
+		},
 	}
 }
 
 // ImageRepository saves images to database.
 type ImageRepository struct {
-	storage *sqluct.Storage
+	hashedRepo[photo.Image, *photo.Image]
 }
 
-func (ir *ImageRepository) Add(ctx context.Context, value photo.ImageData) (photo.Image, error) {
-	r := photo.Image{}
-	r.ImageData = value
-	r.CreatedAt = time.Now()
-
-	q := ir.storage.InsertStmt(ImagesTable, r)
-
-	if res, err := ir.storage.Exec(ctx, q); err != nil {
-		return r, ctxd.WrapError(ctx, err, "store image")
-	} else {
-		id, err := res.LastInsertId()
-		if err != nil {
-			return r, ctxd.WrapError(ctx, err, "get created image id")
-		}
-
-		r.ID = int(id)
-	}
-
-	return r, nil
+func (ir *ImageRepository) PhotoImageEnsurer() uniq.Ensurer[photo.Image] {
+	return ir
 }
 
-func (ir *ImageRepository) PhotoImageAdder() photo.ImageAdder {
+func (ir *ImageRepository) PhotoImageFinder() uniq.Finder[photo.Image] {
+	return ir
+}
+
+func (ir *ImageRepository) PhotoImageUpdater() uniq.Updater[photo.Image] {
 	return ir
 }

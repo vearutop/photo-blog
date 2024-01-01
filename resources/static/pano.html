@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+    <title>{{.Title}}</title>
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width, shrink-to-fit=no">
+    <meta property="og:title" content="{{.Title}}"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content="{{.CoverImage}}"/>
+
+    <meta name="robots" content="noindex">
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+<script src="/static/three.min.js"></script>
+<script src="/static/panolens.min.js"></script>
+
+<script>
+    const panorama = new PANOLENS.ImagePanorama("{{.Image}}");
+    const viewer = new PANOLENS.Viewer({output: 'console'});
+    viewer.add(panorama);
+</script>
+
+</body>
+</html>

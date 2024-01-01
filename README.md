@@ -7,11 +7,7 @@
 ![Code lines](https://sloc.xyz/github/vearutop/photo-blog/?category=code)
 ![Comments](https://sloc.xyz/github/vearutop/photo-blog/?category=comments)
 
-<!--- TODO Update README.md -->
+Personal photo blog engine with focus on user experience and photo quality.
 
-Project template with GitHub actions for Go.
-
-## Usage
-
-Create a new repository from this template, check out it and run `./run_me.sh` to replace template name with name of
-your repository.
+Demo: https://vearutop.p1cs.art/
+A bit of description: https://vearutop.p1cs.art/help/
