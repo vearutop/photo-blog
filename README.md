@@ -7,13 +7,7 @@
 ![Code lines](https://sloc.xyz/github/vearutop/photo-blog/?category=code)
 ![Comments](https://sloc.xyz/github/vearutop/photo-blog/?category=comments)
 
-<!--- TODO Update README.md -->
+Personal photo blog engine.
 
-Project template with GitHub actions for Go.
-
-## Usage
-
-http://localhost:8089/json-form.html#schema=/schema/album.json&value=/album/2a8vev1kgazvu.json&submitUrl=/album&submitMethod=PUT&title=Edit%20album
-
-Create a new repository from this template, check out it and run `./run_me.sh` to replace template name with name of
-your repository.
+Demo: https://vearutop.p1cs.art/
+A bit of description: https://vearutop.p1cs.art/help/
