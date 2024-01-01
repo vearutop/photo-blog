@@ -158,7 +158,7 @@ function loadAlbum(params) {
      * @param {UsecaseGetAlbumOutput} result
      */
     function renderAlbum(result) {
-        console.log("RESULT", result)
+        console.log("RESULT", result.album.name, result.album.title, result)
 
         var hashByIdx = {}
         var idxByHash = {}
@@ -177,6 +177,11 @@ function loadAlbum(params) {
 
         for (var i = 0; i < result.images.length; i++) {
             var img = result.images[i]
+
+            // Image is likely still being indexed.
+            if (!img.blur_hash) {
+                continue
+            }
 
             if (typeof img.gps != 'undefined') {
                 gpsMarkers.push(img)
@@ -201,7 +206,7 @@ function loadAlbum(params) {
                 }
             }
 
-            if (typeof img.exif == "undefined" || img.exif.projection_type === "") {
+            if (typeof img.is_360_pano == "undefined" || !img.is_360_pano) {
                 hashByIdx[idx] = img.hash
                 idxByHash[img.hash] = idx
                 idx++
@@ -234,6 +239,9 @@ function loadAlbum(params) {
                     '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\''+img.hash+'\');return false"></a>' +
                     '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\'' + params.albumName + '\',\'' + img.hash + '\')"></a>'
 
+                if (fullscreenSupported) {
+                    img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'
+                }
 
                 if (typeof img.exif !== "undefined") {
                     var ts = Date.parse(img.exif.digitized)
@@ -257,10 +265,6 @@ function loadAlbum(params) {
                     }
 
                     prevImgTime = ts
-
-                    if (fullscreenSupported) {
-                        img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'
-                    }
 
                     img_description += '<a href="#" class="camera-icon ctrl-btn" title="Technical details" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
 

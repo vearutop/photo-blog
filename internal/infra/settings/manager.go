@@ -30,6 +30,7 @@ type Manager struct {
 	maps       Maps
 	visitors   Visitors
 	storage    Storage
+	privacy    Privacy
 }
 
 type Values interface {
@@ -38,6 +39,7 @@ type Values interface {
 	Maps() Maps
 	Visitors() Visitors
 	Storage() Storage
+	Privacy() Privacy
 }
 
 func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
@@ -51,6 +53,7 @@ func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
 		m.get(ctx, "maps", &m.maps),
 		m.get(ctx, "visitors", &m.visitors),
 		m.get(ctx, "storage", &m.storage),
+		m.get(ctx, "privacy", &m.privacy),
 	)
 }
 

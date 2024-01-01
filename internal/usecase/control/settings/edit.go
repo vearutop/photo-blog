@@ -56,6 +56,7 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 			form("Maps", "/settings/maps.json", deps.Settings().Maps()),
 			form("Visitors", "/settings/visitors.json", deps.Settings().Visitors()),
 			form("Storage", "/settings/storage.json", deps.Settings().Storage()),
+			form("Privacy", "/settings/privacy.json", deps.Settings().Privacy()),
 			jsonform.Form{
 				Title: "Set Admin Password",
 				Description: "<p>Add password protection to editing of albums and uploading of images.</p>" +
@@ -103,6 +104,14 @@ func SetVisitors(deps setSettingsDeps) usecase.Interactor {
 func SetStorage(deps setSettingsDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input settings.Storage, output *struct{}) error {
 		return deps.SettingsManager().SetStorage(ctx, input)
+	})
+
+	return u
+}
+
+func SetPrivacy(deps setSettingsDeps) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, input settings.Privacy, output *struct{}) error {
+		return deps.SettingsManager().SetPrivacy(ctx, input)
 	})
 
 	return u

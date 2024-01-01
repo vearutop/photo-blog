@@ -258,6 +258,7 @@ func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.I
 	exifQuirks(&m.Exif)
 
 	m.Exif.Hash = img.Hash
+
 	if _, err := i.deps.PhotoExifEnsurer().Ensure(ctx, m.Exif); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to store image meta",
 			"error", err.Error(), "exif", m.Exif)

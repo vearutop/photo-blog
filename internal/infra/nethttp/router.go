@@ -71,6 +71,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Post("/settings/maps.json", settings.SetMaps(deps))
 		s.Post("/settings/visitors.json", settings.SetVisitors(deps))
 		s.Post("/settings/storage.json", settings.SetStorage(deps))
+		s.Post("/settings/privacy.json", settings.SetPrivacy(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))

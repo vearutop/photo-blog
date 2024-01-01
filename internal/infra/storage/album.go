@@ -73,6 +73,8 @@ func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.
 	q = q.OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 	q = q.Limit(limit)
 
+	q = q.Where(r.i.Fmt("%s != ''", &r.i.R.BlurHash))
+
 	return augmentResErr(r.i.List(ctx, q))
 }
 

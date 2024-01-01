@@ -112,6 +112,7 @@
  * @property {PhotoGps} gps
  * @property {String} hash
  * @property {Number} height
+ * @property {Boolean} is_360_pano
  * @property {String} name
  * @property {Number} width
  */
@@ -189,13 +190,6 @@
 /**
  * @callback ControlAddDirOutputCallback
  * @param {ControlAddDirOutput} value
- */
-
-/**
- * @typedef ControlUploadImagesRequest
- * @type {Object}
- * @property {String} name
- * @property {Array<File|Blob>} photos
  */
 
 /**
@@ -444,6 +438,19 @@
  * @typedef ControlSettingsSetPasswordRequest
  * @type {Object}
  * @property {SettingsAdminPass} body
+ */
+
+/**
+ * @typedef SettingsPrivacy
+ * @type {Object}
+ * @property {Boolean} hide_geo_position - Disables location information of images.
+ * @property {Boolean} hide_tech_details - Disables a button that shows EXIF data.
+ */
+
+/**
+ * @typedef ControlSettingsSetPrivacyRequest
+ * @type {Object}
+ * @property {SettingsPrivacy} body
  */
 
 /**

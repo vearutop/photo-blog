@@ -110,18 +110,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		var totalSize int64
 		for _, img := range cont.Images {
-			if img.Exif == nil || img.BlurHash == "" {
-				continue
-			}
-
-			if img.Exif.ProjectionType == "" {
-				d.Images = append(d.Images, img)
-			} else {
-				d.Panoramas = append(d.Panoramas, img)
-			}
-
 			totalSize += img.size
 		}
+
 		d.TotalSize = units.HumanSize(float64(totalSize))
 
 		switch {

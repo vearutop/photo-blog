@@ -24,11 +24,11 @@
     /**
      * Show Main
      * @param {Object} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.showMain = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.showMain = function (req, onNoContent, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -36,9 +36,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 case 400:
@@ -436,9 +436,9 @@
     /**
      * Download Album
      * @param {DownloadAlbumRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.downloadAlbum = function (req, onOK) {
+    Backend.prototype.downloadAlbum = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -446,9 +446,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -521,53 +521,6 @@
         var formData = new FormData();
         if (typeof req.path !== 'undefined') {
             formData.append('path', req.path);
-        }
-
-        x.send(formData);
-    };
-
-    /**
-     * Upload Images
-     * @param {ControlUploadImagesRequest} req - request parameters.
-     * @param {RawCallback} onNoContent
-     * @param {RestErrResponseCallback} onUnauthorized
-     */
-    Backend.prototype.controlUploadImages = function (req, onNoContent, onUnauthorized) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
-                    }
-                    break;
-                case 401:
-                    if (typeof (onUnauthorized) === 'function') {
-                        onUnauthorized(JSON.parse(x.responseText));
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
-        '/images?';
-        url = url.slice(0, -1);
-
-        x.open("POST", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-        var formData = new FormData();
-        if (typeof req.photos !== 'undefined') {
-            for (var i = 0; i < req.photos.length; i++) {
-                formData.append('profile', req.photos[i]);
-            }
         }
 
         x.send(formData);
@@ -978,9 +931,9 @@
     /**
      * Serve Favicon
      * @param {Object} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.serveFavicon = function (req, onOK) {
+    Backend.prototype.serveFavicon = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -988,9 +941,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1122,10 +1075,10 @@
     /**
      * Index
      * @param {Object} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.helpIndex = function (req, onOK, onUnauthorized) {
+    Backend.prototype.helpIndex = function (req, onNoContent, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1133,9 +1086,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 case 401:
@@ -1568,9 +1521,9 @@
     /**
      * Map Tile
      * @param {MapTileRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.mapTile = function (req, onOK) {
+    Backend.prototype.mapTile = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1578,9 +1531,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1606,9 +1559,9 @@
     /**
      * OG
      * @param {Object} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.oG = function (req, onOK) {
+    Backend.prototype.oG = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1616,9 +1569,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1640,11 +1593,11 @@
     /**
      * Download Images Poi Gpx
      * @param {DownloadImagesPoiGpxRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.downloadImagesPoiGpx = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.downloadImagesPoiGpx = function (req, onNoContent, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1652,9 +1605,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 case 400:
@@ -1820,6 +1773,51 @@
     };
 
     /**
+     * Set Privacy
+     * @param {ControlSettingsSetPrivacyRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSettingsSetPrivacy = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/privacy.json?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
      * Set Storage
      * @param {ControlSettingsSetStorageRequest} req - request parameters.
      * @param {RawCallback} onNoContent
@@ -1912,9 +1910,9 @@
     /**
      * Serve Site File
      * @param {ServeSiteFileRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.serveSiteFile = function (req, onOK) {
+    Backend.prototype.serveSiteFile = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1922,9 +1920,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1947,9 +1945,9 @@
     /**
      * Show Thumb
      * @param {ShowThumbRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.showThumb = function (req, onOK) {
+    Backend.prototype.showThumb = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1957,9 +1955,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1983,9 +1981,9 @@
     /**
      * Download Gpx
      * @param {DownloadGpxRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.downloadGpx = function (req, onOK) {
+    Backend.prototype.downloadGpx = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1993,9 +1991,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -2018,11 +2016,11 @@
     /**
      * Show Album
      * @param {ShowAlbumRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.showAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.showAlbum = function (req, onNoContent, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2030,9 +2028,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 case 400:
@@ -2065,11 +2063,11 @@
     /**
      * Show Pano
      * @param {ShowPanoRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.showPano = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.showPano = function (req, onNoContent, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2077,9 +2075,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 case 400:
@@ -2113,11 +2111,11 @@
     /**
      * Show Album At Image
      * @param {ShowAlbumAtImageRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.showAlbumAtImage = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.showAlbumAtImage = function (req, onNoContent, onBadRequest, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2125,9 +2123,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 case 400:

@@ -11,6 +11,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
@@ -43,6 +44,7 @@ type Image struct {
 	Gps         *photo.Gps  `json:"gps,omitempty"`
 	Exif        *photo.Exif `json:"exif,omitempty"`
 	Description string      `json:"description,omitempty"`
+	Is360Pano   bool        `json:"is_360_pano,omitempty"`
 	size        int64
 }
 
@@ -89,7 +91,15 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		return out, err
 	}
 
-	var images []photo.Image
+	var (
+		images  []photo.Image
+		privacy settings.Privacy
+	)
+
+	// Privacy settings are only enabled for guests.
+	if !auth.IsAdmin(ctx) {
+		privacy = deps.Settings().Privacy()
+	}
 
 	if preview {
 		images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)
@@ -158,22 +168,28 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		}
 
 		// Skip unprocessed images.
-		if i.Width == 0 {
+		if i.BlurHash == "" {
 			continue
 		}
 
 		if !preview {
-			gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)
-			if err == nil {
-				img.Gps = &gps
-			} else if !errors.Is(err, status.NotFound) {
-				deps.CtxdLogger().Warn(ctx, "failed to find gps",
-					"hash", i.Hash.String(), "error", err.Error())
+			if !privacy.HideGeoPosition {
+				gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)
+				if err == nil {
+					img.Gps = &gps
+				} else if !errors.Is(err, status.NotFound) {
+					deps.CtxdLogger().Warn(ctx, "failed to find gps",
+						"hash", i.Hash.String(), "error", err.Error())
+				}
 			}
 
 			exif, err := deps.PhotoExifFinder().FindByHash(ctx, i.Hash)
 			if err == nil {
-				img.Exif = &exif
+				if !privacy.HideTechDetails {
+					img.Exif = &exif
+				}
+
+				img.Is360Pano = exif.ProjectionType == "equirectangular"
 			} else if !errors.Is(err, status.NotFound) {
 				deps.CtxdLogger().Warn(ctx, "failed to find exif",
 					"hash", i.Hash.String(), "error", err.Error())
