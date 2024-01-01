@@ -25,14 +25,16 @@ function deleteAlbum(name) {
     })
 }
 
+var featured = "featured"
+
 function addToFeatured(imageHash) {
     var b = new Backend('');
     b.controlAddToAlbum({
-        name: "featured",
+        name: featured,
         body: {
             image_hash: imageHash
         }
-    }, function (){
+    }, function () {
         // alert("Done")
     }, function (x) {
         alert("Failed: " + x.error)
@@ -241,10 +243,11 @@ function loadAlbum(params) {
                     a.attr("data-pswp-height", img.height)
                 }
 
-                var img_description =
-                    '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>' +
-                    '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\''+img.hash+'\');return false"></a>' +
-                    '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\'' + params.albumName + '\',\'' + img.hash + '\')"></a>'
+                var img_description = '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
+                if (result.album.name !== featured) {
+                    img_description += '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\'' + img.hash + '\');return false"></a>'
+                }
+                img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\'' + params.albumName + '\',\'' + img.hash + '\')"></a>'
 
                 if (fullscreenSupported) {
                     img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'

@@ -91,9 +91,6 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
-		s.Get("/help/", help.Index(deps))
-		s.Get("/help/{file}", help.ServeFile(deps))
-
 		s.Get("/login", control.Login())
 	})
 
@@ -130,6 +127,10 @@ func NewRouter(deps *service.Locator) http.Handler {
 				handler.ServeHTTP(w, r)
 			})
 		})
+
+		s.Get("/help/", help.Index(deps))
+		s.Get("/help/{file}.md", help.Markdown(deps))
+		s.Get("/help/{file}", help.ServeFile(deps))
 
 		s.Get("/", usecase.ShowMain(deps))
 		s.Get("/{name}/", usecase.ShowAlbum(deps))

@@ -11,7 +11,7 @@
 [x] Custom favicon
 [x] Custom page heading
 [x] Custom files upload
-[ ] Add control to hide image details (global and per album)
+[ ] Add privacy controls per album
 [x] Disable "http request complete" logs, or move to debug
 [ ] Make "dashboard" page
 [x] Make thumb/image paths portable

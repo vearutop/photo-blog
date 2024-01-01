@@ -49,11 +49,12 @@
 <div class="main">
     <h1>{{.Title}}</h1>
 
-    <div id="featured" class="grid"></div>
+    <div id="{{.Featured}}" class="grid"></div>
     <script>
+        featured = {{.Featured}}
         loadAlbum({
             albumName: "{{.Featured}}",
-            gallery: "#featured",
+            gallery: "#{{.Featured}}",
             baseUrl: "/",
             albumData: {{.FeaturedAlbumData}},
         });

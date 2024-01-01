@@ -226,3 +226,8 @@ a.ctrl-btn:hover {
 .some-text {
     max-width: 900px;
 }
+
+.dark-mode pre {
+    background: #0078A8;
+    padding: 10px;
+}

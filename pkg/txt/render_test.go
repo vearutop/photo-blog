@@ -174,3 +174,13 @@ func TestRenderer_Render_stripTags(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Devil's Bridge", s)
 }
+
+func TestRenderer_Render_codeBlock(t *testing.T) {
+	ctx := context.Background()
+	ctx = txt.WithLanguage(ctx, "ru")
+
+	r := txt.NewRenderer()
+	s := r.MustRenderLang(ctx, "```\n\n:::{lang=en}\n\nfoo\n\n:::\n\n:::{lang=ru}\n\nбар\n\n:::\n\n```\n\n:::{lang=en}\n\nbaz\n\n:::\n")
+
+	assert.Equal(t, "Devil's Bridge", s)
+}

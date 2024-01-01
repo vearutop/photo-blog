@@ -5,6 +5,8 @@ import (
 	"html/template"
 
 	"github.com/swaggest/usecase"
+	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
@@ -14,6 +16,7 @@ import (
 
 type indexDeps interface {
 	TxtRenderer() *txt.Renderer
+	Settings() settings.Values
 }
 
 type pageCommon struct {
@@ -60,6 +63,10 @@ func Index(deps indexDeps) usecase.Interactor {
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, input struct{}, output *web.Page) error {
+		if !deps.Settings().Privacy().PublicHelp && !auth.IsAdmin(ctx) {
+			return status.PermissionDenied
+		}
+
 		d := pageData{}
 		c, err := deps.TxtRenderer().RenderLang(ctx, string(md))
 		if err != nil {

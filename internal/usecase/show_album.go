@@ -66,6 +66,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		MapTiles       string
 		MapAttribution string
+		Featured       string
 
 		AlbumData getAlbumOutput
 	}
@@ -96,6 +97,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
+		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 
