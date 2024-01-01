@@ -1257,9 +1257,9 @@
     /**
      * Show Image
      * @param {ShowImage2Request} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.showImage2 = function (req, onOK) {
+    Backend.prototype.showImage2 = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1267,9 +1267,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1292,9 +1292,9 @@
     /**
      * Show Image
      * @param {ShowImageRequest} req - request parameters.
-     * @param {RawCallback} onOK
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.showImage = function (req, onOK) {
+    Backend.prototype.showImage = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1302,9 +1302,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:

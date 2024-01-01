@@ -20,7 +20,7 @@
 [x] Better "Not Found" pages
 [x] Hide exif
 [x] Hide geo
-[ ] Hide original images
+[x] Hide original images
 [ ] Disable download album button
 [ ] Move appearance settings to a separate page
 [x] Fix multilang Title in pano page

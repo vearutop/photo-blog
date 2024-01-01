@@ -133,6 +133,7 @@
  * @type {Object}
  * @property {PhotoAlbum} album - The Album.
  * @property {String} description
+ * @property {Boolean} hide_original
  * @property {Array<UsecaseImage>} images
  * @property {Array<UsecaseTrack>} tracks
  */
@@ -444,6 +445,7 @@
  * @typedef SettingsPrivacy
  * @type {Object}
  * @property {Boolean} hide_geo_position - Disables location information of images.
+ * @property {Boolean} hide_original - Only shows reduced size images with stripped meta tags.
  * @property {Boolean} hide_tech_details - Disables a button that shows EXIF data.
  */
 

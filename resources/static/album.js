@@ -163,6 +163,7 @@ function loadAlbum(params) {
         var hashByIdx = {}
         var idxByHash = {}
         var idx = 0
+        var hideOriginal = result.hide_original
 
         if (typeof result.images === 'undefined') {
             result.images = [];
@@ -218,7 +219,11 @@ function loadAlbum(params) {
                 } else {
                     a.attr("class", "image")
                 }
-                a.attr("href", "/image/" + img.hash + ".jpg")
+                if (hideOriginal) {
+                    a.attr("href", "#")
+                } else {
+                    a.attr("href", "/image/" + img.hash + ".jpg")
+                }
                 a.attr("target", "_blank")
                 a.attr("data-idx", i)
 
@@ -229,7 +234,9 @@ function loadAlbum(params) {
 
 
                 if (img.width > 0 && img.height > 0) {
-                    srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
+                    if (!hideOriginal) {
+                        srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
+                    }
                     a.attr("data-pswp-width", img.width)
                     a.attr("data-pswp-height", img.height)
                 }

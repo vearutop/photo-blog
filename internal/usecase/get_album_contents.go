@@ -54,10 +54,11 @@ type track struct {
 }
 
 type getAlbumOutput struct {
-	Album       photo.Album `json:"album"`
-	Description string      `json:"description,omitempty"`
-	Images      []Image     `json:"images,omitempty"`
-	Tracks      []track     `json:"tracks,omitempty"`
+	Album        photo.Album `json:"album"`
+	Description  string      `json:"description,omitempty"`
+	Images       []Image     `json:"images,omitempty"`
+	Tracks       []track     `json:"tracks,omitempty"`
+	HideOriginal bool        `json:"hide_original"`
 }
 
 // GetAlbumContents creates use case interactor to get album data.
@@ -100,6 +101,8 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 	if !auth.IsAdmin(ctx) {
 		privacy = deps.Settings().Privacy()
 	}
+
+	out.HideOriginal = privacy.HideOriginal
 
 	if preview {
 		images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)

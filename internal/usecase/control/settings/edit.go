@@ -56,12 +56,13 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 			form("Maps", "/settings/maps.json", deps.Settings().Maps()),
 			form("Visitors", "/settings/visitors.json", deps.Settings().Visitors()),
 			form("Storage", "/settings/storage.json", deps.Settings().Storage()),
-			form("Privacy", "/settings/privacy.json", deps.Settings().Privacy()),
+			form("Privacy", "/settings/privacy.json", deps.Settings().Privacy(), func(f *jsonform.Form) {
+				f.Description = "These settings do not affect how pages look for admin user, only for guests."
+			}),
 			jsonform.Form{
 				Title: "Set Admin Password",
 				Description: "<p>Add password protection to editing of albums and uploading of images.</p>" +
-					"<p>For local or externally protected instance, password protection can be removed by setting an empty password.</p>" +
-					`<a href="/">Back to main page.</a>`,
+					"<p>For local or externally protected instance, password protection can be removed by setting an empty password.</p>",
 				SubmitURL:     "/settings/password.json",
 				SubmitMethod:  http.MethodPost,
 				SuccessStatus: http.StatusNoContent,
