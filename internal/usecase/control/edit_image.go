@@ -65,7 +65,10 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 <div style="margin:2em" class="pure-u-2-5">
     <h1>Manage photo</h1>
     <img alt="" style="width:100%" src="/thumb/600w/` + img.Hash.String() + `.jpg" />
-</div>`),
+</div>` +
+					`<script>
+function formSaved(x, ctx) { $(ctx.result).html('Saved.') } 
+</script>`),
 			},
 			jsonform.Form{
 				Title:         "Exif",
@@ -73,6 +76,8 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 				SubmitMethod:  http.MethodPut,
 				SuccessStatus: http.StatusNoContent,
 				Value:         exif,
+				SubmitText:    "Save",
+				OnSuccess:     `formSaved`,
 			},
 			jsonform.Form{
 				Title:         "Image",
@@ -80,6 +85,8 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 				SubmitMethod:  http.MethodPut,
 				SuccessStatus: http.StatusNoContent,
 				Value:         img,
+				SubmitText:    "Save",
+				OnSuccess:     `formSaved`,
 			},
 			jsonform.Form{
 				Title:         "GPS",
@@ -87,6 +94,8 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 				SubmitMethod:  http.MethodPut,
 				SuccessStatus: http.StatusNoContent,
 				Value:         gps,
+				SubmitText:    "Save",
+				OnSuccess:     `formSaved`,
 			},
 		)
 	})

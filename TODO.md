@@ -27,4 +27,4 @@
 [x] Fix multilang Title in pano page
 [ ] Check webdav on windows
 [ ] Update frontend deps
-[ ] Add spinner to submit buttons, update submit button texts
+[x] Add spinner to submit buttons, update submit button texts

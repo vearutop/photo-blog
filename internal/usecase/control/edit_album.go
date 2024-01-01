@@ -47,7 +47,11 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 
 `,
 			PrependHTML: template.HTML(`<a style="margin-left: 2em" href ="/`+a.Name+`">Back to album</a> `) +
-				upload.TusAlbumHTMLButton(a.Name),
+				upload.TusAlbumHTMLButton(a.Name) +
+				`<script>
+function formSaved(x, ctx) { $(ctx.result).html('Saved.') } 
+function formDone(x, ctx) { $(ctx.result).html('Done.') } 
+</script>`,
 			AppendHTML: template.HTML(`
 <hr />
 <button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
@@ -61,6 +65,8 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 				SubmitMethod:  http.MethodPut,
 				SuccessStatus: http.StatusNoContent,
 				Value:         a,
+				SubmitText:    "Save",
+				OnSuccess:     `formSaved`,
 			},
 			jsonform.Form{
 				Title:         "Copy Images From Another Album",
@@ -68,6 +74,8 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 				SubmitMethod:  http.MethodPost,
 				SuccessStatus: http.StatusNoContent,
 				Value:         addToAlbumInput{},
+				SubmitText:    "Copy",
+				OnSuccess:     `formDone`,
 			},
 		)
 	})
