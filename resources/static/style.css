@@ -51,6 +51,12 @@ body.dark-mode {
     width: fit-content;
 }
 
+.pswp__dynamic-caption--mobile .exif {
+    margin-top: -300px;
+    left: 10px;
+    right: auto;
+}
+
 .ctrl-btn {
     background-size: 30px;
     width: 30px;

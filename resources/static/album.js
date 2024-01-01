@@ -311,7 +311,7 @@ function loadAlbum(params) {
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
                     '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
 
-                a.append('<div class="pswp-caption-content">' + img_description + '</div>')
+                a.append('<div class="pswp-caption-content" style="display: none">' + img_description + '</div>')
 
                 $(params.gallery).append(a)
                 if (typeof img.blur_hash !== "undefined") {
@@ -365,8 +365,7 @@ function loadAlbum(params) {
 
         new PhotoSwipeDynamicCaption(lightbox, {
             mobileLayoutBreakpoint: 700,
-            type: 'auto',
-            mobileCaptionOverlapRatio: 1
+            type: 'aside',
         });
 
         lightbox.init();
