@@ -38,7 +38,7 @@ func NotFound(deps notFoundDeps) usecase.IOInteractorOf[struct{}, web.Page] {
 		d := pageData{}
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 
-		d.Description = `There is nothing to be shown at this page. Please check the <a href="/">main page</a> instead.`
+		d.Description = `There is nothing to be shown at this page. Please check the <a href="/">home page</a> instead.`
 
 		out.ResponseWriter().WriteHeader(http.StatusNotFound)
 
