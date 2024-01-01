@@ -3,12 +3,12 @@ package usecase
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/swaggest/rest/request"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/tkrajina/gpxgo/gpx"
@@ -21,11 +21,8 @@ type dlImagesPoiGpxInput struct {
 
 // ShowAlbum creates use case interactor to show album.
 func DownloadImagesPoiGpx(deps getAlbumImagesDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in dlImagesPoiGpxInput, out *usecase.OutputWithEmbeddedWriter) error {
-		rw, ok := out.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	u := usecase.NewInteractor(func(ctx context.Context, in dlImagesPoiGpxInput, out *response.EmbeddedSetter) error {
+		rw := out.ResponseWriter()
 
 		cont, err := getAlbumContents(ctx, deps, in.Name, false)
 		if err != nil {

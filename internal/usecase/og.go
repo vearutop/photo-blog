@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
-	"net/http"
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/request"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"golang.org/x/net/html"
 )
@@ -20,11 +19,8 @@ func OG(deps ogDeps) usecase.Interactor {
 		request.EmbeddedSetter
 	}
 
-	return usecase.NewInteractor(func(ctx context.Context, input req, output *usecase.OutputWithEmbeddedWriter) error {
-		rw, ok := output.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	return usecase.NewInteractor(func(ctx context.Context, input req, output *response.EmbeddedSetter) error {
+		rw := output.ResponseWriter()
 
 		rw.Header().Set("Content-Type", "text/html")
 
@@ -38,7 +34,7 @@ func OG(deps ogDeps) usecase.Interactor {
 			"requestUri", input.Request().RequestURI,
 		)
 
-		rw.Write([]byte(`
+		_, _ = rw.Write([]byte(`
 <!DOCTYPE html>
 <html lang="en">
 <head>

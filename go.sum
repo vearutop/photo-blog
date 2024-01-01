@@ -70,6 +70,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJmJgSg28kpZDP6UIiPt0e0Oz0kqKNGyRaWEPv84=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40 h1:y4B3+GPxKlrigF1ha5FFErxK+sr6sWxQovRMzwMhejo=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40/go.mod h1:8rLXio+WjiTceGBHIoTvn60HIbs7Hm7bcHjyrSqYB9c=
+github.com/bool64/brick v0.2.3 h1:8alhWBpU9M/tETKTOdOVe5rPDzYmscxgMLAnpS3AJvk=
+github.com/bool64/brick v0.2.3/go.mod h1:DW68LtndkIuRngLQ9BrXY18BVEONOk53ZlSyTCB2TdQ=
 github.com/bool64/cache v0.4.7 h1:5Rc8f8i3mX42KgL3FXQptrqBmjGmXPLfA9SzFGgU8bk=
 github.com/bool64/cache v0.4.7/go.mod h1:kU7S7UMotUL5CReSpHK/QRwYDqowH7XKT31nbLOHZXc=
 github.com/bool64/ctxd v1.2.1 h1:hARFteq0zdn4bwfmxLhak3fXFuvtJVKDH2X29VV/2ls=
@@ -460,8 +462,8 @@ github.com/prometheus/client_golang v1.11.0/go.mod h1:Z6t4BnS23TR94PD6BsDNk8yVqr
 github.com/prometheus/client_golang v1.12.1/go.mod h1:3Z9XVyYiZYEO+YQWt3RD2R3jrbd179Rt297l4aS6nDY=
 github.com/prometheus/client_golang v1.12.2/go.mod h1:3Z9XVyYiZYEO+YQWt3RD2R3jrbd179Rt297l4aS6nDY=
 github.com/prometheus/client_golang v1.13.0/go.mod h1:vTeo+zgvILHsnnj/39Ou/1fPN5nJFOEMgftOUOmlvYQ=
-github.com/prometheus/client_golang v1.17.0 h1:rl2sfwZMtSthVU752MqfjQozy7blglC+1SOtjMAMh+Q=
-github.com/prometheus/client_golang v1.17.0/go.mod h1:VeL+gMmOAxkS2IqfCq0ZmHSL+LjWfWDUmp1mBz9JgUY=
+github.com/prometheus/client_golang v1.18.0 h1:HzFfmkOzH5Q8L8G+kSJKUx5dtG87sewO+FoDDqP5Tbk=
+github.com/prometheus/client_golang v1.18.0/go.mod h1:T+GXkCk5wSJyOqMIzVgvvjFDlkOQntgjkJWKrN5txjA=
 github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910/go.mod h1:MbSGuTsp3dbXC40dX6PRTWyKYBIrTGTE9sqQNg2J8bo=
 github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
@@ -559,8 +561,8 @@ github.com/swaggest/openapi-go v0.2.44 h1:6X9HQpXguD1sZtNtF7KfrwzReWX9IhLUAHbtd9
 github.com/swaggest/openapi-go v0.2.44/go.mod h1:/ykzNtS1ZO7X43OnEtyisMktxCiawQLyGd08rkjV68U=
 github.com/swaggest/refl v1.3.0 h1:PEUWIku+ZznYfsoyheF97ypSduvMApYyGkYF3nabS0I=
 github.com/swaggest/refl v1.3.0/go.mod h1:3Ujvbmh1pfSbDYjC6JGG7nMgPvpG0ehQL4iNonnLNbg=
-github.com/swaggest/rest v0.2.60 h1:1+L0wx7ZVw7zgOoG5jV95uYTyyPBY514yVlDFECgPzA=
-github.com/swaggest/rest v0.2.60/go.mod h1:nQGcwz5pD3LGxMXAz0swBTSFHxAWgAh3QnMh7Q4lRvo=
+github.com/swaggest/rest v0.2.61 h1:K2cc3yGTX5i6dkxszS8lH9DmRlqDRl2XWaRxxBpP/Jk=
+github.com/swaggest/rest v0.2.61/go.mod h1:nQGcwz5pD3LGxMXAz0swBTSFHxAWgAh3QnMh7Q4lRvo=
 github.com/swaggest/swgui v1.7.5 h1:Vvq2WfKuXYkP35PdUi2r4+UwGsw4ttDzzLAqFmcmYdk=
 github.com/swaggest/swgui v1.7.5/go.mod h1:YBaAVAwS3ndfvdtW8A4yWDJpge+W57y+8kW+f/DqZtU=
 github.com/swaggest/usecase v1.3.1 h1:JdKV30MTSsDxAXxkldLNcEn8O2uf565khyo6gr5sS+w=

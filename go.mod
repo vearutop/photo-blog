@@ -32,7 +32,7 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.64
 	github.com/swaggest/openapi-go v0.2.44
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.60
+	github.com/swaggest/rest v0.2.61
 	github.com/swaggest/swgui v1.7.5
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.3.1
@@ -109,7 +109,7 @@ require (
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.17.0 // indirect
+	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
@@ -152,5 +152,3 @@ require (
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
-
-replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick

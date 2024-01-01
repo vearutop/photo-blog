@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/bool64/ctxd"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -27,11 +27,8 @@ func (s *showThumbInput) SetRequest(r *http.Request) {
 }
 
 func ShowThumb(deps showThumbDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in showThumbInput, out *usecase.OutputWithEmbeddedWriter) error {
-		rw, ok := out.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	u := usecase.NewInteractor(func(ctx context.Context, in showThumbInput, out *response.EmbeddedSetter) error {
+		rw := out.ResponseWriter()
 
 		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {

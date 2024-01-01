@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -15,11 +15,8 @@ type dlGpxDeps interface {
 }
 
 func DownloadGpx(deps dlGpxDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in hashInPath, out *usecase.OutputWithEmbeddedWriter) error {
-		rw, ok := out.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	u := usecase.NewInteractor(func(ctx context.Context, in hashInPath, out *response.EmbeddedSetter) error {
+		rw := out.ResponseWriter()
 
 		gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
@@ -27,7 +24,7 @@ func DownloadGpx(deps dlGpxDeps) usecase.Interactor {
 		}
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
-		http.ServeFile(rw, in.req, gpx.Path)
+		http.ServeFile(rw, in.Request(), gpx.Path)
 
 		return nil
 	})

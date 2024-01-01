@@ -2,39 +2,15 @@ package usecase
 
 import (
 	"context"
-	"io"
-	"net/http"
 	"time"
 
+	"github.com/swaggest/rest/request"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
 type hashInPath struct {
 	Hash uniq.Hash `path:"hash"`
-	req  *http.Request
-}
-
-func (s *hashInPath) SetRequest(r *http.Request) {
-	s.req = r
-}
-
-type TextBody struct {
-	t   string
-	err error
-}
-
-func (t *TextBody) SetRequest(r *http.Request) {
-	b, err := io.ReadAll(r.Body)
-	defer func() {
-		_ = r.Body.Close()
-	}()
-
-	t.t = string(b)
-	t.err = err
-}
-
-func (t *TextBody) Text() (string, error) {
-	return t.t, t.err
+	request.EmbeddedSetter
 }
 
 // detachedContext exposes parent values, but suppresses parent cancellation.

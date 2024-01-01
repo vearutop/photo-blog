@@ -2,11 +2,11 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/swaggest/rest/request"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
@@ -21,11 +21,8 @@ func ServeFavicon(deps serveFaviconDeps) usecase.Interactor {
 		request.EmbeddedSetter
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in fileReq, out *usecase.OutputWithEmbeddedWriter) error {
-		rw, ok := out.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	u := usecase.NewInteractor(func(ctx context.Context, in fileReq, out *response.EmbeddedSetter) error {
+		rw := out.ResponseWriter()
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 

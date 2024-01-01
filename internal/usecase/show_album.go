@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
-	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -45,10 +45,11 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		panic(err)
 	}
 
+	notFound := NotFound(deps)
+
 	type pageData struct {
 		pageCommon
 
-		Lang        string
 		Description template.HTML
 		OGTitle     string
 		Name        string
@@ -75,6 +76,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		cont, err := getAlbumContents(ctx, deps, in.Name, false)
 		if err != nil {
+			if errors.Is(err, status.NotFound) {
+				return notFound.Invoke(ctx, struct{}{}, out)
+			}
+
 			return fmt.Errorf("get album contents: %w", err)
 		}
 
@@ -83,7 +88,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d := pageData{}
 		d.Title = album.Title
 
-		d.Lang = txt.Language(ctx)
 		d.Description = template.HTML(album.Settings.Description)
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.Name = album.Name

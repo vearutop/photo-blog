@@ -17,7 +17,7 @@
 [x] Make thumb/image paths portable
 [x] Localize external CSS/JS
 [ ] Squash SQL migrations
-[ ] Better "Not Found" pages
+[x] Better "Not Found" pages
 [ ] Strip exif?
 [ ] Strip geo?
 [ ] Fix multilang Title in pano page

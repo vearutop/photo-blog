@@ -34,7 +34,7 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 
-		http.ServeFile(rw, in.req, p)
+		http.ServeFile(rw, in.Request(), p)
 
 		return nil
 	})

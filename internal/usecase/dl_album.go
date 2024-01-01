@@ -3,14 +3,13 @@ package usecase
 import (
 	"archive/zip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path"
 
 	"github.com/bool64/ctxd"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -28,11 +27,8 @@ type dlAlbumInput struct {
 }
 
 func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in dlAlbumInput, out *usecase.OutputWithEmbeddedWriter) (err error) {
-		rw, ok := out.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	u := usecase.NewInteractor(func(ctx context.Context, in dlAlbumInput, out *response.EmbeddedSetter) (err error) {
+		rw := out.ResponseWriter()
 
 		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 		if err != nil {

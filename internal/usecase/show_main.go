@@ -33,6 +33,7 @@ type showMainDeps interface {
 
 type pageCommon struct {
 	Title   string
+	Lang    string
 	Favicon string
 	Head    template.HTML
 	Header  template.HTML
@@ -45,6 +46,8 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Appea
 			o.StripTags = true
 		})
 	}
+
+	p.Lang = txt.Language(ctx)
 
 	p.Head = template.HTML(r.MustRenderLang(ctx, a.SiteHead))
 	p.Header = template.HTML(r.MustRenderLang(ctx, a.SiteHeader))
@@ -66,7 +69,6 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 	type pageData struct {
 		pageCommon
 
-		Lang              string
 		Name              string
 		CoverImage        string
 		Secure            bool
@@ -94,7 +96,6 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 
 			d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 
-			d.Lang = txt.Language(ctx)
 			d.NonAdmin = !auth.IsAdmin(ctx)
 			d.Secure = !deps.Settings().Security().Disabled()
 			d.Featured = deps.Settings().Appearance().FeaturedAlbumName

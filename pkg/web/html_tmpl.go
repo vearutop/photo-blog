@@ -2,17 +2,14 @@ package web
 
 import (
 	"html/template"
-	"io"
+
+	"github.com/swaggest/rest/response"
 )
 
 type Page struct {
-	w io.Writer
-}
-
-func (o *Page) SetWriter(w io.Writer) {
-	o.w = w
+	response.EmbeddedSetter
 }
 
 func (o *Page) Render(tmpl *template.Template, data any) error {
-	return tmpl.Execute(o.w, data)
+	return tmpl.Execute(o.ResponseWriter(), data)
 }

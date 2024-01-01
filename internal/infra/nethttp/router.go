@@ -160,6 +160,9 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 	s.Get("/og.html", usecase.OG(deps))
 
+	s.OnNotFound(usecase.NotFound(deps))
+	s.OnMethodNotAllowed(usecase.NotFound(deps))
+
 	deps.CtxdLogger().Important(context.Background(), "router initialized successfully")
 
 	return s

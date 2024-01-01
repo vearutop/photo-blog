@@ -3,7 +3,6 @@ package usecase
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/cache"
 	"github.com/swaggest/rest/request"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -35,11 +35,8 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 		},
 	)
 
-	return usecase.NewInteractor(func(ctx context.Context, input mapTileID, output *usecase.OutputWithEmbeddedWriter) error {
-		rw, ok := output.Writer.(http.ResponseWriter)
-		if !ok {
-			return errors.New("missing http.ResponseWriter")
-		}
+	return usecase.NewInteractor(func(ctx context.Context, input mapTileID, output *response.EmbeddedSetter) error {
+		rw := output.ResponseWriter()
 
 		t, err := mapCache.Get(ctx, []byte(input.Retina+"/"+input.Zoom+"/"+input.X+"/"+input.Y),
 			func(ctx context.Context) (photo.MapTile, error) {
