@@ -155,9 +155,3 @@ func (p *Processor) AddDirectory(ctx context.Context, albumName string, dirPath 
 
 	return added, err
 }
-
-func Path(filePath string) string {
-	filePath = strings.Replace(filePath, "photo-blog-data/", "./", 1) // TODO: remove after migration.
-
-	return filePath
-}

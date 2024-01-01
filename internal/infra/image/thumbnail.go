@@ -15,7 +15,6 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"github.com/vearutop/photo-blog/internal/infra/files"
 	"go.opencensus.io/trace"
 )
 
@@ -130,7 +129,7 @@ func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (
 
 	time.Sleep(time.Second) // To reduce CPU load. TODO: remove?
 
-	img, err := loadJPEG(ctx, files.Path(i.Path))
+	img, err := loadJPEG(ctx, i.Path)
 	if err != nil {
 		return img, fmt.Errorf("failed to load JPEG: %w", err)
 	}
@@ -164,7 +163,7 @@ func loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
 
 func thumbJPEG(ctx context.Context, t photo.Thumb) (image.Image, error) {
 	if t.FilePath != "" {
-		return loadJPEG(ctx, files.Path(t.FilePath))
+		return loadJPEG(ctx, t.FilePath)
 	}
 
 	return jpeg.Decode(t.ReadSeeker())

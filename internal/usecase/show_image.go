@@ -9,7 +9,6 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/files"
 )
 
 type showImageDeps interface {
@@ -35,7 +34,7 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 
-		http.ServeFile(rw, in.req, files.Path(p))
+		http.ServeFile(rw, in.req, p)
 
 		return nil
 	})

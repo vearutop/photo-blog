@@ -9,7 +9,6 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/files"
 )
 
 type showThumbDeps interface {
@@ -48,7 +47,7 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 
 		if cont.FilePath != "" {
-			http.ServeFile(rw, in.req, files.Path(cont.FilePath))
+			http.ServeFile(rw, in.req, cont.FilePath)
 		} else {
 			http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont.ReadSeeker())
 		}
