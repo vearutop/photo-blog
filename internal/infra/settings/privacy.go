@@ -7,6 +7,7 @@ type Privacy struct {
 	HideGeoPosition   bool `json:"hide_geo_position" inlineTitle:"Hide geo position." noTitle:"true" description:"Disables location information of images."`
 	HideOriginal      bool `json:"hide_original" inlineTitle:"Hide original images." noTitle:"true" description:"Only shows reduced size images with stripped meta tags (except for 360 panoramas)."`
 	HideBatchDownload bool `json:"hide_batch_download" inlineTitle:"Hide batch download." noTitle:"true" description:"Do not allow downloading album images in a ZIP archive."`
+	HideLoginButton   bool `json:"hide_login_button" inlineTitle:"Hide login button." noTitle:"true" description:"To not confuse guests, you can remove login link from the bottom of home page and bookmark its destination (/login) instead."`
 }
 
 func (m *Manager) SetPrivacy(ctx context.Context, value Privacy) error {

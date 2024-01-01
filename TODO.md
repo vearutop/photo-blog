@@ -22,6 +22,7 @@
 [x] Hide geo
 [x] Hide original images
 [x] Disable download album button
+[x] Hide login button
 [ ] Move appearance settings to a separate page
 [x] Fix multilang Title in pano page
 [ ] Check webdav on windows

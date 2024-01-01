@@ -78,6 +78,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		Featured          string
 		FeaturedAlbumData getAlbumOutput
 		Albums            []getAlbumOutput
+		ShowLoginButton   bool
 	}
 
 	cacheName := "main-page"
@@ -99,6 +100,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			d.NonAdmin = !auth.IsAdmin(ctx)
 			d.Secure = !deps.Settings().Security().Disabled()
 			d.Featured = deps.Settings().Appearance().FeaturedAlbumName
+			d.ShowLoginButton = !deps.Settings().Privacy().HideLoginButton
 
 			if d.Featured != "" {
 				cont, err := getAlbumContents(ctx, deps, d.Featured, false)

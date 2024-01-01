@@ -79,7 +79,9 @@
         <a title="Add Album" class="control-panel ctrl-btn film-icon" href="/add-album.html"></a>
         {{ if .Secure }}
         <a title="Log out" class="control-panel ctrl-btn lock-icon" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')"></a>
+        {{ if .ShowLoginButton }}
         <a title="Log in" class="not-control-panel ctrl-btn unlock-icon" href="/login"></a>
+        {{ end }}
         {{ else }}
         <a title="Enable Admin Password" class="ctrl-btn alert-icon" href="/edit/password.html"></a>
         {{ end }}
