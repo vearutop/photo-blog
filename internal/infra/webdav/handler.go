@@ -8,10 +8,10 @@ import (
 	"golang.org/x/net/webdav"
 )
 
-func NewHandler(path string, logger ctxd.Logger, cfg settings.Values) http.Handler {
+func NewHandler(logger ctxd.Logger, cfg settings.Values) http.Handler {
 	handler := &webdav.Handler{
 		Prefix:     "/webdav/",
-		FileSystem: webdav.Dir(path),
+		FileSystem: webdav.Dir("."),
 		LockSystem: webdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
 			if err != nil {

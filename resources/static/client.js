@@ -72,9 +72,10 @@
      * @param {Object} req - request parameters.
      * @param {RawCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlAddAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlAddAlbum = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -90,6 +91,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -119,9 +125,10 @@
      * @param {ControlCreateAlbumRequest} req - request parameters.
      * @param {PhotoAlbumCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlCreateAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlCreateAlbum = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -137,6 +144,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -170,9 +182,10 @@
      * @param {ControlUpdatePhotoAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlUpdatePhotoAlbum = function (req, onNoContent, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlUpdatePhotoAlbum = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -188,6 +201,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -268,9 +286,10 @@
      * @param {ControlGetPhotoAlbumRequest} req - request parameters.
      * @param {PhotoAlbumCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlGetPhotoAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlGetPhotoAlbum = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -286,6 +305,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -314,9 +338,10 @@
      * Delete Album
      * @param {ControlDeleteAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlDeleteAlbum = function (req, onNoContent, onInternalServerError) {
+    Backend.prototype.controlDeleteAlbum = function (req, onNoContent, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -327,6 +352,11 @@
                 case 204:
                     if (typeof (onNoContent) === 'function') {
                         onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -355,9 +385,10 @@
      * Add To Album
      * @param {ControlAddToAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlAddToAlbum = function (req, onNoContent, onInternalServerError) {
+    Backend.prototype.controlAddToAlbum = function (req, onNoContent, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -368,6 +399,11 @@
                 case 204:
                     if (typeof (onNoContent) === 'function') {
                         onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -438,9 +474,10 @@
      * @param {ControlAddDirectoryRequest} req - request parameters.
      * @param {ControlAddDirOutputCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlAddDirectory = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlAddDirectory = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -456,6 +493,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -488,8 +530,9 @@
      * Upload Images
      * @param {ControlUploadImagesRequest} req - request parameters.
      * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.controlUploadImages = function (req, onNoContent) {
+    Backend.prototype.controlUploadImages = function (req, onNoContent, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -500,6 +543,11 @@
                 case 204:
                     if (typeof (onNoContent) === 'function') {
                         onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 default:
@@ -529,9 +577,10 @@
      * Remove From Album
      * @param {ControlRemoveFromAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlRemoveFromAlbum = function (req, onNoContent, onInternalServerError) {
+    Backend.prototype.controlRemoveFromAlbum = function (req, onNoContent, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -542,6 +591,11 @@
                 case 204:
                     if (typeof (onNoContent) === 'function') {
                         onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -571,9 +625,10 @@
      * Get Albums
      * @param {Object} req - request parameters.
      * @param {UsecaseGetAlbumsOutputCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.getAlbums = function (req, onOK, onInternalServerError) {
+    Backend.prototype.getAlbums = function (req, onOK, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -584,6 +639,11 @@
                 case 200:
                     if (typeof (onOK) === 'function') {
                         onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -612,9 +672,10 @@
      * @param {ControlEditAlbumRequest} req - request parameters.
      * @param {RawCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlEditAlbum = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlEditAlbum = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -630,6 +691,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -659,9 +725,10 @@
      * @param {ControlEditImageRequest} req - request parameters.
      * @param {RawCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlEditImage = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlEditImage = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -677,6 +744,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -702,51 +774,13 @@
     };
 
     /**
-     * Set Password
-     * @param {ControlSettingsSetPasswordRequest} req - request parameters.
-     * @param {RawCallback} onNoContent
-     */
-    Backend.prototype.controlSettingsSetPassword = function (req, onNoContent) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/edit/password?';
-        url = url.slice(0, -1);
-
-        x.open("POST", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-        if (typeof req.body !== 'undefined') {
-            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-            x.send(JSON.stringify(req.body));
-            return;
-        }
-
-        x.send();
-    };
-
-    /**
      * Edit Admin Password
      * @param {Object} req - request parameters.
      * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlSettingsEditAdminPassword = function (req, onOK, onInternalServerError) {
+    Backend.prototype.controlSettingsEditAdminPassword = function (req, onOK, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -757,6 +791,11 @@
                 case 200:
                     if (typeof (onOK) === 'function') {
                         onOK(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -781,12 +820,13 @@
     };
 
     /**
-     * Edit Settings
+     * Edit
      * @param {Object} req - request parameters.
      * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlEditSettings = function (req, onOK, onInternalServerError) {
+    Backend.prototype.controlSettingsEdit = function (req, onOK, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -797,6 +837,11 @@
                 case 200:
                     if (typeof (onOK) === 'function') {
                         onOK(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -825,9 +870,10 @@
      * @param {ControlUpdatePhotoExifRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlUpdatePhotoExif = function (req, onNoContent, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlUpdatePhotoExif = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -843,6 +889,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -876,9 +927,10 @@
      * @param {ControlGetPhotoExifRequest} req - request parameters.
      * @param {PhotoExifCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlGetPhotoExif = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlGetPhotoExif = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -894,6 +946,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -919,13 +976,48 @@
     };
 
     /**
+     * Serve Favicon
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.serveFavicon = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/favicon.ico?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Update photo.Gps
      * @param {ControlUpdatePhotoGpsRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlUpdatePhotoGps = function (req, onNoContent, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlUpdatePhotoGps = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -941,6 +1033,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -974,9 +1071,10 @@
      * @param {ControlGetPhotoGpsRequest} req - request parameters.
      * @param {PhotoGpsCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlGetPhotoGps = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlGetPhotoGps = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -992,6 +1090,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -1017,13 +1120,95 @@
     };
 
     /**
+     * Index
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.helpIndex = function (req, onOK, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/help/?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Serve File
+     * @param {HelpServeFileRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.helpServeFile = function (req, onOK, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/help/' + encodeURIComponent(req.file) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Update photo.Image
      * @param {ControlUpdatePhotoImageRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlUpdatePhotoImage = function (req, onNoContent, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlUpdatePhotoImage = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1039,6 +1224,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -1071,8 +1261,9 @@
      * Get Image Info
      * @param {GetImageInfoRequest} req - request parameters.
      * @param {UsecaseImageInfoCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.getImageInfo = function (req, onOK) {
+    Backend.prototype.getImageInfo = function (req, onOK, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1083,6 +1274,11 @@
                 case 200:
                     if (typeof (onOK) === 'function') {
                         onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 default:
@@ -1180,9 +1376,10 @@
      * @param {ControlGetPhotoImageRequest} req - request parameters.
      * @param {PhotoImageCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlGetPhotoImage = function (req, onOK, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlGetPhotoImage = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1198,6 +1395,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -1227,9 +1429,10 @@
      * @param {ControlIndexAlbumRequest} req - request parameters.
      * @param {RawCallback} onAccepted
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlIndexAlbum = function (req, onAccepted, onBadRequest, onInternalServerError) {
+    Backend.prototype.controlIndexAlbum = function (req, onAccepted, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1245,6 +1448,11 @@
                 case 400:
                     if (typeof (onBadRequest) === 'function') {
                         onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -1321,8 +1529,9 @@
      * Login
      * @param {Object} req - request parameters.
      * @param {RawCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.controlLogin = function (req, onOK) {
+    Backend.prototype.controlLogin = function (req, onOK, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1333,6 +1542,11 @@
                 case 200:
                     if (typeof (onOK) === 'function') {
                         onOK(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 default:
@@ -1349,47 +1563,6 @@
         }
 
         x.send();
-    };
-
-    /**
-     * Make Pass Hash
-     * @param {MakePassHashRequest} req - request parameters.
-     * @param {RawCallback} onOK
-     */
-    Backend.prototype.makePassHash = function (req, onOK) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/make-pass-hash?';
-        url = url.slice(0, -1);
-
-        x.open("POST", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-        var formData = new FormData();
-        if (typeof req.pass !== 'undefined') {
-            formData.append('pass', req.pass);
-        }
-        if (typeof req.salt !== 'undefined') {
-            formData.append('salt', req.salt);
-        }
-
-        x.send(formData);
     };
 
     /**
@@ -1512,46 +1685,12 @@
     };
 
     /**
-     * Get Settings
-     * @param {Object} req - request parameters.
-     * @param {ServiceSettingsCallback} onOK
-     */
-    Backend.prototype.controlGetSettings = function (req, onOK) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(JSON.parse(x.responseText));
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/settings.json?';
-        url = url.slice(0, -1);
-
-        x.open("GET", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-
-        x.send();
-    };
-
-    /**
-     * Update Settings
-     * @param {ControlUpdateSettingsRequest} req - request parameters.
+     * Set Appearance
+     * @param {ControlSettingsSetAppearanceRequest} req - request parameters.
      * @param {RawCallback} onNoContent
-     * @param {RestErrResponseCallback} onInternalServerError
+     * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.controlUpdateSettings = function (req, onNoContent, onInternalServerError) {
+    Backend.prototype.controlSettingsSetAppearance = function (req, onNoContent, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1564,9 +1703,9 @@
                         onNoContent(x);
                     }
                     break;
-                case 500:
-                    if (typeof (onInternalServerError) === 'function') {
-                        onInternalServerError(JSON.parse(x.responseText));
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 default:
@@ -1574,10 +1713,10 @@
             }
         };
 
-        var url = this.baseURL + '/settings.json?';
+        var url = this.baseURL + '/settings/appearance.json?';
         url = url.slice(0, -1);
 
-        x.open("PUT", url, true);
+        x.open("POST", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
@@ -1585,6 +1724,221 @@
             x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
             x.send(JSON.stringify(req.body));
             return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Set Maps
+     * @param {ControlSettingsSetMapsRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSettingsSetMaps = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/maps.json?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Set Password
+     * @param {ControlSettingsSetPasswordRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSettingsSetPassword = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/password.json?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Set Storage
+     * @param {ControlSettingsSetStorageRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSettingsSetStorage = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/storage.json?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Set Visitors
+     * @param {ControlSettingsSetVisitorsRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSettingsSetVisitors = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/visitors.json?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Serve Site File
+     * @param {ServeSiteFileRequest} req - request parameters.
+     * @param {RawCallback} onOK
+     */
+    Backend.prototype.serveSiteFile = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/site/' + encodeURIComponent(req.file) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
         }
 
         x.send();

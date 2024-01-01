@@ -14,9 +14,11 @@
 [ ] Add control to hide image details (global and per album)
 [x] Disable "http request complete" logs, or move to debug
 [ ] Make "dashboard" page
-[ ] Make thumb/image paths portable
+[x] Make thumb/image paths portable
 [x] Localize external CSS/JS
 [ ] Squash SQL migrations
 [ ] Better "Not Found" pages
 [ ] Strip exif?
 [ ] Strip geo?
+[ ] Fix multilang Title in pano page
+[ ] Check webdav on windows

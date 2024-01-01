@@ -8,6 +8,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/files"
 )
 
 type dlGpxDeps interface {
@@ -27,7 +28,7 @@ func DownloadGpx(deps dlGpxDeps) usecase.Interactor {
 		}
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
-		http.ServeFile(rw, in.req, gpx.Path)
+		http.ServeFile(rw, in.req, files.Path(gpx.Path))
 
 		return nil
 	})

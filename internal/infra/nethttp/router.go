@@ -31,7 +31,6 @@ import (
 func NewRouter(deps *service.Locator) http.Handler {
 	s := brick.NewBaseWebService(deps.BaseLocator)
 	deps.CtxdLogger().Important(context.Background(), "initializing router")
-	cfg := deps.Config
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
@@ -48,12 +47,11 @@ func NewRouter(deps *service.Locator) http.Handler {
 		for _, m := range strings.Split("OPTIONS, MKCOL, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT", ", ") {
 			chi.RegisterMethod(m)
 		}
-		s.Mount("/webdav/", webdav.NewHandler(cfg.StoragePath, deps.CtxdLogger(), deps.Settings()))
+		s.Mount("/webdav/", webdav.NewHandler(deps.CtxdLogger(), deps.Settings()))
 		// End of WebDAV.
 
 		s.Post("/album", control.CreateAlbum(deps))
 		s.Post("/album/{name}/directory", control.AddDirectory(deps, control.IndexAlbum(deps)))
-		s.Post("/album/{name}/images", control.UploadImages(deps))
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))

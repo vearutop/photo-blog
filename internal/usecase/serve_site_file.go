@@ -8,14 +8,9 @@ import (
 
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
-type serveSiteFileDeps interface {
-	ServiceConfig() service.Config
-}
-
-func ServeSiteFile(deps serveSiteFileDeps) usecase.Interactor {
+func ServeSiteFile(deps interface{}) usecase.Interactor {
 	type fileReq struct {
 		File string `path:"file"`
 		request.EmbeddedSetter
@@ -29,7 +24,7 @@ func ServeSiteFile(deps serveSiteFileDeps) usecase.Interactor {
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 
-		filePath := path.Join(deps.ServiceConfig().StoragePath, "site", in.File)
+		filePath := path.Join("site", in.File)
 
 		http.ServeFile(rw, in.Request(), filePath)
 

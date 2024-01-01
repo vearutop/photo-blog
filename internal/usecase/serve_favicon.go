@@ -4,19 +4,16 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp/ui"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 )
 
 type serveFaviconDeps interface {
 	Settings() settings.Values
-	ServiceConfig() service.Config
 }
 
 func ServeFavicon(deps serveFaviconDeps) usecase.Interactor {
@@ -36,7 +33,7 @@ func ServeFavicon(deps serveFaviconDeps) usecase.Interactor {
 
 		r := in.Request()
 		if strings.HasPrefix(favicon, "/site/") {
-			http.ServeFile(rw, r, path.Join(deps.ServiceConfig().StoragePath, favicon))
+			http.ServeFile(rw, r, strings.TrimPrefix(favicon, "/"))
 
 			return nil
 		}

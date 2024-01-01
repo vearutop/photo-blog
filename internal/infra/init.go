@@ -87,7 +87,11 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
-	if err = setupStorage(l, cfg.StoragePath+"db.sqlite"); err != nil {
+	if err = os.Chdir(cfg.StoragePath); err != nil {
+		return nil, fmt.Errorf("change dir to storage path: %w", err)
+	}
+
+	if err = setupStorage(l, "db.sqlite"); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +117,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
 
-	thumbStorage, err := setupThumbStorage(l, cfg.StoragePath+"thumbs.sqlite")
+	thumbStorage, err := setupThumbStorage(l, "thumbs.sqlite")
 	if err != nil {
 		return nil, err
 	}
@@ -150,9 +154,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 }
 
 func setupAccessLog(l *service.Locator) error {
-	cfg := l.Config
-
-	f, err := os.OpenFile(cfg.StoragePath+"/access.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+	f, err := os.OpenFile("access.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
 		return fmt.Errorf("access log: %w", err)
 	}
@@ -226,7 +228,7 @@ func setupStorage(l *service.Locator, filepath string) error {
 
 func setupUploadStorage(p string) error {
 	if p == "" {
-		return nil
+		return errors.New("storage path is empty")
 	}
 
 	// Create temporary directory for TUS uploads.

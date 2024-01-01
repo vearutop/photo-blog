@@ -42,6 +42,7 @@
  * @property {String} cover_image - Cover Image. ImageHash Id of image to use as a cover.
  * @property {String} created_at - Created At. Timestamp of creation.
  * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {Boolean} hidden - Hidden. Makes album invisible in the main page list.
  * @property {String} name - Name. A slug value that is used in album URL.
  * @property {Boolean} public - Public. Makes album visible in the main page.
  * @property {PhotoAlbumSettings} settings
@@ -86,7 +87,7 @@
  * @property {String} hash - ImageHash Id. Unique hash value.
  * @property {Number} iso_speed - ISO.
  * @property {String} lens_model - Lens.
- * @property {String} projection_type - Projection.
+ * @property {String} projection_type - Projection. Use 'equirectangular' for 360 panorama.
  * @property {Number} rating - Rating.
  * @property {String} software - Software.
  */
@@ -228,19 +229,6 @@
  */
 
 /**
- * @typedef SettingsAdminPass
- * @type {Object}
- * @property {String} password - Password.
- * @property {String} repeatPassword - Repeat Password.
- */
-
-/**
- * @typedef ControlSettingsSetPasswordRequest
- * @type {Object}
- * @property {SettingsAdminPass} body
- */
-
-/**
  * @typedef ControlUpdatePhotoExifRequest
  * @type {Object}
  * @property {PhotoExif} body
@@ -275,6 +263,12 @@
  */
 
 /**
+ * @typedef HelpServeFileRequest
+ * @type {Object}
+ * @property {String} file
+ */
+
+/**
  * @typedef PhotoImageSettings
  * @type {Object}
  * @property {String} description - Description. Description of an image, can contain HTML.
@@ -285,7 +279,6 @@
  * @type {Object}
  * @property {String} blurhash - BlurHash.
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {Boolean} has_avif - Has AVIF Image. Enables serving HDR image.
  * @property {String} hash - ImageHash Id. Unique hash value.
  * @property {Number} height - Height, px.
  * @property {String} path - File Path.
@@ -394,13 +387,6 @@
  */
 
 /**
- * @typedef MakePassHashRequest
- * @type {Object}
- * @property {String} pass
- * @property {String} salt
- */
-
-/**
  * @typedef MapTileRequest
  * @type {Object}
  * @property {String} r
@@ -416,56 +402,79 @@
  */
 
 /**
- * @typedef ServiceAppearanceSettings
+ * @typedef SettingsAppearance
  * @type {Object}
- * @property {String} site_title - Title. The title of this site.
- */
-
-/**
- * @typedef ServiceMapSettings
- * @type {Object}
- * @property {String} map_attribution - Map attribution. Map tiles attribution.
- * @property {Boolean} map_cache - Map cache. Enable local cache of map tiles.
- * @property {String} map_tiles - Map tiles. URL to custom map tiles.
- */
-
-/**
- * @typedef SettingsSecurity
- * @type {Object}
- * @property {String} pass_hash
- * @property {String} pass_salt
- */
-
-/**
- * Settings
- * @typedef ServiceSettings
- * @type {Object}
- * @property {Boolean} access_log_disabled
- * @property {String} access_log_file - Path to access log. When not empty, requests to albums and photos will be logged.
- * @property {ServiceAppearanceSettings} appearance_settings
  * @property {String} featured_album_name - Featured album name. The name of an album to show on the main page.
  * @property {?Array<String>} languages - Languages. Supported content languages.
- * @property {String} map_attribution - Map attribution. Map tiles attribution.
- * @property {Boolean} map_cache - Map cache. Enable local cache of map tiles.
- * @property {ServiceMapSettings} map_settings
- * @property {String} map_tiles - Map tiles. URL to custom map tiles.
- * @property {SettingsSecurity} security_settings
+ * @property {String} site_favicon - Link to favicon. Defaults to /static/favicon.png, you can upload your own and use, for example, /site/favicon.png.
+ * @property {String} site_footer - Footer. Injected at page end.
+ * @property {String} site_head - HTML Head. Injected at the end of page &lt;html&gt;&lt;head&gt; element.
+ * @property {String} site_header - Header. Injected at page start.
  * @property {String} site_title - Title. The title of this site.
- * @property {Boolean} tag_visitors - Tag unique visitors. Unique visitors would be tagged with cookies.
- * @property {String} upload_storage - Upload storage. Path to directory where uploaded files are stored.
- * @property {Boolean} webdav_disabled - Disable WebDAV. Disable WebDAV access to storage.
- * @property {String} webdav_storage - WebDAV storage. Path to directory with WebDAV access.
  */
 
 /**
- * @callback ServiceSettingsCallback
- * @param {ServiceSettings} value
- */
-
-/**
- * @typedef ControlUpdateSettingsRequest
+ * @typedef ControlSettingsSetAppearanceRequest
  * @type {Object}
- * @property {ServiceSettings} body - Settings.
+ * @property {SettingsAppearance} body
+ */
+
+/**
+ * @typedef SettingsMaps
+ * @type {Object}
+ * @property {String} attribution - Attribution. Map tiles attribution.
+ * @property {Boolean} cache - Cache. Enable local cache of map tiles.
+ * @property {String} tiles - Tiles. URL to custom map tiles.
+ */
+
+/**
+ * @typedef ControlSettingsSetMapsRequest
+ * @type {Object}
+ * @property {SettingsMaps} body
+ */
+
+/**
+ * @typedef SettingsAdminPass
+ * @type {Object}
+ * @property {String} password - Password.
+ * @property {String} repeatPassword - Repeat Password.
+ */
+
+/**
+ * @typedef ControlSettingsSetPasswordRequest
+ * @type {Object}
+ * @property {SettingsAdminPass} body
+ */
+
+/**
+ * @typedef SettingsStorage
+ * @type {Object}
+ * @property {Boolean} web_dav - Enable WebDAV. Served at http(s)://[this-site-address]/webdav/ URL with admin password.
+ */
+
+/**
+ * @typedef ControlSettingsSetStorageRequest
+ * @type {Object}
+ * @property {SettingsStorage} body
+ */
+
+/**
+ * @typedef SettingsVisitors
+ * @type {Object}
+ * @property {Boolean} access_log
+ * @property {Boolean} tag
+ */
+
+/**
+ * @typedef ControlSettingsSetVisitorsRequest
+ * @type {Object}
+ * @property {SettingsVisitors} body
+ */
+
+/**
+ * @typedef ServeSiteFileRequest
+ * @type {Object}
+ * @property {String} file
  */
 
 /**

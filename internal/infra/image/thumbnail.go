@@ -15,13 +15,12 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
-	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/internal/infra/files"
 	"go.opencensus.io/trace"
 )
 
 type ThumbnailerDeps interface {
 	CtxdLogger() ctxd.Logger
-	ServiceConfig() service.Config
 }
 
 func NewThumbnailer(deps ThumbnailerDeps) *Thumbnailer {
@@ -88,7 +87,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	th.Hash = i.Hash
 
 	if len(buf.Bytes()) > 1e5 {
-		dir := t.deps.ServiceConfig().StoragePath + "thumb/" + string(size) + "/" + i.Hash.String()[:1] + "/"
+		dir := "thumb/" + string(size) + "/" + i.Hash.String()[:1] + "/"
 		if err := os.MkdirAll(dir, 0o700); err == nil {
 			filePath := dir + i.Hash.String() + ".jpg"
 
@@ -121,7 +120,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
 	lt := largerThumbFromContext(ctx)
 	if lt != nil && (lt.Width > w || lt.Height > h) {
-		img, err := lt.JPEG()
+		img, err := thumbJPEG(ctx, *lt)
 		if err != nil {
 			return nil, fmt.Errorf("decoding larger thumb: %w", err)
 		}
@@ -129,9 +128,9 @@ func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (
 		return img, nil
 	}
 
-	time.Sleep(time.Second) // To reduce CPU load.
+	time.Sleep(time.Second) // To reduce CPU load. TODO: remove?
 
-	img, err := loadJPEG(ctx, i.Path)
+	img, err := loadJPEG(ctx, files.Path(i.Path))
 	if err != nil {
 		return img, fmt.Errorf("failed to load JPEG: %w", err)
 	}
@@ -161,6 +160,14 @@ func loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
 
 	// decode jpeg into image.Image
 	return jpeg.Decode(f)
+}
+
+func thumbJPEG(ctx context.Context, t photo.Thumb) (image.Image, error) {
+	if t.FilePath != "" {
+		return loadJPEG(ctx, files.Path(t.FilePath))
+	}
+
+	return jpeg.Decode(t.ReadSeeker())
 }
 
 func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (w, h uint, err error) {

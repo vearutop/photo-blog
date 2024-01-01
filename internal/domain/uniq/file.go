@@ -19,7 +19,7 @@ type File struct {
 func (v *File) SetPath(ctx context.Context, path string) (err error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return ctxd.WrapError(ctx, err, "failed to open image",
+		return ctxd.WrapError(ctx, err, "set file path",
 			"path", v.Path)
 	}
 	closed := false
@@ -27,7 +27,7 @@ func (v *File) SetPath(ctx context.Context, path string) (err error) {
 		if !closed {
 			clErr := f.Close()
 			if clErr != nil && err == nil {
-				err = ctxd.WrapError(ctx, err, "close file after reading",
+				err = ctxd.WrapError(ctx, err, "set file path, close file after reading",
 					"path", v.Path)
 			}
 		}
@@ -51,8 +51,6 @@ func (v *File) SetPath(ctx context.Context, path string) (err error) {
 	if v.CreatedAt.IsZero() {
 		v.CreatedAt = time.Now()
 	}
-
-	v.Path = path
 
 	return nil
 }

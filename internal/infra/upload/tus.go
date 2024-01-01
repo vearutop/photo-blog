@@ -15,12 +15,11 @@ import (
 	"github.com/tus/tusd/v2/pkg/filestore"
 	tusd "github.com/tus/tusd/v2/pkg/handler"
 	"github.com/vearutop/photo-blog/internal/infra/files"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
 func MountTus(s *web.Service, deps TusHandlerDeps) error {
 	store := filestore.FileStore{
-		Path: deps.ServiceConfig().StoragePath + "temp",
+		Path: "temp",
 	}
 	composer := tusd.NewStoreComposer()
 	store.UseIn(composer)
@@ -60,15 +59,14 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 	ctx := event.Context
 	deps.CtxdLogger().Info(ctx, "upload finished", "event", event)
-	storagePath := deps.ServiceConfig().StoragePath
 
 	defer func() {
-		if err := os.Remove(storagePath + "temp/" + event.Upload.ID + ".info"); err != nil {
+		if err := os.Remove("temp/" + event.Upload.ID + ".info"); err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				deps.CtxdLogger().Error(ctx, "failed to remove uploaded info", "error", err)
 			}
 		}
-		if err := os.Remove(storagePath + "temp/" + event.Upload.ID); err != nil {
+		if err := os.Remove("temp/" + event.Upload.ID); err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				deps.CtxdLogger().Error(ctx, "failed to remove uploaded file", "error", err)
 			}
@@ -82,14 +80,14 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 		return
 	}
 
-	albumPath := path.Join(storagePath, "album", albumName)
+	albumPath := path.Join("album", albumName)
 	if err := os.MkdirAll(albumPath, 0o700); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to create album directory", "error", err)
 
 		return
 	}
 
-	filePath := path.Join(albumPath, event.Upload.MetaData["filename"])
+	filePath := albumPath + "/" + event.Upload.MetaData["filename"]
 	if err := os.Rename(event.Upload.Storage["Path"], filePath); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to move uploaded file", "error", err)
 
@@ -103,12 +101,16 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 					"error", err,
 					"filePath", filePath)
 			}
+		} else {
+			deps.CtxdLogger().Error(ctx, "failed to process uploaded file",
+				"error", err,
+				"filePath", filePath)
 		}
 	}
 }
 
 func siteUpload(ctx context.Context, deps TusHandlerDeps, event tusd.HookEvent) {
-	dir := path.Join(deps.ServiceConfig().StoragePath, "site")
+	dir := "site"
 
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to create site directory", "error", err)
@@ -126,7 +128,6 @@ func siteUpload(ctx context.Context, deps TusHandlerDeps, event tusd.HookEvent) 
 
 type TusHandlerDeps interface {
 	CtxdLogger() ctxd.Logger
-	ServiceConfig() service.Config
 	FilesProcessor() *files.Processor
 }
 
