@@ -20,5 +20,5 @@
 [x] Better "Not Found" pages
 [ ] Strip exif?
 [ ] Strip geo?
-[ ] Fix multilang Title in pano page
+[x] Fix multilang Title in pano page
 [ ] Check webdav on windows

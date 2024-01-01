@@ -9,6 +9,8 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -17,6 +19,8 @@ type showPanoDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
+	TxtRenderer() *txt.Renderer
+	Settings() settings.Values
 }
 
 // ShowPano creates use case interactor to show pano.
@@ -32,7 +36,7 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 	}
 
 	type pageData struct {
-		Title      string
+		pageCommon
 		Name       string
 		CoverImage string
 		Image      string
@@ -48,7 +52,10 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 		}
 
 		d := pageData{}
-		d.Title = album.Title
+		d.Title = deps.TxtRenderer().MustRenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
+			o.StripTags = true
+		})
+		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 		d.Name = album.Name
 		d.CoverImage = "/thumb/1200w/" + in.Hash.String() + ".jpg"
 		d.Image = "/image/" + in.Hash.String() + ".jpg"
