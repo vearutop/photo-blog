@@ -21,7 +21,7 @@
 [x] Hide exif
 [x] Hide geo
 [x] Hide original images
-[ ] Disable download album button
+[x] Disable download album button
 [ ] Move appearance settings to a separate page
 [x] Fix multilang Title in pano page
 [ ] Check webdav on windows

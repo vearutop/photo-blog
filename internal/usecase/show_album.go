@@ -108,12 +108,16 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d.MapAttribution = maps.Attribution
 
-		var totalSize int64
-		for _, img := range cont.Images {
-			totalSize += img.size
-		}
+		// TotalSize controls visibility of batch download button.
+		privacy := deps.Settings().Privacy()
+		if !d.NonAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
+			var totalSize int64
+			for _, img := range cont.Images {
+				totalSize += img.size
+			}
 
-		d.TotalSize = units.HumanSize(float64(totalSize))
+			d.TotalSize = units.HumanSize(float64(totalSize))
+		}
 
 		switch {
 		case in.imgHash != 0:

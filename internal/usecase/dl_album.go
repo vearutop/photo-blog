@@ -11,8 +11,11 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
+	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 )
 
 type dlAlbumDeps interface {
@@ -20,6 +23,7 @@ type dlAlbumDeps interface {
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
+	Settings() settings.Values
 }
 
 type dlAlbumInput struct {
@@ -28,6 +32,11 @@ type dlAlbumInput struct {
 
 func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in dlAlbumInput, out *response.EmbeddedSetter) (err error) {
+		privacy := deps.Settings().Privacy()
+		if (privacy.HideOriginal || privacy.HideBatchDownload) && !auth.IsAdmin(ctx) {
+			return status.PermissionDenied
+		}
+
 		rw := out.ResponseWriter()
 
 		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
