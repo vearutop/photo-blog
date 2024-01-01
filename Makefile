@@ -27,7 +27,7 @@ ifeq ($(DEVGO_PATH),)
 	endif
 endif
 
-RELEASE_TARGETS ?= linux/amd64
+export RELEASE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 linux/arm32 windows/amd64"
 BUILD_LDFLAGS=-s -w
 
 -include $(DEVGO_PATH)/makefiles/main.mk
