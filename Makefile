@@ -27,6 +27,7 @@ ifeq ($(DEVGO_PATH),)
 	endif
 endif
 
+export CGO_ENABLED=0
 export RELEASE_TARGETS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 linux/arm32 windows/amd64"
 BUILD_LDFLAGS=-s -w
 
