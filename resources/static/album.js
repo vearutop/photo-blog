@@ -303,7 +303,7 @@ function loadAlbum(params) {
                 }
 
                 var landscape = ""
-                if (img.width / img.height >= 1.5) {
+                if (img.width / img.height >= 1.499) {
                     landscape = " landscape"
                 } else {
                     landscape = " portrait"

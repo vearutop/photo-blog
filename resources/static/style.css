@@ -20,7 +20,7 @@ body.dark-mode {
 .thumb, a.image, .thumb canvas {
     width: 300px;
     height: 200px;
-    line-height: 200px;
+    line-height: 197px;
 }
 
 .thumb.landscape img {
