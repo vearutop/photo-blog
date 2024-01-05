@@ -10,7 +10,7 @@ import (
 
 func NewHandler(logger ctxd.Logger, cfg settings.Values) http.Handler {
 	handler := &webdav.Handler{
-		Prefix:     "/webdav/",
+		Prefix:     "/webdav",
 		FileSystem: webdav.Dir("."),
 		LockSystem: webdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
