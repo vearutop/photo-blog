@@ -47,7 +47,9 @@ func NewRouter(deps *service.Locator) http.Handler {
 		for _, m := range strings.Split("OPTIONS, MKCOL, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT", ", ") {
 			chi.RegisterMethod(m)
 		}
-		s.Mount("/webdav/", webdav.NewHandler(deps.CtxdLogger(), deps.Settings()))
+		wh := webdav.NewHandler(deps.CtxdLogger(), deps.Settings())
+		s.Handle("/webdav", wh)
+		s.Mount("/webdav/", wh)
 		// End of WebDAV.
 
 		s.Post("/album", control.CreateAlbum(deps))
