@@ -363,7 +363,8 @@ function loadAlbum(params) {
         var lightbox = new PhotoSwipeLightbox({
             gallery: params.gallery,
             children: 'a.image',
-            pswpModule: PhotoSwipe
+            pswpModule: PhotoSwipe,
+            bgOpacity: 1.0,
         });
 
         new PhotoSwipeDynamicCaption(lightbox, {
