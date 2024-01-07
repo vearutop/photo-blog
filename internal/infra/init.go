@@ -140,6 +140,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.FilesProcessorInstance = files.NewProcessor(l)
 
+	l.StorageStats = storage.NewStats(l.Storage, thumbStorage)
+
 	if err := refl.NoEmptyFields(l); err != nil {
 		return nil, err
 	}

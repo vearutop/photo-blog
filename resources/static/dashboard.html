@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+    <title>{{.Title}}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{{.Favicon}}" type="image/png"/>
+    <link rel="stylesheet" href="/static/pure.css">
+    <link rel="stylesheet" href="/static/style.css">
+{{.Head}}
+</head>
+<body class="dark-mode">
+{{.Header}}
+
+<div class="main">
+    <a href="/">Back to main page</a>
+
+    <h1>{{.Title}}</h1>
+
+    <div class="some-text">
+        <table>
+            <tr>
+                <th>Photos</th>
+                <td>{{.PhotosCount}}</td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+{{.Footer}}
+</body>
+</html>

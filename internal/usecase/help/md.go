@@ -2,6 +2,7 @@ package help
 
 import (
 	"context"
+	uc "github.com/vearutop/photo-blog/internal/usecase"
 	"html/template"
 
 	"github.com/swaggest/usecase"
@@ -20,7 +21,7 @@ func Markdown(deps indexDeps) usecase.Interactor {
 	}
 
 	type pageData struct {
-		pageCommon
+		uc.PageCommon
 		Content template.HTML
 	}
 

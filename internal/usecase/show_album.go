@@ -48,7 +48,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 	notFound := NotFound(deps)
 
 	type pageData struct {
-		pageCommon
+		PageCommon
 
 		Description template.HTML
 		OGTitle     string
@@ -99,7 +99,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.AlbumData = cont
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
-		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+		d.Fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 
 		maps := deps.Settings().Maps()
 

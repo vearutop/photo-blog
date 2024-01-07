@@ -93,6 +93,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
+		s.Get("/dashboard.html", control.Dashboard(deps))
+
 		s.Get("/login", control.Login())
 	})
 

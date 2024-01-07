@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/swaggest/rest/response"
 	"html/template"
 	"net/http"
 	"time"
@@ -33,7 +34,7 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 		Hash uniq.Hash `path:"hash"`
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in editImageInput, out *usecase.OutputWithEmbeddedWriter) error {
+	u := usecase.NewInteractor(func(ctx context.Context, in editImageInput, out *response.EmbeddedSetter) error {
 		img, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
 		if err != nil {
 			return fmt.Errorf("find image: %w", err)
@@ -58,7 +59,7 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
 			gps.GpsTime = time.Now()
 		}
 
-		return deps.SchemaRepository().Render(out.Writer,
+		return deps.SchemaRepository().Render(out.ResponseWriter(),
 			jsonform.Page{
 				Title: "Edit Photo Details",
 				PrependHTML: template.HTML(`

@@ -36,7 +36,7 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 	}
 
 	type pageData struct {
-		pageCommon
+		PageCommon
 		Name       string
 		CoverImage string
 		Image      string
@@ -55,7 +55,7 @@ func ShowPano(deps showPanoDeps) usecase.Interactor {
 		d.Title = deps.TxtRenderer().MustRenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
 			o.StripTags = true
 		})
-		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+		d.Fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 		d.Name = album.Name
 		d.CoverImage = "/thumb/1200w/" + in.Hash.String() + ".jpg"
 		d.Image = "/image/" + in.Hash.String() + ".jpg"

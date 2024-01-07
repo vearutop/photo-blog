@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"sort"
 	"strconv"
 	"time"
@@ -31,34 +30,6 @@ type showMainDeps interface {
 	Settings() settings.Values
 }
 
-type pageCommon struct {
-	Title   string
-	Lang    string
-	Favicon string
-	Head    template.HTML
-	Header  template.HTML
-	Footer  template.HTML
-}
-
-func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Appearance) {
-	if p.Title == "" {
-		p.Title = r.MustRenderLang(ctx, a.SiteTitle, func(o *txt.RenderOptions) {
-			o.StripTags = true
-		})
-	}
-
-	p.Lang = txt.Language(ctx)
-
-	p.Head = template.HTML(r.MustRenderLang(ctx, a.SiteHead))
-	p.Header = template.HTML(r.MustRenderLang(ctx, a.SiteHeader))
-	p.Footer = template.HTML(r.MustRenderLang(ctx, a.SiteFooter))
-	p.Favicon = a.SiteFavicon
-
-	if p.Favicon == "" {
-		p.Favicon = "/static/favicon.png"
-	}
-}
-
 // ShowMain creates use case interactor to show album.
 func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
 	tmpl, err := static.Template("index.html")
@@ -67,7 +38,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 	}
 
 	type pageData struct {
-		pageCommon
+		PageCommon
 
 		Name              string
 		CoverImage        string
@@ -95,7 +66,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 
-			d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+			d.Fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 
 			d.NonAdmin = !auth.IsAdmin(ctx)
 			d.Secure = !deps.Settings().Security().Disabled()

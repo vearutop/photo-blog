@@ -2,6 +2,7 @@ package help
 
 import (
 	"context"
+	uc "github.com/vearutop/photo-blog/internal/usecase"
 	"html/template"
 
 	"github.com/swaggest/usecase"
@@ -19,33 +20,6 @@ type indexDeps interface {
 	Settings() settings.Values
 }
 
-type pageCommon struct {
-	Title   string
-	Lang    string
-	Favicon string
-	Head    template.HTML
-	Header  template.HTML
-	Footer  template.HTML
-}
-
-func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Appearance) {
-	if p.Title == "" {
-		p.Title = r.MustRenderLang(ctx, a.SiteTitle, func(o *txt.RenderOptions) {
-			o.StripTags = true
-		})
-	}
-
-	p.Lang = txt.Language(ctx)
-	p.Head = template.HTML(r.MustRenderLang(ctx, a.SiteHead))
-	p.Header = template.HTML(r.MustRenderLang(ctx, a.SiteHeader))
-	p.Footer = template.HTML(r.MustRenderLang(ctx, a.SiteFooter))
-	p.Favicon = a.SiteFavicon
-
-	if p.Favicon == "" {
-		p.Favicon = "/static/favicon.png"
-	}
-}
-
 func Index(deps indexDeps) usecase.Interactor {
 	tmpl, err := static.Template("help.html")
 	if err != nil {
@@ -58,7 +32,7 @@ func Index(deps indexDeps) usecase.Interactor {
 	}
 
 	type pageData struct {
-		pageCommon
+		uc.PageCommon
 		Content template.HTML
 	}
 
