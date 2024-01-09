@@ -7,3 +7,5 @@ Personal photo blog engine with focus on user experience and photo quality.
 Demo: https://vearutop.p1cs.art/
 
 A bit of description: https://vearutop.p1cs.art/help/
+
+![resources/help/view-album.jpg](resources/help/view-album.jpg)
