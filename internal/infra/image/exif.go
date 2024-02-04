@@ -97,7 +97,7 @@ func readPanoramaAndRatingXMP(r io.Reader, res *Meta) error {
 }
 
 // TODO: check this lib performance and quality.
-func readExif2(r io.ReadSeeker, res *Meta) error {
+func ReadExif2(r io.ReadSeeker, res *Meta) error {
 	e, err := imagemeta.Decode(r)
 	if err != nil {
 		return err
@@ -114,6 +114,8 @@ func readExif(r io.Reader, res *Meta) error {
 	if err != nil {
 		return fmt.Errorf("search exif: %w", err)
 	}
+
+	println(len(rawExif), bytes.Index(rawExif, []byte("Display P3")))
 
 	im, err := exifcommon.NewIfdMappingWithStandard()
 	if err != nil {
@@ -191,6 +193,10 @@ func readExif(r io.Reader, res *Meta) error {
 				}
 			}
 		}
+
+		s, _ := ite.Format()
+
+		println(key, s)
 
 		if vv := extractExifValue(v); vv != nil {
 			res.exif[key] = vv
