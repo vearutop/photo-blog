@@ -1,7 +1,9 @@
 package service
 
 import (
+	"github.com/vearutop/photo-blog/internal/domain/comment"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/site"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
@@ -80,4 +82,28 @@ type PhotoGpxFinderProvider interface {
 
 type TxtRendererProvider interface {
 	TxtRenderer() *txt.Renderer
+}
+
+type SiteVisitorEnsurerProvider interface {
+	SiteVisitorEnsurer() uniq.Ensurer[site.Visitor]
+}
+
+type SiteVisitorFinderProvider interface {
+	SiteVisitorFinder() uniq.Finder[site.Visitor]
+}
+
+type CommentMessageEnsurerProvider interface {
+	CommentMessageEnsurer() uniq.Ensurer[comment.Message]
+}
+
+type CommentMessageFinderProvider interface {
+	CommentMessageFinder() uniq.Finder[comment.Message]
+}
+
+type CommentThreadEnsurerProvider interface {
+	CommentThreadEnsurer() uniq.Ensurer[comment.Thread]
+}
+
+type CommentThreadFinderProvider interface {
+	CommentThreadFinder() uniq.Finder[comment.Thread]
 }

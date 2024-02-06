@@ -135,6 +135,18 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoGpxFinderProvider = gpxRepo
 	l.PhotoGpxEnsurerProvider = gpxRepo
 
+	visitorRepo := storage.NewVisitorRepository(l.Storage)
+	l.SiteVisitorFinderProvider = visitorRepo
+	l.SiteVisitorEnsurerProvider = visitorRepo
+
+	messageRepo := storage.NewMessageRepository(l.Storage)
+	l.CommentMessageEnsurerProvider = messageRepo
+	l.CommentMessageFinderProvider = messageRepo
+
+	threadRepo := storage.NewThreadRepository(l.Storage)
+	l.CommentThreadEnsurerProvider = threadRepo
+	l.CommentThreadFinderProvider = threadRepo
+
 	l.PhotoImageIndexerProvider = image.NewIndexer(l)
 	l.TxtRendererProvider = txt.NewRenderer()
 

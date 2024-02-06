@@ -69,12 +69,12 @@ function formDone(x, ctx) { $(ctx.result).html('Done.') }
 				OnSuccess:     `formSaved`,
 			},
 			jsonform.Form{
-				Title:         "Copy Images From Another Album",
+				Title:         "Add Images From Another Album",
 				SubmitURL:     "/album/" + a.Name,
 				SubmitMethod:  http.MethodPost,
 				SuccessStatus: http.StatusNoContent,
 				Value:         addToAlbumInput{},
-				SubmitText:    "Copy",
+				SubmitText:    "Add",
 				OnSuccess:     `formDone`,
 			},
 		)

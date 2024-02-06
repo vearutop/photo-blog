@@ -158,13 +158,14 @@ func TusAlbumHTMLButton(albumName string) template.HTML {
 <script>
     {
         const { Dashboard, Tus } = Uppy
-        const uppy = new Uppy.Uppy({ debug: true, autoProceed: false })
+        const uppy = new Uppy.Uppy({ debug: true, autoProceed: false, limit: 1 })
             .use(Dashboard, { 
 				trigger: '#uppyModalOpener', 
 				note: 'JPG, GPX are supported', 
 				proudlyDisplayPoweredByUppy: false,
 			})
             .use(Tus, { 
+				limit: 1,
 				endpoint: window.location.protocol + '//' + window.location.host + '/files',
 				chunkSize: 900000, // 900K to fit in 1MiB default client_max_body_size of nginx.
 				headers: {"X-Album-Name": "` + albumName + `"},

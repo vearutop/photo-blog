@@ -49,6 +49,15 @@ type Locator struct {
 	PhotoGpxFinderProvider
 
 	TxtRendererProvider
+
+	SiteVisitorEnsurerProvider
+	SiteVisitorFinderProvider
+
+	CommentMessageEnsurerProvider
+	CommentMessageFinderProvider
+
+	CommentThreadEnsurerProvider
+	CommentThreadFinderProvider
 }
 
 // ServiceConfig gives access to service configuration.
