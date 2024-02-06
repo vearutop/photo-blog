@@ -87,6 +87,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 		s.Delete("/album/{name}", control.DeleteAlbum(deps))
 
+		s.Post("/message/approve", control.ApproveMessage(deps))
+
 		if err := upload.MountTus(s, deps); err != nil {
 			panic(err)
 		}
@@ -146,6 +148,8 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
+
+		s.Post("/message", usecase.AddMessage(deps))
 
 		s.Get("/site/{file}", usecase.ServeSiteFile(deps))
 		s.Get("/favicon.ico", usecase.ServeFavicon(deps))

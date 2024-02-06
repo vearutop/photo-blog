@@ -116,7 +116,7 @@ func (ir *hashedRepo[V, T]) FindAll(ctx context.Context) ([]V, error) {
 	return augmentResErr(ir.List(ctx, ir.SelectStmt()))
 }
 
-func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) (V, error) {
+func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq.EnsureOption[V]) (V, error) {
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -124,12 +124,32 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) (V, error) {
 		return value, ErrMissingHash
 	}
 
+	var opts []func(o *sqluct.Options)
+
 	if val, err := ir.findBaseByHash(ctx, h); err == nil {
 		// Update.
 		vv := T(&val)
 		v.SetCreatedAt(vv.GetCreatedAt())
 
-		if _, err := ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx); err != nil {
+		skipUpdate := false
+
+		for _, o := range options {
+			if o.SkipUpdate {
+				skipUpdate = true
+			}
+
+			if o.OnUpdate != nil {
+				opts = append(opts, func(opt *sqluct.Options) {
+					o.OnUpdate(ir.StorageOf, opt)
+				})
+			}
+		}
+
+		if skipUpdate {
+			return value, nil
+		}
+
+		if _, err := ir.UpdateStmt(value, opts...).Where(ir.hashEq(h)).ExecContext(ctx); err != nil {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "update")
 		}
 	} else {
@@ -137,9 +157,17 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V) (V, error) {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "find")
 		}
 
+		for _, o := range options {
+			if o.OnInsert != nil {
+				opts = append(opts, func(opt *sqluct.Options) {
+					o.OnInsert(ir.StorageOf, opt)
+				})
+			}
+		}
+
 		// Insert.
 		v.SetCreatedAt(time.Now())
-		if _, err := ir.InsertRow(ctx, value); err != nil {
+		if _, err := ir.InsertRow(ctx, value, opts...); err != nil {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "insert")
 		}
 	}

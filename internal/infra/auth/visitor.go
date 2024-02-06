@@ -49,7 +49,17 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 
 				c, err := r.Cookie("v")
 				if err == nil {
-					_ = h.UnmarshalText([]byte(c.Value))
+					if err = h.UnmarshalText([]byte(c.Value)); err != nil || h == 0 {
+						h = uniq.Hash(rand.Int())
+					}
+
+					c := http.Cookie{
+						Name: "v", Value: h.String(),
+						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+					} // Around 3 years.
+
+					http.SetCookie(w, &c)
+
 					isNew = false
 				} else if errors.Is(err, http.ErrNoCookie) {
 					if v := r.URL.Query().Get("v"); v != "" {
@@ -59,8 +69,11 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 						h = uniq.Hash(rand.Int())
 					}
 
-					c := http.Cookie{Name: "v", Value: h.String(),
-						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400} // Around 3 years.
+					c := http.Cookie{
+						Name: "v", Value: h.String(),
+						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+					} // Around 3 years.
+
 					http.SetCookie(w, &c)
 				}
 

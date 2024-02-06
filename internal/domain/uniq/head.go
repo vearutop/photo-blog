@@ -3,10 +3,18 @@ package uniq
 import (
 	"context"
 	"time"
+
+	"github.com/bool64/sqluct"
 )
 
+type EnsureOption[V any] struct {
+	OnInsert   func(st sqluct.StorageOf[V], o *sqluct.Options)
+	OnUpdate   func(st sqluct.StorageOf[V], o *sqluct.Options)
+	SkipUpdate bool
+}
+
 type Ensurer[V any] interface {
-	Ensure(ctx context.Context, value V) (V, error)
+	Ensure(ctx context.Context, value V, options ...EnsureOption[V]) (V, error)
 }
 
 type Finder[V any] interface {

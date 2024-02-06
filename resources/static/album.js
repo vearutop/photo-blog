@@ -597,6 +597,4 @@ function loadAlbum(params) {
             alert("Failed: " + error.error)
         })
     }
-
-
 }
