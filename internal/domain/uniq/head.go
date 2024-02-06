@@ -2,8 +2,9 @@ package uniq
 
 import (
 	"context"
-	"github.com/bool64/sqluct"
 	"time"
+
+	"github.com/bool64/sqluct"
 )
 
 type EnsureOption[V any] struct {

@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"time"
+
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/comment"
@@ -9,7 +11,6 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/service"
-	"time"
 )
 
 type addMessageDeps interface {

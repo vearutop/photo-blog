@@ -53,8 +53,10 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 						h = uniq.Hash(rand.Int())
 					}
 
-					c := http.Cookie{Name: "v", Value: h.String(),
-						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400} // Around 3 years.
+					c := http.Cookie{
+						Name: "v", Value: h.String(),
+						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+					} // Around 3 years.
 
 					http.SetCookie(w, &c)
 
@@ -67,8 +69,10 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 						h = uniq.Hash(rand.Int())
 					}
 
-					c := http.Cookie{Name: "v", Value: h.String(),
-						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400} // Around 3 years.
+					c := http.Cookie{
+						Name: "v", Value: h.String(),
+						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+					} // Around 3 years.
 
 					http.SetCookie(w, &c)
 				}
