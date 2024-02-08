@@ -15,10 +15,25 @@ type Message struct {
 	Text        string    `db:"text" json:"text"`
 }
 
+func (m Message) MakeHash() uniq.Hash {
+	return uniq.StringHash(m.Hash.String() + m.VisitorHash.String() + m.Text)
+}
+
 type Thread struct {
 	uniq.Head
 
 	Type        string     `db:"type" json:"type"`
 	RelatedHash uniq.Hash  `db:"related_hash" json:"related_hash"`
 	RelatedAt   *time.Time `db:"related_at" json:"related_at"`
+
+	Messages []Message `json:"messages,omitempty"`
+}
+
+func (t Thread) MakeHash() uniq.Hash {
+	th := t.Type + t.RelatedHash.String()
+	if t.RelatedAt != nil {
+		th += t.RelatedAt.String()
+	}
+
+	return uniq.StringHash(th)
 }

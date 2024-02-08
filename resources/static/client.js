@@ -1076,9 +1076,8 @@
      * Index
      * @param {Object} req - request parameters.
      * @param {RawCallback} onNoContent
-     * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.helpIndex = function (req, onNoContent, onUnauthorized) {
+    Backend.prototype.helpIndex = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1089,11 +1088,6 @@
                 case 204:
                     if (typeof (onNoContent) === 'function') {
                         onNoContent(x);
-                    }
-                    break;
-                case 401:
-                    if (typeof (onUnauthorized) === 'function') {
-                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 default:
@@ -1115,10 +1109,9 @@
     /**
      * Serve File
      * @param {HelpServeFileRequest} req - request parameters.
-     * @param {RawCallback} onOK
-     * @param {RestErrResponseCallback} onUnauthorized
+     * @param {RawCallback} onNoContent
      */
-    Backend.prototype.helpServeFile = function (req, onOK, onUnauthorized) {
+    Backend.prototype.helpServeFile = function (req, onNoContent) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1126,14 +1119,9 @@
             }
 
             switch (x.status) {
-                case 200:
-                    if (typeof (onOK) === 'function') {
-                        onOK(x);
-                    }
-                    break;
-                case 401:
-                    if (typeof (onUnauthorized) === 'function') {
-                        onUnauthorized(JSON.parse(x.responseText));
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
                     }
                     break;
                 default:
@@ -1143,6 +1131,41 @@
 
         var url = this.baseURL + '/help/' + encodeURIComponent(req.file) +
         '?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Markdown
+     * @param {HelpMarkdownRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.helpMarkdown = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/help/' + encodeURIComponent(req.file) +
+        '.md?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
@@ -1551,6 +1574,90 @@
         x.open("GET", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Add Message
+     * @param {AddMessageRequest} req - request parameters.
+     * @param {CommentMessageCallback} onOK
+     */
+    Backend.prototype.addMessage = function (req, onOK) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/message?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Approve Message
+     * @param {ControlApproveMessageRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlApproveMessage = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/message/approve?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
         }
 
         x.send();

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/comment"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -30,4 +31,11 @@ func (ir *ThreadRepository) CommentThreadEnsurer() uniq.Ensurer[comment.Thread] 
 
 func (ir *ThreadRepository) CommentThreadFinder() uniq.Finder[comment.Thread] {
 	return ir
+}
+
+func (ir *ThreadRepository) FindChronoMessages(ctx context.Context, hash uniq.Hash) []
+
+func (ir *ThreadRepository) FindMessages(ctx context.Context, thread comment.Thread) {
+	ir.R.Type
+	ir.SelectStmt().Where()
 }

@@ -35,11 +35,7 @@ func AddMessage(deps addMessageDeps) usecase.Interactor {
 			RelatedHash: input.RelatedHash,
 			RelatedAt:   input.RelatedAt,
 		}
-		th := input.Type + input.RelatedHash.String()
-		if input.RelatedAt != nil {
-			th += input.RelatedAt.String()
-		}
-		thread.Hash = uniq.StringHash(th)
+		thread.Hash = thread.MakeHash()
 
 		if _, err := deps.CommentThreadEnsurer().Ensure(ctx, thread, uniq.EnsureOption[comment.Thread]{
 			SkipUpdate: true,
@@ -49,10 +45,10 @@ func AddMessage(deps addMessageDeps) usecase.Interactor {
 
 		visitor := auth.VisitorFromContext(ctx)
 		message := comment.Message{}
-		message.Hash = uniq.StringHash(thread.Hash.String() + visitor.String() + input.Text)
 		message.ThreadHash = thread.Hash
 		message.VisitorHash = visitor
 		message.Text = input.Text
+		message.Hash = message.MakeHash()
 
 		*output, err = deps.CommentMessageEnsurer().Ensure(ctx, message, uniq.EnsureOption[comment.Message]{
 			SkipUpdate: true,

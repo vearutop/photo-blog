@@ -39,7 +39,7 @@
  * The Album
  * @typedef PhotoAlbum
  * @type {Object}
- * @property {String} cover_image - Cover Image. ImageHash Id of image to use as a cover.
+ * @property {String} cover_image - Cover Image. Hash of image to use as a cover.
  * @property {String} created_at - Created At. Timestamp of creation.
  * @property {String} hash - ImageHash Id. Unique hash value.
  * @property {Boolean} hidden - Hidden. Makes album invisible in the main page list.
@@ -264,6 +264,12 @@
  */
 
 /**
+ * @typedef HelpMarkdownRequest
+ * @type {Object}
+ * @property {String} file
+ */
+
+/**
  * @typedef PhotoImageSettings
  * @type {Object}
  * @property {String} description - Description. Description of an image, can contain HTML.
@@ -391,6 +397,51 @@
  */
 
 /**
+ * @typedef UsecaseAddMessageRequest
+ * @type {Object}
+ * @property {String} name
+ * @property {?String} related_at
+ * @property {String} related_hash
+ * @property {String} text
+ * @property {('image'|'album')} type
+ */
+
+/**
+ * @typedef AddMessageRequest
+ * @type {Object}
+ * @property {UsecaseAddMessageRequest} body
+ */
+
+/**
+ * @typedef CommentMessage
+ * @type {Object}
+ * @property {Boolean} approved
+ * @property {String} created_at - Created At. Timestamp of creation.
+ * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {String} text
+ * @property {String} thread_hash
+ * @property {String} visitor_hash
+ */
+
+/**
+ * @callback CommentMessageCallback
+ * @param {CommentMessage} value
+ */
+
+/**
+ * @typedef ControlApproveMessageInput
+ * @type {Object}
+ * @property {Boolean} approve_visitor
+ * @property {String} message_hash
+ */
+
+/**
+ * @typedef ControlApproveMessageRequest
+ * @type {Object}
+ * @property {ControlApproveMessageInput} body
+ */
+
+/**
  * @typedef DownloadImagesPoiGpxRequest
  * @type {Object}
  * @property {String} name
@@ -444,9 +495,12 @@
 /**
  * @typedef SettingsPrivacy
  * @type {Object}
+ * @property {Boolean} hide_batch_download - Do not allow downloading album images in a ZIP archive.
  * @property {Boolean} hide_geo_position - Disables location information of images.
- * @property {Boolean} hide_original - Only shows reduced size images with stripped meta tags.
+ * @property {Boolean} hide_login_button - To not confuse guests, you can remove login link from the bottom of home page and bookmark its destination ('/login') instead.
+ * @property {Boolean} hide_original - Only shows reduced size images with stripped meta tags (except for 360 panoramas).
  * @property {Boolean} hide_tech_details - Disables a button that shows EXIF data.
+ * @property {Boolean} public_help - Disables auth requirement for '/help'.
  */
 
 /**

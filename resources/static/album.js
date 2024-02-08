@@ -57,6 +57,36 @@ function removeImage(albumName, imageHash) {
     })
 }
 
+function addImageComment(hash, btn) {
+    var f = $(btn).parent()
+    var text = f.find("textarea").val()
+    var name = f.find("input").val()
+
+    var b = new Backend('');
+    b.addMessage({
+        body: {
+            type: 'image',
+            text: text,
+            name: name,
+            related_hash: hash,
+        },
+    }, function (d) {
+
+    })
+
+
+    console.log(hash, btn, text, name)
+}
+
+function showImageComments(hash) {
+    lightbox.pswp.close()
+    $('#img' + hash).after('<div class="chrono-text pure-g"><div class="text pure-u-3-5 some-text"><div data-fence="0" lang="en">\n' +
+        '<!--img src="/thumb/1200w/' + hash + '.jpg" /-->\n' +
+        '<p>Comments</p>' +
+        '</div></div></div>')
+    console.log(hash)
+}
+
 function toggleFullscreen() {
     if (document.fullscreenElement) {
         document.exitFullscreen()
@@ -253,6 +283,8 @@ function loadAlbum(params) {
                     img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'
                 }
 
+                img_description += '<a class="comment-icon ctrl-btn" rel="modal:open" title="Comments" href="#comments-' + img.hash+'" onclick="lightbox.pswp.close();return false"></a>'
+
                 if (typeof img.exif !== "undefined") {
                     var ts = Date.parse(img.exif.digitized)
 
@@ -298,6 +330,16 @@ function loadAlbum(params) {
                     img_description += '</table></div>';
                 }
 
+                var comments = '<div style="display: none" class="modal" id="comments-' + img.hash + '">' +
+                    '<img style="width: 100%" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x"/>' +
+                    '<p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p>' +
+                    '<form class="pure-form">' +
+                    '<input type="text" name="name" placeholder="Name" onclick="this.focus()"/><br>' +
+                    '<textarea onclick="this.focus()"></textarea><br>' +
+                    '<button class="btn btn-primary" onclick="addImageComment(\'' + img.hash + '\', this);return false">Add Comment</button>' +
+                    '</form>' +
+                    '</div>'
+
                 if (img.description) {
                     img_description += '<div>' + img.description + '</div>';
                 }
@@ -320,6 +362,8 @@ function loadAlbum(params) {
                 if (typeof img.blur_hash !== "undefined") {
                     blurHash(img.blur_hash, document.getElementById('bh-' + img.hash))
                 }
+                $(params.gallery).append(comments)
+
             } else {
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
@@ -366,6 +410,8 @@ function loadAlbum(params) {
             pswpModule: PhotoSwipe,
             bgOpacity: 1.0,
         });
+
+        window.lightbox = lightbox;
 
         new PhotoSwipeDynamicCaption(lightbox, {
             mobileLayoutBreakpoint: 700,
