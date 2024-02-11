@@ -7,6 +7,7 @@ import (
 	"html/template"
 
 	"github.com/docker/go-units"
+	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -21,6 +22,8 @@ type showAlbumAtImageInput struct {
 }
 
 type showAlbumInput struct {
+	request.EmbeddedSetter
+
 	Name    string `path:"name"`
 	imgHash uniq.Hash
 }
@@ -52,6 +55,8 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		Description template.HTML
 		OGTitle     string
+		OGPageURL   string
+		OGSiteName  string
 		Name        string
 		CoverImage  string
 		NonAdmin    bool
@@ -91,6 +96,8 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d.Description = template.HTML(album.Settings.Description)
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
+		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
+		d.OGSiteName = deps.Settings().Appearance().SiteTitle
 		d.Name = album.Name
 		d.NonAdmin = !auth.IsAdmin(ctx)
 		d.Public = album.Public

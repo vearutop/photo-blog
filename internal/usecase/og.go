@@ -38,10 +38,13 @@ func OG(deps ogDeps) usecase.Interactor {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Bla bla</title>
+    <title>OpenGraph Echo</title>
 
     <meta property="og:title" content="User-Agent: ` + html.EscapeString(input.Request().Header.Get("User-Agent")) + `"/>
-    <meta property="og:description" content="URL: ` + html.EscapeString(input.Request().RequestURI) + `, IP: ` + input.Request().Header.Get("X-Forwarded-For") + `"/>
+    <meta property="og:description" content="URL: ` + html.EscapeString(input.Request().RequestURI) +
+			`, IP: ` + input.Request().Header.Get("X-Forwarded-For") +
+			`, Accept-Language: ` + input.Request().Header.Get("Accept-Language") +
+			`"/>
     <meta property="og:type" content="website"/>
 </head>
 
