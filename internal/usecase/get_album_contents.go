@@ -117,12 +117,12 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			return out, err
 		}
 
-		for _, h := range album.Settings.GpxTracksHashes {
-			gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, h)
-			if err != nil {
-				return out, err
-			}
+		gpxs, err := deps.PhotoGpxFinder().FindByHashes(ctx, album.Settings.GpxTracksHashes...)
+		if err != nil && !errors.Is(err, status.NotFound) {
+			return out, err
+		}
 
+		for _, gpx := range gpxs {
 			s := gpx.Settings.Val
 
 			if s.Name == "" {
@@ -130,7 +130,7 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			}
 
 			out.Tracks = append(out.Tracks, track{
-				Hash:        h,
+				Hash:        gpx.Hash,
 				GpxSettings: s,
 			})
 		}
@@ -159,104 +159,45 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 
 	out.Album = album
 	out.Images = make([]Image, 0, len(images))
-	for _, i := range images {
-		img := Image{
-			Name:        path.Base(i.Path),
-			Hash:        i.Hash.String(),
-			Width:       i.Width,
-			Height:      i.Height,
-			BlurHash:    i.BlurHash,
-			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description),
-			size:        i.Size,
-		}
 
+	imageHashes := make([]uniq.Hash, 0, len(images))
+	for _, i := range images {
 		// Skip unprocessed images.
 		if i.BlurHash == "" {
 			continue
 		}
 
-		if !preview {
-			if !privacy.HideGeoPosition {
-				gps, err := deps.PhotoGpsFinder().FindByHash(ctx, i.Hash)
-				if err == nil {
-					img.Gps = &gps
-				} else if !errors.Is(err, status.NotFound) {
-					deps.CtxdLogger().Warn(ctx, "failed to find gps",
-						"hash", i.Hash.String(), "error", err.Error())
-				}
+		imageHashes = append(imageHashes, i.Hash)
+	}
+
+	gpsData := map[uniq.Hash]photo.Gps{}
+	exifData := map[uniq.Hash]photo.Exif{}
+
+	if !preview {
+		if !privacy.HideGeoPosition {
+			gpss, err := deps.PhotoGpsFinder().FindByHashes(ctx, imageHashes...)
+			if err != nil && !errors.Is(err, status.NotFound) {
+				return out, err
 			}
 
-			exif, err := deps.PhotoExifFinder().FindByHash(ctx, i.Hash)
-			if err == nil {
-				if !privacy.HideTechDetails {
-					img.Exif = &exif
-				}
-
-				img.Is360Pano = exif.ProjectionType == "equirectangular"
-			} else if !errors.Is(err, status.NotFound) {
-				deps.CtxdLogger().Warn(ctx, "failed to find exif",
-					"hash", i.Hash.String(), "error", err.Error())
+			for _, gps := range gpss {
+				gpsData[gps.Hash] = gps
 			}
 		}
 
-		out.Images = append(out.Images, img)
-	}
-
-	if album.Settings.NewestFirst {
-		reverse(out.Images)
-	}
-
-	return out, nil
-}
-
-func getAlbumContents2(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
-	albumHash := photo.AlbumHash(name)
-
-	album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
-	if err != nil {
-		return out, err
-	}
-
-	var images []photo.Image
-
-	if preview {
-		images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)
-		if err != nil {
-			return out, err
-		}
-	} else {
-		images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
-		if err != nil {
-			return out, err
-		}
-	}
-
-	for _, h := range album.Settings.GpxTracksHashes {
-		gpx, err := deps.PhotoGpxFinder().FindByHash(ctx, h)
-		if err != nil {
+		exifs, err := deps.PhotoExifFinder().FindByHashes(ctx, imageHashes...)
+		if err != nil && !errors.Is(err, status.NotFound) {
 			return out, err
 		}
 
-		s := gpx.Settings.Val
-
-		if s.Name == "" {
-			s.Name = path.Base(gpx.Path)
+		for _, exif := range exifs {
+			exifData[exif.Hash] = exif
 		}
-
-		out.Tracks = append(out.Tracks, track{
-			Hash:        h,
-			GpxSettings: s,
-		})
 	}
-
-	out.Album = album
-	out.Images = make([]Image, 0, len(images))
-	hashes := make([]uniq.Hash, 0, len(images))
-	imgByHash := make(map[uniq.Hash]Image, len(images))
 
 	for _, i := range images {
 		// Skip unprocessed images.
-		if i.Width == 0 {
+		if i.BlurHash == "" {
 			continue
 		}
 
@@ -270,38 +211,23 @@ func getAlbumContents2(ctx context.Context, deps getAlbumImagesDeps, name string
 			size:        i.Size,
 		}
 
-		hashes = append(hashes, i.Hash)
-		imgByHash[i.Hash] = img
-	}
-
-	if !preview {
-		gps, err := deps.PhotoGpsFinder().FindByHashes(ctx, hashes...)
-		if err == nil {
-			for _, v := range gps {
-				img := imgByHash[v.Hash]
-				img.Gps = &v
-				imgByHash[v.Hash] = img
+		if !preview {
+			if !privacy.HideGeoPosition {
+				if gps, ok := gpsData[i.Hash]; ok {
+					img.Gps = &gps
+				}
 			}
-		} else if !errors.Is(err, status.NotFound) {
-			deps.CtxdLogger().Warn(ctx, "failed to find gps",
-				"hashes", hashes, "error", err.Error())
+
+			if exif, ok := exifData[i.Hash]; ok {
+				if !privacy.HideTechDetails {
+					img.Exif = &exif
+				}
+
+				img.Is360Pano = exif.ProjectionType == "equirectangular"
+			}
 		}
 
-		exif, err := deps.PhotoExifFinder().FindByHashes(ctx, hashes...)
-		if err == nil {
-			for _, v := range exif {
-				img := imgByHash[v.Hash]
-				img.Exif = &v
-				imgByHash[v.Hash] = img
-			}
-		} else if !errors.Is(err, status.NotFound) {
-			deps.CtxdLogger().Warn(ctx, "failed to find exif",
-				"hashes", hashes, "error", err.Error())
-		}
-	}
-
-	for _, h := range hashes {
-		out.Images = append(out.Images, imgByHash[h])
+		out.Images = append(out.Images, img)
 	}
 
 	if album.Settings.NewestFirst {
