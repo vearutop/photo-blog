@@ -109,6 +109,14 @@ function exitFullscreen() {
  * @property {String} baseUrl - base address to set on image close
  */
 
+function collectStats(params) {
+    params.sw = screen.width
+    params.sh = screen.height
+    params.px = window.devicePixelRatio
+    params.v = window.visitorData.id
+
+    $.get("/stats", params)
+}
 
 /**
  *
@@ -216,6 +224,8 @@ function loadAlbum(params) {
 
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
+                a.attr("data-hash", img.hash)
+
                 if (i < 4) {
                     a.attr("class", "image img" + i)
                 } else {
@@ -247,7 +257,7 @@ function loadAlbum(params) {
                 if (result.album.name !== featured) {
                     img_description += '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\'' + img.hash + '\');return false"></a>'
                 }
-                img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="return removeImage(\'' + params.albumName + '\',\'' + img.hash + '\')"></a>'
+                img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\');return false"></a>'
 
                 if (fullscreenSupported) {
                     img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'
@@ -370,6 +380,35 @@ function loadAlbum(params) {
         new PhotoSwipeDynamicCaption(lightbox, {
             mobileLayoutBreakpoint: 700,
             type: 'aside',
+        });
+
+        var currentImage = {
+            album: params.albumName
+        }
+
+        lightbox.on('contentResize', ({content, width, height}) => {
+            if (width > currentImage.w) {
+                currentImage.mw = width
+                currentImage.mh = height
+            }
+        });
+        lightbox.on('contentActivate', ({content}) => {
+            if (currentImage.img) {
+                currentImage.time = Date.now() - currentImage.time;
+                collectStats(currentImage);
+            }
+
+            currentImage.img = $(content.data.element).data('hash')
+            currentImage.time = Date.now();
+            currentImage.w = content.displayedImageWidth
+            currentImage.h = content.displayedImageHeight
+        });
+
+        lightbox.on('close', () => {
+            if (currentImage.img) {
+                currentImage.time = Date.now() - currentImage.time;
+                collectStats(currentImage);
+            }
         });
 
         lightbox.init();

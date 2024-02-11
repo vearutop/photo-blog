@@ -21,8 +21,14 @@
     <script src="/static/album.js"></script>
 
     <meta property="og:title" content="{{.OGTitle}}"/>
-    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="{{.OGSiteName}}"/>
+    <meta property="og:url" content="{{.OGPageURL}}"/>
+    <meta property="og:type" content="article"/>
     <meta property="og:image" content="{{.CoverImage}}"/>
+
+    {{if not .Public}}
+    <meta name="robots" content="noindex">
+    {{end}}
 
     <link rel="stylesheet" href="/static/leaflet/leaflet-1.9.3.css" />
     <script src="/static/leaflet/leaflet-1.9.3.js"></script>
@@ -73,6 +79,7 @@
 
 <script>
     featured = {{.Featured}}
+    collectStats({album: '{{.Name}}'});
     loadAlbum({
         albumName: '{{.Name}}',
         mapTiles: '{{.MapTiles}}',
