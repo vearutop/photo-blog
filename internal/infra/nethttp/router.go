@@ -115,17 +115,35 @@ func NewRouter(deps *service.Locator) http.Handler {
 				matcher, languages := deps.Settings().Appearance().LanguageMatcher()
 
 				if matcher != nil {
-					lang, _ := r.Cookie("lang")
+					queryLang := r.URL.Query().Get("lang")
+					cookieLang := ""
+					if c, err := r.Cookie("lang"); err == nil {
+						cookieLang = c.Value
+					}
+
 					accept := r.Header.Get("Accept-Language")
-					tag, i := language.MatchStrings(matcher, lang.String(), accept)
+					tag, i := language.MatchStrings(matcher, queryLang, cookieLang, accept)
+					lang := languages[i]
+
 					deps.CtxdLogger().Debug(context.Background(), "matching language",
 						"lang", tag.String(),
 						"idx", i,
-						"cookie", lang,
+						"cookie", cookieLang,
+						"query", queryLang,
 						"accept", accept,
+						"lang", lang,
 					)
 
-					r = r.WithContext(txt.WithLanguage(r.Context(), languages[i]))
+					if queryLang != "" {
+						c := http.Cookie{
+							Name: "lang", Value: queryLang,
+							SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+						} // Around 3 years.
+
+						http.SetCookie(w, &c)
+					}
+
+					r = r.WithContext(txt.WithLanguage(r.Context(), lang))
 				}
 
 				handler.ServeHTTP(w, r)
@@ -152,8 +170,13 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Post("/message", usecase.AddMessage(deps))
 
 		s.Get("/site/{file}", usecase.ServeSiteFile(deps))
-		s.Get("/favicon.ico", usecase.ServeFavicon(deps))
+		s.Get("/stats", usecase.CollectStats(deps))
 	})
+
+	s.Get("/favicon.ico", usecase.ServeFavicon(deps))
+	s.Method(http.MethodGet, "/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("User-agent: *\nAllow: /"))
+	}))
 
 	// Redirecting `/my-album` to `/my-album/`.
 	s.Method(http.MethodGet, "/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
