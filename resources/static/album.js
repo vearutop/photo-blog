@@ -295,6 +295,13 @@ function loadAlbum(params) {
                     exif = {"file_name": img.name}
                 }
 
+                if (typeof img.gps != 'undefined') {
+                    exif["location"] =
+                    '<a class="google-maps" href="https://maps.google.com/maps?q=loc:' +
+                        img.gps.latitude.toFixed(8) + ',' + img.gps.longitude.toFixed(8) + '">google maps</a>' +
+                    ' <a class="apple-maps" href="https://maps.apple.com/?ll=' +
+                    img.gps.latitude.toFixed(8) + ',' + img.gps.longitude.toFixed(8) + '">apple maps</a>'
+                }
 
                 var exh = '<table>'
                 for (var k in exif) {
