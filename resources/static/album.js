@@ -186,6 +186,8 @@ function loadAlbum(params) {
             fullscreenSupported = true
         }
 
+        var exifHtml = {}
+
         for (var i = 0; i < result.images.length; i++) {
             var img = result.images[i]
 
@@ -259,12 +261,14 @@ function loadAlbum(params) {
                 }
                 img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\');return false"></a>'
 
-                if (fullscreenSupported) {
-                    img_description += '<a href="#" class="screen-icon ctrl-btn" title="Toggle full screen" onclick="toggleFullscreen();return false;"></a>'
-                }
-
+                var exif
                 if (typeof img.exif !== "undefined") {
                     var ts = Date.parse(img.exif.digitized)
+
+                    exif = img.exif
+
+                    exif["file_name"] = img.name
+
 
                     if (result.album.settings.texts) {
                         for (var ti = 0; ti < result.album.settings.texts.length; ti++) {
@@ -286,27 +290,29 @@ function loadAlbum(params) {
 
                     prevImgTime = ts
 
-                    img_description += '<a href="#" class="camera-icon ctrl-btn" title="Technical details" onclick="$(this).next().toggle();return false;"></a><div class="exif" style="display: none"><table>';
 
-                    var exif = img.exif
-
-                    exif["file_name"] = img.name
-
-                    for (var k in exif) {
-                        if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
-                            continue;
-                        }
-
-                        var v = exif[k]
-
-                        if (!v) {
-                            continue;
-                        }
-
-                        img_description += "<tr><th>" + k + "</th><td>" + v + "</td>";
-                    }
-                    img_description += '</table></div>';
+                } else {
+                    exif = {"file_name": img.name}
                 }
+
+
+                var exh = '<table>'
+                for (var k in exif) {
+                    if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
+                        continue;
+                    }
+
+                    var v = exif[k]
+
+                    if (!v) {
+                        continue;
+                    }
+
+                    exh += "<tr><th>" + k + "</th><td>" + v + "</td>";
+                }
+                exh += '</table>';
+
+                exifHtml[img.hash] = exh
 
                 if (img.description) {
                     img_description += '<div>' + img.description + '</div>';
@@ -377,6 +383,68 @@ function loadAlbum(params) {
             bgOpacity: 1.0,
         });
 
+
+        lightbox.on('uiRegister', function () {
+            lightbox.pswp.ui.registerElement({
+                name: 'tech-details-button',
+                ariaLabel: 'Technical details',
+                order: 7,
+                isButton: true,
+                html: '<i title="Technical details" class="camera-icon ctrl-btn"></i>',
+                onClick: (event, el) => {
+                    var hash = $(pswp.currSlide.data.element).data('hash')
+                    var exh = exifHtml[hash]
+
+                    $('#exif-container').html(exh).toggle();
+
+                    console.log(pswp.currSlide, hash, exh)
+                }
+            });
+        });
+
+        if (fullscreenSupported) {
+            lightbox.on('uiRegister', function () {
+                lightbox.pswp.ui.registerElement({
+                    name: 'fullscreen-button',
+                    ariaLabel: 'Toggle full screen',
+                    order: 8,
+                    isButton: true,
+                    html: '<i title="Toggle full screen" class="screen-icon ctrl-btn"></i>',
+                    onClick: (event, el) => {
+                        toggleFullscreen()
+                    }
+                });
+            });
+        }
+
+        // Download image button.
+        lightbox.on('uiRegister', function () {
+            lightbox.pswp.ui.registerElement({
+                name: 'download-button',
+                order: 9,
+                isButton: true,
+                tagName: 'a',
+
+                // SVG with outline
+                html: {
+                    isCustomSVG: true,
+                    inner: '<path d="M20.5 14.3 17.1 18V10h-2.2v7.9l-3.4-3.6L10 16l6 6.1 6-6.1ZM23 23H9v2h14Z" id="pswp__icn-download"/>',
+                    outlineID: 'pswp__icn-download'
+                },
+
+                onInit: (el, pswp) => {
+                    el.setAttribute('download', '');
+                    el.setAttribute('target', '_blank');
+                    el.setAttribute('rel', 'noopener');
+
+                    pswp.on('change', () => {
+                        console.log('change');
+                        el.href = pswp.currSlide.data.src;
+                    });
+                }
+            });
+        });
+
         new PhotoSwipeDynamicCaption(lightbox, {
             mobileLayoutBreakpoint: 700,
             type: 'aside',
@@ -393,6 +461,8 @@ function loadAlbum(params) {
             }
         });
         lightbox.on('contentActivate', ({content}) => {
+            $('#exif-container').hide();
+
             if (currentImage.img) {
                 currentImage.time = Date.now() - currentImage.time;
                 collectStats(currentImage);
@@ -405,6 +475,7 @@ function loadAlbum(params) {
         });
 
         lightbox.on('close', () => {
+            $('#exif-container').hide();
             if (currentImage.img) {
                 currentImage.time = Date.now() - currentImage.time;
                 collectStats(currentImage);
@@ -542,8 +613,17 @@ function loadAlbum(params) {
                         res += feat.properties.desc + "<br />"
                     }
 
+                    if (feat.properties.name) {
+                        res += feat.properties.name + "<br />"
+                    }
+
                     if (feat.geometry.type === "Point") {
+
                         res += feat.geometry.coordinates[1].toFixed(8) + ", " + feat.geometry.coordinates[0].toFixed(8)
+                        res += '<br /><a class="google-maps" href="https://maps.google.com/maps?q=loc:' +
+                            feat.geometry.coordinates[1].toFixed(8) + ',' + feat.geometry.coordinates[0].toFixed(8) + '">google maps</a>'
+                        res += '<br /><a class="apple-maps" href="https://maps.apple.com/?ll=' +
+                            feat.geometry.coordinates[1].toFixed(8) + ',' + feat.geometry.coordinates[0].toFixed(8) + '">apple maps</a>'
 
                         popup.setContent(res);
                         return
@@ -554,50 +634,56 @@ function loadAlbum(params) {
                     var lat = popup.getLatLng().lat
                     var lon = popup.getLatLng().lng
 
-                    var shortest = null
-                    var ptIdx = []
-                    for (var i = 0; i < points.length; i++) {
-                        var pt = points[i]
+                    res += lat.toFixed(8) + ", " + lon.toFixed(8)
 
-                        if (pt instanceof Array) {
-                            for (var j = 0; j < pt.length; j++) {
-                                var pt2 = pt[j]
+                    if (typeof e.layer.feature.properties.coordTimes !== 'undefined') {
+                        var shortest = null
+                        var ptIdx = []
+                        for (var i = 0; i < points.length; i++) {
+                            var pt = points[i]
 
-                                var dist = distance(lat, lon, pt2.lat, pt2.lng)
+                            if (pt instanceof Array) {
+                                for (var j = 0; j < pt.length; j++) {
+                                    var pt2 = pt[j]
 
-                                if (shortest === null || shortest > dist) {
-                                    shortest = dist
-                                    ptIdx = [i, j]
+                                    var dist = distance(lat, lon, pt2.lat, pt2.lng)
+
+                                    if (shortest === null || shortest > dist) {
+                                        shortest = dist
+                                        ptIdx = [i, j]
+                                    }
                                 }
+
+                                continue
                             }
 
-                            continue
+                            var dist = distance(lat, lon, pt.lat, pt.lng)
+
+                            if (shortest === null || shortest > dist) {
+                                shortest = dist
+                                ptIdx = [i]
+                            }
                         }
 
-                        var dist = distance(lat, lon, pt.lat, pt.lng)
+                        var ts
 
-                        if (shortest === null || shortest > dist) {
-                            shortest = dist
-                            ptIdx = [i]
+                        if (ptIdx.length == 1) {
+                            ts = e.layer.feature.properties.coordTimes[ptIdx[0]]
                         }
+
+                        if (ptIdx.length == 2) {
+                            ts = e.layer.feature.properties.coordTimes[ptIdx[0]][ptIdx[1]]
+                        }
+
+                        res +=
+                            '<br />' + ts + " (" + Math.round(shortest) + "m away)"
                     }
 
-                    if (typeof e.layer.feature.properties.coordTimes === 'undefined') {
-                        popup.setContent(res);
-                    }
+                    res += '<br /><a class="google-maps" href="https://maps.google.com/maps?q=loc:' +
+                        lat.toFixed(8) + ',' + lon.toFixed(8) + '">google maps</a>'
+                    res += '<br /><a class="apple-maps" href="https://maps.apple.com/?ll=' +
+                        lat.toFixed(8) + ',' + lon.toFixed(8) + '">apple maps</a>'
 
-                    var ts
-
-                    if (ptIdx.length == 1) {
-                        ts = e.layer.feature.properties.coordTimes[ptIdx[0]]
-                    }
-
-                    if (ptIdx.length == 2) {
-                        ts = e.layer.feature.properties.coordTimes[ptIdx[0]][ptIdx[1]]
-                    }
-
-                    res += lat.toFixed(8) + ", " + lon.toFixed(8) + "<br />" +
-                        ts + "<br /> (dist to nearest timestamp " + Math.round(shortest) + " meters)"
                     popup.setContent(res);
                 }
             }

@@ -44,11 +44,13 @@ body.dark-mode {
 }
 
 .exif {
-    position: absolute;
-    right: 10px;
+    position: fixed;
+    right: 20px;
     background: #222;
     padding: 10px;
     width: fit-content;
+    z-index: 1000000;
+    top: 50px;
 }
 
 .pswp__dynamic-caption--mobile .exif {
@@ -62,10 +64,21 @@ body.dark-mode {
     width: 30px;
     height: 30px;
     display: inline-block;
-    background-color: #aaa;
-    border-radius: 20%;
+    /*background-color: #aaa;
+    border-radius: 20%;*/
     margin: 5px;
     vertical-align: middle;
+
+    filter: invert(100%);
+    opacity: 0.7;
+}
+
+.ctrl-btn path {
+    fill: none;
+    stroke: #646464;
+    stroke-width: 1px;
+    stroke-dasharray: 2,2;
+    stroke-linejoin: round;
 }
 
 a.ctrl-btn:active {
@@ -73,7 +86,8 @@ a.ctrl-btn:active {
 }
 
 a.ctrl-btn:hover {
-    background-color: #fff;
+    opacity: 1;
+    /*background-color: #fff;*/
 }
 
 .edit-icon {
@@ -184,6 +198,24 @@ a.ctrl-btn:hover {
     margin-top: 40px;
     display: none;
     grid-column: 1 / -1;
+}
+.google-maps {
+    background-image: url('/static/google_maps.svg');
+    background-size: 15px;
+    background-repeat: no-repeat;
+    padding-left: 24px;
+    padding-bottom: 6px;
+    display: inline-block;
+    height: 16px;
+    padding-top: 0;
+}
+
+.apple-maps {
+    background-image: url('/static/apple_maps.svg');
+    background-size: 20px;
+    background-repeat: no-repeat;
+    padding-left: 24px;
+    padding-bottom: 6px;
 }
 
 .dark-mode a:link {
