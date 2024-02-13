@@ -60,7 +60,9 @@ function removeImage(albumName, imageHash) {
 function toggleFullscreen() {
     if (document.fullscreenElement) {
         document.exitFullscreen()
+        $('html body').css("overflow", "auto")
     } else {
+        $('html body').css("overflow", "hidden")
         $('html')[0].requestFullscreen()
     }
 }
@@ -68,6 +70,7 @@ function toggleFullscreen() {
 function exitFullscreen() {
     if (document.fullscreenElement) {
         document.exitFullscreen()
+        $('html body').css("overflow", "auto")
     }
 }
 

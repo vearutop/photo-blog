@@ -51,6 +51,7 @@ body.dark-mode {
     width: fit-content;
     z-index: 1000000;
     top: 50px;
+    display: none;
 }
 
 .pswp__dynamic-caption--mobile .exif {
@@ -71,6 +72,17 @@ body.dark-mode {
 
     filter: invert(100%);
     opacity: 0.7;
+}
+
+h1 .ctrl-btn {
+    margin-top: -2px;
+}
+
+.pswp__top-bar .ctrl-btn {
+    height: 20px;
+    width: 20px;
+    background-size: 20px;
+    opacity: 1;
 }
 
 .ctrl-btn path {
@@ -158,7 +170,7 @@ a.ctrl-btn:hover {
 
 .screen-icon {
     /* https://www.iconfinder.com/icons/211777/monitor_icon */
-    background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjwhRE9DVFlQRSBzdmcgIFBVQkxJQyAnLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4nICAnaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkJz48c3ZnIGhlaWdodD0iNTEycHgiIGlkPSJMYXllcl8xIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1MTIgNTEyOyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgd2lkdGg9IjUxMnB4IiB4bWw6c3BhY2U9InByZXNlcnZlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48cGF0aCBkPSJNNDk2LDM4NFY5NkgxNnYyODhoMTc1djE2aC02NHYxNmgyNTd2LTE2aC02NHYtMTZINDk2eiBNMzIsMTEyaDQ0OHYyNTZIMzJWMTEyeiIvPjxnPjxyZWN0IGhlaWdodD0iMjI0IiB3aWR0aD0iNDE2IiB4PSI0OCIgeT0iMTI4Ii8+PC9nPjwvc3ZnPg==');
+    background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjwhRE9DVFlQRSBzdmcgIFBVQkxJQyAnLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4nICAnaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkJz48c3ZnIGhlaWdodD0iMzJweCIgaWQ9IkxheWVyXzEiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMyIDMyOyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIzMnB4IiB4bWw6c3BhY2U9InByZXNlcnZlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48cGF0aCBkPSJNMjgsMmgtNmMtMS4xMDQsMC0yLDAuODk2LTIsMnMwLjg5NiwyLDIsMmgxLjJsLTQuNiw0LjYwMUMxOC4yOCwxMC45MjEsMTgsMTEuMzQ0LDE4LDEyYzAsMS4wOTQsMC44NTksMiwyLDIgIGMwLjY0MSwwLDEuMDQ5LTAuMjQ4LDEuNC0wLjZMMjYsOC44VjEwYzAsMS4xMDQsMC44OTYsMiwyLDJzMi0wLjg5NiwyLTJWNEMzMCwyLjg5NiwyOS4xMDQsMiwyOCwyeiBNMTIsMTggIGMtMC42NDEsMC0xLjA0OSwwLjI0OC0xLjQsMC42TDYsMjMuMlYyMmMwLTEuMTA0LTAuODk2LTItMi0ycy0yLDAuODk2LTIsMnY2YzAsMS4xMDQsMC44OTYsMiwyLDJoNmMxLjEwNCwwLDItMC44OTYsMi0yICBzLTAuODk2LTItMi0ySDguOGw0LjYtNC42MDFDMTMuNzIsMjEuMDc5LDE0LDIwLjY1NiwxNCwyMEMxNCwxOC45MDYsMTMuMTQxLDE4LDEyLDE4eiIvPjwvc3ZnPg==');
 }
 
 .star-icon {
