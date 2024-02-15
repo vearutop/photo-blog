@@ -109,6 +109,14 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings()))
 
+		s.Use(func(handler http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Accept-Ch", "Downlink, Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version")
+
+				handler.ServeHTTP(w, r)
+			})
+		})
+
 		// Supported content language matching.
 		s.Use(func(handler http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/bool64/ctxd"
@@ -83,13 +84,19 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 			}
 
 			if logger != nil && visitors.AccessLog {
+				h := r.Header
 				logger.Important(r.Context(), "access",
 					"new_visitor", isNew,
 					"host", r.Host,
 					"url", r.URL.String(),
-					"user_agent", r.Header.Get("User-Agent"),
-					"referer", r.Header.Get("Referer"),
-					"forwarded_for", r.Header.Get("X-Forwarded-For"),
+					"user_agent", h.Get("User-Agent"),
+					"device", strings.TrimSpace(
+						strings.Trim(h.Get("Sec-Ch-Ua-Model"), `"`)+" "+
+							strings.Trim(h.Get("Sec-Ch-Ua-Platform"), `"`)+" "+
+							strings.Trim(h.Get("Sec-Ch-Ua-Platform-Version"), `"`),
+					),
+					"referer", h.Get("Referer"),
+					"forwarded_for", h.Get("X-Forwarded-For"),
 				)
 			}
 
