@@ -9,6 +9,7 @@
      *
      * @type {{
      *   id: string,
+     *   lowRes: boolean,
      * }}
      */
     var visitorData= JSON.parse(localStorage.getItem("visitorData"))
@@ -32,3 +33,11 @@
 
     window.visitorData = visitorData;
 })()
+
+/**
+ * @param v {Boolean}
+ */
+function setLowRes(v) {
+    window.visitorData.lowRes = v
+    localStorage.setItem("visitorData", JSON.stringify(window.visitorData))
+}

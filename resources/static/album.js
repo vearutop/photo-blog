@@ -63,7 +63,14 @@ function toggleFullscreen() {
         $('html body').css("overflow", "auto")
     } else {
         $('html body').css("overflow", "hidden")
-        $('html')[0].requestFullscreen()
+        var el = $('html')[0]
+        el.requestFullscreen()
+
+        el.addEventListener("fullscreenchange", function () {
+            if (!document.fullscreenElement) {
+                $('html body').css("overflow", "auto")
+            }
+        });
     }
 }
 
@@ -246,12 +253,15 @@ function loadAlbum(params) {
 
                 var srcSet = "/thumb/300w/" + img.hash + ".jpg 300w" +
                     ", /thumb/600w/" + img.hash + ".jpg 600w" +
-                    ", /thumb/1200w/" + img.hash + ".jpg 1200w" +
-                    ", /thumb/2400w/" + img.hash + ".jpg 2400w"
+                    ", /thumb/1200w/" + img.hash + ".jpg 1200w"
 
+
+                if (!visitorData.lowRes) {
+                    srcSet += ", /thumb/2400w/" + img.hash + ".jpg 2400w"
+                }
 
                 if (img.width > 0 && img.height > 0) {
-                    if (!hideOriginal) {
+                    if (!hideOriginal && !visitorData.lowRes) {
                         srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
                     }
                     a.attr("data-pswp-width", img.width)
