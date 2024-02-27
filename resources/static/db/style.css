@@ -1,0 +1,20 @@
+@keyframes spinner {
+    to {transform: rotate(360deg);}
+}
+
+.spinner:after {
+    content: '';
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    margin-left: 25px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    border-top-color: #07d;
+    animation: spinner .6s linear infinite;
+    display: inline-block;
+}
+
+#query-result td {
+    white-space: nowrap;
+}
