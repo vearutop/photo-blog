@@ -2,10 +2,10 @@ package debug
 
 import (
 	"context"
-	"github.com/swaggest/rest/response"
 	"net/http"
 
 	jsonform "github.com/swaggest/jsonform-go"
+	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )

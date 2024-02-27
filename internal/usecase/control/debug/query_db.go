@@ -3,6 +3,7 @@ package debug
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -36,7 +37,12 @@ func DBQuery(deps *service.Locator) usecase.Interactor {
 			}
 
 			for i, colName := range cols {
-				data[colName] = columns[i]
+				v := columns[i]
+				if i, ok := v.(int64); ok {
+					v = strconv.Itoa(int(i))
+				}
+
+				data[colName] = v
 			}
 
 			out = append(out, data)
