@@ -100,6 +100,10 @@ func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, 
 }
 
 func (ir *hashedRepo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]V, error) {
+	if len(hashes) == 0 {
+		return nil, nil
+	}
+
 	q := ir.SelectStmt().Where(ir.Eq(ir.hashCol(), hashes))
 
 	return augmentResErr(ir.List(ctx, q))
