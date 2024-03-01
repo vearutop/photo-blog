@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -16,9 +17,10 @@ const (
 	ThumbTable = "thumb"
 )
 
-func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer) *ThumbRepository {
+func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer, logger ctxd.Logger) *ThumbRepository {
 	return &ThumbRepository{
 		upstream: upstream,
+		logger:   logger,
 		hashedRepo: hashedRepo[photo.Thumb, *photo.Thumb]{
 			StorageOf: sqluct.Table[photo.Thumb](storage, ThumbTable),
 		},
@@ -28,6 +30,7 @@ func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer) *Th
 // ThumbRepository saves images to database.
 type ThumbRepository struct {
 	upstream photo.Thumbnailer
+	logger   ctxd.Logger
 	hashedRepo[photo.Thumb, *photo.Thumb]
 }
 

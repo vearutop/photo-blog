@@ -80,14 +80,14 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 		return
 	}
 
-	albumPath := path.Join("album", albumName)
+	albumPath := AlbumPath(albumName)
 	if err := os.MkdirAll(albumPath, 0o700); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to create album directory", "error", err)
 
 		return
 	}
 
-	filePath := albumPath + "/" + event.Upload.MetaData["filename"]
+	filePath := AlbumFilePath(albumPath, event.Upload.MetaData["filename"])
 	if err := os.Rename(event.Upload.Storage["Path"], filePath); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to move uploaded file", "error", err)
 
@@ -107,6 +107,14 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 				"filePath", filePath)
 		}
 	}
+}
+
+func AlbumPath(albumName string) string {
+	return path.Join("album", albumName)
+}
+
+func AlbumFilePath(albumPath, fileName string) string {
+	return albumPath + "/" + fileName
 }
 
 func siteUpload(ctx context.Context, deps TusHandlerDeps, event tusd.HookEvent) {

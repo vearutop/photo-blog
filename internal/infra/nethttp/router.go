@@ -21,6 +21,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
+	"github.com/vearutop/photo-blog/internal/usecase/control/debug"
 	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
 	"github.com/vearutop/photo-blog/internal/usecase/help"
 	"github.com/vearutop/photo-blog/pkg/txt"
@@ -28,7 +29,7 @@ import (
 )
 
 // NewRouter creates an instance of router filled with handlers and docs.
-func NewRouter(deps *service.Locator) http.Handler {
+func NewRouter(deps *service.Locator) *web.Service {
 	s := brick.NewBaseWebService(deps.BaseLocator)
 	deps.CtxdLogger().Important(context.Background(), "initializing router")
 
@@ -41,6 +42,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 			return nil
 		}))
+
 		s.Use(adminAuth, nethttp.HTTPBasicSecurityMiddleware(s.OpenAPICollector, "Admin", "Admin access"))
 
 		// WebDAV server configuration.
@@ -57,6 +59,7 @@ func NewRouter(deps *service.Locator) http.Handler {
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
+		s.Post("/gather/{name}", control.GatherFiles(deps))
 
 		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
 		s.Post("/album/{name}", control.AddToAlbum(deps))
@@ -96,6 +99,10 @@ func NewRouter(deps *service.Locator) http.Handler {
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
 		s.Get("/login", control.Login())
+
+		s.Get("/db.html", debug.DBConsole(deps))
+		s.Post("/query-db", debug.DBQuery(deps))
+		s.Get("/query-db.csv", debug.DBQueryCSV(deps))
 	})
 
 	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))
