@@ -32,7 +32,7 @@ func DBConsole(deps dbConsoleDeps) usecase.Interactor {
 		p.AppendHTML = `
 <div style="margin: 2em">
 
-<a href="#" style="display:none;margin-bottom: 10px" id="dl-csv" class="btn btn-primary" target="_blank">Download CSV</a>
+<a href="#" style="display:none;margin-bottom: 10px" id="dl-csv" class="btn btn-primary" target="_blank">Download CSV</a> <span id="num-rows"></span>
 <table id="query-result" class="pure-table">
 
 </table>

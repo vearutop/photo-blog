@@ -69,6 +69,7 @@ function onQuerySQLSuccess(x) {
         globalSearch:true
     });
 
+    $('#num-rows').text("Rows: " + a.length)
     $('#dl-csv').attr("href", "/query-db.csv?statement="+encodeURIComponent($('#jsonform-1-elt-statement').val())).show()
 }
 
