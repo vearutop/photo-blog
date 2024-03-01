@@ -45,7 +45,7 @@ type Image struct {
 	Exif        *photo.Exif `json:"exif,omitempty"`
 	Description string      `json:"description,omitempty"`
 	Is360Pano   bool        `json:"is_360_pano,omitempty"`
-	size        int64
+	Size        int64       `json:"size,omitempty"`
 }
 
 type track struct {
@@ -87,36 +87,55 @@ func reverse[S ~[]E, E any](s S) {
 func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
 	albumHash := photo.AlbumHash(name)
 
-	album, err := deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
+	var (
+		album   photo.Album
+		images  []photo.Image
+		privacy settings.Privacy
+		isAdmin = auth.IsAdmin(ctx)
+	)
+
+	switch name {
+	case photo.Orphan:
+		if !auth.IsAdmin(ctx) {
+			return out, status.PermissionDenied
+		}
+
+		album.Title = "Orphan Photos"
+		album.Name = photo.Orphan
+		images, err = deps.PhotoAlbumImageFinder().FindOrphanImages(ctx)
+	case photo.Broken:
+		if !isAdmin {
+			return out, status.PermissionDenied
+		}
+
+		album.Title = "Broken Photos"
+		album.Name = photo.Broken
+		images, err = deps.PhotoAlbumImageFinder().FindBrokenImages(ctx)
+	default:
+		album, err = deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
+		if err != nil {
+			return out, err
+		}
+		if preview {
+			album.Settings = photo.AlbumSettings{}
+			images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)
+		} else {
+			images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
+		}
+	}
+
 	if err != nil {
 		return out, err
 	}
 
-	var (
-		images  []photo.Image
-		privacy settings.Privacy
-	)
-
 	// Privacy settings are only enabled for guests.
-	if !auth.IsAdmin(ctx) {
+	if !isAdmin {
 		privacy = deps.Settings().Privacy()
 	}
 
 	out.HideOriginal = privacy.HideOriginal
 
-	if preview {
-		images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)
-		if err != nil {
-			return out, err
-		}
-
-		album.Settings = photo.AlbumSettings{}
-	} else {
-		images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
-		if err != nil {
-			return out, err
-		}
-
+	if !preview {
 		gpxs, err := deps.PhotoGpxFinder().FindByHashes(ctx, album.Settings.GpxTracksHashes...)
 		if err != nil && !errors.Is(err, status.NotFound) {
 			return out, err
@@ -170,8 +189,11 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		imageHashes = append(imageHashes, i.Hash)
 	}
 
-	gpsData := map[uniq.Hash]photo.Gps{}
-	exifData := map[uniq.Hash]photo.Exif{}
+	var (
+		gpsData  = map[uniq.Hash]photo.Gps{}
+		exifData = map[uniq.Hash]photo.Exif{}
+		imgAlbum map[uniq.Hash][]photo.Album
+	)
 
 	if !preview {
 		if !privacy.HideGeoPosition {
@@ -193,6 +215,11 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		for _, exif := range exifs {
 			exifData[exif.Hash] = exif
 		}
+
+		imgAlbum, err = deps.PhotoAlbumImageFinder().FindImageAlbums(ctx, albumHash, imageHashes...)
+		if err != nil {
+			return out, err
+		}
 	}
 
 	for _, i := range images {
@@ -208,7 +235,7 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			Height:      i.Height,
 			BlurHash:    i.BlurHash,
 			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description),
-			size:        i.Size,
+			Size:        i.Size,
 		}
 
 		if !preview {
@@ -224,6 +251,24 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 				}
 
 				img.Is360Pano = exif.ProjectionType == "equirectangular"
+			}
+
+			if albums, ok := imgAlbum[i.Hash]; ok {
+				links := ""
+
+				for _, a := range albums {
+					if !a.Public && !isAdmin {
+						continue
+					}
+
+					links += `<br/><a href="/` + a.Name + `">` + deps.TxtRenderer().MustRenderLang(ctx, a.Title, func(o *txt.RenderOptions) {
+						o.StripTags = true
+					}) + `</a>`
+				}
+
+				if links != "" {
+					img.Description += "Albums:" + links
+				}
 			}
 		}
 

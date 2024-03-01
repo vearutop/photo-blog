@@ -95,9 +95,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Title = album.Title
 
 		d.Description = template.HTML(album.Settings.Description)
-		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
-		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
-		d.OGSiteName = deps.Settings().Appearance().SiteTitle
 		d.Name = album.Name
 		d.NonAdmin = !auth.IsAdmin(ctx)
 		d.Public = album.Public
@@ -107,6 +104,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
+		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
+		d.OGSiteName = deps.Settings().Appearance().SiteTitle
 
 		maps := deps.Settings().Maps()
 
@@ -122,7 +122,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		if !d.NonAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
 			var totalSize int64
 			for _, img := range cont.Images {
-				totalSize += img.size
+				totalSize += img.Size
 			}
 
 			d.TotalSize = units.HumanSize(float64(totalSize))

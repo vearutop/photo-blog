@@ -2,7 +2,10 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"os"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -24,20 +27,26 @@ type AlbumImage struct {
 }
 
 func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepository {
-	ai := sqluct.Table[AlbumImage](storage, AlbumImageTable)
-	ir.Referencer.AddTableAlias(ai.R, AlbumImageTable)
-
-	return &AlbumRepository{
+	ar := &AlbumRepository{
+		st: storage,
 		hashedRepo: hashedRepo[photo.Album, *photo.Album]{
 			StorageOf: sqluct.Table[photo.Album](storage, AlbumTable),
 		},
-		ai: ai,
-		i:  ir,
 	}
+
+	ai := sqluct.Table[AlbumImage](storage, AlbumImageTable)
+	ir.Referencer.AddTableAlias(ai.R, AlbumImageTable)
+	ar.Referencer.AddTableAlias(ai.R, AlbumImageTable)
+
+	ar.ai = ai
+	ar.i = ir
+
+	return ar
 }
 
 // AlbumRepository saves images to database.
 type AlbumRepository struct {
+	st *sqluct.Storage
 	hashedRepo[photo.Album, *photo.Album]
 	ai sqluct.StorageOf[AlbumImage]
 	i  *ImageRepository
@@ -52,6 +61,81 @@ func (r *AlbumRepository) FindImages(ctx context.Context, albumHash uniq.Hash) (
 		).OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 
 	return augmentResErr(r.i.List(ctx, q))
+}
+
+func (r *AlbumRepository) FindImageAlbums(ctx context.Context, excludeAlbum uniq.Hash, imageHashes ...uniq.Hash) (map[uniq.Hash][]photo.Album, error) {
+	q := r.ai.SelectStmt().Columns(r.Cols(r.R)...).
+		InnerJoin(r.Fmt("%s ON %s = %s", r.R, &r.ai.R.AlbumHash, &r.R.Hash)).
+		Where(r.ai.Eq(&r.ai.R.ImageHash, imageHashes))
+
+	if excludeAlbum != 0 {
+		q = q.Where(squirrel.NotEq(r.ai.Eq(&r.ai.R.AlbumHash, excludeAlbum)))
+	}
+
+	type row struct {
+		photo.Album
+		AlbumImage
+	}
+
+	var rows []row
+
+	if err := r.st.Select(ctx, q, &rows); err != nil {
+		return nil, augmentErr(err)
+	}
+
+	res := make(map[uniq.Hash][]photo.Album)
+	for _, i := range rows {
+		res[i.ImageHash] = append(res[i.ImageHash], i.Album)
+	}
+
+	return res, nil
+}
+
+func (r *AlbumRepository) FindOrphanImages(ctx context.Context) ([]photo.Image, error) {
+	// SELECT image.hash, image.path FROM image
+	//                                       LEFT JOIN album_image ON image.hash = album_image.image_hash
+	//                                       LEFT JOIN album on album.hash = album_image.album_hash
+	// WHERE album.hash is NULL;
+
+	q := r.i.SelectStmt().
+		LeftJoin(
+			r.i.Fmt("%s ON %s = %s", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash),
+		).
+		Where(r.i.Fmt("%s IS NULL", &r.ai.R.AlbumHash)).
+		GroupBy(r.i.Col(&r.i.R.Hash)).
+		OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+
+	return augmentResErr(r.i.List(ctx, q))
+}
+
+func (r *AlbumRepository) FindBrokenImages(ctx context.Context) ([]photo.Image, error) {
+	q := r.i.SelectStmt().
+		OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+
+	l, err := r.i.List(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	var broken []photo.Image
+	for _, i := range l {
+		i.Settings.Description += "\n\nPath: " + i.Path
+
+		s, err := os.Lstat(i.Path)
+		if err != nil {
+			i.Settings.Description += "\n\n" + "Error: " + err.Error()
+			broken = append(broken, i)
+
+			continue
+		}
+
+		if s.Size() != i.Size {
+			i.Settings.Description += "\n\n" + fmt.Sprintf("Wrong size: %d on disk, %d in DB", s.Size(), i.Size)
+			broken = append(broken, i)
+		}
+	}
+
+	return broken, nil
 }
 
 func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]photo.Image, error) {

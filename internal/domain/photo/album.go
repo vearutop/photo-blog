@@ -10,6 +10,12 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
+// Names of special "albums".
+const (
+	Orphan = "orphan-photos"
+	Broken = "broken-photos"
+)
+
 type AlbumImageAdder interface {
 	AddImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error
 }
@@ -21,6 +27,9 @@ type AlbumImageDeleter interface {
 type AlbumImageFinder interface {
 	FindImages(ctx context.Context, albumHash uniq.Hash) ([]Image, error)
 	FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]Image, error)
+	FindOrphanImages(ctx context.Context) ([]Image, error)
+	FindBrokenImages(ctx context.Context) ([]Image, error)
+	FindImageAlbums(ctx context.Context, excludeAlbum uniq.Hash, imageHashes ...uniq.Hash) (map[uniq.Hash][]Album, error)
 }
 
 type ChronoText struct {
