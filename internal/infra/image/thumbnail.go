@@ -60,6 +60,23 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	)
 	defer finish(&err)
 
+	th.Hash = i.Hash
+
+	dir := "thumb/" + string(size) + "/" + i.Hash.String()[:1] + "/"
+	filePath := dir + i.Hash.String() + ".jpg"
+
+	// Check existing thumb file.
+	if s, err := os.Lstat(filePath); err == nil && s.Size() > 0 {
+		th.FilePath = filePath
+		i, err := loadJPEG(ctx, filePath)
+		if err != nil {
+			return th, err
+		}
+
+		th.Width, th.Height = uint(i.Bounds().Dx()), uint(i.Bounds().Dy())
+		return th, nil
+	}
+
 	r := Resizer{
 		Quality: 85,
 		Interp:  resize.Lanczos2,
@@ -83,13 +100,9 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 
 	th.Width = w
 	th.Height = h
-	th.Hash = i.Hash
 
 	if len(buf.Bytes()) > 1e5 {
-		dir := "thumb/" + string(size) + "/" + i.Hash.String()[:1] + "/"
 		if err := os.MkdirAll(dir, 0o700); err == nil {
-			filePath := dir + i.Hash.String() + ".jpg"
-
 			if err := os.WriteFile(filePath, buf.Bytes(), 0o600); err == nil {
 				th.FilePath = filePath
 			} else {
@@ -108,11 +121,6 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	elapsed := time.Since(start)
 	t.deps.CtxdLogger().Info(ctx, "thumb done", "elapsed", elapsed.String())
 
-	// TODO: add proper concurrency/rate limiter here to avoid resource overuse on limited systems.
-	if elapsed > time.Second {
-		time.Sleep(100 * time.Millisecond)
-	}
-
 	return th, nil
 }
 
@@ -126,8 +134,6 @@ func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (
 
 		return img, nil
 	}
-
-	time.Sleep(time.Second) // To reduce CPU load. TODO: remove?
 
 	img, err := loadJPEG(ctx, i.Path)
 	if err != nil {
