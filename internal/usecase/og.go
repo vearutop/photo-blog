@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/request"
@@ -17,10 +18,20 @@ type ogDeps interface {
 func OG(deps ogDeps) usecase.Interactor {
 	type req struct {
 		request.EmbeddedSetter
+		TargetURL string `query:"target_url"`
 	}
 
 	return usecase.NewInteractor(func(ctx context.Context, input req, output *response.EmbeddedSetter) error {
+		deps.CtxdLogger().Info(ctx, "og page requested",
+			"header", input.Request().Header,
+			"requestUri", input.Request().RequestURI,
+		)
+
 		rw := output.ResponseWriter()
+
+		if input.TargetURL != "" {
+			http.Redirect(rw, input.Request(), input.TargetURL, http.StatusMovedPermanently)
+		}
 
 		rw.Header().Set("Content-Type", "text/html")
 
@@ -28,11 +39,6 @@ func OG(deps ogDeps) usecase.Interactor {
 		for k, v := range input.Request().Header {
 			hd += "<p>" + k + ": " + v[0] + "</p>"
 		}
-
-		deps.CtxdLogger().Info(ctx, "og page requested",
-			"header", input.Request().Header,
-			"requestUri", input.Request().RequestURI,
-		)
 
 		_, _ = rw.Write([]byte(`
 <!DOCTYPE html>
