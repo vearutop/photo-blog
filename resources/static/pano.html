@@ -28,9 +28,24 @@
 <script src="/static/panolens.min.js"></script>
 
 <script>
-    const panorama = new PANOLENS.ImagePanorama("{{.Image}}");
-    const viewer = new PANOLENS.Viewer({output: 'console'});
-    viewer.add(panorama);
+    var viewer = new PANOLENS.Viewer({output: 'console'});
+    var isPano = true;
+    viewer.add(new PANOLENS.ImagePanorama("{{.Image}}"));
+    viewer.appendControlItem({
+        style: {
+            "background-image": 'url("data:image/png;base64,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")'
+        },
+        onTap: function (e) {
+            viewer.dispose()
+            if (isPano) {
+                isPano = false
+                viewer.add(new PANOLENS.ImageLittlePlanet("{{.Image}}"))
+            } else {
+                isPano = true
+                viewer.add(new PANOLENS.ImagePanorama("{{.Image}}"))
+            }
+        }
+    });
 </script>
 
 </body>
