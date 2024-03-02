@@ -28,9 +28,9 @@ require (
 	github.com/swaggest/form/v5 v5.1.1
 	github.com/swaggest/jsonform-go v0.2.0
 	github.com/swaggest/jsonschema-go v0.3.66
-	github.com/swaggest/openapi-go v0.2.45
+	github.com/swaggest/openapi-go v0.2.46
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.61
+	github.com/swaggest/rest v0.2.62
 	github.com/swaggest/swgui v1.8.0
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.3.1

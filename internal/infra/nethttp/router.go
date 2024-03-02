@@ -8,7 +8,7 @@ import (
 
 	"github.com/bool64/brick"
 	"github.com/go-chi/chi/v5"
-	"github.com/swaggest/openapi-go/openapi3"
+	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/rest/chirouter"
 	"github.com/swaggest/rest/nethttp"
 	"github.com/swaggest/rest/web"
@@ -37,8 +37,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s := fork(s, r)
 
 		adminAuth := auth.BasicAuth("Admin Access", deps.Settings)
-		s.Use(nethttp.AnnotateOpenAPI(s.OpenAPICollector, func(op *openapi3.Operation) error {
-			op.Tags = append(op.Tags, "Control Panel")
+		s.Use(nethttp.OpenAPIAnnotationsMiddleware(s.OpenAPICollector, func(oc openapi.OperationContext) error {
+			oc.SetTags(append(oc.Tags(), "Control Panel")...)
 
 			return nil
 		}))
