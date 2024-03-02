@@ -86,7 +86,6 @@ function exitFullscreen() {
         return
     }
 
-
     var styles = `
 @media screen and (orientation:portrait) {
     .main {
@@ -128,6 +127,47 @@ function collectStats(params) {
     $.get("/stats", params)
 }
 
+function collectThumbVisibility() {
+    var visibleSince = {}
+    var visibleFor = {}
+    var lastFlush = new Date()
+
+    var options = {threshold: 1.0};
+    var observer = new IntersectionObserver(function (entries) {
+        var now = new Date();
+        for (i in entries) {
+            var e = entries[i];
+            var h = $(e.target).data('hash')
+            if (e.isIntersecting) {
+                if (!visibleSince[h]) {
+                    visibleSince[h] = now
+                }
+            } else {
+                if (visibleSince[h]) {
+                    if (!visibleFor[h]) {
+                        visibleFor[h] = now - visibleSince[h];
+                    } else {
+                        visibleFor[h] += now - visibleSince[h];
+                    }
+
+                    delete (visibleSince[h])
+                }
+            }
+        }
+
+        if (now - lastFlush >= 5000) {
+            collectStats({"thumb": JSON.stringify(visibleFor)})
+            visibleFor = {}
+            lastFlush = now
+        }
+    }, options);
+
+
+    $("a.image").each(function (i, e) {
+        observer.observe(e);
+    })
+}
+
 /**
  *
  * @param {loadAlbumParams} params
@@ -145,7 +185,7 @@ function loadAlbum(params) {
      *
      * @return Formatted string.
      */
-    function humanFileSize(bytes, si=false, dp=1) {
+    function humanFileSize(bytes, si = false, dp = 1) {
         const thresh = si ? 1000 : 1024;
 
         if (Math.abs(bytes) < thresh) {
@@ -156,7 +196,7 @@ function loadAlbum(params) {
             ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
             : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
         let u = -1;
-        const r = 10**dp;
+        const r = 10 ** dp;
 
         do {
             bytes /= thresh;
@@ -333,14 +373,14 @@ function loadAlbum(params) {
                     prevImgTime = ts
                 }
                 exif["file_name"] = img.name
-                exif["size"] = humanFileSize(img.size) + ", " + (Math.round((img.width*img.height)/10000)/100 + " MP")
+                exif["size"] = humanFileSize(img.size) + ", " + (Math.round((img.width * img.height) / 10000) / 100 + " MP")
 
                 if (typeof img.gps != 'undefined') {
                     exif["location"] =
-                    '<a class="google-maps" href="https://maps.google.com/maps?q=loc:' +
+                        '<a class="google-maps" href="https://maps.google.com/maps?q=loc:' +
                         img.gps.latitude.toFixed(8) + ',' + img.gps.longitude.toFixed(8) + '">google maps</a>' +
-                    ' <a class="apple-maps" href="https://maps.apple.com/?ll=' +
-                    img.gps.latitude.toFixed(8) + ',' + img.gps.longitude.toFixed(8) + '">apple maps</a>'
+                        ' <a class="apple-maps" href="https://maps.apple.com/?ll=' +
+                        img.gps.latitude.toFixed(8) + ',' + img.gps.longitude.toFixed(8) + '">apple maps</a>'
                 }
 
                 var exh = '<table>'
