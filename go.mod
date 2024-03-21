@@ -11,7 +11,7 @@ require (
 	github.com/bool64/dev v0.2.34
 	github.com/bool64/sqluct v0.2.1
 	github.com/bool64/stats v0.2.2
-	github.com/bool64/zapctxd v1.1.0
+	github.com/bool64/zapctxd v1.1.1
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/corona10/goimagehash v1.1.0
@@ -27,22 +27,22 @@ require (
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/form/v5 v5.1.1
 	github.com/swaggest/jsonform-go v0.2.0
-	github.com/swaggest/jsonschema-go v0.3.66
-	github.com/swaggest/openapi-go v0.2.46
+	github.com/swaggest/jsonschema-go v0.3.70
+	github.com/swaggest/openapi-go v0.2.50
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.62
-	github.com/swaggest/swgui v1.8.0
+	github.com/swaggest/rest v0.2.65
+	github.com/swaggest/swgui v1.8.1
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.3.1
-	github.com/tus/tusd/v2 v2.3.0
+	github.com/tus/tusd/v2 v2.4.0
 	github.com/vearutop/statigz v1.4.0
 	github.com/yuin/goldmark v1.7.0
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.20.0
-	golang.org/x/net v0.21.0
+	golang.org/x/crypto v0.21.0
+	golang.org/x/net v0.22.0
 	golang.org/x/text v0.14.0
-	modernc.org/sqlite v1.29.2
+	modernc.org/sqlite v1.29.5
 )
 
 require (
@@ -53,7 +53,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bool64/dbwrap v0.1.3 // indirect
-	github.com/bool64/logz v1.3.0 // indirect
+	github.com/bool64/logz v1.3.1 // indirect
 	github.com/bool64/prom-stats v0.1.3 // indirect
 	github.com/bool64/shared v0.1.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -110,7 +110,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	google.golang.org/api v0.166.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240221002015-b0ce06bbee7c // indirect
 	google.golang.org/grpc v1.62.0 // indirect
@@ -118,9 +118,15 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
-	modernc.org/libc v1.41.0 // indirect
+	modernc.org/libc v1.43.1 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
+
+//replace github.com/bool64/zapctxd => /Users/vearutop/gohack/github.com/bool64/zapctxd
+
+//replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick
+
+replace github.com/bool64/dev => /Users/vearutop/gohack/github.com/bool64/dev
