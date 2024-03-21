@@ -2,9 +2,11 @@ package settings
 
 import (
 	"context"
+	"html/template"
 	"net/http"
 
 	"github.com/bool64/ctxd"
+	"github.com/bool64/dev/version"
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -51,6 +53,7 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 				PrependHTML: `<a style="margin-left: 2em" href ="/">Back to main page</a> ` +
 					upload.TusUploadsButton() +
 					`<script>function formSaved(x, ctx) { $(ctx.result).html('Saved.') } </script>`,
+				AppendHTML: `<div style="margin:2em">` + template.HTML(version.Info().String()) + `</div>`,
 			},
 			form("Appearance", "/settings/appearance.json", deps.Settings().Appearance()),
 			form("Maps", "/settings/maps.json", deps.Settings().Maps()),
