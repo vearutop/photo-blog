@@ -195,6 +195,7 @@ func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 	cfg := database.Config{}
 	cfg.DriverName = "sqlite"
 	cfg.MaxOpen = 1
+	cfg.MaxIdle = 1
 	cfg.DSN = filepath + "?_time_format=sqlite"
 	cfg.ApplyMigrations = true
 
@@ -213,6 +214,7 @@ func setupStorage(l *service.Locator, filepath string) error {
 	cfg := database.Config{}
 	cfg.DriverName = "sqlite"
 	cfg.MaxOpen = 1
+	cfg.MaxIdle = 1
 	cfg.DSN = filepath + "?_time_format=sqlite"
 	cfg.ApplyMigrations = true
 
