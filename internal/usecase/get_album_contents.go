@@ -261,13 +261,13 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 						continue
 					}
 
-					links += `<br/><a href="/` + a.Name + `">` + deps.TxtRenderer().MustRenderLang(ctx, a.Title, func(o *txt.RenderOptions) {
+					links += `<br/><a href="/` + a.Name + `"><span class="icon-link film-icon"></span>` + deps.TxtRenderer().MustRenderLang(ctx, a.Title, func(o *txt.RenderOptions) {
 						o.StripTags = true
 					}) + `</a>`
 				}
 
 				if links != "" {
-					img.Description += "Albums:" + links
+					img.Description += links
 				}
 			}
 		}
