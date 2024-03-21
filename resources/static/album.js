@@ -627,6 +627,8 @@ function loadAlbum(params) {
                 attribution: params.mapAttribution
             }).addTo(map);
 
+            L.control.scale().addTo(map);
+
             var images = []
             for (var i = 0; i < gpsMarkers.length; i++) {
                 var img = gpsMarkers[i]
