@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bool64/brick"
 	"github.com/go-chi/chi/v5"
@@ -30,6 +31,22 @@ import (
 
 // NewRouter creates an instance of router filled with handlers and docs.
 func NewRouter(deps *service.Locator) *web.Service {
+	deps.BaseLocator.HTTPServerMiddlewares = append(deps.BaseLocator.HTTPServerMiddlewares, func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s := time.Now()
+			h.ServeHTTP(w, r)
+
+			ctx := r.Context()
+			if err := ctx.Err(); err != nil {
+				deps.CtxdLogger().Error(ctx, "http ctx err",
+					"error", err,
+					"elapsed", time.Since(s).String(),
+					"req", r.URL.String(),
+				)
+			}
+		})
+	})
+
 	s := brick.NewBaseWebService(deps.BaseLocator)
 	deps.CtxdLogger().Important(context.Background(), "initializing router")
 
