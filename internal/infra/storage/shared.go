@@ -65,6 +65,9 @@ type hashedRepo[V any, T interface {
 	GetCreatedAt() time.Time
 }] struct {
 	sqluct.StorageOf[V]
+
+	// prepare is optional, it is called on the value to validate/prepare before create/update.
+	prepare func(ctx context.Context, v *V) error
 }
 
 func (ir *hashedRepo[V, T]) hashCol() *uniq.Hash {
@@ -153,6 +156,12 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 			return value, nil
 		}
 
+		if ir.prepare != nil {
+			if err := ir.prepare(ctx, &value); err != nil {
+				return value, fmt.Errorf("prepare value: %w", err)
+			}
+		}
+
 		if _, err := ir.UpdateStmt(value, opts...).Where(ir.hashEq(h)).ExecContext(ctx); err != nil {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "update")
 		}
@@ -171,6 +180,13 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 
 		// Insert.
 		v.SetCreatedAt(time.Now())
+
+		if ir.prepare != nil {
+			if err := ir.prepare(ctx, &value); err != nil {
+				return value, fmt.Errorf("prepare value: %w", err)
+			}
+		}
+
 		if _, err := ir.InsertRow(ctx, value, opts...); err != nil {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "insert")
 		}
@@ -189,6 +205,12 @@ func (ir *hashedRepo[V, T]) Add(ctx context.Context, value V) error {
 
 	v.SetCreatedAt(time.Now())
 
+	if ir.prepare != nil {
+		if err := ir.prepare(ctx, v); err != nil {
+			return fmt.Errorf("prepare value: %w", err)
+		}
+	}
+
 	return augmentReturnErr(ir.InsertRow(ctx, value))
 }
 
@@ -198,6 +220,12 @@ func (ir *hashedRepo[V, T]) Update(ctx context.Context, value V) error {
 
 	if h == 0 {
 		return ErrMissingHash
+	}
+
+	if ir.prepare != nil {
+		if err := ir.prepare(ctx, v); err != nil {
+			return fmt.Errorf("prepare value: %w", err)
+		}
 	}
 
 	return augmentReturnErr(ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx))

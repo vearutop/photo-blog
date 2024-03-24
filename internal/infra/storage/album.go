@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
@@ -40,6 +41,17 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepo
 
 	ar.ai = ai
 	ar.i = ir
+
+	ar.hashedRepo.prepare = func(ctx context.Context, v *photo.Album) error {
+		t := v.Settings.Texts
+		if len(t) > 0 {
+			sort.Slice(t, func(i, j int) bool {
+				return t[i].Time.Before(t[j].Time)
+			})
+		}
+
+		return nil
+	}
 
 	return ar
 }

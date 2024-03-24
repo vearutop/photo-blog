@@ -261,7 +261,7 @@ function loadAlbum(params) {
             result.images = [];
         }
 
-        var prevImgTime = null
+        var chronoTexts = result.album.settings.texts
 
         var fullscreenSupported = false
         if (typeof document.exitFullscreen == 'function') {
@@ -336,6 +336,7 @@ function loadAlbum(params) {
                     if (!hideOriginal && !visitorData.lowRes) {
                         srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
                     }
+
                     a.attr("data-pswp-width", img.width)
                     a.attr("data-pswp-height", img.height)
                 }
@@ -352,17 +353,17 @@ function loadAlbum(params) {
 
                     exif = img.exif
 
-                    if (result.album.settings.texts) {
-                        for (var ti = 0; ti < result.album.settings.texts.length; ti++) {
-                            var t = result.album.settings.texts[ti]
+                    if (chronoTexts) {
+                        var ct = [];
+
+                        for (var ti = 0; ti < chronoTexts.length; ti++) {
+                            var t = chronoTexts[ti]
 
                             var tt = Date.parse(t.time)
 
                             if (tt > ts) {
-                                continue
-                            }
+                                ct.push(t)
 
-                            if (prevImgTime !== null && tt < prevImgTime) {
                                 continue
                             }
 
@@ -370,7 +371,7 @@ function loadAlbum(params) {
                         }
                     }
 
-                    prevImgTime = ts
+                    chronoTexts = ct
                 }
                 exif["file_name"] = img.name
                 exif["size"] = humanFileSize(img.size) + ", " + (Math.round((img.width * img.height) / 10000) / 100 + " MP")
@@ -430,6 +431,13 @@ function loadAlbum(params) {
                 a.html('<img alt="" src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
 
                 $(params.galleryPano).show().append(a)
+            }
+        }
+
+        if (chronoTexts) {
+            for (var ti = 0; ti < chronoTexts.length; ti++) {
+                var t = chronoTexts[ti]
+                $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
             }
         }
 
