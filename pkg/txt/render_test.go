@@ -182,5 +182,69 @@ func TestRenderer_Render_codeBlock(t *testing.T) {
 	r := txt.NewRenderer()
 	s := r.MustRenderLang(ctx, "```\n\n:::{lang=en}\n\nfoo\n\n:::\n\n:::{lang=ru}\n\nбар\n\n:::\n\n```\n\n:::{lang=en}\n\nbaz\n\n:::\n")
 
-	assert.Equal(t, "Devil's Bridge", s)
+	assert.Equal(t, `<pre><code>
+:::{lang=en}
+
+foo
+
+:::
+
+:::{lang=ru}
+
+бар
+
+:::
+
+</code></pre>`, s)
+}
+
+func TestRenderer_Render_multiLine(t *testing.T) {
+	ctx := context.Background()
+	ctx = txt.WithLanguage(ctx, "en")
+
+	r := txt.NewRenderer()
+	s := r.MustRenderLang(ctx, `
+line1
+line2
+line3
+`)
+
+	assert.Equal(t, `<p>line1<br/>
+line2<br/>
+line3</p>`, s)
+}
+
+// BenchmarkRenderer_MustRenderLang-16    	   37148	     29364 ns/op	   27071 B/op	     200 allocs/op.
+func BenchmarkRenderer_MustRenderLang(b *testing.B) {
+	ctx := context.Background()
+
+	r := txt.NewRenderer()
+
+	md := `
+# The Title
+
+Lorem ipsum [foo](https://bar.com).
+
+* bla
+
+:::{lang=fr}
+Après deux
+:::
+
+:::{lang=ru}
+бла бла бла бла
+:::
+
+:::{lang=en}
+hello, world!
+:::
+
+`
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, err := r.RenderLang(txt.WithLanguage(ctx, "ru"), md)
+		if err != nil {
+			b.Fail()
+		}
+	}
 }

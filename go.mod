@@ -124,9 +124,3 @@ require (
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
-
-//replace github.com/bool64/zapctxd => /Users/vearutop/gohack/github.com/bool64/zapctxd
-
-//replace github.com/bool64/brick => /Users/vearutop/gohack/github.com/bool64/brick
-
-replace github.com/bool64/dev => /Users/vearutop/gohack/github.com/bool64/dev

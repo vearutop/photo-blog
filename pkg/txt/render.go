@@ -34,7 +34,7 @@ func NewRenderer() *Renderer {
 				parser.WithAutoHeadingID(),
 			),
 			goldmark.WithRendererOptions(
-				// gmhtml.WithHardWraps(),
+				gmhtml.WithHardWraps(),
 				gmhtml.WithUnsafe(),
 			),
 		),
