@@ -105,6 +105,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Put("/exif", control.Update(deps, func() uniq.Ensurer[photo.Exif] { return deps.PhotoExifEnsurer() }))
 		s.Put("/gps", control.Update(deps, func() uniq.Ensurer[photo.Gps] { return deps.PhotoGpsEnsurer() }))
 
+		s.Put("/album-image-time", control.SetAlbumImageTime(deps))
+
 		s.Delete("/album/{name}", control.DeleteAlbum(deps))
 
 		s.Post("/message/approve", control.ApproveMessage(deps))

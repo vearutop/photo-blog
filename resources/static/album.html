@@ -93,6 +93,9 @@
         albumData: {{.AlbumData}}
     });
     collectThumbVisibility();
+    {{if not .NonAdmin}}
+    enableDragNDropImagesReordering();
+    {{end}}
 </script>
 
 {{.Footer}}

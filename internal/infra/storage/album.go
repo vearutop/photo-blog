@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
@@ -23,8 +24,9 @@ const (
 
 // AlbumImage describes database mapping.
 type AlbumImage struct {
-	AlbumHash uniq.Hash `db:"album_hash"`
-	ImageHash uniq.Hash `db:"image_hash"`
+	AlbumHash uniq.Hash  `db:"album_hash"`
+	ImageHash uniq.Hash  `db:"image_hash"`
+	Timestamp *time.Time `db:"timestamp"`
 }
 
 func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepository {
@@ -205,6 +207,19 @@ func (r *AlbumRepository) AddImages(ctx context.Context, albumHash uniq.Hash, im
 	}
 
 	return nil
+}
+
+func (r *AlbumRepository) SetAlbumImageTimestamp(ctx context.Context, album uniq.Hash, img uniq.Hash, ts time.Time) error {
+	v := AlbumImage{
+		AlbumHash: album,
+		ImageHash: img,
+		Timestamp: &ts,
+	}
+
+	return augmentReturnErr(r.ai.UpdateStmt(v).Where(squirrel.Eq{
+		r.ai.Ref(&r.ai.R.AlbumHash): album,
+		r.ai.Ref(&r.ai.R.ImageHash): img,
+	}).ExecContext(ctx))
 }
 
 func (r *AlbumRepository) PhotoAlbumImageAdder() photo.AlbumImageAdder {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path"
+	"time"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -46,6 +47,7 @@ type Image struct {
 	Description string      `json:"description,omitempty"`
 	Is360Pano   bool        `json:"is_360_pano,omitempty"`
 	Size        int64       `json:"size,omitempty"`
+	Time        time.Time   `json:"time"`
 }
 
 type track struct {
@@ -236,6 +238,12 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			BlurHash:    i.BlurHash,
 			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description),
 			Size:        i.Size,
+		}
+
+		if i.TakenAt != nil {
+			img.Time = *i.TakenAt
+		} else {
+			img.Time = i.CreatedAt
 		}
 
 		if !preview {

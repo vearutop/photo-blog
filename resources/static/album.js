@@ -81,6 +81,48 @@ function exitFullscreen() {
     }
 }
 
+function enableDragNDropImagesReordering() {
+ $("a.image").each(function () {
+     var a = $(this)
+
+     a.attr("draggable", true);
+     a.on("dragstart", function(e){
+         console.log(e)
+         e.originalEvent.dataTransfer.setData("text/plain", a.data("hash"));
+     })
+
+     a.on("dragover", function (e) {
+         e.preventDefault();
+     })
+
+     a.on("drop", function (e) {
+         e.preventDefault();
+         var data = e.originalEvent.dataTransfer.getData("text/plain");
+         console.log(data, e);
+
+         $(e.currentTarget).after($("#img" + data))
+     });
+
+ });
+
+    $("div.chrono-text").each(function (){
+        var div = $(this);
+
+        div.on('drop', function (e) {
+            e.preventDefault();
+            var data = e.originalEvent.dataTransfer.getData("text/plain");
+            console.log(data, e);
+
+            $(e.currentTarget).after($("#img" + data))
+        });
+
+        div.on('dragover', function (e) {
+            e.preventDefault();
+        });
+
+    });
+}
+
 (function () {
     if (screen.width > 576 || screen.width == 0) {
         return
@@ -174,38 +216,6 @@ function collectThumbVisibility() {
  */
 function loadAlbum(params) {
     "use strict";
-
-    /**
-     * Format bytes as human-readable text.
-     *
-     * @param bytes Number of bytes.
-     * @param si True to use metric (SI) units, aka powers of 1000. False to use
-     *           binary (IEC), aka powers of 1024.
-     * @param dp Number of decimal places to display.
-     *
-     * @return Formatted string.
-     */
-    function humanFileSize(bytes, si = false, dp = 1) {
-        const thresh = si ? 1000 : 1024;
-
-        if (Math.abs(bytes) < thresh) {
-            return bytes + ' B';
-        }
-
-        const units = si
-            ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-            : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-        let u = -1;
-        const r = 10 ** dp;
-
-        do {
-            bytes /= thresh;
-            ++u;
-        } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
-
-
-        return bytes.toFixed(dp) + ' ' + units[u];
-    }
 
     if (params.albumName === "") {
         return;
@@ -367,7 +377,9 @@ function loadAlbum(params) {
                                 continue
                             }
 
-                            $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
+                            var div = $("<div data-ts='"+t.time+"' class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
+
+                            $(params.gallery).append(div)
                         }
                     }
 
@@ -417,6 +429,7 @@ function loadAlbum(params) {
                 a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
                     '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
+                a.attr("data-ts", img.time)
 
                 a.append('<div class="pswp-caption-content" style="display: none">' + img_description + '</div>')
 

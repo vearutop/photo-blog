@@ -18,6 +18,7 @@ const (
 
 type AlbumImageAdder interface {
 	AddImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error
+	SetAlbumImageTimestamp(ctx context.Context, album uniq.Hash, img uniq.Hash, ts time.Time) error
 }
 
 type AlbumImageDeleter interface {
