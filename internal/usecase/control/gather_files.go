@@ -74,6 +74,9 @@ func GatherFiles(deps gatherFilesDeps) usecase.Interactor {
 		Reports []albumReport `json:"reports"`
 	}
 
+	// Forces canonical location to current album, disabled for "-" all albums to avoid unnecessary moves.
+	forceAlbumPath := true
+
 	u := usecase.NewInteractor(func(ctx context.Context, in gatherFilesInput, out *gatherFilesOutput) (err error) {
 		deps.StatsTracker().Add(ctx, "gather_files", 1)
 		deps.CtxdLogger().Info(ctx, "gathering files", "album_name", in.Name)
@@ -115,7 +118,7 @@ func GatherFiles(deps gatherFilesDeps) usecase.Interactor {
 					continue
 				}
 
-				if strings.HasPrefix(img.Path, canonicalAlbumPath) {
+				if strings.HasPrefix(img.Path, canonicalAlbumPath) && !forceAlbumPath {
 					continue
 				}
 
@@ -220,6 +223,8 @@ func GatherFiles(deps gatherFilesDeps) usecase.Interactor {
 		}
 
 		if in.Name == "-" {
+			forceAlbumPath = false
+
 			albums, err := deps.PhotoAlbumFinder().FindAll(ctx)
 			if err != nil {
 				return err
