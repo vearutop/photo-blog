@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: go1.22.0
+     * Version: Version: dev, GoVersion: go1.22.1
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -276,6 +276,51 @@
         x.open("GET", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Set Album Image Time
+     * @param {ControlSetAlbumImageTimeRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSetAlbumImageTime = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album-image-time?';
+        url = url.slice(0, -1);
+
+        x.open("PUT", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
         }
 
         x.send();
@@ -1017,12 +1062,12 @@
     /**
      * Gather Files
      * @param {ControlGatherFilesRequest} req - request parameters.
-     * @param {RawCallback} onNoContent
+     * @param {ControlGatherFilesOutputCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlGatherFiles = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
+    Backend.prototype.controlGatherFiles = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1030,9 +1075,9 @@
             }
 
             switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
                     }
                     break;
                 case 400:
@@ -1057,6 +1102,9 @@
 
         var url = this.baseURL + '/gather/' + encodeURIComponent(req.name) +
         '?';
+        if (req.checkMissing != null) {
+            url += 'check_missing=' + encodeURIComponent(req.checkMissing) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("POST", url, true);
@@ -1770,6 +1818,43 @@
 
     /**
      * OG
+     * @param {OG4Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG4 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("DELETE", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
      * @param {OGRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      */
@@ -1798,6 +1883,228 @@
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {OG6Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG6 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {OG5Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG5 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("OPTIONS", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {OG7Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG7 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("PATCH", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {OG3Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG3 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {OG2Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG2 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("PUT", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * OG
+     * @param {OG8Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.oG8 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/og.html?';
+        if (req.targetUrl != null) {
+            url += 'target_url=' + encodeURIComponent(req.targetUrl) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("TRACE", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
@@ -2271,6 +2578,42 @@
         var url = this.baseURL + '/stats?';
         if (req.v != null) {
             url += 'v=' + encodeURIComponent(req.v) + '&';
+        }
+        if (req.sw != null) {
+            url += 'sw=' + encodeURIComponent(req.sw) + '&';
+        }
+        if (req.sh != null) {
+            url += 'sh=' + encodeURIComponent(req.sh) + '&';
+        }
+        if (req.px != null) {
+            url += 'px=' + encodeURIComponent(req.px) + '&';
+        }
+        if (req.main != null) {
+            url += 'main=' + encodeURIComponent(req.main) + '&';
+        }
+        if (req.album != null) {
+            url += 'album=' + encodeURIComponent(req.album) + '&';
+        }
+        if (req.thumb != null) {
+            url += 'thumb=' + encodeURIComponent(JSON.stringify(req.thumb)) + '&';
+        }
+        if (req.img != null) {
+            url += 'img=' + encodeURIComponent(req.img) + '&';
+        }
+        if (req.w != null) {
+            url += 'w=' + encodeURIComponent(req.w) + '&';
+        }
+        if (req.h != null) {
+            url += 'h=' + encodeURIComponent(req.h) + '&';
+        }
+        if (req.mw != null) {
+            url += 'mw=' + encodeURIComponent(req.mw) + '&';
+        }
+        if (req.mh != null) {
+            url += 'mh=' + encodeURIComponent(req.mh) + '&';
+        }
+        if (req.time != null) {
+            url += 'time=' + encodeURIComponent(req.time) + '&';
         }
         url = url.slice(0, -1);
 

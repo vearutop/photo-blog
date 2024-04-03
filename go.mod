@@ -30,7 +30,7 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.70
 	github.com/swaggest/openapi-go v0.2.50
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.65
+	github.com/swaggest/rest v0.2.66
 	github.com/swaggest/swgui v1.8.1
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.3.1

@@ -31,7 +31,10 @@
  * @type {Object}
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
+ * @property {Boolean} hide_map - Hide map on album page.
+ * @property {String} image_base_url - URL prefix to use for full-res images instead of local endpoint.
  * @property {Boolean} newest_first - Newest first. Show newest images at the top.
+ * @property {String} redirect - Relative or absolute URL to redirect to with HTTP 301 status.
  * @property {Array<PhotoChronoText>} texts - Chronological texts.
  */
 
@@ -115,6 +118,7 @@
  * @property {Boolean} is_360_pano
  * @property {String} name
  * @property {Number} size
+ * @property {String} time
  * @property {Number} width
  */
 
@@ -145,6 +149,20 @@
  */
 
 /**
+ * @typedef ControlReq
+ * @type {Object}
+ * @property {String} album_name
+ * @property {String} image_hash
+ * @property {String} timestamp
+ */
+
+/**
+ * @typedef ControlSetAlbumImageTimeRequest
+ * @type {Object}
+ * @property {ControlReq} body
+ */
+
+/**
  * @typedef ControlGetPhotoAlbumRequest
  * @type {Object}
  * @property {String} hash
@@ -161,6 +179,7 @@
  * @type {Object}
  * @property {String} album_name - Source Album Name. Name of a source album to add photos from.
  * @property {String} image_hash - Image Hash. Hash of an image to add to album.
+ * @property {String} image_url - Fetch image from a publicly available URL.
  */
 
 /**
@@ -244,7 +263,34 @@
 /**
  * @typedef ControlGatherFilesRequest
  * @type {Object}
+ * @property {Boolean} checkMissing
  * @property {String} name - Album name.
+ */
+
+/**
+ * @typedef ControlMove
+ * @type {Object}
+ * @property {String} error
+ * @property {String} new
+ * @property {String} orig
+ */
+
+/**
+ * @typedef ControlAlbumReport
+ * @type {Object}
+ * @property {String} albumName
+ * @property {Array<ControlMove>} moves
+ */
+
+/**
+ * @typedef ControlGatherFilesOutput
+ * @type {Object}
+ * @property {?Array<ControlAlbumReport>} reports
+ */
+
+/**
+ * @callback ControlGatherFilesOutputCallback
+ * @param {ControlGatherFilesOutput} value
  */
 
 /**
@@ -449,7 +495,49 @@
  */
 
 /**
+ * @typedef OG4Request
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
  * @typedef OGRequest
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
+ * @typedef OG6Request
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
+ * @typedef OG5Request
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
+ * @typedef OG7Request
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
+ * @typedef OG3Request
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
+ * @typedef OG2Request
+ * @type {Object}
+ * @property {String} targetUrl
+ */
+
+/**
+ * @typedef OG8Request
  * @type {Object}
  * @property {String} targetUrl
  */
@@ -579,7 +667,19 @@
 /**
  * @typedef CollectStatsRequest
  * @type {Object}
- * @property {String} v
+ * @property {String} v - Visitor.
+ * @property {Number} sw - Screen width.
+ * @property {Number} sh - Screen height.
+ * @property {Number} px - Device pixel ratio (retina factor).
+ * @property {Boolean} main - Main page shown.
+ * @property {String} album - Album with a name shown.
+ * @property {?Object.<String,Number>} thumb - Thumb on-screen times, ms.
+ * @property {String} img - Image with a hash is shown individually.
+ * @property {Number} w - Shown width of the image.
+ * @property {Number} h - Shown height of the image.
+ * @property {Number} mw - Max shown width of the image (zoom).
+ * @property {Number} mh - Max shown height of the image (zoom).
+ * @property {Number} time - Image view time, ms.
  */
 
 /**
