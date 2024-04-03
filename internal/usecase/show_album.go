@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net/http"
 
 	"github.com/docker/go-units"
 	"github.com/swaggest/rest/request"
@@ -74,6 +75,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		Featured       string
 
 		AlbumData getAlbumOutput
+
+		ImageBaseURL string
+		ShowMap      bool
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
@@ -87,6 +91,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			}
 
 			return fmt.Errorf("get album contents: %w", err)
+		}
+
+		if cont.Album.Settings.Redirect != "" {
+			http.Redirect(out.ResponseWriter(), in.Request(), cont.Album.Settings.Redirect, http.StatusMovedPermanently)
 		}
 
 		album := cont.Album
@@ -107,6 +115,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
 		d.OGSiteName = deps.Settings().Appearance().SiteTitle
+
+		d.ImageBaseURL = album.Settings.ImageBaseURL
+		d.ShowMap = !album.Settings.HideMap
 
 		maps := deps.Settings().Maps()
 

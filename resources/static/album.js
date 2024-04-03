@@ -82,30 +82,30 @@ function exitFullscreen() {
 }
 
 function enableDragNDropImagesReordering() {
- $("a.image").each(function () {
-     var a = $(this)
+    $("a.image").each(function () {
+        var a = $(this)
 
-     a.attr("draggable", true);
-     a.on("dragstart", function(e){
-         console.log(e)
-         e.originalEvent.dataTransfer.setData("text/plain", a.data("hash"));
-     })
+        a.attr("draggable", true);
+        a.on("dragstart", function (e) {
+            console.log(e)
+            e.originalEvent.dataTransfer.setData("text/plain", a.data("hash"));
+        })
 
-     a.on("dragover", function (e) {
-         e.preventDefault();
-     })
+        a.on("dragover", function (e) {
+            e.preventDefault();
+        })
 
-     a.on("drop", function (e) {
-         e.preventDefault();
-         var data = e.originalEvent.dataTransfer.getData("text/plain");
-         console.log(data, e);
+        a.on("drop", function (e) {
+            e.preventDefault();
+            var data = e.originalEvent.dataTransfer.getData("text/plain");
+            console.log(data, e);
 
-         $(e.currentTarget).after($("#img" + data))
-     });
+            $(e.currentTarget).after($("#img" + data))
+        });
 
- });
+    });
 
-    $("div.chrono-text").each(function (){
+    $("div.chrono-text").each(function () {
         var div = $(this);
 
         div.on('drop', function (e) {
@@ -158,6 +158,7 @@ function enableDragNDropImagesReordering() {
  * @property {String} gallery - CSS selector for gallery container
  * @property {String} galleryPano - CSS selector for gallery panoramas container
  * @property {String} baseUrl - base address to set on image close
+ * @property {String} imageBaseUrl - base address to link to full-res images
  */
 
 function collectStats(params) {
@@ -328,7 +329,11 @@ function loadAlbum(params) {
                 if (hideOriginal) {
                     a.attr("href", "#")
                 } else {
-                    a.attr("href", "/image/" + img.hash + ".jpg")
+                    if (params.imageBaseUrl) {
+                        a.attr("href", params.imageBaseUrl + img.name)
+                    } else {
+                        a.attr("href", "/image/" + img.hash + ".jpg")
+                    }
                 }
                 a.attr("target", "_blank")
                 a.attr("data-idx", i)
@@ -344,7 +349,11 @@ function loadAlbum(params) {
 
                 if (img.width > 0 && img.height > 0) {
                     if (!hideOriginal && !visitorData.lowRes) {
-                        srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
+                        if (params.imageBaseUrl) {
+                            srcSet += ", " + params.imageBaseUrl + img.name + " " + img.width + "w"
+                        } else {
+                            srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
+                        }
                     }
 
                     a.attr("data-pswp-width", img.width)
@@ -377,7 +386,7 @@ function loadAlbum(params) {
                                 continue
                             }
 
-                            var div = $("<div data-ts='"+t.time+"' class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
+                            var div = $("<div data-ts='" + t.time + "' class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
 
                             $(params.gallery).append(div)
                         }
