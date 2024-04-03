@@ -224,7 +224,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 	deps.SchemaRepo.Mount(s, "/json-form/")
 
-	s.Get("/og.html", usecase.OG(deps))
+	s.Handle("/og.html", nethttp.NewHandler(usecase.OG(deps)))
 
 	s.OnNotFound(usecase.NotFound(deps))
 	s.OnMethodNotAllowed(usecase.NotFound(deps))
