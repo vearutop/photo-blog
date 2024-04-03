@@ -209,6 +209,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 	s.Get("/favicon.ico", usecase.ServeFavicon(deps))
 	s.Method(http.MethodGet, "/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("User-agent: *\nAllow: /"))
 	}))
 
