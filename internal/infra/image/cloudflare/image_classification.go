@@ -100,7 +100,7 @@ func (ic *ImageClassifier) Classify(imgHash uniq.Hash, cb func(labels []photo.Im
 
 	if !ic.pending {
 		ic.pending = true
-		time.AfterFunc(5*time.Second, func() {
+		time.AfterFunc(time.Second, func() {
 			defer func() {
 				if r := recover(); r != nil {
 					ic.logger.Error(context.Background(), "panic recovered", "value", r)
@@ -142,8 +142,10 @@ func (ic *ImageClassifier) doClassify() {
 
 		if len(req.Images) >= cfg.BatchSize {
 			if err := ic.fetch(&req); err != nil {
-				println("ERR:", err.Error())
+				ic.logger.Error(context.Background(), "failed to fetch cf img cls", "images", req.Images, "error", err)
 			}
+
+			req.Images = req.Images[:0]
 		}
 	}
 
@@ -188,6 +190,11 @@ func (ic *ImageClassifier) fetch(req *request) error {
 		cb := ic.queue[u]
 		delete(ic.queue, u)
 
+		if cb == nil {
+			ic.logger.Warn(context.Background(), "empty callback for cf cls", "url", u)
+			continue
+		}
+
 		labels := make([]photo.ImageLabel, len(l))
 
 		for i, lbl := range l {
@@ -197,6 +204,9 @@ func (ic *ImageClassifier) fetch(req *request) error {
 				Score: lbl.Score,
 			}
 		}
+
+		ic.logger.Info(context.Background(), "cf img classification",
+			"url", u, "labels", labels)
 
 		cb(labels)
 	}
