@@ -26,6 +26,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/image"
+	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
@@ -99,6 +100,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
+	l.CloudflareImageClassifierInstance = cloudflare.NewImageClassifier(l.CtxdLogger(), l.Settings().CFImageClassifier)
+
 	if err = setupAccessLog(l); err != nil {
 		return nil, err
 	}
@@ -130,6 +133,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	gpsRepo := storage.NewGpsRepository(l.Storage)
 	l.PhotoGpsFinderProvider = gpsRepo
 	l.PhotoGpsEnsurerProvider = gpsRepo
+
+	metaRepo := storage.NewMetaRepository(l.Storage)
+	l.PhotoMetaFinderProvider = metaRepo
+	l.PhotoMetaEnsurerProvider = metaRepo
 
 	gpxRepo := storage.NewGpxRepository(l.Storage)
 	l.PhotoGpxFinderProvider = gpxRepo

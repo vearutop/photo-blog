@@ -72,11 +72,20 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 				Value:         adminPass{},
 				SubmitText:    "Save",
 			},
+			form("External API Integration", "/settings/external_api.json", deps.Settings().ExternalAPI()),
 		)
 	})
 
 	u.SetTags("Control Panel")
 	u.SetExpectedErrors(status.Unknown)
+
+	return u
+}
+
+func SetExternalAPI(deps setSettingsDeps) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, input settings.ExternalAPI, output *struct{}) error {
+		return deps.SettingsManager().SetExternalAPI(ctx, input)
+	})
 
 	return u
 }

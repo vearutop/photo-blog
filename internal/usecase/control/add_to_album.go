@@ -3,8 +3,6 @@ package control
 import (
 	"context"
 	"fmt"
-	"github.com/vearutop/photo-blog/internal/infra/files"
-	"github.com/vearutop/photo-blog/internal/infra/upload"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,6 +16,8 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/files"
+	"github.com/vearutop/photo-blog/internal/infra/upload"
 )
 
 type addToAlbumDeps interface {

@@ -13,6 +13,7 @@ import (
 	"github.com/swaggest/refl"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 )
 
 type Repository interface {
@@ -24,13 +25,14 @@ type Manager struct {
 	r  Repository
 	dc *dep.Cache
 
-	mu         sync.Mutex
-	security   Security
-	appearance Appearance
-	maps       Maps
-	visitors   Visitors
-	storage    Storage
-	privacy    Privacy
+	mu          sync.Mutex
+	security    Security
+	appearance  Appearance
+	maps        Maps
+	visitors    Visitors
+	storage     Storage
+	privacy     Privacy
+	externalAPI ExternalAPI
 }
 
 type Values interface {
@@ -40,6 +42,9 @@ type Values interface {
 	Visitors() Visitors
 	Storage() Storage
 	Privacy() Privacy
+
+	ExternalAPI() ExternalAPI
+	CFImageClassifier() cloudflare.ImageClassifierConfig
 }
 
 func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
@@ -54,6 +59,7 @@ func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
 		m.get(ctx, "visitors", &m.visitors),
 		m.get(ctx, "storage", &m.storage),
 		m.get(ctx, "privacy", &m.privacy),
+		m.get(ctx, "external_api", &m.externalAPI),
 	)
 }
 

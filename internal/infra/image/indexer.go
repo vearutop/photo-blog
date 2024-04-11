@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"errors"
 	"image/jpeg"
 	"os"
 	"sync/atomic"
@@ -12,8 +13,10 @@ import (
 	"github.com/bool64/stats"
 	blurhash "github.com/buckket/go-blurhash"
 	"github.com/corona10/goimagehash"
+	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"go.opencensus.io/trace"
 )
 
@@ -30,6 +33,11 @@ type indexerDeps interface {
 
 	PhotoGpsEnsurer() uniq.Ensurer[photo.Gps]
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
+
+	PhotoMetaEnsurer() uniq.Ensurer[photo.Meta]
+	PhotoMetaFinder() uniq.Finder[photo.Meta]
+
+	CloudflareImageClassifier() *cloudflare.ImageClassifier
 }
 
 func NewIndexer(deps indexerDeps) *Indexer {
@@ -147,8 +155,33 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	i.ensureThumbs(ctx, img)
 	i.ensureBlurHash(ctx, &img)
 	i.ensurePHash(ctx, &img)
+	i.ensureCFClassification(ctx, img)
 
 	return nil
+}
+
+func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
+	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
+	if err != nil && !errors.Is(err, status.NotFound) {
+		i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
+
+		return
+	}
+
+	m.Hash = img.Hash
+
+	// Already classified.
+	if m.Data.Val.ImageClassification != nil {
+		return
+	}
+
+	i.deps.CloudflareImageClassifier().Classify(img.Hash, func(labels []photo.ImageLabel) {
+		m.Data.Val.ImageClassification = labels
+
+		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m); err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
+		}
+	})
 }
 
 func (i *Indexer) ensurePHash(ctx context.Context, img *photo.Image) {

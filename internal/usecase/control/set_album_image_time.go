@@ -2,10 +2,11 @@ package control
 
 import (
 	"context"
+	"time"
+
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"time"
 )
 
 type setAlbumImageTimeDeps interface {

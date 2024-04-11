@@ -6,6 +6,7 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
+	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 )
 
@@ -45,6 +46,9 @@ type Locator struct {
 	PhotoGpsEnsurerProvider
 	PhotoGpsFinderProvider
 
+	PhotoMetaEnsurerProvider
+	PhotoMetaFinderProvider
+
 	PhotoGpxEnsurerProvider
 	PhotoGpxFinderProvider
 
@@ -58,6 +62,8 @@ type Locator struct {
 
 	CommentThreadEnsurerProvider
 	CommentThreadFinderProvider
+
+	CloudflareImageClassifierInstance *cloudflare.ImageClassifier
 }
 
 // ServiceConfig gives access to service configuration.
@@ -87,4 +93,8 @@ func (l *Locator) SettingsManager() *settings.Manager {
 
 func (l *Locator) Settings() settings.Values {
 	return l.SettingsManagerInstance
+}
+
+func (l *Locator) CloudflareImageClassifier() *cloudflare.ImageClassifier {
+	return l.CloudflareImageClassifierInstance
 }

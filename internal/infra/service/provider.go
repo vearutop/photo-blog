@@ -72,6 +72,14 @@ type PhotoGpsFinderProvider interface {
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 }
 
+type PhotoMetaEnsurerProvider interface {
+	PhotoMetaEnsurer() uniq.Ensurer[photo.Meta]
+}
+
+type PhotoMetaFinderProvider interface {
+	PhotoMetaFinder() uniq.Finder[photo.Meta]
+}
+
 type PhotoGpxEnsurerProvider interface {
 	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
 }
