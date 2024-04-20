@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bool64/ctxd"
+	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
@@ -85,11 +87,12 @@ type ImageClassifier struct {
 	logger ctxd.Logger
 
 	mu      sync.Mutex
+	ctx     context.Context
 	queue   map[string]func(labels []photo.ImageLabel)
 	pending bool
 }
 
-func (ic *ImageClassifier) Classify(imgHash uniq.Hash, cb func(labels []photo.ImageLabel)) {
+func (ic *ImageClassifier) Classify(ctx context.Context, imgHash uniq.Hash, cb func(labels []photo.ImageLabel)) {
 	ic.mu.Lock()
 	defer ic.mu.Unlock()
 
@@ -97,6 +100,7 @@ func (ic *ImageClassifier) Classify(imgHash uniq.Hash, cb func(labels []photo.Im
 
 	u := fmt.Sprintf(cfg.ImageURLTemplate, imgHash.String())
 	ic.queue[u] = cb
+	ic.ctx = ctx
 
 	if !ic.pending {
 		ic.pending = true
@@ -141,21 +145,40 @@ func (ic *ImageClassifier) doClassify() {
 		req.Images = append(req.Images, u)
 
 		if len(req.Images) >= cfg.BatchSize {
-			if err := ic.fetch(&req); err != nil {
-				ic.logger.Error(context.Background(), "failed to fetch cf img cls", "images", req.Images, "error", err)
-			}
-
-			req.Images = req.Images[:0]
+			ic.ensureFetch(&req)
 		}
 	}
 
 	if len(req.Images) > 0 {
-		if err := ic.fetch(&req); err != nil {
-			println("ERR:", err.Error())
-		}
+		ic.ensureFetch(&req)
 	}
 
 	ic.pending = false
+}
+
+func (ic *ImageClassifier) ensureFetch(req *request) {
+	defer func() {
+		req.Images = req.Images[:0]
+	}()
+
+	for {
+		err := ic.fetch(req)
+
+		if err == nil {
+			return
+		}
+
+		if errors.Is(err, status.ResourceExhausted) {
+			ic.logger.Warn(ic.ctx, "cf worker resource exhausted, sleeping")
+
+			time.Sleep(time.Minute)
+
+			continue
+		}
+
+		ic.logger.Error(ic.ctx, "failed to fetch cf img cls", "images", req.Images, "error", err)
+		return
+	}
 }
 
 func (ic *ImageClassifier) fetch(req *request) error {
@@ -180,6 +203,18 @@ func (ic *ImageClassifier) fetch(req *request) error {
 		return err
 	}
 
+	if res.StatusCode == http.StatusServiceUnavailable && bytes.Contains(resp, []byte("Worker exceeded resource limits")) {
+		return status.ResourceExhausted
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return ctxd.NewError(ic.ctx, "unexpected status code",
+			"code", res.StatusCode,
+			"resp", string(resp),
+			"header", res.Header,
+		)
+	}
+
 	var response map[string][]label
 
 	if err := json.Unmarshal(resp, &response); err != nil {
@@ -191,7 +226,7 @@ func (ic *ImageClassifier) fetch(req *request) error {
 		delete(ic.queue, u)
 
 		if cb == nil {
-			ic.logger.Warn(context.Background(), "empty callback for cf cls", "url", u)
+			ic.logger.Warn(ic.ctx, "empty callback for cf cls", "url", u)
 			continue
 		}
 
@@ -205,7 +240,7 @@ func (ic *ImageClassifier) fetch(req *request) error {
 			}
 		}
 
-		ic.logger.Info(context.Background(), "cf img classification",
+		ic.logger.Info(ic.ctx, "cf img classification",
 			"url", u, "labels", labels)
 
 		cb(labels)
