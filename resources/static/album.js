@@ -87,7 +87,7 @@ function enableDragNDropImagesReordering() {
 
         a.attr("draggable", true);
         a.on("dragstart", function (e) {
-            console.log(e)
+            console.log("dragstart", e)
             e.originalEvent.dataTransfer.setData("text/plain", a.data("hash"));
         })
 
@@ -97,10 +97,11 @@ function enableDragNDropImagesReordering() {
 
         a.on("drop", function (e) {
             e.preventDefault();
-            var data = e.originalEvent.dataTransfer.getData("text/plain");
-            console.log(data, e);
+            var draggedHash = e.originalEvent.dataTransfer.getData("text/plain");
+            var afterTs = $(e.currentTarget).data('ts')
+            console.log("dragdrop", "dragged hash", draggedHash, "after", afterTs, e);
 
-            $(e.currentTarget).after($("#img" + data))
+            $(e.currentTarget).after($("#img" + draggedHash))
         });
 
     });
@@ -111,7 +112,7 @@ function enableDragNDropImagesReordering() {
         div.on('drop', function (e) {
             e.preventDefault();
             var data = e.originalEvent.dataTransfer.getData("text/plain");
-            console.log(data, e);
+            console.log("dragdrop-text", data, e);
 
             $(e.currentTarget).after($("#img" + data))
         });
@@ -405,6 +406,15 @@ function loadAlbum(params) {
                         img.gps.latitude.toFixed(8) + ',' + img.gps.longitude.toFixed(8) + '">apple maps</a>'
                 }
 
+                if (typeof img.meta !== "undefined") {
+                    var cl = img.meta.image_classification
+                    for (var ci in cl) {
+                        var l = cl[ci]
+
+                        exif[l.model + ":" + l.text] = l.score
+                    }
+                }
+
                 var exh = '<table>'
                 for (var k in exif) {
                     if (k === "hash" || k === "exposure_time_sec" || k === "created_at") {
@@ -425,6 +435,22 @@ function loadAlbum(params) {
 
                 if (img.description) {
                     img_description += '<div>' + img.description + '</div>';
+                }
+
+                if (typeof img.meta !== "undefined") {
+                    img_description += '<div class="control-panel">'
+                    var cl = img.meta.image_classification
+                    for (var ci in cl) {
+                        var l = cl[ci]
+
+                        img_description += l.text + '<br/>'
+                    }
+
+                    if (img.meta.faces && img.meta.faces.length > 0) {
+                        img_description += img.meta.faces.length + ' face(s)<br/>'
+                    }
+
+                    img_description += '</div>'
                 }
 
                 var landscape = ""

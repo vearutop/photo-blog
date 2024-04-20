@@ -25,6 +25,7 @@ type getAlbumImagesDeps interface {
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
+	PhotoMetaFinder() uniq.Finder[photo.Meta]
 	Settings() settings.Values
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 
@@ -37,17 +38,18 @@ type getAlbumInput struct {
 }
 
 type Image struct {
-	Name        string      `json:"name"`
-	Hash        string      `json:"hash"`
-	Width       int64       `json:"width"`
-	Height      int64       `json:"height"`
-	BlurHash    string      `json:"blur_hash,omitempty"`
-	Gps         *photo.Gps  `json:"gps,omitempty"`
-	Exif        *photo.Exif `json:"exif,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Is360Pano   bool        `json:"is_360_pano,omitempty"`
-	Size        int64       `json:"size,omitempty"`
-	Time        time.Time   `json:"time"`
+	Name        string          `json:"name"`
+	Hash        string          `json:"hash"`
+	Width       int64           `json:"width"`
+	Height      int64           `json:"height"`
+	BlurHash    string          `json:"blur_hash,omitempty"`
+	Gps         *photo.Gps      `json:"gps,omitempty"`
+	Exif        *photo.Exif     `json:"exif,omitempty"`
+	Description string          `json:"description,omitempty"`
+	Is360Pano   bool            `json:"is_360_pano,omitempty"`
+	Size        int64           `json:"size,omitempty"`
+	Time        time.Time       `json:"time"`
+	Meta        *photo.MetaData `json:"meta,omitempty"`
 }
 
 type track struct {
@@ -194,6 +196,7 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 	var (
 		gpsData  = map[uniq.Hash]photo.Gps{}
 		exifData = map[uniq.Hash]photo.Exif{}
+		metaData = map[uniq.Hash]photo.Meta{}
 		imgAlbum map[uniq.Hash][]photo.Album
 	)
 
@@ -216,6 +219,15 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 
 		for _, exif := range exifs {
 			exifData[exif.Hash] = exif
+		}
+
+		metas, err := deps.PhotoMetaFinder().FindByHashes(ctx, imageHashes...)
+		if err != nil && !errors.Is(err, status.NotFound) {
+			return out, err
+		}
+
+		for _, meta := range metas {
+			metaData[meta.Hash] = meta
 		}
 
 		imgAlbum, err = deps.PhotoAlbumImageFinder().FindImageAlbums(ctx, albumHash, imageHashes...)
@@ -259,6 +271,10 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 				}
 
 				img.Is360Pano = exif.ProjectionType == "equirectangular"
+			}
+
+			if meta, ok := metaData[i.Hash]; ok {
+				img.Meta = &meta.Data.Val
 			}
 
 			if albums, ok := imgAlbum[i.Hash]; ok {

@@ -3,6 +3,7 @@ package photo
 import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 )
 
 type Meta struct {
@@ -18,5 +19,6 @@ type ImageLabel struct {
 }
 
 type MetaData struct {
-	ImageClassification []ImageLabel `json:"image_classification"`
+	ImageClassification []ImageLabel       `json:"image_classification"`
+	Faces               []faces.GoFaceFace `json:"faces"`
 }

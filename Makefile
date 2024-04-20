@@ -55,4 +55,8 @@ js-client:
 	@go run . -openapi > ./resources/static/openapi.json
 	@swac js-client ./resources/static/openapi.json --out ./resources/static/ --client-name Backend
 
+## Generate faces API Go client
+faces-client:
+	@swac go-client ./resources/faces-openapi.json --out ./internal/infra/image/faces/ --ignore-nullable --skip-default-additional-properties --pkg-name faces
+
 -include local.mk

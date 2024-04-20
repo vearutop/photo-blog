@@ -7,6 +7,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
+	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 )
 
@@ -64,6 +65,7 @@ type Locator struct {
 	CommentThreadFinderProvider
 
 	CloudflareImageClassifierInstance *cloudflare.ImageClassifier
+	FacesRecognizerInstance           *faces.Recognizer
 }
 
 // ServiceConfig gives access to service configuration.
@@ -97,4 +99,8 @@ func (l *Locator) Settings() settings.Values {
 
 func (l *Locator) CloudflareImageClassifier() *cloudflare.ImageClassifier {
 	return l.CloudflareImageClassifierInstance
+}
+
+func (l *Locator) FacesRecognizer() *faces.Recognizer {
+	return l.FacesRecognizerInstance
 }

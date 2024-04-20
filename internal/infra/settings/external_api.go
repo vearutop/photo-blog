@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
+	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 )
 
 type ExternalAPI struct {
 	CFImageClassifier cloudflare.ImageClassifierConfig `json:"cf_image_classifier"`
+	FacesRecognizer   faces.RecognizerConfig           `json:"faces_recognizer"`
 }
 
 func (m *Manager) SetExternalAPI(ctx context.Context, value ExternalAPI) error {

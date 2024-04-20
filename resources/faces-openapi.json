@@ -1,0 +1,117 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Faces Detector",
+  "description": "REST API to detect faces in images.",
+  "version": "master"
+ },
+ "paths": {
+  "/image": {
+   "post": {
+    "summary": "Files Uploads With 'multipart/form-data'",
+    "operationId": "uploadImage",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/FormDataUpload"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Output"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "FormDataUpload": {
+    "type": "object",
+    "properties": {
+     "image": {
+      "$ref": "#/components/schemas/MultipartFile"
+     }
+    }
+   },
+   "GoFaceDescriptor": {
+    "type": "array",
+    "items": {
+     "type": "number"
+    },
+    "nullable": true
+   },
+   "GoFaceFace": {
+    "type": "object",
+    "properties": {
+     "Descriptor": {
+      "$ref": "#/components/schemas/GoFaceDescriptor"
+     },
+     "Rectangle": {
+      "$ref": "#/components/schemas/ImageRectangle"
+     },
+     "Shapes": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ImagePoint"
+      },
+      "nullable": true
+     }
+    }
+   },
+   "ImagePoint": {
+    "type": "object",
+    "properties": {
+     "X": {
+      "type": "integer"
+     },
+     "Y": {
+      "type": "integer"
+     }
+    }
+   },
+   "ImageRectangle": {
+    "type": "object",
+    "properties": {
+     "Max": {
+      "$ref": "#/components/schemas/ImagePoint"
+     },
+     "Min": {
+      "$ref": "#/components/schemas/ImagePoint"
+     }
+    }
+   },
+   "MultipartFile": {
+    "type": "string",
+    "format": "binary"
+   },
+   "Output": {
+    "type": "object",
+    "properties": {
+     "elapsedSec": {
+      "type": "number"
+     },
+     "faces": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GoFaceFace"
+      }
+     },
+     "found": {
+      "type": "integer"
+     }
+    }
+   }
+  }
+ }
+}

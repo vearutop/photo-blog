@@ -31,9 +31,9 @@
  * @type {Object}
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
- * @property {Boolean} hide_map - Hide map on album page.
+ * @property {Boolean} hide_map
  * @property {String} image_base_url - URL prefix to use for full-res images instead of local endpoint.
- * @property {Boolean} newest_first - Newest first. Show newest images at the top.
+ * @property {Boolean} newest_first - Show newest images at the top.
  * @property {String} redirect - Relative or absolute URL to redirect to with HTTP 301 status.
  * @property {Array<PhotoChronoText>} texts - Chronological texts.
  */
@@ -44,7 +44,7 @@
  * @type {Object}
  * @property {String} cover_image - Cover Image. Hash of image to use as a cover.
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {String} hash - Hash Id. Unique hash value.
  * @property {Boolean} hidden - Hidden. Makes album invisible in the main page list.
  * @property {String} name - Name. A slug value that is used in album URL.
  * @property {Boolean} public - Public. Makes album visible in the main page.
@@ -87,7 +87,7 @@
  * @property {Number} exposure_time_sec - Exposure (sec.).
  * @property {Number} f_number - Aperture.
  * @property {Number} focal_length - Focal length.
- * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {String} hash - Hash Id. Unique hash value.
  * @property {Number} iso_speed - ISO.
  * @property {String} lens_model - Lens.
  * @property {String} projection_type - Projection. Use 'equirectangular' for 360 panorama.
@@ -100,10 +100,47 @@
  * @type {Object}
  * @property {Number} altitude - Altitude.
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {String} hash - Hash Id. Unique hash value.
  * @property {Number} latitude - Latitude.
  * @property {Number} longitude - Longitude.
  * @property {String} time - GPS Timestamp.
+ */
+
+/**
+ * @typedef FacesImagePoint
+ * @type {Object}
+ * @property {Number} X
+ * @property {Number} Y
+ */
+
+/**
+ * @typedef FacesImageRectangle
+ * @type {Object}
+ * @property {FacesImagePoint} Max
+ * @property {FacesImagePoint} Min
+ */
+
+/**
+ * @typedef FacesGoFaceFace
+ * @type {Object}
+ * @property {?Array<Number>} Descriptor
+ * @property {FacesImageRectangle} Rectangle
+ * @property {?Array<FacesImagePoint>} Shapes
+ */
+
+/**
+ * @typedef PhotoImageLabel
+ * @type {Object}
+ * @property {String} model
+ * @property {Number} score
+ * @property {String} text
+ */
+
+/**
+ * @typedef PhotoMetaData
+ * @type {Object}
+ * @property {?Array<FacesGoFaceFace>} faces
+ * @property {?Array<PhotoImageLabel>} image_classification
  */
 
 /**
@@ -116,6 +153,7 @@
  * @property {String} hash
  * @property {Number} height
  * @property {Boolean} is_360_pano
+ * @property {PhotoMetaData} meta
  * @property {String} name
  * @property {Number} size
  * @property {String} time
@@ -333,7 +371,7 @@
  * @type {Object}
  * @property {String} blurhash - BlurHash.
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {String} hash - Hash Id. Unique hash value.
  * @property {Number} height - Height, px.
  * @property {String} path - File Path.
  * @property {String} phash - PerceptionHash.
@@ -470,7 +508,7 @@
  * @type {Object}
  * @property {Boolean} approved
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - ImageHash Id. Unique hash value.
+ * @property {String} hash - Hash Id. Unique hash value.
  * @property {String} text
  * @property {String} thread_hash
  * @property {String} visitor_hash
@@ -587,6 +625,34 @@
  * @typedef ControlSettingsSetAppearanceRequest
  * @type {Object}
  * @property {SettingsAppearance} body
+ */
+
+/**
+ * @typedef CloudflareImageClassifierConfig
+ * @type {Object}
+ * @property {String} api_key
+ * @property {Number} batch_size
+ * @property {String} image_url_template
+ * @property {String} url
+ */
+
+/**
+ * @typedef FacesRecognizerConfig
+ * @type {Object}
+ * @property {String} url
+ */
+
+/**
+ * @typedef SettingsExternalAPI
+ * @type {Object}
+ * @property {CloudflareImageClassifierConfig} cf_image_classifier
+ * @property {FacesRecognizerConfig} faces_recognizer
+ */
+
+/**
+ * @typedef ControlSettingsSetExternalAPIRequest
+ * @type {Object}
+ * @property {SettingsExternalAPI} body
  */
 
 /**
