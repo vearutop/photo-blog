@@ -38,6 +38,12 @@ func ReadMeta(r io.ReadSeeker) (Meta, error) {
 		return res, err
 	}
 
+	now := time.Now()
+	res.Exif.CreatedAt = now
+	if res.GpsInfo != nil {
+		res.GpsInfo.CreatedAt = now
+	}
+
 	return res, nil
 }
 
