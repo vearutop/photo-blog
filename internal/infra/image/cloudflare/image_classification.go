@@ -98,6 +98,10 @@ func (ic *ImageClassifier) Classify(ctx context.Context, imgHash uniq.Hash, cb f
 
 	cfg := ic.cfg()
 
+	if cfg.ImageURLTemplate == "" {
+		return
+	}
+
 	u := fmt.Sprintf(cfg.ImageURLTemplate, imgHash.String())
 	ic.queue[u] = cb
 	ic.ctx = ctx
