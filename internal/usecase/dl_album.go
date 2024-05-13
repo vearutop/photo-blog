@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/response"
@@ -66,23 +68,58 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			}
 		}()
 
+		copyImg := func(ctx context.Context, f io.Writer, img photo.Image) error {
+			if len(img.Settings.HTTPSources) > 0 {
+				resp, err := http.Get(img.Settings.HTTPSources[0])
+				if err != nil {
+					deps.CtxdLogger().Error(ctx, "failed to open remote image",
+						"error", err, "img", img)
+					return err
+				}
+				defer func() {
+					if err := resp.Body.Close(); err != nil {
+						deps.CtxdLogger().Error(ctx, "failed to close remote image")
+					}
+				}()
+				if _, err = io.Copy(f, resp.Body); err != nil {
+					return err
+				}
+			} else {
+				src, err := os.Open(img.Path)
+				if err != nil {
+					deps.CtxdLogger().Error(ctx, "failed to open image",
+						"error", err, "img", img)
+					return err
+				}
+				defer func() {
+					if err := src.Close(); err != nil {
+						deps.CtxdLogger().Error(ctx, "failed to close image")
+					}
+				}()
+
+				if _, err = io.Copy(f, src); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}
+
 		for _, img := range images {
+			if img.TakenAt == nil {
+				img.TakenAt = &img.CreatedAt
+			}
+
 			f, err := w.CreateHeader(&zip.FileHeader{
-				Name:   path.Base(img.Path),
-				Method: zip.Store,
+				Name:     path.Base(strings.TrimSuffix(img.Path, "."+img.Hash.String()+".jpg")),
+				Method:   zip.Store,
+				Modified: *img.TakenAt,
 			})
 			if err != nil {
 				return err
 			}
 
-			src, err := os.Open(img.Path)
-			if err != nil {
-				deps.CtxdLogger().Error(ctx, "failed to open image",
-					"error", err, "img", img)
-				continue
-			}
-
-			if _, err = io.Copy(f, src); err != nil {
+			if err := copyImg(ctx, f, img); err != nil {
 				return err
 			}
 		}

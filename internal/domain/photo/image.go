@@ -32,7 +32,8 @@ type Image struct {
 }
 
 type ImageSettings struct {
-	Description string `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an image, can contain HTML."`
+	Description string   `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an image, can contain HTML."`
+	HTTPSources []string `json:"http_sources,omitempty"`
 }
 
 // TODO: generalize scanner with generics.

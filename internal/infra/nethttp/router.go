@@ -73,6 +73,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Post("/album", control.CreateAlbum(deps))
 		s.Post("/album/{name}/directory", control.AddDirectory(deps, control.IndexAlbum(deps)))
+		s.Post("/album/{name}/url", control.AddRemote(deps))
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))

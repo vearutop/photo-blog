@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/response"
@@ -44,6 +45,11 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 
 		if cont.FilePath != "" {
+			if strings.HasPrefix(cont.FilePath, "https://") || strings.HasPrefix(cont.FilePath, "http://") {
+				http.Redirect(rw, in.req, cont.FilePath, http.StatusMovedPermanently)
+				return nil
+			}
+
 			http.ServeFile(rw, in.req, cont.FilePath)
 		} else {
 			http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont.ReadSeeker())

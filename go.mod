@@ -40,6 +40,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.22.0
+	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
 	golang.org/x/net v0.24.0
 	golang.org/x/text v0.14.0
 	modernc.org/sqlite v1.29.8

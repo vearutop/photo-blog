@@ -39,6 +39,11 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 			return err
 		}
 
+		if len(image.Settings.HTTPSources) > 0 {
+			http.Redirect(rw, in.Request(), image.Settings.HTTPSources[0], http.StatusMovedPermanently)
+			return nil
+		}
+
 		p := image.Path
 		if useAvif {
 			p = p[0:strings.LastIndex(p, ".")] + ".avif"

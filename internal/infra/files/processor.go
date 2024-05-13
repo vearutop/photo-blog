@@ -43,7 +43,7 @@ const (
 	ErrSkip = ctxd.SentinelError("unsupported file skipped")
 )
 
-func (p *Processor) AddFile(ctx context.Context, albumName string, filePath string) (err error) {
+func (p *Processor) AddFile(ctx context.Context, albumName string, filePath string, after ...func(hash uniq.Hash)) (err error) {
 	lName := strings.ToLower(filePath)
 
 	defer func() {
@@ -58,13 +58,17 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 			return fmt.Errorf("set image path: %w", err)
 		}
 
-		if img, err := p.deps.PhotoImageEnsurer().Ensure(ctx, d); err != nil {
+		img, err := p.deps.PhotoImageEnsurer().Ensure(ctx, d)
+		if err != nil {
 			return fmt.Errorf("ensure image: %w", err)
 		} else if err := p.deps.PhotoAlbumImageAdder().AddImages(ctx, uniq.StringHash(albumName), img.Hash); err != nil {
 			return fmt.Errorf("add image to album: %w", err)
 		} else {
 			p.deps.PhotoImageIndexer().QueueIndex(ctx, img, photo.IndexingFlags{})
 			p.deps.PhotoImageIndexer().QueueCallback(ctx, func(ctx context.Context) {
+				for _, cb := range after {
+					cb(img.Hash)
+				}
 				_ = p.deps.DepCache().AlbumChanged(ctx, albumName)
 			})
 		}
@@ -84,7 +88,8 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 
 		p.deps.CtxdLogger().Info(ctx, "gpx", "settings", d.Settings.Val)
 
-		if d, err := p.deps.PhotoGpxEnsurer().Ensure(ctx, d); err != nil {
+		d, err := p.deps.PhotoGpxEnsurer().Ensure(ctx, d)
+		if err != nil {
 			return fmt.Errorf("ensure gpx: %w", err)
 		} else {
 			// TODO: migrate album_images to album_contents with hashed items of different types
@@ -109,6 +114,10 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 				if _, err = p.deps.PhotoAlbumEnsurer().Ensure(ctx, a); err != nil {
 					return fmt.Errorf("ensure album %s: %w", albumName, err)
 				}
+			}
+
+			for _, cb := range after {
+				cb(d.Hash)
 			}
 
 			return nil
