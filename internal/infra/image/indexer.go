@@ -157,8 +157,8 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	i.ensureThumbs(ctx, img)
 	i.ensureBlurHash(ctx, &img)
 	i.ensurePHash(ctx, &img)
-	i.ensureFacesRecognized(ctx, img)
-	i.ensureCFClassification(ctx, img)
+	go i.ensureFacesRecognized(ctx, img)
+	go i.ensureCFClassification(ctx, img)
 
 	return nil
 }
