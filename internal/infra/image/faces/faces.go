@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sync"
 
 	"github.com/bool64/ctxd"
 )
@@ -13,6 +14,7 @@ import (
 type Recognizer struct {
 	logger ctxd.Logger
 	c      *Client
+	mu     sync.Mutex
 }
 
 type RecognizerConfig struct {
@@ -37,6 +39,9 @@ func (r *Recognizer) RecognizeFile(ctx context.Context, fileName string) ([]GoFa
 	if r.c == nil {
 		return nil, nil
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	f, err := os.Open(fileName)
 	if err != nil {
