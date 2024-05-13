@@ -38,12 +38,56 @@ func LargerThumbToContext(ctx context.Context, th photo.Thumb) context.Context {
 	return context.WithValue(ctx, thumbCtxKey{}, &th)
 }
 
-func largerThumbFromContext(ctx context.Context) *photo.Thumb {
+func LargerThumbFromContext(ctx context.Context) *photo.Thumb {
 	if th, ok := ctx.Value(thumbCtxKey{}).(*photo.Thumb); ok {
 		return th
 	}
 
 	return nil
+}
+
+func makeThumbnail(
+	ctx context.Context,
+	i photo.Image,
+	size photo.ThumbSize,
+) (th photo.Thumb, err error) {
+	w, h, err := size.WidthHeight()
+	if err != nil {
+		return th, err
+	}
+
+	lt := LargerThumbFromContext(ctx)
+	if lt != nil && lt.Format == size {
+		return *lt, nil
+	}
+
+	th.Hash = i.Hash
+	th.CreatedAt = time.Now()
+
+	r := Resizer{
+		Quality: 85,
+		Interp:  resize.Lanczos2,
+	}
+
+	buf := bytes.NewBuffer(nil)
+
+	img, err := loadImage(ctx, i, w, h)
+	if err != nil {
+		return th, err
+	}
+
+	w, h, err = r.resizeJPEG(ctx, img, buf, w, h)
+	if err != nil {
+		return th, fmt.Errorf("resize: %w", err)
+	}
+
+	th.Width = w
+	th.Height = h
+	th.Format = size
+
+	th.Data = buf.Bytes()
+
+	return th, nil
 }
 
 func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (th photo.Thumb, err error) {
@@ -77,34 +121,16 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 		return th, nil
 	}
 
-	r := Resizer{
-		Quality: 85,
-		Interp:  resize.Lanczos2,
-	}
-
-	buf := bytes.NewBuffer(nil)
-	w, h, err := size.WidthHeight()
+	th, err = makeThumbnail(ctx, i, size)
 	if err != nil {
 		return th, err
 	}
 
-	img, err := t.loadImage(ctx, i, w, h)
-	if err != nil {
-		return th, err
-	}
-
-	w, h, err = r.resizeJPEG(ctx, img, buf, w, h)
-	if err != nil {
-		return th, fmt.Errorf("failed to resize: %w", err)
-	}
-
-	th.Width = w
-	th.Height = h
-
-	if len(buf.Bytes()) > 1e5 {
+	if len(th.Data) > 1e5 {
 		if err := os.MkdirAll(dir, 0o700); err == nil {
-			if err := os.WriteFile(filePath, buf.Bytes(), 0o600); err == nil {
+			if err := os.WriteFile(filePath, th.Data, 0o600); err == nil {
 				th.FilePath = filePath
+				th.Data = nil
 			} else {
 				t.deps.CtxdLogger().Error(ctx, "failed to write thumb file",
 					"error", err, "filePath", filePath)
@@ -114,19 +140,15 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 		}
 	}
 
-	if th.FilePath == "" {
-		th.Data = buf.Bytes()
-	}
-
 	elapsed := time.Since(start)
 	t.deps.CtxdLogger().Info(ctx, "thumb done", "elapsed", elapsed.String())
 
 	return th, nil
 }
 
-func (t *Thumbnailer) loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
-	lt := largerThumbFromContext(ctx)
-	if lt != nil && (lt.Width > w || lt.Height > h) {
+func loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
+	lt := LargerThumbFromContext(ctx)
+	if lt != nil && (lt.Width >= w || lt.Height >= h) {
 		img, err := thumbJPEG(ctx, *lt)
 		if err != nil {
 			return nil, fmt.Errorf("decoding larger thumb: %w", err)

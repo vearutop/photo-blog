@@ -47,8 +47,10 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size 
 		return th, nil
 	}
 
-	if lt, err := tr.FindLarger(ctx, img.Hash, w, h); err == nil {
-		ctx = image.LargerThumbToContext(ctx, lt)
+	if lt := image.LargerThumbFromContext(ctx); lt == nil || lt.Format != size {
+		if lt, err := tr.FindLarger(ctx, img.Hash, w, h); err == nil {
+			ctx = image.LargerThumbToContext(ctx, lt)
+		}
 	}
 
 	th, err = tr.upstream.Thumbnail(ctx, img, size)
