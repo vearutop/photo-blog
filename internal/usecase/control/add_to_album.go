@@ -8,6 +8,9 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -17,6 +20,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
+	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/upload"
 )
 
@@ -29,15 +33,20 @@ type addToAlbumDeps interface {
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
 
+	PhotoGpsEnsurer() uniq.Ensurer[photo.Gps]
+	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
+
 	FilesProcessor() *files.Processor
 
 	DepCache() *dep.Cache
 }
 type addToAlbumInput struct {
-	DstAlbumName string    `path:"name" description:"Name of destination album to add photo."`
-	SrcImageHash uniq.Hash `json:"image_hash,omitempty" title:"Image Hash" description:"Hash of an image to add to album."`
-	SrcAlbumName string    `json:"album_name,omitempty" title:"Source Album Name" description:"Name of a source album to add photos from."`
-	SrcImageURL  string    `json:"image_url,omitempty" title:"Fetch image from a publicly available URL."`
+	DstAlbumName        string    `path:"name" description:"Name of destination album to add photo."`
+	SrcImageHash        uniq.Hash `json:"image_hash,omitempty" title:"Image Hash" description:"Hash of an image to add to album."`
+	SrcAlbumName        string    `json:"album_name,omitempty" title:"Source Album Name" description:"Name of a source album to add photos from."`
+	SrcImageURL         string    `json:"image_url,omitempty" title:"Fetch image from a publicly available URL."`
+	SrcGPS              string    `json:"image_lat_lon,omitempty" title:"Set image GPS location after adding from URL." description:"In latitude,longitude format."`
+	SrcImageDescription string    `json:"image_description,omitempty" title:"Set image description after adding from URL." formType:"textarea" description:"Description of an image, can contain HTML."`
 }
 
 // AddToAlbum creates use case interactor to add a single photo or photos from an album to another album.
@@ -77,8 +86,17 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 				return nil
 			}
 
-			dstFilePath := upload.AlbumFilePath(upload.AlbumPath(in.DstAlbumName), path.Base(u.Path))
+			albumPath := upload.AlbumPath(in.DstAlbumName)
+			if err := os.MkdirAll(albumPath, 0o700); err != nil {
+				return err
+			}
+
+			dstFilePath := upload.AlbumFilePath(albumPath, path.Base(u.Path))
 			// TODO: Add file exists check here.
+
+			if !strings.HasSuffix(dstFilePath, ".jpg") {
+				dstFilePath += ".jpg"
+			}
 
 			dst, err := os.Create(dstFilePath)
 			if err != nil {
@@ -97,17 +115,80 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 			}
 			defer resp.Body.Close()
 
-			if _, err := io.Copy(dst, resp.Body); err != nil {
-				return fmt.Errorf("saving remote file: %w", err)
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return fmt.Errorf("reading image %s: %w", in.SrcImageURL, err)
+			}
+
+			data, err = image.ToJpeg(data)
+			if err != nil {
+				return fmt.Errorf("converting image %s: %w", in.SrcImageURL, err)
+			}
+
+			_, err = dst.Write(data)
+			if err != nil {
+				return fmt.Errorf("writing image %s: %w", dstFilePath, err)
 			}
 
 			if err := dst.Close(); err != nil {
 				return err
 			}
 
-			if err := deps.FilesProcessor().AddFile(ctx, in.DstAlbumName, dstFilePath); err != nil {
+			err = deps.FilesProcessor().AddFile(ctx, in.DstAlbumName, dstFilePath, func(hash uniq.Hash) {
+				ctx := detachedContext{
+					parent: ctx,
+				}
+
+				if in.SrcGPS != "" {
+					parts := strings.Split(in.SrcGPS, ",")
+
+					gps := photo.Gps{}
+					gps.Hash = hash
+
+					if len(parts) != 2 {
+						deps.CtxdLogger().Error(ctx, "invalid gps location", "location", in.SrcGPS)
+						return
+					}
+
+					gps.Latitude, err = strconv.ParseFloat(strings.TrimSpace(parts[0]), 32)
+					if err != nil {
+						deps.CtxdLogger().Error(ctx, "invalid gps location", "location", in.SrcGPS)
+						return
+					}
+
+					gps.Longitude, err = strconv.ParseFloat(strings.TrimSpace(parts[1]), 32)
+					if err != nil {
+						deps.CtxdLogger().Error(ctx, "invalid gps location", "location", in.SrcGPS)
+						return
+					}
+
+					if _, err := deps.PhotoGpsEnsurer().Ensure(ctx, gps); err != nil {
+						deps.CtxdLogger().Error(ctx, "ensure gps location", "error", err)
+						return
+					}
+				}
+
+				if in.SrcImageDescription != "" {
+					time.Sleep(time.Second)
+
+					img, err := deps.PhotoImageFinder().FindByHash(ctx, hash)
+					if err != nil {
+						deps.CtxdLogger().Error(ctx, "find image", "error", err)
+						return
+					}
+
+					img.Settings.Description = in.SrcImageDescription
+
+					if _, err := deps.PhotoImageEnsurer().Ensure(ctx, img); err != nil {
+						deps.CtxdLogger().Error(ctx, "ensure image", "error", err)
+						return
+					}
+				}
+			})
+			if err != nil {
 				return err
 			}
+
 		}
 
 		if err == nil {
