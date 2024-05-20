@@ -673,6 +673,7 @@ function loadAlbum(params) {
             $('#map').show()
             var map = L.map('map', {
                 fullscreenControl: true,
+                scrollWheelZoom: false
             }).fitBounds([
                 [gpsBounds.minLat, gpsBounds.minLon],
                 [gpsBounds.maxLat, gpsBounds.maxLon]
