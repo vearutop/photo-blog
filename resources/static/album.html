@@ -40,7 +40,7 @@
     <script type="text/javascript" src="/static/leaflet/L.Control.Locate.js"></script>
     <script type="text/javascript" src="/static/leaflet-omnivore.min.js"></script>
     <style>
-        /*{{if .NonAdmin}}*/.control-panel {
+        /*{{if not .IsAdmin}}*/.control-panel {
             display: none !important;
         }/*{{end}}*/
     </style>
@@ -94,7 +94,7 @@
         albumData: {{.AlbumData}}
     });
     collectThumbVisibility();
-    {{if not .NonAdmin}}
+    {{if .IsAdmin}}
     enableDragNDropImagesReordering();
     {{end}}
 </script>

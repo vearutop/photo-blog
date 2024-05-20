@@ -60,7 +60,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		OGSiteName  string
 		Name        string
 		CoverImage  string
-		NonAdmin    bool
+		IsAdmin     bool
 		Public      bool
 		Hash        string
 
@@ -104,7 +104,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d.Description = template.HTML(album.Settings.Description)
 		d.Name = album.Name
-		d.NonAdmin = !auth.IsAdmin(ctx)
+		d.IsAdmin = auth.IsAdmin(ctx)
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
@@ -130,7 +130,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		// TotalSize controls visibility of batch download button.
 		privacy := deps.Settings().Privacy()
-		if !d.NonAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
+		if d.IsAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
 			var totalSize int64
 			for _, img := range cont.Images {
 				totalSize += img.Size

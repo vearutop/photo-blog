@@ -28,12 +28,12 @@
     <script src="/static/leaflet/leaflet-1.9.3.js"></script>
 
     <style>
-        /*{{if .NonAdmin}}*/
-        .control-panel {
+        /*{{if .IsAdmin}}*/
+        .not-control-panel {
             display: none !important;
         }
         /*{{else}}*/
-        .not-control-panel {
+        .control-panel {
             display: none !important;
         }
         /*{{end}}*/

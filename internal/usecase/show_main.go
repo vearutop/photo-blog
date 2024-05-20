@@ -72,7 +72,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		Name              string
 		CoverImage        string
 		Secure            bool
-		NonAdmin          bool
+		IsAdmin           bool
 		Public            bool
 		Hash              string
 		Featured          string
@@ -97,7 +97,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 
 			d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
 
-			d.NonAdmin = !auth.IsAdmin(ctx)
+			d.IsAdmin = auth.IsAdmin(ctx)
 			d.Secure = !deps.Settings().Security().Disabled()
 			d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 			d.ShowLoginButton = !deps.Settings().Privacy().HideLoginButton
@@ -132,7 +132,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 				}
 
 				if !a.Public || a.Name == "" {
-					if d.NonAdmin {
+					if !d.IsAdmin {
 						continue
 					}
 				}
@@ -142,7 +142,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 					return d, err
 				}
 
-				if len(cont.Images) == 0 && d.NonAdmin {
+				if len(cont.Images) == 0 && !d.IsAdmin {
 					continue
 				}
 
