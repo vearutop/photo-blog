@@ -44,6 +44,10 @@
             display: none !important;
         }/*{{end}}*/
     </style>
+    {{if .IsAdmin}}
+    <link rel="stylesheet" href="/static/tus/uppy.min.css">
+    <script src="/static/tus/uppy.legacy.min.js"></script>
+    {{end}}
 {{.Head}}
 </head>
 
@@ -59,8 +63,9 @@
 
     <div style="display: inline-block;position: relative; top: -0.35em">
         <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a>
+        <a title="Upload files" class="control-panel ctrl-btn upload-icon" id="uppyModalOpener" href="#"></a>
         {{if gt .Count 0 }}
-        <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos</a>
+        <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
         {{end}}
     </div>
 
@@ -96,6 +101,22 @@
     collectThumbVisibility();
     {{if .IsAdmin}}
     enableDragNDropImagesReordering();
+
+    {
+        const { Dashboard, Tus } = Uppy
+        const uppy = new Uppy.Uppy({ debug: true, autoProceed: false, limit: 1 })
+            .use(Dashboard, {
+                trigger: '#uppyModalOpener',
+                note: 'JPG, GPX are supported',
+                proudlyDisplayPoweredByUppy: false,
+            })
+            .use(Tus, {
+                limit: 1,
+                endpoint: window.location.protocol + '//' + window.location.host + '/files',
+                chunkSize: 900000, // 900K to fit in 1MiB default client_max_body_size of nginx.
+                headers: {"X-Album-Name": "{{.Name}}"},
+            })
+    }
     {{end}}
 </script>
 
