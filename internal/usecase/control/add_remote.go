@@ -81,128 +81,143 @@ func AddRemote(deps addRemoteDeps) usecase.Interactor {
 			return fmt.Errorf("unmarshalling JSON list: %w", err)
 		}
 
-		baseURL, _ := path.Split(in.URL)
-
-		var (
-			imgHashes    []uniq.Hash
-			imgByHash    = map[uniq.Hash]photo.Image{}
-			zippedThumbs = map[string][]photo.Thumb{}
-		)
-
-		for _, l := range list {
-			newImg := l.Image
-			img, err := deps.PhotoImageFinder().FindByHash(ctx, newImg.Hash)
-			if errors.Is(err, status.NotFound) {
-				img = newImg
-			}
-
-			img.Settings.HTTPSources = append(img.Settings.HTTPSources, baseURL+img.Path)
-			if _, err := deps.PhotoImageEnsurer().Ensure(ctx, img); err != nil {
-				return fmt.Errorf("ensure image: %w", err)
-			}
-
-			imgByHash[img.Hash] = img
-
-			if l.Exif != nil {
-				l.Exif.Hash = img.Hash
-				if _, err := deps.PhotoExifEnsurer().Ensure(ctx, *l.Exif); err != nil {
-					return fmt.Errorf("ensure exif: %w", err)
-				}
-			}
-
-			if l.Gps != nil {
-				l.Gps.Hash = img.Hash
-				if _, err := deps.PhotoGpsEnsurer().Ensure(ctx, *l.Gps); err != nil {
-					return fmt.Errorf("ensure gps: %w", err)
-				}
-			}
-
-			for _, th := range l.Thumbs {
-				if th.FilePath == "" {
-					continue
-				}
-
-				if strings.Contains(th.FilePath, ".zip/") {
-					zipURL := baseURL + path.Dir(th.FilePath)
-					zippedThumbs[zipURL] = append(zippedThumbs[zipURL], th)
-				} else {
-					th.FilePath = baseURL + th.FilePath
-					ctx := image.LargerThumbToContext(ctx, th)
-					if _, err := deps.PhotoThumbnailer().Thumbnail(ctx, img, th.Format); err != nil {
-						return fmt.Errorf("thumbnail: %w", err)
-					}
-				}
-			}
-
-			imgHashes = append(imgHashes, img.Hash)
-		}
-
-		if len(imgHashes) > 0 {
-			if err := deps.PhotoAlbumImageAdder().AddImages(ctx, a.Hash, imgHashes...); err != nil {
-				return fmt.Errorf("add album images: %w", err)
-			}
-		}
-
-		for zipURL, thumbs := range zippedThumbs {
-			resp, err := http.Get(zipURL)
-			if err != nil {
-				return fmt.Errorf("getting thumbs zip contents %s: %w", zipURL, err)
-			}
-
+		go func() (err error) {
 			defer func() {
-				if err := resp.Body.Close(); err != nil {
-					deps.CtxdLogger().Warn(ctx, "error closing response body", "error", err)
+				if err != nil {
+					deps.CtxdLogger().Error(ctx, "failed to process remote album", "error", err)
 				}
 			}()
 
-			zipFn := "temp/" + path.Base(zipURL)
-			f, err := os.Create(zipFn)
-			if err != nil {
-				return fmt.Errorf("creating zip file: %w", err)
+			ctx := detachedContext{
+				parent: ctx,
 			}
 
-			size, err := io.Copy(f, resp.Body)
-			if err != nil {
-				return err
+			baseURL, _ := path.Split(in.URL)
+
+			var (
+				imgHashes    []uniq.Hash
+				imgByHash    = map[uniq.Hash]photo.Image{}
+				zippedThumbs = map[string][]photo.Thumb{}
+			)
+
+			for _, l := range list {
+				newImg := l.Image
+				img, err := deps.PhotoImageFinder().FindByHash(ctx, newImg.Hash)
+				if errors.Is(err, status.NotFound) {
+					img = newImg
+				}
+
+				// img.Settings.HTTPSources = append(img.Settings.HTTPSources, baseURL+newImg.Path)
+				img.Settings.HTTPSources = []string{baseURL + newImg.Path}
+				if _, err := deps.PhotoImageEnsurer().Ensure(ctx, img); err != nil {
+					return fmt.Errorf("ensure image: %w", err)
+				}
+
+				imgByHash[img.Hash] = img
+
+				if l.Exif != nil {
+					l.Exif.Hash = img.Hash
+					if _, err := deps.PhotoExifEnsurer().Ensure(ctx, *l.Exif); err != nil {
+						return fmt.Errorf("ensure exif: %w", err)
+					}
+				}
+
+				if l.Gps != nil {
+					l.Gps.Hash = img.Hash
+					if _, err := deps.PhotoGpsEnsurer().Ensure(ctx, *l.Gps); err != nil {
+						return fmt.Errorf("ensure gps: %w", err)
+					}
+				}
+
+				for _, th := range l.Thumbs {
+					if th.FilePath == "" {
+						continue
+					}
+
+					if strings.Contains(th.FilePath, ".zip/") {
+						zipURL := baseURL + path.Dir(th.FilePath)
+						zippedThumbs[zipURL] = append(zippedThumbs[zipURL], th)
+					} else {
+						th.FilePath = baseURL + th.FilePath
+						ctx := image.LargerThumbToContext(ctx, th)
+						if _, err := deps.PhotoThumbnailer().Thumbnail(ctx, img, th.Format); err != nil {
+							return fmt.Errorf("thumbnail: %w", err)
+						}
+					}
+				}
+
+				imgHashes = append(imgHashes, img.Hash)
 			}
 
-			zr, err := zip.NewReader(f, size)
-			if err != nil {
-				return err
+			if len(imgHashes) > 0 {
+				if err := deps.PhotoAlbumImageAdder().AddImages(ctx, a.Hash, imgHashes...); err != nil {
+					return fmt.Errorf("add album images: %w", err)
+				}
 			}
 
-			for _, th := range thumbs {
-				tf, err := zr.Open(path.Base(th.FilePath))
+			for zipURL, thumbs := range zippedThumbs {
+				resp, err := http.Get(zipURL)
+				if err != nil {
+					return fmt.Errorf("getting thumbs zip contents %s: %w", zipURL, err)
+				}
+
+				defer func() {
+					if err := resp.Body.Close(); err != nil {
+						deps.CtxdLogger().Warn(ctx, "error closing response body", "error", err)
+					}
+				}()
+
+				zipFn := "temp/" + path.Base(zipURL)
+				f, err := os.Create(zipFn)
+				if err != nil {
+					return fmt.Errorf("creating zip file: %w", err)
+				}
+
+				size, err := io.Copy(f, resp.Body)
 				if err != nil {
 					return err
 				}
 
-				th.Data, err = io.ReadAll(tf)
+				zr, err := zip.NewReader(f, size)
 				if err != nil {
 					return err
 				}
 
-				if err := tf.Close(); err != nil {
-					return err
+				for _, th := range thumbs {
+					tf, err := zr.Open(path.Base(th.FilePath))
+					if err != nil {
+						return err
+					}
+
+					th.Data, err = io.ReadAll(tf)
+					if err != nil {
+						return err
+					}
+
+					if err := tf.Close(); err != nil {
+						return err
+					}
+
+					th.FilePath = ""
+
+					ctx := image.LargerThumbToContext(ctx, th)
+					_, err = deps.PhotoThumbnailer().Thumbnail(ctx, imgByHash[th.Hash], th.Format)
+					if err != nil {
+						return err
+					}
 				}
 
-				th.FilePath = ""
-
-				ctx := image.LargerThumbToContext(ctx, th)
-				_, err = deps.PhotoThumbnailer().Thumbnail(ctx, imgByHash[th.Hash], th.Format)
-				if err != nil {
-					return err
+				if err := os.Remove(zipFn); err != nil {
+					return fmt.Errorf("removing zip file %s: %w", zipFn, err)
 				}
 			}
 
-			if err := os.Remove(zipFn); err != nil {
-				return fmt.Errorf("removing zip file %s: %w", zipFn, err)
+			if err == nil {
+				err = deps.DepCache().AlbumChanged(ctx, a.Name)
 			}
-		}
 
-		if err == nil {
-			err = deps.DepCache().AlbumChanged(ctx, a.Name)
-		}
+			return nil
+		}()
 
 		return err
 	})
