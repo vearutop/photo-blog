@@ -33,17 +33,17 @@ require (
 	github.com/swaggest/rest v0.2.66
 	github.com/swaggest/swgui v1.8.1
 	github.com/swaggest/usecase v1.3.1
-	github.com/tkrajina/gpxgo v1.3.1
+	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.4.0
 	github.com/vearutop/statigz v1.4.0
 	github.com/yuin/goldmark v1.7.1
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.22.0
-	golang.org/x/image v0.0.0-20190802002840-cff245a6509b
-	golang.org/x/net v0.24.0
-	golang.org/x/text v0.14.0
-	modernc.org/sqlite v1.29.8
+	golang.org/x/crypto v0.23.0
+	golang.org/x/image v0.16.0
+	golang.org/x/net v0.25.0
+	golang.org/x/text v0.15.0
+	modernc.org/sqlite v1.29.9
 )
 
 require (
@@ -111,7 +111,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	google.golang.org/api v0.166.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240221002015-b0ce06bbee7c // indirect
 	google.golang.org/grpc v1.62.0 // indirect
@@ -119,7 +119,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.50.1 // indirect
+	modernc.org/libc v1.50.5 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
