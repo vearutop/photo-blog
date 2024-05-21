@@ -17,6 +17,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/image"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 )
 
 func main() {
@@ -118,6 +119,8 @@ func main() {
 type thumbStorer struct {
 	mu sync.Mutex
 	z  map[photo.ThumbSize]*thumbZipWriter
+
+	s map[int]*sprite.Vertical
 }
 
 type thumbZipWriter struct {
@@ -137,6 +140,10 @@ func (t *thumbStorer) Close() error {
 		}
 	}
 
+	for _, sp := range t.s {
+		sp.Flush()
+	}
+
 	return nil
 }
 
@@ -145,7 +152,7 @@ func (t *thumbStorer) Write(th *photo.Thumb) error {
 	defer t.mu.Unlock()
 
 	if len(th.Data) > 5e5 { // 500 KB
-		if err := os.MkdirAll("thumbs", 0o600); err != nil {
+		if err := os.MkdirAll("thumbs", 0o700); err != nil {
 			return err
 		}
 		th.FilePath = "thumbs/" + th.Hash.String() + "." + string(th.Format) + ".jpg"
@@ -157,6 +164,14 @@ func (t *thumbStorer) Write(th *photo.Thumb) error {
 		th.Data = nil
 
 		return nil
+	}
+
+	if th.Width <= 600 {
+		if t.s == nil {
+			t.s = make(map[int]*sprite.Vertical)
+		}
+
+		t.s[th.Width] = append(t.s[th.Width], &thc)
 	}
 
 	w := t.z[th.Format]
@@ -180,7 +195,7 @@ func (t *thumbStorer) Write(th *photo.Thumb) error {
 	if w.zip == nil {
 		w.idx++
 		w.fn = fmt.Sprintf("thumbs/%s.%s.%d.zip", uniq.Hash(rand.Int64()), th.Format, w.idx)
-		if err := os.MkdirAll("thumbs", 0o600); err != nil {
+		if err := os.MkdirAll("thumbs", 0o700); err != nil {
 			return err
 		}
 
