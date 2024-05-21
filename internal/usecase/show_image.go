@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -18,6 +19,7 @@ type showImageDeps interface {
 	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 	Settings() settings.Values
+	CtxdLogger() ctxd.Logger
 }
 
 func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
@@ -40,6 +42,7 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 		}
 
 		if len(image.Settings.HTTPSources) > 0 {
+			deps.CtxdLogger().Info(ctx, "redirecting image to remote address", "img", image, "url", image.Settings.HTTPSources[0])
 			http.Redirect(rw, in.Request(), image.Settings.HTTPSources[0], http.StatusMovedPermanently)
 			return nil
 		}
