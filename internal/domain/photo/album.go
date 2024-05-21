@@ -42,6 +42,7 @@ type AlbumSettings struct {
 	Description     string       `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an album, can contain HTML."`
 	GpxTracksHashes []uniq.Hash  `json:"gpx_tracks_hashes,omitempty" title:"GPX track hashes"`
 	NewestFirst     bool         `json:"newest_first,omitempty" noTitle:"true" inlineTitle:"Newest first" description:"Show newest images at the top."`
+	DailyRulers     bool         `json:"daily_rulers,omitempty" noTitle:"true" inlineTitle:"Daily rulers" description:"Show date splits between the photos."`
 	Texts           []ChronoText `json:"texts,omitempty" title:"Chronological texts"`
 	// Deprecated: TODO remove and implement as separate entity.
 	Redirect string `json:"redirect,omitempty" title:"Relative or absolute URL to redirect to with HTTP 301 status."`

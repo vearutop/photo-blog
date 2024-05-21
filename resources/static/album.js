@@ -273,6 +273,7 @@ function loadAlbum(params) {
             result.images = [];
         }
 
+        var albumSettings = result.album.settings
         var chronoTexts = result.album.settings.texts
 
         var fullscreenSupported = false
@@ -369,32 +370,42 @@ function loadAlbum(params) {
 
                 var exif = {}
                 if (typeof img.exif !== "undefined") {
-                    var ts = Date.parse(img.exif.digitized)
-
                     exif = img.exif
+                }
 
-                    if (chronoTexts) {
-                        var ct = [];
 
-                        for (var ti = 0; ti < chronoTexts.length; ti++) {
-                            var t = chronoTexts[ti]
+                var ts = Date.parse(img.time)
 
-                            var tt = Date.parse(t.time)
+                if (chronoTexts) {
+                    var ct = [];
 
+                    for (var ti = 0; ti < chronoTexts.length; ti++) {
+                        var t = chronoTexts[ti]
+
+                        var tt = Date.parse(t.time)
+
+                        if (albumSettings.newest_first) {
+                            if (tt < ts) {
+                                ct.push(t)
+
+                                continue
+                            }
+                        } else {
                             if (tt > ts) {
                                 ct.push(t)
 
                                 continue
                             }
-
-                            var div = $("<div data-ts='" + t.time + "' class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
-
-                            $(params.gallery).append(div)
                         }
-                    }
 
-                    chronoTexts = ct
+                        var div = $("<div data-ts='" + t.time + "' class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
+
+                        $(params.gallery).append(div)
+                    }
                 }
+
+                chronoTexts = ct
+
                 exif["file_name"] = img.name
                 exif["size"] = humanFileSize(img.size) + ", " + (Math.round((img.width * img.height) / 10000) / 100 + " MP")
 

@@ -139,51 +139,10 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 
 	out.HideOriginal = privacy.HideOriginal
 
-	if !preview {
-		gpxs, err := deps.PhotoGpxFinder().FindByHashes(ctx, album.Settings.GpxTracksHashes...)
-		if err != nil && !errors.Is(err, status.NotFound) {
-			return out, err
-		}
-
-		for _, gpx := range gpxs {
-			s := gpx.Settings.Val
-
-			if s.Name == "" {
-				s.Name = path.Base(gpx.Path)
-			}
-
-			out.Tracks = append(out.Tracks, track{
-				Hash:        gpx.Hash,
-				GpxSettings: s,
-			})
-		}
-
-		for i, t := range album.Settings.Texts {
-			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
-			if err != nil {
-				return out, err
-			}
-
-			album.Settings.Texts[i] = t
-		}
-
-		album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description)
-		if err != nil {
-			return out, err
-		}
-	}
-
-	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
-		o.StripTags = true
-	})
-	if err != nil {
-		return out, err
-	}
-
-	out.Album = album
 	out.Images = make([]Image, 0, len(images))
 
 	imageHashes := make([]uniq.Hash, 0, len(images))
+
 	for _, i := range images {
 		// Skip unprocessed images.
 		if i.BlurHash == "" {
@@ -302,6 +261,70 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 	if album.Settings.NewestFirst {
 		reverse(out.Images)
 	}
+
+	if album.Settings.DailyRulers {
+		dateShift := -time.Second
+		if album.Settings.NewestFirst {
+			dateShift = time.Second
+		}
+
+		prevDate := ""
+
+		for _, i := range out.Images {
+			d := i.Time.Format(time.DateOnly)
+			if d != prevDate {
+				album.Settings.Texts = append(album.Settings.Texts, photo.ChronoText{
+					Time: i.Time.Add(dateShift),
+					Text: "### " + d + "\n",
+				})
+
+				prevDate = d
+			}
+		}
+	}
+
+	if !preview {
+		gpxs, err := deps.PhotoGpxFinder().FindByHashes(ctx, album.Settings.GpxTracksHashes...)
+		if err != nil && !errors.Is(err, status.NotFound) {
+			return out, err
+		}
+
+		for _, gpx := range gpxs {
+			s := gpx.Settings.Val
+
+			if s.Name == "" {
+				s.Name = path.Base(gpx.Path)
+			}
+
+			out.Tracks = append(out.Tracks, track{
+				Hash:        gpx.Hash,
+				GpxSettings: s,
+			})
+		}
+
+		for i, t := range album.Settings.Texts {
+			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
+			if err != nil {
+				return out, err
+			}
+
+			album.Settings.Texts[i] = t
+		}
+
+		album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description)
+		if err != nil {
+			return out, err
+		}
+	}
+
+	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
+		o.StripTags = true
+	})
+	if err != nil {
+		return out, err
+	}
+
+	out.Album = album
 
 	return out, nil
 }
