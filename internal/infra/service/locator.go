@@ -65,7 +65,9 @@ type Locator struct {
 	CommentThreadFinderProvider
 
 	CloudflareImageClassifierInstance *cloudflare.ImageClassifier
-	FacesRecognizerInstance           *faces.Recognizer
+	CloudflareImageDescriberInstance  *cloudflare.ImageDescriber
+
+	FacesRecognizerInstance *faces.Recognizer
 }
 
 // ServiceConfig gives access to service configuration.
@@ -99,6 +101,10 @@ func (l *Locator) Settings() settings.Values {
 
 func (l *Locator) CloudflareImageClassifier() *cloudflare.ImageClassifier {
 	return l.CloudflareImageClassifierInstance
+}
+
+func (l *Locator) CloudflareImageDescriber() *cloudflare.ImageDescriber {
+	return l.CloudflareImageDescriberInstance
 }
 
 func (l *Locator) FacesRecognizer() *faces.Recognizer {

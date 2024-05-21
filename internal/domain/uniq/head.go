@@ -10,6 +10,7 @@ import (
 type EnsureOption[V any] struct {
 	OnInsert   func(st sqluct.StorageOf[V], o *sqluct.Options)
 	OnUpdate   func(st sqluct.StorageOf[V], o *sqluct.Options)
+	Prepare    func(candidate *V, existing *V)
 	SkipUpdate bool
 }
 

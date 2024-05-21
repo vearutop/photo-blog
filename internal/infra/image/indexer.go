@@ -39,6 +39,7 @@ type indexerDeps interface {
 	PhotoMetaFinder() uniq.Finder[photo.Meta]
 
 	CloudflareImageClassifier() *cloudflare.ImageClassifier
+	CloudflareImageDescriber() *cloudflare.ImageDescriber
 	FacesRecognizer() *faces.Recognizer
 }
 
@@ -119,6 +120,23 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 
 	ctx = ctxd.AddFields(ctx, "img", img)
 
+	if len(img.Settings.HTTPSources) > 1 {
+		dup := map[string]bool{}
+		res := make([]string, 0, 1)
+		for _, src := range img.Settings.HTTPSources {
+			if dup[src] {
+				continue
+			}
+
+			res = append(res, src)
+		}
+
+		img.Settings.HTTPSources = res
+		if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
+			return ctxd.WrapError(ctx, err, "dedup image sources")
+		}
+	}
+
 	if img.Width == 0 {
 		f, err := os.Open(img.Path)
 		if err != nil {
@@ -157,13 +175,26 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	i.ensureThumbs(ctx, img)
 	i.ensureBlurHash(ctx, &img)
 	i.ensurePHash(ctx, &img)
+	i.ensureMeta(ctx, img)
+
 	go i.ensureFacesRecognized(ctx, img)
 	go i.ensureCFClassification(ctx, img)
+	go i.ensureCFDescription(ctx, img)
 
 	return nil
 }
 
+func (i *Indexer) ensureMeta(ctx context.Context, img photo.Image) {
+	m := photo.Meta{}
+	m.Hash = img.Hash
+	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m); err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to ensure metadata", "error", err)
+	}
+}
+
 func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
+	ctx = ctxd.AddFields(ctx, "action", "cf_classify")
+
 	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
 	if err != nil && !errors.Is(err, status.NotFound) {
 		i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
@@ -173,21 +204,67 @@ func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
 
 	m.Hash = img.Hash
 
-	// Already classified.
+	// Check if already classified.
 	if m.Data.Val.ImageClassification != nil {
-		return
+		for _, l := range m.Data.Val.ImageClassification {
+			if l.Model == cloudflare.ResNet50 {
+				return
+			}
+		}
 	}
 
 	i.deps.CloudflareImageClassifier().Classify(ctx, img.Hash, func(labels []photo.ImageLabel) {
-		m.Data.Val.ImageClassification = labels
+		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
+			Prepare: func(m *photo.Meta) {
+				if existing != nil {
+					*candidate = *existing
+				}
+				candidate.Data.Val.ImageClassification = append(candidate.Data.Val.ImageClassification, labels...)
+			},
+		}); err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
+		}
+	})
+}
 
-		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m); err != nil {
+func (i *Indexer) ensureCFDescription(ctx context.Context, img photo.Image) {
+	ctx = ctxd.AddFields(ctx, "action", "cf_describe")
+
+	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
+	if err != nil && !errors.Is(err, status.NotFound) {
+		i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
+
+		return
+	}
+
+	m.Hash = img.Hash
+
+	// Check if already classified.
+	if m.Data.Val.ImageClassification != nil {
+		for _, l := range m.Data.Val.ImageClassification {
+			if l.Model == cloudflare.UformGen2 {
+				return
+			}
+		}
+	}
+
+	i.deps.CloudflareImageDescriber().Describe(ctx, img.Hash, func(label photo.ImageLabel) {
+		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
+			Prepare: func(candidate, existing *photo.Meta) {
+				if existing != nil {
+					*candidate = *existing
+				}
+				candidate.Data.Val.ImageClassification = append(candidate.Data.Val.ImageClassification, label)
+			},
+		}); err != nil {
 			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
 		}
 	})
 }
 
 func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
+	ctx = ctxd.AddFields(ctx, "action", "faces")
+
 	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
 	if err != nil && !errors.Is(err, status.NotFound) {
 		i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
@@ -308,9 +385,12 @@ func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.I
 		return ctxd.WrapError(ctx, err, "check existing gps")
 	}
 
-	if exifExists && gpsExists && !flags.RebuildExif && !flags.RebuildGps {
+	if exifExists && !flags.RebuildExif && !flags.RebuildGps {
 		return nil
 	}
+
+	ctx = ctxd.AddFields(ctx, "exifExists", exifExists, "gpsExists", gpsExists,
+		"rebuildExif", flags.RebuildExif, "rebuildGps", flags.RebuildGps)
 
 	f, err := os.Open(img.Path)
 	if err != nil {

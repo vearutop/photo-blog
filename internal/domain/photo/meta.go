@@ -15,7 +15,7 @@ type Meta struct {
 type ImageLabel struct {
 	Model string  `json:"model"`
 	Text  string  `json:"text"`
-	Score float64 `json:"score"`
+	Score float64 `json:"score,omitempty"`
 }
 
 type MetaData struct {

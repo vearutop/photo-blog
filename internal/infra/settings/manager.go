@@ -44,7 +44,8 @@ type Values interface {
 	Privacy() Privacy
 
 	ExternalAPI() ExternalAPI
-	CFImageClassifier() cloudflare.ImageClassifierConfig
+	CFImageClassifier() cloudflare.ImageWorkerConfig
+	CFImageDescriber() cloudflare.ImageWorkerConfig
 }
 
 func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -64,6 +65,7 @@ type hashedRepo[V any, T interface {
 	SetCreatedAt(t time.Time)
 	GetCreatedAt() time.Time
 }] struct {
+	mu sync.Mutex
 	sqluct.StorageOf[V]
 
 	// prepare is optional, it is called on the value to validate/prepare before create/update.
@@ -131,9 +133,12 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 		return value, ErrMissingHash
 	}
 
+	ir.mu.Lock()
+	defer ir.mu.Unlock()
+
 	var opts []func(o *sqluct.Options)
 
-	if val, err := ir.findBaseByHash(ctx, h); err == nil {
+	if val, err := ir.FindByHash(ctx, h); err == nil {
 		// Update.
 		vv := T(&val)
 		v.SetCreatedAt(vv.GetCreatedAt())
@@ -150,6 +155,10 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 					o.OnUpdate(ir.StorageOf, opt)
 				})
 			}
+
+			if o.Prepare != nil {
+				o.Prepare(v, vv)
+			}
 		}
 
 		if skipUpdate {
@@ -162,11 +171,19 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 			}
 		}
 
-		if _, err := ir.UpdateStmt(value, opts...).Where(ir.hashEq(h)).ExecContext(ctx); err != nil {
+		q := ir.UpdateStmt(value, opts...).Where(ir.hashEq(h))
+		stmt, args, err := q.ToSql()
+		if err != nil {
+			return value, fmt.Errorf("prepare update statement: %w", err)
+		}
+
+		ctx = ctxd.AddFields(ctx, "statement", stmt, "args", args)
+
+		if _, err := q.ExecContext(ctx); err != nil {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "update")
 		}
 	} else {
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if !errors.Is(err, sql.ErrNoRows) {
 			return value, ctxd.WrapError(ctx, augmentErr(err), "find")
 		}
 
@@ -175,6 +192,10 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 				opts = append(opts, func(opt *sqluct.Options) {
 					o.OnInsert(ir.StorageOf, opt)
 				})
+			}
+
+			if o.Prepare != nil {
+				o.Prepare(&value, nil)
 			}
 		}
 

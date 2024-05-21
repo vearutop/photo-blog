@@ -102,6 +102,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	}
 
 	l.CloudflareImageClassifierInstance = cloudflare.NewImageClassifier(l.CtxdLogger(), l.Settings().CFImageClassifier)
+	l.CloudflareImageDescriberInstance = cloudflare.NewImageDescriber(l.CtxdLogger(), l.Settings().CFImageDescriber)
 	l.FacesRecognizerInstance = faces.NewRecognizer(l.CtxdLogger(), l.Settings().ExternalAPI().FacesRecognizer)
 
 	if err = setupAccessLog(l); err != nil {

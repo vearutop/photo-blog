@@ -8,8 +8,9 @@ import (
 )
 
 type ExternalAPI struct {
-	CFImageClassifier cloudflare.ImageClassifierConfig `json:"cf_image_classifier"`
-	FacesRecognizer   faces.RecognizerConfig           `json:"faces_recognizer"`
+	CFImageClassifier cloudflare.ImageWorkerConfig `json:"cf_image_classifier"`
+	CFImageDescriber  cloudflare.ImageWorkerConfig `json:"cf_image_describer"`
+	FacesRecognizer   faces.RecognizerConfig       `json:"faces_recognizer"`
 }
 
 func (m *Manager) SetExternalAPI(ctx context.Context, value ExternalAPI) error {
@@ -32,9 +33,16 @@ func (m *Manager) ExternalAPI() ExternalAPI {
 	return m.externalAPI
 }
 
-func (m *Manager) CFImageClassifier() cloudflare.ImageClassifierConfig {
+func (m *Manager) CFImageClassifier() cloudflare.ImageWorkerConfig {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	return m.externalAPI.CFImageClassifier
+}
+
+func (m *Manager) CFImageDescriber() cloudflare.ImageWorkerConfig {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.externalAPI.CFImageDescriber
 }

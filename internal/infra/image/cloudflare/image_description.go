@@ -18,15 +18,13 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
-const ResNet50 = "cf-resnet-50"
+// UformGen2 identifies a model, see https://developers.cloudflare.com/workers-ai/models/uform-gen2-qwen-500m.
+const UformGen2 = "cf-uform-gen2"
 
 // Following worker code can be deployed on Cloudflare.
 /*
-import { Ai } from './vendor/@cloudflare/ai.js';
-
 export default {
   async fetch(request, env) {
-    const ai = new Ai(env.AI);
     const req = await request.json();
     const images = req.images;
 
@@ -45,10 +43,12 @@ export default {
       const blob = await imageResponse.arrayBuffer();
 
       const inputs = {
-        image: [...new Uint8Array(blob)]
+        image: [...new Uint8Array(blob)],
+        prompt: "Generate a caption for this image",
+        max_tokens: 512,
       };
 
-      response[url] = await ai.run('@cf/microsoft/resnet-50', inputs);
+      response[url] = await env.AI.run("@cf/unum/uform-gen2-qwen-500m", inputs);
     }
 
     var promises = [];
@@ -65,35 +65,34 @@ export default {
     return Response.json(response);
   }
 };
+
+Sample request body:
+{"api_key":"foo","images":["https://vearutop.p1cs.art/thumb/1200w/mbu3wmasjobq.jpg"]}
+
+Sample response body:
+{"https://vearutop.p1cs.art/thumb/1200w/mbu3wmasjobq.jpg":{"description":"A solitary figure sits on a bench in a park, surrounded by a lush tree with pink flowers. The bench is near a trash can and a laptop, suggesting a moment of rest or contemplation. The park is surrounded by a wall adorned with graffiti, adding a touch of urban artistry. The perspective of the image is from the ground, looking up at the tree, creating a sense of depth and scale. The landmark identifier \"sa_1500\" does not provide additional information about the location of this park."}}
 */
 
-type ImageWorkerConfig struct {
-	URL              string `json:"url" example:"https://image-classification-soft-rain-fb0b.nanopeni.workers.dev/"`
-	ImageURLTemplate string `json:"image_url_template" example:"https://vearutop.p1cs.art/thumb/1200w/%s.jpg"`
-	APIKey           string `json:"api_key"`
-	BatchSize        int    `json:"batch_size" default:"10"`
-}
-
-func NewImageClassifier(logger ctxd.Logger, cfg func() ImageWorkerConfig) *ImageClassifier {
-	return &ImageClassifier{
+func NewImageDescriber(logger ctxd.Logger, cfg func() ImageWorkerConfig) *ImageDescriber {
+	return &ImageDescriber{
 		logger: logger,
 		cfg:    cfg,
-		queue:  make(map[string]func(labels []photo.ImageLabel)),
+		queue:  make(map[string]func(labels photo.ImageLabel)),
 	}
 }
 
-type ImageClassifier struct {
+type ImageDescriber struct {
 	cfg func() ImageWorkerConfig
 
 	logger ctxd.Logger
 
 	mu      sync.Mutex
 	ctx     context.Context
-	queue   map[string]func(labels []photo.ImageLabel)
+	queue   map[string]func(labels photo.ImageLabel)
 	pending bool
 }
 
-func (ic *ImageClassifier) Classify(ctx context.Context, imgHash uniq.Hash, cb func(labels []photo.ImageLabel)) {
+func (ic *ImageDescriber) Describe(ctx context.Context, imgHash uniq.Hash, cb func(labels photo.ImageLabel)) {
 	ic.mu.Lock()
 	defer ic.mu.Unlock()
 
@@ -120,17 +119,7 @@ func (ic *ImageClassifier) Classify(ctx context.Context, imgHash uniq.Hash, cb f
 	}
 }
 
-type request struct {
-	APIKey string   `json:"api_key"`
-	Images []string `json:"images"`
-}
-
-type label struct {
-	Label string  `json:"label"`
-	Score float64 `json:"score"`
-}
-
-func (ic *ImageClassifier) doClassify() {
+func (ic *ImageDescriber) doClassify() {
 	ic.mu.Lock()
 	defer ic.mu.Unlock()
 
@@ -161,7 +150,7 @@ func (ic *ImageClassifier) doClassify() {
 	ic.pending = false
 }
 
-func (ic *ImageClassifier) ensureFetch(req *request) {
+func (ic *ImageDescriber) ensureFetch(req *request) {
 	defer func() {
 		req.Images = req.Images[:0]
 	}()
@@ -174,7 +163,7 @@ func (ic *ImageClassifier) ensureFetch(req *request) {
 		}
 
 		if errors.Is(err, status.ResourceExhausted) {
-			ic.logger.Warn(ic.ctx, "cf worker resource exhausted, sleeping", "model", ResNet50)
+			ic.logger.Warn(ic.ctx, "cf worker resource exhausted, sleeping", "model", UformGen2)
 
 			time.Sleep(time.Minute)
 
@@ -186,7 +175,7 @@ func (ic *ImageClassifier) ensureFetch(req *request) {
 	}
 }
 
-func (ic *ImageClassifier) fetch(req *request) (err error) {
+func (ic *ImageDescriber) fetch(req *request) (err error) {
 	_, done := opencensus.AddSpan(context.Background())
 	defer done(&err)
 
@@ -223,7 +212,9 @@ func (ic *ImageClassifier) fetch(req *request) (err error) {
 		)
 	}
 
-	var response map[string][]label
+	var response map[string]struct {
+		Description string `json:"description"`
+	}
 
 	if err := json.Unmarshal(resp, &response); err != nil {
 		return err
@@ -238,20 +229,13 @@ func (ic *ImageClassifier) fetch(req *request) (err error) {
 			continue
 		}
 
-		labels := make([]photo.ImageLabel, len(l))
+		ic.logger.Info(ic.ctx, "cf img description",
+			"url", u, "desc", l.Description)
 
-		for i, lbl := range l {
-			labels[i] = photo.ImageLabel{
-				Model: ResNet50,
-				Text:  lbl.Label,
-				Score: lbl.Score,
-			}
-		}
-
-		ic.logger.Info(ic.ctx, "cf img classification",
-			"url", u, "labels", labels)
-
-		cb(labels)
+		cb(photo.ImageLabel{
+			Model: UformGen2,
+			Text:  l.Description,
+		})
 	}
 
 	return nil
