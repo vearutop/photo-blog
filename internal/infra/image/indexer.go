@@ -175,21 +175,12 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	i.ensureThumbs(ctx, img)
 	i.ensureBlurHash(ctx, &img)
 	i.ensurePHash(ctx, &img)
-	i.ensureMeta(ctx, img)
 
 	go i.ensureFacesRecognized(ctx, img)
 	go i.ensureCFClassification(ctx, img)
 	go i.ensureCFDescription(ctx, img)
 
 	return nil
-}
-
-func (i *Indexer) ensureMeta(ctx context.Context, img photo.Image) {
-	m := photo.Meta{}
-	m.Hash = img.Hash
-	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m); err != nil {
-		i.deps.CtxdLogger().Error(ctx, "failed to ensure metadata", "error", err)
-	}
 }
 
 func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
@@ -215,7 +206,7 @@ func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
 
 	i.deps.CloudflareImageClassifier().Classify(ctx, img.Hash, func(labels []photo.ImageLabel) {
 		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
-			Prepare: func(m *photo.Meta) {
+			Prepare: func(candidate, existing *photo.Meta) {
 				if existing != nil {
 					*candidate = *existing
 				}
