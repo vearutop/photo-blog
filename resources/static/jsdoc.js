@@ -29,6 +29,7 @@
 /**
  * @typedef PhotoAlbumSettings
  * @type {Object}
+ * @property {Boolean} daily_rulers - Show date splits between the photos.
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
  * @property {Boolean} hide_map
@@ -216,7 +217,9 @@
  * @typedef ControlAddToAlbumInput
  * @type {Object}
  * @property {String} album_name - Source Album Name. Name of a source album to add photos from.
+ * @property {String} image_description - Set image description after adding from URL.. Description of an image, can contain HTML.
  * @property {String} image_hash - Image Hash. Hash of an image to add to album.
+ * @property {String} image_lat_lon - Set image GPS location after adding from URL.. In latitude,longitude format.
  * @property {String} image_url - Fetch image from a publicly available URL.
  */
 
@@ -249,6 +252,24 @@
 /**
  * @callback ControlAddDirOutputCallback
  * @param {ControlAddDirOutput} value
+ */
+
+/**
+ * @typedef ControlAddRemoteRequest
+ * @type {Object}
+ * @property {String} name - Album name.
+ * @property {String} url - URL to JSON list file.
+ */
+
+/**
+ * @typedef ControlAddDirOutputType2
+ * @type {Object}
+ * @property {?Array<String>} names
+ */
+
+/**
+ * @callback ControlAddDirOutputType2Callback
+ * @param {ControlAddDirOutputType2} value
  */
 
 /**
@@ -364,6 +385,7 @@
  * @typedef PhotoImageSettings
  * @type {Object}
  * @property {String} description - Description. Description of an image, can contain HTML.
+ * @property {Array<String>} http_sources
  */
 
 /**
@@ -628,7 +650,7 @@
  */
 
 /**
- * @typedef CloudflareImageClassifierConfig
+ * @typedef CloudflareImageWorkerConfig
  * @type {Object}
  * @property {String} api_key
  * @property {Number} batch_size
@@ -645,7 +667,8 @@
 /**
  * @typedef SettingsExternalAPI
  * @type {Object}
- * @property {CloudflareImageClassifierConfig} cf_image_classifier
+ * @property {CloudflareImageWorkerConfig} cf_image_classifier
+ * @property {CloudflareImageWorkerConfig} cf_image_describer
  * @property {FacesRecognizerConfig} faces_recognizer
  */
 

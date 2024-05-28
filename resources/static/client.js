@@ -572,6 +572,64 @@
     };
 
     /**
+     * Add Remote
+     * Add a http-remote directory of photos to an album.
+     * @param {ControlAddRemoteRequest} req - request parameters.
+     * @param {ControlAddDirOutputType2Callback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.controlAddRemote = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
+        '/url?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        var formData = new FormData();
+        if (typeof req.url !== 'undefined') {
+            formData.append('url', req.url);
+        }
+
+        x.send(formData);
+    };
+
+    /**
      * Remove From Album
      * @param {ControlRemoveFromAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
