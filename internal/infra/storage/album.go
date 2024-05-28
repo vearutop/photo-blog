@@ -29,7 +29,7 @@ type AlbumImage struct {
 	Timestamp *time.Time `db:"timestamp"`
 }
 
-func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepository {
+func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository, mr *MetaRepository) *AlbumRepository {
 	ar := &AlbumRepository{
 		st: storage,
 		hashedRepo: hashedRepo[photo.Album, *photo.Album]{
@@ -37,12 +37,13 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepo
 		},
 	}
 
-	ai := sqluct.Table[AlbumImage](storage, AlbumImageTable)
-	ir.Referencer.AddTableAlias(ai.R, AlbumImageTable)
-	ar.Referencer.AddTableAlias(ai.R, AlbumImageTable)
-
-	ar.ai = ai
+	ar.ai = sqluct.Table[AlbumImage](storage, AlbumImageTable)
 	ar.i = ir
+	ar.m = mr
+
+	ar.Referencer.AddTableAlias(ar.ai.R, AlbumImageTable)
+	ar.Referencer.AddTableAlias(ar.m.R, MetaTable)
+	ar.Referencer.AddTableAlias(ar.i.R, ImageTable)
 
 	ar.hashedRepo.prepare = func(ctx context.Context, v *photo.Album) error {
 		t := v.Settings.Texts
@@ -62,17 +63,24 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository) *AlbumRepo
 type AlbumRepository struct {
 	st *sqluct.Storage
 	hashedRepo[photo.Album, *photo.Album]
+
 	ai sqluct.StorageOf[AlbumImage]
 	i  *ImageRepository
+	m  *MetaRepository
+}
+
+func (r *AlbumRepository) orderImages(q squirrel.SelectBuilder) squirrel.SelectBuilder {
+	return q.OrderByClause(r.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 }
 
 func (r *AlbumRepository) FindImages(ctx context.Context, albumHash uniq.Hash) ([]photo.Image, error) {
 	q := r.i.SelectStmt().
 		InnerJoin(
-			r.i.Fmt("%s ON %s = %s AND %s = ?",
-				r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
+			r.Fmt("%s ON %s = %s AND %s = ?", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
 			albumHash,
-		).OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+		)
+
+	q = r.orderImages(q)
 
 	return augmentResErr(r.i.List(ctx, q))
 }
@@ -80,10 +88,10 @@ func (r *AlbumRepository) FindImages(ctx context.Context, albumHash uniq.Hash) (
 func (r *AlbumRepository) FindImageAlbums(ctx context.Context, excludeAlbum uniq.Hash, imageHashes ...uniq.Hash) (map[uniq.Hash][]photo.Album, error) {
 	q := r.ai.SelectStmt().Columns(r.Cols(r.R)...).
 		InnerJoin(r.Fmt("%s ON %s = %s", r.R, &r.ai.R.AlbumHash, &r.R.Hash)).
-		Where(r.ai.Eq(&r.ai.R.ImageHash, imageHashes))
+		Where(r.Eq(&r.ai.R.ImageHash, imageHashes))
 
 	if excludeAlbum != 0 {
-		q = q.Where(squirrel.NotEq(r.ai.Eq(&r.ai.R.AlbumHash, excludeAlbum)))
+		q = q.Where(squirrel.NotEq(r.Eq(&r.ai.R.AlbumHash, excludeAlbum)))
 	}
 
 	type row struct {
@@ -113,11 +121,44 @@ func (r *AlbumRepository) FindOrphanImages(ctx context.Context) ([]photo.Image, 
 
 	q := r.i.SelectStmt().
 		LeftJoin(
-			r.i.Fmt("%s ON %s = %s", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash),
+			r.Fmt("%s ON %s = %s", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash),
 		).
-		Where(r.i.Fmt("%s IS NULL", &r.ai.R.AlbumHash)).
-		GroupBy(r.i.Col(&r.i.R.Hash)).
-		OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+		Where(r.Fmt("%s IS NULL", &r.ai.R.AlbumHash)).
+		GroupBy(r.Ref(&r.i.R.Hash)).
+		OrderByClause(r.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+
+	return augmentResErr(r.i.List(ctx, q))
+}
+
+func (r *AlbumRepository) SearchImages(ctx context.Context, query string) ([]photo.Image, error) {
+	// SELECT `image`.`width`, `image`.`height`, `image`.`blurhash`, `image`.`phash`, `image`.`taken_at`, `image`.`settings`, `image`.`size`, `image`.`path`, `image`.`hash`, `image`.`created_at`
+	// FROM `image`
+	// LEFT JOIN `album_image` ON `album_image`.`image_hash` = `image`.`hash`
+	// LEFT JOIN `meta` ON `meta`.`hash` = `image`.`hash`
+	// WHERE `meta`.`data` LIKE ? GROUP BY `image`.`hash`
+	// ORDER BY COALESCE(`image`.`taken_at`, `image`.`created_at`), `image`.`path`
+
+	q := r.i.SelectStmt().
+		LeftJoin(r.Fmt("%s ON %s = %s", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash)).
+		LeftJoin(r.Fmt("%s ON %s = %s", r.m.R, &r.m.R.Hash, &r.i.R.Hash)).
+		Where(r.Fmt("%s LIKE ?", &r.m.R.Data), "%"+query+"%").
+		GroupBy(r.Ref(&r.i.R.Hash)).
+		OrderByClause(r.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+
+	return augmentResErr(r.i.List(ctx, q))
+}
+
+func (r *AlbumRepository) SearchImages2(ctx context.Context, query string) ([]photo.Image, error) {
+	q := r.i.SelectStmt(func(options *sqluct.Options) {
+		options.PrepareColumn = func(col string) string {
+			return "image." + col
+		}
+	}).
+		LeftJoin(r.Fmt("%s ON %s = %s", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash)).
+		LeftJoin(r.Fmt("meta as m ON m.hash=%s", &r.i.R.Hash)).
+		Where("m.data like '%" + query + "%'").
+		GroupBy(r.Ref(&r.i.R.Hash)).
+		OrderByClause(r.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 
 	return augmentResErr(r.i.List(ctx, q))
 }
@@ -155,8 +196,7 @@ func (r *AlbumRepository) FindBrokenImages(ctx context.Context) ([]photo.Image, 
 func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]photo.Image, error) {
 	q := r.i.SelectStmt().
 		InnerJoin(
-			r.i.Fmt("%s ON %s = %s AND %s = ?",
-				r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
+			r.Fmt("%s ON %s = %s AND %s = ?", r.ai.R, &r.ai.R.ImageHash, &r.i.R.Hash, &r.ai.R.AlbumHash),
 			albumHash,
 		)
 
@@ -166,12 +206,12 @@ func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.
 	}
 
 	// Take 3:2 aspect ratio first.
-	q = q.OrderByClause(r.i.Fmt("ROUND(ABS(100.0*%s/%s-150)) ASC", &r.i.R.Width, &r.i.R.Height))
+	q = q.OrderByClause(r.Fmt("ROUND(ABS(100.0*%s/%s-150)) ASC", &r.i.R.Width, &r.i.R.Height))
 
-	q = q.OrderByClause(r.i.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
+	q = q.OrderByClause(r.Fmt("COALESCE(%s, %s), %s", &r.i.R.TakenAt, &r.i.R.CreatedAt, &r.i.R.Path))
 	q = q.Limit(limit)
 
-	q = q.Where(r.i.Fmt("%s != ''", &r.i.R.BlurHash))
+	q = q.Where(r.Fmt("%s != ''", &r.i.R.BlurHash))
 
 	return augmentResErr(r.i.List(ctx, q))
 }
@@ -186,8 +226,8 @@ func (r *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Al
 
 func (r *AlbumRepository) DeleteImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error {
 	return augmentReturnErr(r.ai.DeleteStmt().
-		Where(r.ai.Eq(&r.ai.R.AlbumHash, albumHash)).
-		Where(r.ai.Eq(&r.ai.R.ImageHash, imageHashes)).
+		Where(r.Eq(&r.ai.R.AlbumHash, albumHash)).
+		Where(r.Eq(&r.ai.R.ImageHash, imageHashes)).
 		ExecContext(ctx))
 }
 
@@ -217,8 +257,8 @@ func (r *AlbumRepository) SetAlbumImageTimestamp(ctx context.Context, album uniq
 	}
 
 	return augmentReturnErr(r.ai.UpdateStmt(v).Where(squirrel.Eq{
-		r.ai.Ref(&r.ai.R.AlbumHash): album,
-		r.ai.Ref(&r.ai.R.ImageHash): img,
+		r.Ref(&r.ai.R.AlbumHash): album,
+		r.Ref(&r.ai.R.ImageHash): img,
 	}).ExecContext(ctx))
 }
 

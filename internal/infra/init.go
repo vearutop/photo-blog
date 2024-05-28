@@ -114,7 +114,11 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoImageUpdaterProvider = ir
 	l.PhotoImageFinderProvider = ir
 
-	ar := storage.NewAlbumRepository(l.Storage, ir)
+	metaRepo := storage.NewMetaRepository(l.Storage)
+	l.PhotoMetaFinderProvider = metaRepo
+	l.PhotoMetaEnsurerProvider = metaRepo
+
+	ar := storage.NewAlbumRepository(l.Storage, ir, metaRepo)
 	l.PhotoAlbumEnsurerProvider = ar
 	l.PhotoAlbumUpdaterProvider = ar
 	l.PhotoAlbumFinderProvider = ar
@@ -136,10 +140,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	gpsRepo := storage.NewGpsRepository(l.Storage)
 	l.PhotoGpsFinderProvider = gpsRepo
 	l.PhotoGpsEnsurerProvider = gpsRepo
-
-	metaRepo := storage.NewMetaRepository(l.Storage)
-	l.PhotoMetaFinderProvider = metaRepo
-	l.PhotoMetaEnsurerProvider = metaRepo
 
 	gpxRepo := storage.NewGpxRepository(l.Storage)
 	l.PhotoGpxFinderProvider = gpxRepo

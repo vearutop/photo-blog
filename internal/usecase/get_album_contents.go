@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/bool64/ctxd"
@@ -96,9 +97,23 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		images  []photo.Image
 		privacy settings.Privacy
 		isAdmin = auth.IsAdmin(ctx)
+		query   string
 	)
 
+	if strings.HasPrefix(name, "search:") {
+		query = strings.TrimPrefix(name, "search:")
+		name = "search"
+	}
+
 	switch name {
+	case "search":
+		if !auth.IsAdmin(ctx) {
+			return out, status.PermissionDenied
+		}
+		album.Title = query
+		album.Name = "search"
+		images, err = deps.PhotoAlbumImageFinder().SearchImages(ctx, query)
+
 	case photo.Orphan:
 		if !auth.IsAdmin(ctx) {
 			return out, status.PermissionDenied
