@@ -633,6 +633,7 @@ function loadAlbum(params) {
             if (currentImage.img) {
                 currentImage.time = Date.now() - currentImage.time;
                 collectStats(currentImage);
+                currentImage.img = ""
             }
         });
 
