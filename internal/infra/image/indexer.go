@@ -1,10 +1,14 @@
 package image
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"image/jpeg"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -270,7 +274,39 @@ func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 		return
 	}
 
-	f, err := i.deps.FacesRecognizer().RecognizeFile(ctx, img.File.Path)
+	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, "2400w")
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to find thumbnail", "error", err)
+
+		return
+	}
+
+	fn := th.FilePath
+	var fr io.ReadCloser
+
+	if strings.HasPrefix("https://", fn) || strings.HasPrefix("http://", fn) {
+		resp, err := http.Get(fn)
+		if err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to fetch image", "error", err)
+
+			return
+		}
+
+		fr = resp.Body
+	} else if fn == "" {
+		fr = io.NopCloser(bytes.NewReader(th.Data))
+	} else {
+		f, err := os.Open(fn)
+		if err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to open thumb file", "error", err)
+
+			return
+		}
+
+		fr = f
+	}
+
+	f, err := i.deps.FacesRecognizer().Recognize(ctx, fr)
 	if err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to recognize faces", "error", err)
 
@@ -281,8 +317,14 @@ func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 		return
 	}
 
-	m.Data.Val.Faces = f
-	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m); err != nil {
+	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
+		Prepare: func(candidate, existing *photo.Meta) {
+			if existing != nil {
+				*candidate = *existing
+			}
+			candidate.Data.Val.Faces = f
+		},
+	}); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
 	}
 }

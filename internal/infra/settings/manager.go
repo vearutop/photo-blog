@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/swaggest/form/v5"
 	"github.com/swaggest/refl"
@@ -131,6 +133,14 @@ func applyDefaults(input any) error {
 		}
 
 		if d, ok := sf.Tag.Lookup("default"); ok {
+			if sf.Type == reflect.TypeOf(time.Duration(0)) {
+				dd, err := time.ParseDuration(d)
+				if err != nil {
+					panic(err)
+				}
+				d = strconv.Itoa(int(dd))
+			}
+
 			defaults[key] = []string{d}
 		}
 	})
