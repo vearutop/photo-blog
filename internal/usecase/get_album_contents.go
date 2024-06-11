@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ type getAlbumImagesDeps interface {
 	CtxdLogger() ctxd.Logger
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
+	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoGpsFinder() uniq.Finder[photo.Gps]
 	PhotoExifFinder() uniq.Finder[photo.Exif]
 	PhotoMetaFinder() uniq.Finder[photo.Meta]
@@ -100,12 +102,34 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		query   string
 	)
 
+	if strings.HasPrefix(name, "list-") {
+		l := strings.TrimPrefix(name, "list-")
+		album.Title = "List"
+		album.Name = name
+
+		name = "list"
+		ll := strings.Split(l, ",")
+		hashes := make([]uniq.Hash, 0, len(ll))
+		for _, l := range ll {
+			var h uniq.Hash
+
+			if err := h.UnmarshalText([]byte(l)); err != nil {
+				return getAlbumOutput{}, fmt.Errorf("decode hash: %w", err)
+			}
+
+			hashes = append(hashes, h)
+		}
+		images, err = deps.PhotoImageFinder().FindByHashes(ctx, hashes...)
+	}
+
 	if strings.HasPrefix(name, "search:") {
 		query = strings.TrimPrefix(name, "search:")
 		name = "search"
 	}
 
 	switch name {
+	case "list":
+
 	case "search":
 		if !auth.IsAdmin(ctx) {
 			return out, status.PermissionDenied
