@@ -16,12 +16,6 @@ import (
 	"github.com/bool64/ctxd"
 )
 
-// vearutop.de
-// 5b3ce3597851110001cf6248de9adf1b870b4aeba17396c18f25520d
-
-// main
-// 5b3ce3597851110001cf6248462070b535c94571951e64ab4af853a9
-
 type Client struct {
 	logger    *ctxd.Logger
 	deps      Deps
