@@ -3,6 +3,7 @@ package settings
 import (
 	"context"
 
+	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 )
@@ -11,6 +12,7 @@ type ExternalAPI struct {
 	CFImageClassifier cloudflare.ImageWorkerConfig `json:"cf_image_classifier"`
 	CFImageDescriber  cloudflare.ImageWorkerConfig `json:"cf_image_describer"`
 	FacesRecognizer   faces.RecognizerConfig       `json:"faces_recognizer"`
+	ORS               ors.Config                   `json:"ors" description:"OpenRouteService configuration."`
 }
 
 func (m *Manager) SetExternalAPI(ctx context.Context, value ExternalAPI) error {
@@ -45,4 +47,11 @@ func (m *Manager) CFImageDescriber() cloudflare.ImageWorkerConfig {
 	defer m.mu.Unlock()
 
 	return m.externalAPI.CFImageDescriber
+}
+
+func (m *Manager) ORSConfig() ors.Config {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.externalAPI.ORS
 }

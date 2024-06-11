@@ -6,6 +6,7 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
+	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
@@ -68,6 +69,7 @@ type Locator struct {
 	CloudflareImageDescriberInstance  *cloudflare.ImageDescriber
 
 	FacesRecognizerInstance *faces.Recognizer
+	ORS                     *ors.Client
 }
 
 // ServiceConfig gives access to service configuration.
@@ -109,4 +111,8 @@ func (l *Locator) CloudflareImageDescriber() *cloudflare.ImageDescriber {
 
 func (l *Locator) FacesRecognizer() *faces.Recognizer {
 	return l.FacesRecognizerInstance
+}
+
+func (l *Locator) OpenRouteService() *ors.Client {
+	return l.ORS
 }

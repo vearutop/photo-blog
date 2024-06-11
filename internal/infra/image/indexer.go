@@ -20,6 +20,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"go.opencensus.io/trace"
@@ -45,6 +46,7 @@ type indexerDeps interface {
 	CloudflareImageClassifier() *cloudflare.ImageClassifier
 	CloudflareImageDescriber() *cloudflare.ImageDescriber
 	FacesRecognizer() *faces.Recognizer
+	OpenRouteService() *ors.Client
 }
 
 func NewIndexer(deps indexerDeps) *Indexer {
@@ -180,11 +182,52 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	i.ensureBlurHash(ctx, &img)
 	i.ensurePHash(ctx, &img)
 
+	go i.ensureGeoLabel(ctx, img.Hash)
 	go i.ensureFacesRecognized(ctx, img)
 	go i.ensureCFClassification(ctx, img)
 	go i.ensureCFDescription(ctx, img)
 
 	return nil
+}
+
+func (i *Indexer) ensureGeoLabel(ctx context.Context, hash uniq.Hash) {
+	g, err := i.deps.PhotoGpsFinder().FindByHash(ctx, hash)
+	if err != nil {
+		if !errors.Is(err, status.NotFound) {
+			i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
+		}
+
+		return
+	}
+
+	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, hash)
+	if err != nil && !errors.Is(err, status.NotFound) {
+		i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
+
+		return
+	}
+
+	if m.Data.Val.GeoLabel != nil {
+		return
+	}
+
+	label, err := i.deps.OpenRouteService().ReverseGeocode(ctx, g.Latitude, g.Longitude)
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to reverse geocode", "error", err, "gps", g)
+
+		return
+	}
+
+	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
+		Prepare: func(candidate, existing *photo.Meta) {
+			if existing != nil {
+				*candidate = *existing
+			}
+			candidate.Data.Val.GeoLabel = &label
+		},
+	}); err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
+	}
 }
 
 func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {

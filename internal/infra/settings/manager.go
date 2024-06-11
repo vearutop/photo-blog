@@ -15,6 +15,7 @@ import (
 	"github.com/swaggest/refl"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 )
 
@@ -48,6 +49,7 @@ type Values interface {
 	ExternalAPI() ExternalAPI
 	CFImageClassifier() cloudflare.ImageWorkerConfig
 	CFImageDescriber() cloudflare.ImageWorkerConfig
+	ORSConfig() ors.Config
 }
 
 func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {

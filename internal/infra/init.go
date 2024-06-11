@@ -25,6 +25,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
+	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
@@ -104,6 +105,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.CloudflareImageClassifierInstance = cloudflare.NewImageClassifier(l.CtxdLogger(), l.Settings().CFImageClassifier)
 	l.CloudflareImageDescriberInstance = cloudflare.NewImageDescriber(l.CtxdLogger(), l.Settings().CFImageDescriber)
 	l.FacesRecognizerInstance = faces.NewRecognizer(l.CtxdLogger(), l.Settings().ExternalAPI().FacesRecognizer)
+	l.ORS = ors.NewORS(l, l.Settings().ORSConfig)
 
 	if err = setupAccessLog(l); err != nil {
 		return nil, err
@@ -157,7 +159,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.CommentThreadEnsurerProvider = threadRepo
 	l.CommentThreadFinderProvider = threadRepo
 
-	l.PhotoImageIndexerProvider = image.NewIndexer(l)
+	idx := image.NewIndexer(l)
+	l.PhotoImageIndexerProvider = idx
 	l.TxtRendererProvider = txt.NewRenderer()
 
 	l.FilesProcessorInstance = files.NewProcessor(l)

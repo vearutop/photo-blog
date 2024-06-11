@@ -141,6 +141,7 @@
  * @typedef PhotoMetaData
  * @type {Object}
  * @property {?Array<FacesGoFaceFace>} faces
+ * @property {?String} geo_label
  * @property {?Array<PhotoImageLabel>} image_classification
  */
 
@@ -632,6 +633,12 @@
  */
 
 /**
+ * @typedef SearchImagesRequest
+ * @type {Object}
+ * @property {String} q
+ */
+
+/**
  * @typedef SettingsAppearance
  * @type {Object}
  * @property {String} featured_album_name - Featured album name. The name of an album to show on the main page.
@@ -665,11 +672,18 @@
  */
 
 /**
+ * @typedef OrsConfig
+ * @type {Object}
+ * @property {String} api_key
+ */
+
+/**
  * @typedef SettingsExternalAPI
  * @type {Object}
  * @property {CloudflareImageWorkerConfig} cf_image_classifier
  * @property {CloudflareImageWorkerConfig} cf_image_describer
  * @property {FacesRecognizerConfig} faces_recognizer
+ * @property {OrsConfig} ors
  */
 
 /**

@@ -2306,6 +2306,55 @@
     };
 
     /**
+     * Search Images
+     * @param {SearchImagesRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.searchImages = function (req, onNoContent, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/search/?';
+        if (req.q != null) {
+            url += 'q=' + encodeURIComponent(req.q) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Set Appearance
      * @param {ControlSettingsSetAppearanceRequest} req - request parameters.
      * @param {RawCallback} onNoContent

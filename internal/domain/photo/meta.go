@@ -21,4 +21,5 @@ type ImageLabel struct {
 type MetaData struct {
 	ImageClassification []ImageLabel       `json:"image_classification"`
 	Faces               []faces.GoFaceFace `json:"faces"`
+	GeoLabel            *string            `json:"geo_label,omitempty"`
 }
