@@ -18,8 +18,13 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
-// UformGen2 identifies a model, see https://developers.cloudflare.com/workers-ai/models/uform-gen2-qwen-500m.
-const UformGen2 = "cf-uform-gen2"
+const (
+	// UformGen2 identifies a model, see https://developers.cloudflare.com/workers-ai/models/uform-gen2-qwen-500m.
+	UformGen2 = "cf-uform-gen2"
+
+	// LlavaHf identifies a model, see https://developers.cloudflare.com/workers-ai/models/llava-1.5-7b-hf/.
+	LlavaHf = "cf-llava-1.5-7b-hf"
+)
 
 // Following worker code can be deployed on Cloudflare.
 /*
@@ -71,6 +76,54 @@ Sample request body:
 
 Sample response body:
 {"https://vearutop.p1cs.art/thumb/1200w/mbu3wmasjobq.jpg":{"description":"A solitary figure sits on a bench in a park, surrounded by a lush tree with pink flowers. The bench is near a trash can and a laptop, suggesting a moment of rest or contemplation. The park is surrounded by a wall adorned with graffiti, adding a touch of urban artistry. The perspective of the image is from the ground, looking up at the tree, creating a sense of depth and scale. The landmark identifier \"sa_1500\" does not provide additional information about the location of this park."}}
+*/
+
+// Or another model.
+/*
+export default {
+  async fetch(request, env) {
+    const req = await request.json();
+    const images = req.images;
+
+    if (req.api_key !== "foo") {
+      // Incorrect key supplied. Reject the request.
+      return new Response("Sorry, you have supplied an invalid key.", {
+        status: 403,
+      });
+    }
+
+
+// @cf/llava-hf/llava-1.5-7b-hf
+
+    var response = {};
+
+    const process = async function(url) {
+      const imageResponse = await fetch(url);
+      const blob = await imageResponse.arrayBuffer();
+
+      const inputs = {
+        image: [...new Uint8Array(blob)],
+        prompt: "Generate a detailed caption for this image",
+        max_tokens: 512,
+      };
+
+      response[url] = await env.AI.run("@cf/llava-hf/llava-1.5-7b-hf", inputs);
+    }
+
+    var promises = [];
+
+    for (var i in images) {
+      const url = images[i];
+      promises.push(process(url));
+    }
+
+    for (const i in promises) {
+      await promises[i]
+    }
+
+    return Response.json(response);
+  }
+};
 */
 
 func NewImageDescriber(logger ctxd.Logger, cfg func() ImageWorkerConfig) *ImageDescriber {

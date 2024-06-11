@@ -454,6 +454,10 @@ function loadAlbum(params) {
                     for (var ci in cl) {
                         var l = cl[ci]
 
+                        if (l.model === "cf-uform-gen2") {
+                            continue
+                        }
+
                         img_description += l.text + '<br/>'
                     }
 
@@ -462,6 +466,18 @@ function loadAlbum(params) {
                     }
 
                     img_description += '</div>'
+
+                    for (var ci in cl) {
+                        var l = cl[ci]
+
+                        if (l.model === "cf-uform-gen2") {
+                            img_description += '<div style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text + '</div>'
+                        }
+                    }
+
+                    if (img.meta.geo_label) {
+                        img_description += '<div style="margin-top: 20px"><span class="icon-link location-icon"></span>' + img.meta.geo_label + '</div>'
+                    }
                 }
 
                 var landscape = ""
