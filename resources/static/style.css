@@ -251,6 +251,10 @@ a.ctrl-btn:hover {
     padding-bottom: 6px;
 }
 
+.fullscreen .ai-says {
+    display: none;
+}
+
 .dark-mode a:link {
     color: lightskyblue;
 }

@@ -8,7 +8,7 @@ require (
 	github.com/bool64/brick v0.2.5
 	github.com/bool64/cache v0.4.7
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.34
+	github.com/bool64/dev v0.2.35
 	github.com/bool64/sqluct v0.2.3
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.1.1
@@ -19,7 +19,7 @@ require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/chi/v5 v5.1.0
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stefanfritsch/goldmark-fences v1.0.0
@@ -27,8 +27,8 @@ require (
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/form/v5 v5.1.1
 	github.com/swaggest/jsonform-go v0.2.0
-	github.com/swaggest/jsonschema-go v0.3.70
-	github.com/swaggest/openapi-go v0.2.51
+	github.com/swaggest/jsonschema-go v0.3.72
+	github.com/swaggest/openapi-go v0.2.53
 	github.com/swaggest/refl v1.3.0
 	github.com/swaggest/rest v0.2.66
 	github.com/swaggest/swgui v1.8.1
@@ -36,11 +36,11 @@ require (
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.4.0
 	github.com/vearutop/statigz v1.4.0
-	github.com/yuin/goldmark v1.7.1
+	github.com/yuin/goldmark v1.7.4
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.24.0
-	golang.org/x/image v0.17.0
+	golang.org/x/image v0.18.0
 	golang.org/x/net v0.26.0
 	golang.org/x/text v0.16.0
 	modernc.org/sqlite v1.30.1
@@ -114,7 +114,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.53.1 // indirect
+	modernc.org/libc v1.53.4 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect

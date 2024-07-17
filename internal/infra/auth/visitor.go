@@ -98,6 +98,7 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 					"referer", h.Get("Referer"),
 					"forwarded_for", h.Get("X-Forwarded-For"),
 					"admin", IsAdmin(r.Context()),
+					"lang", r.Header.Get("Accept-Language"),
 				)
 			}
 

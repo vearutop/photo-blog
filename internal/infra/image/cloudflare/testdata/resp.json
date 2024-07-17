@@ -1,0 +1,1013 @@
+{
+  "@cf/llava-hf/llava-1.5-7b-hf": {
+    "description": " The image features a group of five men standing together on a road, posing for a picture. They are all wearing bicycle helmets, indicating that they might be bicyclists. The men are standing in front of a sign, possibly a road sign or a sign for a nearby attraction. The scene appears to be a casual gathering of friends or fellow cyclists.",
+    "elapsedTimeMs": 6734
+  },
+  "@cf/facebook/detr-resnet-50": [
+    {
+      "score": 0.9995812773704529,
+      "label": "person",
+      "box": {
+        "xmin": 645,
+        "ymin": 371,
+        "xmax": 744,
+        "ymax": 666
+      }
+    },
+    {
+      "score": 0.999207079410553,
+      "label": "person",
+      "box": {
+        "xmin": 547,
+        "ymin": 377,
+        "xmax": 628,
+        "ymax": 664
+      }
+    },
+    {
+      "score": 0.9990720748901367,
+      "label": "person",
+      "box": {
+        "xmin": 170,
+        "ymin": 349,
+        "xmax": 293,
+        "ymax": 665
+      }
+    },
+    {
+      "score": 0.9989836812019348,
+      "label": "person",
+      "box": {
+        "xmin": 286,
+        "ymin": 333,
+        "xmax": 404,
+        "ymax": 663
+      }
+    },
+    {
+      "score": 0.9987012147903442,
+      "label": "bicycle",
+      "box": {
+        "xmin": 533,
+        "ymin": 492,
+        "xmax": 613,
+        "ymax": 663
+      }
+    },
+    {
+      "score": 0.9984208345413208,
+      "label": "person",
+      "box": {
+        "xmin": 399,
+        "ymin": 360,
+        "xmax": 489,
+        "ymax": 661
+      }
+    },
+    {
+      "score": 0.9956474900245667,
+      "label": "bicycle",
+      "box": {
+        "xmin": 273,
+        "ymin": 492,
+        "xmax": 481,
+        "ymax": 655
+      }
+    },
+    {
+      "score": 0.8387312293052673,
+      "label": "handbag",
+      "box": {
+        "xmin": 588,
+        "ymin": 528,
+        "xmax": 635,
+        "ymax": 564
+      }
+    },
+    {
+      "score": 0.7945366501808167,
+      "label": "bicycle",
+      "box": {
+        "xmin": 854,
+        "ymin": 594,
+        "xmax": 1086,
+        "ymax": 678
+      }
+    },
+    {
+      "score": 0.584663987159729,
+      "label": "cell phone",
+      "box": {
+        "xmin": 200,
+        "ymin": 447,
+        "xmax": 232,
+        "ymax": 460
+      }
+    },
+    {
+      "score": 0.5192041397094727,
+      "label": "bicycle",
+      "box": {
+        "xmin": 268,
+        "ymin": 520,
+        "xmax": 353,
+        "ymax": 654
+      }
+    },
+    {
+      "score": 0.3245745003223419,
+      "label": "handbag",
+      "box": {
+        "xmin": 304,
+        "ymin": 437,
+        "xmax": 370,
+        "ymax": 494
+      }
+    },
+    {
+      "score": 0.32427260279655457,
+      "label": "bicycle",
+      "box": {
+        "xmin": 450,
+        "ymin": 499,
+        "xmax": 483,
+        "ymax": 615
+      }
+    },
+    {
+      "score": 0.30907511711120605,
+      "label": "handbag",
+      "box": {
+        "xmin": 316,
+        "ymin": 437,
+        "xmax": 374,
+        "ymax": 481
+      }
+    },
+    {
+      "score": 0.29730337858200073,
+      "label": "handbag",
+      "box": {
+        "xmin": 311,
+        "ymin": 447,
+        "xmax": 370,
+        "ymax": 492
+      }
+    },
+    {
+      "score": 0.25155189633369446,
+      "label": "bicycle",
+      "box": {
+        "xmin": 216,
+        "ymin": 501,
+        "xmax": 299,
+        "ymax": 658
+      }
+    },
+    {
+      "score": 0.23327238857746124,
+      "label": "bicycle",
+      "box": {
+        "xmin": 285,
+        "ymin": 538,
+        "xmax": 343,
+        "ymax": 631
+      }
+    },
+    {
+      "score": 0.2304021269083023,
+      "label": "cell phone",
+      "box": {
+        "xmin": 199,
+        "ymin": 445,
+        "xmax": 225,
+        "ymax": 456
+      }
+    },
+    {
+      "score": 0.21025396883487701,
+      "label": "bicycle",
+      "box": {
+        "xmin": 280,
+        "ymin": 531,
+        "xmax": 346,
+        "ymax": 592
+      }
+    },
+    {
+      "score": 0.1804249882698059,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1048,
+        "ymin": 595,
+        "xmax": 1100,
+        "ymax": 679
+      }
+    },
+    {
+      "score": 0.17001958191394806,
+      "label": "bicycle",
+      "box": {
+        "xmin": 220,
+        "ymin": 551,
+        "xmax": 285,
+        "ymax": 626
+      }
+    },
+    {
+      "score": 0.15654891729354858,
+      "label": "bicycle",
+      "box": {
+        "xmin": 271,
+        "ymin": 505,
+        "xmax": 341,
+        "ymax": 611
+      }
+    },
+    {
+      "score": 0.14596378803253174,
+      "label": "bicycle",
+      "box": {
+        "xmin": 423,
+        "ymin": 495,
+        "xmax": 488,
+        "ymax": 649
+      }
+    },
+    {
+      "score": 0.14013101160526276,
+      "label": "car",
+      "box": {
+        "xmin": 274,
+        "ymin": 501,
+        "xmax": 307,
+        "ymax": 563
+      }
+    },
+    {
+      "score": 0.13759846985340118,
+      "label": "handbag",
+      "box": {
+        "xmin": 557,
+        "ymin": 417,
+        "xmax": 613,
+        "ymax": 509
+      }
+    },
+    {
+      "score": 0.1369089037179947,
+      "label": "cell phone",
+      "box": {
+        "xmin": 197,
+        "ymin": 449,
+        "xmax": 220,
+        "ymax": 461
+      }
+    },
+    {
+      "score": 0.1249290481209755,
+      "label": "bicycle",
+      "box": {
+        "xmin": 302,
+        "ymin": 547,
+        "xmax": 345,
+        "ymax": 604
+      }
+    },
+    {
+      "score": 0.11521632969379425,
+      "label": "car",
+      "box": {
+        "xmin": 266,
+        "ymin": 460,
+        "xmax": 301,
+        "ymax": 522
+      }
+    },
+    {
+      "score": 0.10511964559555054,
+      "label": "handbag",
+      "box": {
+        "xmin": 322,
+        "ymin": 437,
+        "xmax": 369,
+        "ymax": 463
+      }
+    },
+    {
+      "score": 0.09588685631752014,
+      "label": "bottle",
+      "box": {
+        "xmin": 270,
+        "ymin": 457,
+        "xmax": 284,
+        "ymax": 480
+      }
+    },
+    {
+      "score": 0.08961664140224457,
+      "label": "backpack",
+      "box": {
+        "xmin": 588,
+        "ymin": 532,
+        "xmax": 631,
+        "ymax": 564
+      }
+    },
+    {
+      "score": 0.08921995013952255,
+      "label": "bicycle",
+      "box": {
+        "xmin": 318,
+        "ymin": 516,
+        "xmax": 469,
+        "ymax": 648
+      }
+    },
+    {
+      "score": 0.08908601105213165,
+      "label": "bicycle",
+      "box": {
+        "xmin": 334,
+        "ymin": 497,
+        "xmax": 475,
+        "ymax": 600
+      }
+    },
+    {
+      "score": 0.08442851155996323,
+      "label": "backpack",
+      "box": {
+        "xmin": 586,
+        "ymin": 535,
+        "xmax": 630,
+        "ymax": 567
+      }
+    },
+    {
+      "score": 0.08131350576877594,
+      "label": "cell phone",
+      "box": {
+        "xmin": 261,
+        "ymin": 456,
+        "xmax": 276,
+        "ymax": 475
+      }
+    },
+    {
+      "score": 0.07932236045598984,
+      "label": "bicycle",
+      "box": {
+        "xmin": 174,
+        "ymin": 474,
+        "xmax": 301,
+        "ymax": 658
+      }
+    },
+    {
+      "score": 0.07434146106243134,
+      "label": "bicycle",
+      "box": {
+        "xmin": 177,
+        "ymin": 496,
+        "xmax": 273,
+        "ymax": 545
+      }
+    },
+    {
+      "score": 0.0734846442937851,
+      "label": "bicycle",
+      "box": {
+        "xmin": 275,
+        "ymin": 497,
+        "xmax": 466,
+        "ymax": 611
+      }
+    },
+    {
+      "score": 0.07123418897390366,
+      "label": "handbag",
+      "box": {
+        "xmin": 567,
+        "ymin": 415,
+        "xmax": 623,
+        "ymax": 486
+      }
+    },
+    {
+      "score": 0.07038275897502899,
+      "label": "cell phone",
+      "box": {
+        "xmin": 203,
+        "ymin": 451,
+        "xmax": 233,
+        "ymax": 462
+      }
+    },
+    {
+      "score": 0.07017403095960617,
+      "label": "cell phone",
+      "box": {
+        "xmin": 270,
+        "ymin": 458,
+        "xmax": 284,
+        "ymax": 478
+      }
+    },
+    {
+      "score": 0.06730025261640549,
+      "label": "car",
+      "box": {
+        "xmin": 268,
+        "ymin": 465,
+        "xmax": 306,
+        "ymax": 548
+      }
+    },
+    {
+      "score": 0.06513116508722305,
+      "label": "bicycle",
+      "box": {
+        "xmin": 280,
+        "ymin": 520,
+        "xmax": 461,
+        "ymax": 620
+      }
+    },
+    {
+      "score": 0.06458388268947601,
+      "label": "bicycle",
+      "box": {
+        "xmin": 896,
+        "ymin": 594,
+        "xmax": 1092,
+        "ymax": 674
+      }
+    },
+    {
+      "score": 0.061855822801589966,
+      "label": "cell phone",
+      "box": {
+        "xmin": 429,
+        "ymin": 387,
+        "xmax": 452,
+        "ymax": 409
+      }
+    },
+    {
+      "score": 0.06164363771677017,
+      "label": "car",
+      "box": {
+        "xmin": 261,
+        "ymin": 453,
+        "xmax": 300,
+        "ymax": 555
+      }
+    },
+    {
+      "score": 0.05685798078775406,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1048,
+        "ymin": 595,
+        "xmax": 1099,
+        "ymax": 680
+      }
+    },
+    {
+      "score": 0.056607358157634735,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1034,
+        "ymin": 593,
+        "xmax": 1098,
+        "ymax": 679
+      }
+    },
+    {
+      "score": 0.05650899186730385,
+      "label": "handbag",
+      "box": {
+        "xmin": 574,
+        "ymin": 420,
+        "xmax": 635,
+        "ymax": 551
+      }
+    },
+    {
+      "score": 0.05504985153675079,
+      "label": "bicycle",
+      "box": {
+        "xmin": 174,
+        "ymin": 475,
+        "xmax": 277,
+        "ymax": 637
+      }
+    },
+    {
+      "score": 0.04508891701698303,
+      "label": "bicycle",
+      "box": {
+        "xmin": 530,
+        "ymin": 488,
+        "xmax": 567,
+        "ymax": 551
+      }
+    },
+    {
+      "score": 0.04303475096821785,
+      "label": "bicycle",
+      "box": {
+        "xmin": 277,
+        "ymin": 495,
+        "xmax": 482,
+        "ymax": 592
+      }
+    },
+    {
+      "score": 0.04007174074649811,
+      "label": "handbag",
+      "box": {
+        "xmin": 582,
+        "ymin": 415,
+        "xmax": 624,
+        "ymax": 475
+      }
+    },
+    {
+      "score": 0.039397019892930984,
+      "label": "cell phone",
+      "box": {
+        "xmin": 425,
+        "ymin": 393,
+        "xmax": 448,
+        "ymax": 413
+      }
+    },
+    {
+      "score": 0.03791533038020134,
+      "label": "handbag",
+      "box": {
+        "xmin": 301,
+        "ymin": 408,
+        "xmax": 364,
+        "ymax": 478
+      }
+    },
+    {
+      "score": 0.035398490726947784,
+      "label": "handbag",
+      "box": {
+        "xmin": 575,
+        "ymin": 414,
+        "xmax": 615,
+        "ymax": 462
+      }
+    },
+    {
+      "score": 0.03420129045844078,
+      "label": "bicycle",
+      "box": {
+        "xmin": 240,
+        "ymin": 443,
+        "xmax": 300,
+        "ymax": 657
+      }
+    },
+    {
+      "score": 0.0336068831384182,
+      "label": "bottle",
+      "box": {
+        "xmin": 273,
+        "ymin": 436,
+        "xmax": 293,
+        "ymax": 474
+      }
+    },
+    {
+      "score": 0.03136366233229637,
+      "label": "bicycle",
+      "box": {
+        "xmin": 299,
+        "ymin": 475,
+        "xmax": 453,
+        "ymax": 583
+      }
+    },
+    {
+      "score": 0.027287786826491356,
+      "label": "bicycle",
+      "box": {
+        "xmin": 885,
+        "ymin": 601,
+        "xmax": 1089,
+        "ymax": 663
+      }
+    },
+    {
+      "score": 0.02605932578444481,
+      "label": "cell phone",
+      "box": {
+        "xmin": 194,
+        "ymin": 453,
+        "xmax": 222,
+        "ymax": 469
+      }
+    },
+    {
+      "score": 0.025185544043779373,
+      "label": "bicycle",
+      "box": {
+        "xmin": 857,
+        "ymin": 588,
+        "xmax": 1094,
+        "ymax": 674
+      }
+    },
+    {
+      "score": 0.01886911503970623,
+      "label": "bicycle",
+      "box": {
+        "xmin": 540,
+        "ymin": 531,
+        "xmax": 577,
+        "ymax": 623
+      }
+    },
+    {
+      "score": 0.016476552933454514,
+      "label": "cell phone",
+      "box": {
+        "xmin": 412,
+        "ymin": 390,
+        "xmax": 445,
+        "ymax": 431
+      }
+    },
+    {
+      "score": 0.015592736192047596,
+      "label": "bicycle",
+      "box": {
+        "xmin": 567,
+        "ymin": 500,
+        "xmax": 627,
+        "ymax": 557
+      }
+    },
+    {
+      "score": 0.015092084184288979,
+      "label": "handbag",
+      "box": {
+        "xmin": 582,
+        "ymin": 408,
+        "xmax": 626,
+        "ymax": 461
+      }
+    },
+    {
+      "score": 0.013984905555844307,
+      "label": "bicycle",
+      "box": {
+        "xmin": 456,
+        "ymin": 494,
+        "xmax": 488,
+        "ymax": 554
+      }
+    },
+    {
+      "score": 0.012401343323290348,
+      "label": "bicycle",
+      "box": {
+        "xmin": 950,
+        "ymin": 600,
+        "xmax": 1090,
+        "ymax": 643
+      }
+    },
+    {
+      "score": 0.0123837785795331,
+      "label": "cell phone",
+      "box": {
+        "xmin": 662,
+        "ymin": 445,
+        "xmax": 685,
+        "ymax": 461
+      }
+    },
+    {
+      "score": 0.011566994711756706,
+      "label": "cell phone",
+      "box": {
+        "xmin": 658,
+        "ymin": 442,
+        "xmax": 679,
+        "ymax": 456
+      }
+    },
+    {
+      "score": 0.011553574353456497,
+      "label": "handbag",
+      "box": {
+        "xmin": 558,
+        "ymin": 400,
+        "xmax": 609,
+        "ymax": 464
+      }
+    },
+    {
+      "score": 0.011093872599303722,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1059,
+        "ymin": 593,
+        "xmax": 1103,
+        "ymax": 635
+      }
+    },
+    {
+      "score": 0.010744716040790081,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1057,
+        "ymin": 597,
+        "xmax": 1096,
+        "ymax": 638
+      }
+    },
+    {
+      "score": 0.010695002973079681,
+      "label": "cell phone",
+      "box": {
+        "xmin": 649,
+        "ymin": 446,
+        "xmax": 675,
+        "ymax": 464
+      }
+    },
+    {
+      "score": 0.009399373084306717,
+      "label": "handbag",
+      "box": {
+        "xmin": 408,
+        "ymin": 387,
+        "xmax": 444,
+        "ymax": 436
+      }
+    },
+    {
+      "score": 0.009373866021633148,
+      "label": "cell phone",
+      "box": {
+        "xmin": 660,
+        "ymin": 445,
+        "xmax": 685,
+        "ymax": 463
+      }
+    },
+    {
+      "score": 0.009294976480305195,
+      "label": "handbag",
+      "box": {
+        "xmin": 289,
+        "ymin": 402,
+        "xmax": 360,
+        "ymax": 604
+      }
+    },
+    {
+      "score": 0.009264333173632622,
+      "label": "bicycle",
+      "box": {
+        "xmin": 856,
+        "ymin": 629,
+        "xmax": 1078,
+        "ymax": 668
+      }
+    },
+    {
+      "score": 0.009232399053871632,
+      "label": "bicycle",
+      "box": {
+        "xmin": 568,
+        "ymin": 510,
+        "xmax": 616,
+        "ymax": 567
+      }
+    },
+    {
+      "score": 0.0087007200345397,
+      "label": "cup",
+      "box": {
+        "xmin": 237,
+        "ymin": 418,
+        "xmax": 255,
+        "ymax": 455
+      }
+    },
+    {
+      "score": 0.007944365963339806,
+      "label": "handbag",
+      "box": {
+        "xmin": 568,
+        "ymin": 413,
+        "xmax": 623,
+        "ymax": 490
+      }
+    },
+    {
+      "score": 0.007758459076285362,
+      "label": "bicycle",
+      "box": {
+        "xmin": 288,
+        "ymin": 493,
+        "xmax": 1090,
+        "ymax": 671
+      }
+    },
+    {
+      "score": 0.007733439560979605,
+      "label": "handbag",
+      "box": {
+        "xmin": 555,
+        "ymin": 400,
+        "xmax": 600,
+        "ymax": 460
+      }
+    },
+    {
+      "score": 0.007625706028193235,
+      "label": "handbag",
+      "box": {
+        "xmin": 615,
+        "ymin": 507,
+        "xmax": 644,
+        "ymax": 550
+      }
+    },
+    {
+      "score": 0.0074838073924183846,
+      "label": "handbag",
+      "box": {
+        "xmin": 579,
+        "ymin": 493,
+        "xmax": 623,
+        "ymax": 541
+      }
+    },
+    {
+      "score": 0.00693330867215991,
+      "label": "cell phone",
+      "box": {
+        "xmin": 658,
+        "ymin": 403,
+        "xmax": 699,
+        "ymax": 438
+      }
+    },
+    {
+      "score": 0.006870601326227188,
+      "label": "handbag",
+      "box": {
+        "xmin": 665,
+        "ymin": 415,
+        "xmax": 706,
+        "ymax": 458
+      }
+    },
+    {
+      "score": 0.006575895007699728,
+      "label": "cell phone",
+      "box": {
+        "xmin": 674,
+        "ymin": 439,
+        "xmax": 694,
+        "ymax": 456
+      }
+    },
+    {
+      "score": 0.006551135331392288,
+      "label": "handbag",
+      "box": {
+        "xmin": 553,
+        "ymin": 394,
+        "xmax": 621,
+        "ymax": 497
+      }
+    },
+    {
+      "score": 0.006378167774528265,
+      "label": "bicycle",
+      "box": {
+        "xmin": 274,
+        "ymin": 492,
+        "xmax": 978,
+        "ymax": 664
+      }
+    },
+    {
+      "score": 0.006046145688742399,
+      "label": "handbag",
+      "box": {
+        "xmin": 539,
+        "ymin": 420,
+        "xmax": 622,
+        "ymax": 614
+      }
+    },
+    {
+      "score": 0.005949265789240599,
+      "label": "handbag",
+      "box": {
+        "xmin": 638,
+        "ymin": 413,
+        "xmax": 676,
+        "ymax": 456
+      }
+    },
+    {
+      "score": 0.005649484694004059,
+      "label": "handbag",
+      "box": {
+        "xmin": 655,
+        "ymin": 415,
+        "xmax": 703,
+        "ymax": 472
+      }
+    },
+    {
+      "score": 0.005381634924560785,
+      "label": "bicycle",
+      "box": {
+        "xmin": 866,
+        "ymin": 628,
+        "xmax": 1056,
+        "ymax": 664
+      }
+    },
+    {
+      "score": 0.005039227195084095,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1061,
+        "ymin": 595,
+        "xmax": 1096,
+        "ymax": 632
+      }
+    },
+    {
+      "score": 0.004105361644178629,
+      "label": "bicycle",
+      "box": {
+        "xmin": 1062,
+        "ymin": 593,
+        "xmax": 1095,
+        "ymax": 634
+      }
+    },
+    {
+      "score": 0.004102267790585756,
+      "label": "person",
+      "box": {
+        "xmin": 461,
+        "ymin": 497,
+        "xmax": 487,
+        "ymax": 526
+      }
+    },
+    {
+      "score": 0.003168343100696802,
+      "label": "handbag",
+      "box": {
+        "xmin": 665,
+        "ymin": 409,
+        "xmax": 708,
+        "ymax": 449
+      }
+    },
+    {
+      "score": 0.0027897944673895836,
+      "label": "cell phone",
+      "box": {
+        "xmin": 615,
+        "ymin": 428,
+        "xmax": 642,
+        "ymax": 456
+      }
+    },
+    {
+      "score": 0.0024038762785494328,
+      "label": "person",
+      "box": {
+        "xmin": 113,
+        "ymin": 391,
+        "xmax": 147,
+        "ymax": 425
+      }
+    }
+  ],
+  "@cf/meta/m2m100-1.2b_ru": {
+    "translated_text": "На изображении изображена группа из пяти мужчин, стоящих вместе на дороге, позируя для картины. Все они носят велосипедные шлемы, что указывает на то, что они могут быть велосипедистами. Мужчины стоят перед знаком, возможно, дорожным знаком или знаком для близлежащей достопримечательности. Сцена кажется случайным собранием друзей или коллег-велосипедистов.",
+    "elapsedTimeMs": 5449
+  },
+  "contentType": "foo"
+}

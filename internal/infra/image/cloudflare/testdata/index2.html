@@ -1,0 +1,443 @@
+<html>
+<head>
+    <script
+            src="https://code.jquery.com/jquery-3.7.1.slim.js"
+            integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+
+<div id="holder" style="position:relative">
+    <img src="1li4mv5l82smg.jpg"/>
+</div>
+
+<script>
+    var data = {
+        "@cf/llava-hf/llava-1.5-7b-hf": {
+            "description": " The image depicts a group of people gathered outside a building, possibly a restaurant or a shop. They are sitting at tables under umbrellas, enjoying their time together. There are several bicycles parked nearby, indicating that some of the people might have arrived by bike.\n\nIn the scene, there are multiple chairs, dining tables, and potted plants, adding to the ambiance of the outdoor gathering. The people are engaged in conversation and enjoying their time together, creating a lively atmosphere.",
+            "elapsedTimeMs": 8269
+        },
+        "@cf/facebook/detr-resnet-50": [{
+            "score": 0.9975875616073608,
+            "label": "person",
+            "box": {"xmin": 83, "ymin": 378, "xmax": 172, "ymax": 597}
+        }, {
+            "score": 0.9970568418502808,
+            "label": "person",
+            "box": {"xmin": 212, "ymin": 378, "xmax": 304, "ymax": 588}
+        }, {
+            "score": 0.9968540072441101,
+            "label": "bicycle",
+            "box": {"xmin": 353, "ymin": 469, "xmax": 525, "ymax": 573}
+        }, {
+            "score": 0.9950689077377319,
+            "label": "potted plant",
+            "box": {"xmin": 594, "ymin": 566, "xmax": 657, "ymax": 634}
+        }, {
+            "score": 0.9828917980194092,
+            "label": "person",
+            "box": {"xmin": 158, "ymin": 299, "xmax": 198, "ymax": 336}
+        }, {
+            "score": 0.9767767786979675,
+            "label": "bicycle",
+            "box": {"xmin": 1097, "ymin": 453, "xmax": 1198, "ymax": 576}
+        }, {
+            "score": 0.9758972525596619,
+            "label": "handbag",
+            "box": {"xmin": 774, "ymin": 468, "xmax": 811, "ymax": 551}
+        }, {
+            "score": 0.9756503105163574,
+            "label": "person",
+            "box": {"xmin": 147, "ymin": 402, "xmax": 210, "ymax": 560}
+        }, {
+            "score": 0.9731387495994568,
+            "label": "person",
+            "box": {"xmin": 203, "ymin": 303, "xmax": 232, "ymax": 341}
+        }, {
+            "score": 0.9700719714164734,
+            "label": "umbrella",
+            "box": {"xmin": 514, "ymin": 222, "xmax": 1005, "ymax": 489}
+        }, {
+            "score": 0.9668829441070557,
+            "label": "person",
+            "box": {"xmin": 676, "ymin": 437, "xmax": 754, "ymax": 563}
+        }, {
+            "score": 0.9643561244010925,
+            "label": "bicycle",
+            "box": {"xmin": 138, "ymin": 468, "xmax": 219, "ymax": 562}
+        }, {
+            "score": 0.9588879942893982,
+            "label": "bicycle",
+            "box": {"xmin": 46, "ymin": 457, "xmax": 113, "ymax": 518}
+        }, {
+            "score": 0.9569931626319885,
+            "label": "person",
+            "box": {"xmin": 948, "ymin": 399, "xmax": 991, "ymax": 460}
+        }, {
+            "score": 0.9468981027603149,
+            "label": "bicycle",
+            "box": {"xmin": 208, "ymin": 482, "xmax": 357, "ymax": 572}
+        }, {
+            "score": 0.9393717050552368,
+            "label": "bicycle",
+            "box": {"xmin": 291, "ymin": 490, "xmax": 360, "ymax": 570}
+        }, {
+            "score": 0.9390226602554321,
+            "label": "bicycle",
+            "box": {"xmin": 265, "ymin": 488, "xmax": 361, "ymax": 572}
+        }, {
+            "score": 0.9353563785552979,
+            "label": "bicycle",
+            "box": {"xmin": 184, "ymin": 471, "xmax": 247, "ymax": 557}
+        }, {
+            "score": 0.934895396232605,
+            "label": "umbrella",
+            "box": {"xmin": 119, "ymin": 201, "xmax": 409, "ymax": 313}
+        }, {
+            "score": 0.9186616539955139,
+            "label": "potted plant",
+            "box": {"xmin": 537, "ymin": 427, "xmax": 566, "ymax": 450}
+        }, {
+            "score": 0.9166899919509888,
+            "label": "person",
+            "box": {"xmin": 677, "ymin": 438, "xmax": 758, "ymax": 623}
+        }, {
+            "score": 0.9093694090843201,
+            "label": "person",
+            "box": {"xmin": 935, "ymin": 410, "xmax": 1036, "ymax": 628}
+        }, {
+            "score": 0.9068312644958496,
+            "label": "person",
+            "box": {"xmin": 259, "ymin": 382, "xmax": 312, "ymax": 573}
+        }, {
+            "score": 0.9031890034675598,
+            "label": "bicycle",
+            "box": {"xmin": 183, "ymin": 491, "xmax": 236, "ymax": 561}
+        }, {
+            "score": 0.8979370594024658,
+            "label": "potted plant",
+            "box": {"xmin": 496, "ymin": 418, "xmax": 525, "ymax": 446}
+        }, {
+            "score": 0.8943099975585938,
+            "label": "person",
+            "box": {"xmin": 933, "ymin": 408, "xmax": 1035, "ymax": 495}
+        }, {
+            "score": 0.8910579085350037,
+            "label": "potted plant",
+            "box": {"xmin": 510, "ymin": 419, "xmax": 538, "ymax": 447}
+        }, {
+            "score": 0.889394223690033,
+            "label": "potted plant",
+            "box": {"xmin": 570, "ymin": 433, "xmax": 599, "ymax": 455}
+        }, {
+            "score": 0.8864192366600037,
+            "label": "umbrella",
+            "box": {"xmin": 122, "ymin": 201, "xmax": 406, "ymax": 405}
+        }, {
+            "score": 0.8676414489746094,
+            "label": "person",
+            "box": {"xmin": 765, "ymin": 429, "xmax": 861, "ymax": 621}
+        }, {
+            "score": 0.8661724925041199,
+            "label": "bench",
+            "box": {"xmin": 655, "ymin": 536, "xmax": 870, "ymax": 623}
+        }, {
+            "score": 0.8611322641372681,
+            "label": "umbrella",
+            "box": {"xmin": 702, "ymin": 52, "xmax": 1200, "ymax": 307}
+        }, {
+            "score": 0.8417393565177917,
+            "label": "umbrella",
+            "box": {"xmin": 678, "ymin": 49, "xmax": 1199, "ymax": 485}
+        }, {
+            "score": 0.8333310484886169,
+            "label": "person",
+            "box": {"xmin": 334, "ymin": 381, "xmax": 374, "ymax": 421}
+        }, {
+            "score": 0.8222190141677856,
+            "label": "person",
+            "box": {"xmin": 773, "ymin": 430, "xmax": 859, "ymax": 556}
+        }, {
+            "score": 0.8197587132453918,
+            "label": "handbag",
+            "box": {"xmin": 228, "ymin": 449, "xmax": 277, "ymax": 499}
+        }, {
+            "score": 0.8195400834083557,
+            "label": "bicycle",
+            "box": {"xmin": 38, "ymin": 502, "xmax": 164, "ymax": 586}
+        }, {
+            "score": 0.7996007800102234,
+            "label": "handbag",
+            "box": {"xmin": 627, "ymin": 491, "xmax": 678, "ymax": 534}
+        }, {
+            "score": 0.7790208458900452,
+            "label": "potted plant",
+            "box": {"xmin": 746, "ymin": 461, "xmax": 777, "ymax": 516}
+        }, {
+            "score": 0.7732248902320862,
+            "label": "person",
+            "box": {"xmin": 627, "ymin": 447, "xmax": 702, "ymax": 536}
+        }, {
+            "score": 0.7706299424171448,
+            "label": "umbrella",
+            "box": {"xmin": 119, "ymin": 205, "xmax": 406, "ymax": 358}
+        }, {
+            "score": 0.7274848818778992,
+            "label": "bicycle",
+            "box": {"xmin": 16, "ymin": 494, "xmax": 89, "ymax": 582}
+        }, {
+            "score": 0.7121888995170593,
+            "label": "umbrella",
+            "box": {"xmin": 518, "ymin": 231, "xmax": 1005, "ymax": 362}
+        }, {
+            "score": 0.7121495008468628,
+            "label": "bench",
+            "box": {"xmin": 658, "ymin": 544, "xmax": 869, "ymax": 622}
+        }, {
+            "score": 0.708109974861145,
+            "label": "bicycle",
+            "box": {"xmin": 198, "ymin": 457, "xmax": 244, "ymax": 502}
+        }, {
+            "score": 0.6717034578323364,
+            "label": "person",
+            "box": {"xmin": 212, "ymin": 304, "xmax": 237, "ymax": 341}
+        }, {
+            "score": 0.6652604937553406,
+            "label": "potted plant",
+            "box": {"xmin": 467, "ymin": 404, "xmax": 507, "ymax": 444}
+        }, {
+            "score": 0.6456034183502197,
+            "label": "dining table",
+            "box": {"xmin": 833, "ymin": 485, "xmax": 1009, "ymax": 515}
+        }, {
+            "score": 0.6142861843109131,
+            "label": "person",
+            "box": {"xmin": 302, "ymin": 381, "xmax": 328, "ymax": 413}
+        }, {
+            "score": 0.5707416534423828,
+            "label": "potted plant",
+            "box": {"xmin": 445, "ymin": 419, "xmax": 489, "ymax": 448}
+        }, {
+            "score": 0.5449732542037964,
+            "label": "bicycle",
+            "box": {"xmin": 419, "ymin": 478, "xmax": 530, "ymax": 570}
+        }, {
+            "score": 0.5449198484420776,
+            "label": "umbrella",
+            "box": {"xmin": 744, "ymin": 288, "xmax": 1003, "ymax": 375}
+        }, {
+            "score": 0.5267311334609985,
+            "label": "potted plant",
+            "box": {"xmin": 759, "ymin": 474, "xmax": 784, "ymax": 513}
+        }, {
+            "score": 0.5105981826782227,
+            "label": "umbrella",
+            "box": {"xmin": 669, "ymin": 55, "xmax": 1199, "ymax": 629}
+        }, {
+            "score": 0.49736878275871277,
+            "label": "person",
+            "box": {"xmin": 151, "ymin": 400, "xmax": 208, "ymax": 495}
+        }, {
+            "score": 0.4958922266960144,
+            "label": "bicycle",
+            "box": {"xmin": 283, "ymin": 453, "xmax": 360, "ymax": 571}
+        }, {
+            "score": 0.4937726557254791,
+            "label": "dining table",
+            "box": {"xmin": 648, "ymin": 531, "xmax": 866, "ymax": 564}
+        }, {
+            "score": 0.4864441156387329,
+            "label": "bicycle",
+            "box": {"xmin": 296, "ymin": 456, "xmax": 358, "ymax": 504}
+        }, {
+            "score": 0.48091158270835876,
+            "label": "person",
+            "box": {"xmin": 194, "ymin": 306, "xmax": 224, "ymax": 339}
+        }, {
+            "score": 0.46222394704818726,
+            "label": "dining table",
+            "box": {"xmin": 825, "ymin": 490, "xmax": 1000, "ymax": 621}
+        }, {
+            "score": 0.4476683735847473,
+            "label": "potted plant",
+            "box": {"xmin": 531, "ymin": 426, "xmax": 558, "ymax": 450}
+        }, {
+            "score": 0.4456155598163605,
+            "label": "bicycle",
+            "box": {"xmin": 36, "ymin": 433, "xmax": 109, "ymax": 518}
+        }, {
+            "score": 0.4228280782699585,
+            "label": "person",
+            "box": {"xmin": 164, "ymin": 300, "xmax": 197, "ymax": 331}
+        }, {
+            "score": 0.40784895420074463,
+            "label": "umbrella",
+            "box": {"xmin": 523, "ymin": 250, "xmax": 1006, "ymax": 496}
+        }, {
+            "score": 0.3970572352409363,
+            "label": "person",
+            "box": {"xmin": 635, "ymin": 441, "xmax": 706, "ymax": 537}
+        }, {
+            "score": 0.38289371132850647,
+            "label": "person",
+            "box": {"xmin": 984, "ymin": 412, "xmax": 1039, "ymax": 494}
+        }, {
+            "score": 0.34961947798728943,
+            "label": "potted plant",
+            "box": {"xmin": 575, "ymin": 433, "xmax": 602, "ymax": 456}
+        }, {
+            "score": 0.3392679989337921,
+            "label": "person",
+            "box": {"xmin": 311, "ymin": 381, "xmax": 335, "ymax": 412}
+        }, {
+            "score": 0.3347616195678711,
+            "label": "umbrella",
+            "box": {"xmin": 113, "ymin": 225, "xmax": 272, "ymax": 380}
+        }, {
+            "score": 0.30670881271362305,
+            "label": "umbrella",
+            "box": {"xmin": 151, "ymin": 227, "xmax": 400, "ymax": 300}
+        }, {
+            "score": 0.2932127118110657,
+            "label": "person",
+            "box": {"xmin": 638, "ymin": 441, "xmax": 704, "ymax": 502}
+        }, {
+            "score": 0.2881986200809479,
+            "label": "dining table",
+            "box": {"xmin": 763, "ymin": 529, "xmax": 850, "ymax": 557}
+        }, {
+            "score": 0.24873922765254974,
+            "label": "person",
+            "box": {"xmin": 1009, "ymin": 415, "xmax": 1040, "ymax": 455}
+        }, {
+            "score": 0.24555891752243042,
+            "label": "dining table",
+            "box": {"xmin": 958, "ymin": 466, "xmax": 1196, "ymax": 601}
+        }, {
+            "score": 0.24454611539840698,
+            "label": "bench",
+            "box": {"xmin": 657, "ymin": 531, "xmax": 763, "ymax": 573}
+        }, {
+            "score": 0.24258430302143097,
+            "label": "handbag",
+            "box": {"xmin": 644, "ymin": 491, "xmax": 690, "ymax": 528}
+        }, {
+            "score": 0.23823100328445435,
+            "label": "car",
+            "box": {"xmin": 1082, "ymin": 464, "xmax": 1135, "ymax": 497}
+        }, {
+            "score": 0.22961145639419556,
+            "label": "bench",
+            "box": {"xmin": 653, "ymin": 530, "xmax": 868, "ymax": 608}
+        }, {
+            "score": 0.22305315732955933,
+            "label": "handbag",
+            "box": {"xmin": 248, "ymin": 414, "xmax": 296, "ymax": 489}
+        }, {
+            "score": 0.20975540578365326,
+            "label": "umbrella",
+            "box": {"xmin": 544, "ymin": 274, "xmax": 994, "ymax": 406}
+        }, {
+            "score": 0.20092028379440308,
+            "label": "bicycle",
+            "box": {"xmin": 1131, "ymin": 456, "xmax": 1199, "ymax": 521}
+        }, {
+            "score": 0.18230463564395905,
+            "label": "umbrella",
+            "box": {"xmin": 522, "ymin": 242, "xmax": 1008, "ymax": 586}
+        }, {
+            "score": 0.1738232523202896,
+            "label": "umbrella",
+            "box": {"xmin": 524, "ymin": 244, "xmax": 990, "ymax": 497}
+        }, {
+            "score": 0.15292340517044067,
+            "label": "bicycle",
+            "box": {"xmin": 1109, "ymin": 457, "xmax": 1199, "ymax": 601}
+        }, {
+            "score": 0.1487305462360382,
+            "label": "bicycle",
+            "box": {"xmin": 74, "ymin": 420, "xmax": 157, "ymax": 562}
+        }, {
+            "score": 0.11719373613595963,
+            "label": "umbrella",
+            "box": {"xmin": 148, "ymin": 131, "xmax": 1170, "ymax": 536}
+        }, {
+            "score": 0.11703062802553177,
+            "label": "person",
+            "box": {"xmin": 136, "ymin": 311, "xmax": 178, "ymax": 340}
+        }, {
+            "score": 0.11426452547311783,
+            "label": "bicycle",
+            "box": {"xmin": 228, "ymin": 392, "xmax": 269, "ymax": 425}
+        }, {
+            "score": 0.10800797492265701,
+            "label": "potted plant",
+            "box": {"xmin": 842, "ymin": 605, "xmax": 948, "ymax": 641}
+        }, {
+            "score": 0.10209985077381134,
+            "label": "umbrella",
+            "box": {"xmin": 705, "ymin": 54, "xmax": 1201, "ymax": 602}
+        }, {
+            "score": 0.09453295171260834,
+            "label": "umbrella",
+            "box": {"xmin": 528, "ymin": 159, "xmax": 988, "ymax": 381}
+        }, {
+            "score": 0.09045879542827606,
+            "label": "bicycle",
+            "box": {"xmin": 1092, "ymin": 456, "xmax": 1175, "ymax": 499}
+        }, {
+            "score": 0.0833476111292839,
+            "label": "dining table",
+            "box": {"xmin": 625, "ymin": 473, "xmax": 699, "ymax": 563}
+        }, {
+            "score": 0.08044680207967758,
+            "label": "person",
+            "box": {"xmin": 1010, "ymin": 422, "xmax": 1044, "ymax": 474}
+        }, {
+            "score": 0.07236914336681366,
+            "label": "bicycle",
+            "box": {"xmin": 1082, "ymin": 466, "xmax": 1137, "ymax": 501}
+        }, {
+            "score": 0.07177940011024475,
+            "label": "handbag",
+            "box": {"xmin": 932, "ymin": 454, "xmax": 973, "ymax": 486}
+        }, {
+            "score": 0.06532013416290283,
+            "label": "handbag",
+            "box": {"xmin": 814, "ymin": 466, "xmax": 864, "ymax": 528}
+        }, {
+            "score": 0.05650511384010315,
+            "label": "potted plant",
+            "box": {"xmin": 597, "ymin": 558, "xmax": 658, "ymax": 618}
+        }, {
+            "score": 0.054980382323265076,
+            "label": "person",
+            "box": {"xmin": 952, "ymin": 411, "xmax": 999, "ymax": 470}
+        }, {
+            "score": 0.05264405533671379,
+            "label": "bench",
+            "box": {"xmin": 312, "ymin": 392, "xmax": 361, "ymax": 426}
+        }],
+        "@cf/meta/m2m100-1.2b_ru": {
+            "translated_text": "На изображении изображена группа людей, собравшихся за пределами здания, возможно, в ресторане или магазине. Они сидят за столами под зонтиками, наслаждаясь своим временем вместе. Есть несколько велосипедов, припаркованных поблизости, что указывает на то, что некоторые из людей могли прибыть на велосипеде. На сцене, есть несколько стульев, столы для обеда и горшники, добавляя к атмосфере собрания на открытом воздухе. Люди участвуют в разговоре и наслаждаются своим временем вместе, создавая оживленную атмосферу.",
+            "elapsedTimeMs": 4601
+        },
+        "contentType": "foo"
+    }
+
+    for (var k in data["@cf/facebook/detr-resnet-50"]) {
+        var v = data["@cf/facebook/detr-resnet-50"][k]
+        console.log(v)
+
+        if (v.score < 0.5) {
+            continue
+        }
+
+        $("#holder").append('<div title="' + v.label + ':' + v.score + '" style="position:absolute;border:2px solid red;width:' + (v.box.xmax - v.box.xmin) + 'px;height:' + (v.box.ymax - v.box.ymin) + 'px;top:' + v.box.ymin + 'px;left:' + v.box.xmin + 'px"></div>')
+    }
+
+</script>
+
+</body>
+
+</html>

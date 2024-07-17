@@ -60,15 +60,15 @@ function removeImage(albumName, imageHash) {
 function toggleFullscreen() {
     if (document.fullscreenElement) {
         document.exitFullscreen()
-        $('html body').css("overflow", "auto")
+        $('html body').css("overflow", "auto").removeClass("fullscreen")
     } else {
-        $('html body').css("overflow", "hidden")
+        $('html body').css("overflow", "hidden").addClass("fullscreen")
         var el = $('html')[0]
         el.requestFullscreen()
 
         el.addEventListener("fullscreenchange", function () {
             if (!document.fullscreenElement) {
-                $('html body').css("overflow", "auto")
+                $('html body').css("overflow", "auto").removeClass("fullscreen")
             }
         });
     }
@@ -77,7 +77,7 @@ function toggleFullscreen() {
 function exitFullscreen() {
     if (document.fullscreenElement) {
         document.exitFullscreen()
-        $('html body').css("overflow", "auto")
+        $('html body').css("overflow", "auto").removeClass("fullscreen")
     }
 }
 
@@ -471,7 +471,7 @@ function loadAlbum(params) {
                         var l = cl[ci]
 
                         if (l.model === "cf-uform-gen2") {
-                            img_description += '<div style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text + '</div>'
+                            img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text + '</div>'
                         }
                     }
 
