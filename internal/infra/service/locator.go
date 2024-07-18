@@ -10,14 +10,16 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 )
 
 // Locator defines application resources.
 type Locator struct {
 	*brick.BaseLocator
 
-	SchemaRepo   *jsonform.Repository
-	AccessLogger ctxd.Logger
+	SchemaRepo           *jsonform.Repository
+	AccessLogger         ctxd.Logger
+	VisitorStatsInstance *visitor.Stats
 
 	DepCacheInstance       *dep.Cache
 	FilesProcessorInstance *files.Processor
@@ -115,4 +117,8 @@ func (l *Locator) FacesRecognizer() *faces.Recognizer {
 
 func (l *Locator) OpenRouteService() *ors.Client {
 	return l.ORS
+}
+
+func (l *Locator) VisitorStats() *visitor.Stats {
+	return l.VisitorStatsInstance
 }

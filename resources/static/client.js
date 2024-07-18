@@ -2727,7 +2727,7 @@
             }
         };
 
-        var url = this.baseURL + '/stats?';
+        var url = this.baseURL + '/visitor?';
         if (req.v != null) {
             url += 'v=' + encodeURIComponent(req.v) + '&';
         }

@@ -21,14 +21,59 @@ CREATE TABLE visitor
 CREATE TABLE page_visitors
 (
     `visitor` integer NOT NULL,
-    `page`    integer not null, -- album/image hash or 0 for main page
-    PRIMARY KEY (`visitor`, `page`)
+    `page`    integer not null, -- album hash or 0 for main page
+    `date`    integer not null, -- visit date as truncated unix timestamp
+    PRIMARY KEY (`visitor`, `page`, `date`)
 );
 -- +goose StatementEnd
 
-CREATE TABLE image_views
+CREATE TABLE daily_page_stats
 (
-    `hash` INTEGER NOT NULL PRIMARY KEY,
-    `time_ms` integer not null,
-    `cnt` integer not null
+    `page`   integer not null, -- album hash or 0 for main page
+    `date`   integer not null, -- visit date as truncated unix timestamp
+    `views`  integer not null,
+    `refers` integer not null,
+    `uniq`   integer not null,
+    PRIMARY KEY (`page`, `date`)
 );
+
+-- +goose StatementBegin
+CREATE TABLE image_visitors
+(
+    `visitor` integer NOT NULL,
+    `image`   integer not null, -- image hash
+    PRIMARY KEY (`visitor`, `image`)
+);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE TABLE image_stats
+(
+    `hash`     INTEGER NOT NULL PRIMARY KEY,
+    `view_ms`  integer not null,
+    `thumb_ms` integer not null,
+    `views`    integer not null,
+    `zooms`    integer not null,
+    `uniq`     integer not null
+);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE TABLE page_stats
+(
+    `hash`   INTEGER NOT NULL PRIMARY KEY, -- album hash or 0 for main page
+    `views`  integer not null,
+    `uniq`   integer not null,
+    `refers` integer not null
+);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE TABLE refers
+(
+    `ts`      integer,
+    `visitor` integer      NOT NULL,
+    `referer` VARCHAR(255) NOT NULL default '',
+    `url`     VARCHAR(255) NOT NULL default ''
+);
+-- +goose StatementEnd

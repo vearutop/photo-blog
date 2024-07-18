@@ -168,6 +168,10 @@ function collectStats(params) {
     params.px = window.devicePixelRatio
     params.v = window.visitorData.id
 
+    if (new URL(document.referrer).hostname !== window.location.hostname) {
+        params.ref = document.referrer
+    }
+
     $.get("/stats", params)
 }
 

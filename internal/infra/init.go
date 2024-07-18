@@ -34,7 +34,9 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
+	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_stats"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
+	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
@@ -129,6 +131,13 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
 
+	statsStorage, err := setupStatsStorage(l, "stats.sqlite")
+	if err != nil {
+		return nil, err
+	}
+
+	l.VisitorStatsInstance = visitor.NewStats(statsStorage, l.CtxdLogger())
+
 	thumbStorage, err := setupThumbStorage(l, "thumbs.sqlite")
 	if err != nil {
 		return nil, err
@@ -219,6 +228,25 @@ func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 		return nil, err
 	}
 	l.CtxdLogger().Info(context.Background(), "thumb storage setup complete", "elapsed", time.Since(start).String())
+
+	return st, nil
+}
+
+func setupStatsStorage(l *service.Locator, filepath string) (*sqluct.Storage, error) {
+	cfg := database.Config{}
+	cfg.DriverName = "sqlite"
+	cfg.MaxOpen = 1
+	cfg.MaxIdle = 1
+	cfg.DSN = filepath + "?_time_format=sqlite"
+	cfg.ApplyMigrations = true
+
+	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
+	start := time.Now()
+	st, err := database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), sqlite_stats.Migrations)
+	if err != nil {
+		return nil, err
+	}
+	l.CtxdLogger().Info(context.Background(), "visitor stats storage setup complete", "elapsed", time.Since(start).String())
 
 	return st, nil
 }

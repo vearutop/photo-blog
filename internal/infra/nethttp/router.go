@@ -135,7 +135,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		adminAuth := auth.MaybeAuth(deps.Settings())
 		s.Use(adminAuth)
 
-		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings()))
+		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings(), deps.VisitorStats()))
 
 		s.Use(func(handler http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

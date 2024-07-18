@@ -5,12 +5,15 @@ import (
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/usecase"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 )
 
 type collectStatsDeps interface {
 	CtxdLogger() ctxd.Logger
+	VisitorStats() *visitor.Stats
 }
 
 func CollectStats(deps collectStatsDeps) usecase.Interactor {
@@ -20,6 +23,7 @@ func CollectStats(deps collectStatsDeps) usecase.Interactor {
 	// /stats?thumb=%7B%2234suxvlfx0lz8%22%3A36704%2C%221z4zoegvmke8n%22%3A36704%2C%223b45tgt52cnms%22%3A36704%2C%221d2ujpqi6nbb4%22%3A36704%2C%221shlwpftv8av4%22%3A36704%7D&sw=1792&sh=1120&px=2&v=1...w
 	type collectStatsRequest struct {
 		Visitor uniq.Hash `query:"v" description:"Visitor."`
+		Referer string    `query:"ref" description:"Referer."`
 
 		ScreenWidth  int     `query:"sw" description:"Screen width."`
 		ScreenHeight int     `query:"sh" description:"Screen height."`
@@ -39,6 +43,25 @@ func CollectStats(deps collectStatsDeps) usecase.Interactor {
 
 	u := usecase.NewInteractor(func(ctx context.Context, input collectStatsRequest, output *struct{}) error {
 		deps.CtxdLogger().Info(ctx, "stats", "input", input, "admin", auth.IsAdmin(ctx))
+
+		switch {
+		// /stats?main=1&sw=1920&sh=1080&px=2&v=k...g
+		case input.Main:
+			deps.VisitorStats().CollectMain(ctx, input.Visitor)
+
+		// /stats?album=featured&img=3d3kr8ydrb8l4&time=4169&w=1475&h=983&mw=1620&mh=1080&sw=1920&sh=1080&px=2&v=k...g
+		case input.Image != 0:
+			zoomedIn := float64(input.MaxWidth)/float64(input.Width) > 1.1 // At least 10% zoom in.
+			deps.VisitorStats().CollectImage(ctx, input.Visitor, input.Image, input.Time, zoomedIn)
+
+		// /stats?album=2024-07-13-aloevera&sw=1280&sh=800&px=2&v=qtuf2cgx08i4
+		case input.Album != "":
+			deps.VisitorStats().CollectAlbum(ctx, input.Visitor, photo.AlbumHash(input.Album))
+
+		// /stats?thumb=%7B%2234suxvlfx0lz8%22%3A36704%2C%221z4zoegvmke8n%22%3A36704%2C%223b45tgt52cnms%22%3A36704%2C%221d2ujpqi6nbb4%22%3A36704%2C%221shlwpftv8av4%22%3A36704%7D&sw=1792&sh=1120&px=2&v=1...w
+		case len(input.Thumb) > 0:
+			deps.VisitorStats().CollectThumbs(ctx, input.Visitor, input.Thumb)
+		}
 
 		return nil
 	})
