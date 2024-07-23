@@ -19,7 +19,7 @@ type Locator struct {
 
 	SchemaRepo           *jsonform.Repository
 	AccessLogger         ctxd.Logger
-	VisitorStatsInstance *visitor.Stats
+	VisitorStatsInstance *visitor.StatsRepository
 
 	DepCacheInstance       *dep.Cache
 	FilesProcessorInstance *files.Processor
@@ -119,6 +119,6 @@ func (l *Locator) OpenRouteService() *ors.Client {
 	return l.ORS
 }
 
-func (l *Locator) VisitorStats() *visitor.Stats {
+func (l *Locator) VisitorStats() *visitor.StatsRepository {
 	return l.VisitorStatsInstance
 }

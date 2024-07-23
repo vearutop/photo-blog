@@ -124,7 +124,31 @@ function enableDragNDropImagesReordering() {
     });
 }
 
+var lastBlur = null;
+var unfocused = 0;
+
 (function () {
+    window.addEventListener('blur', function() {
+        lastBlur = new Date();
+    });
+
+    window.addEventListener('focus', function() {
+        if (lastBlur) {
+            unfocused += new Date() - lastBlur;
+        }
+
+        lastBlur = null
+    });
+
+    window.addEventListener('scroll', function() {
+        if (lastBlur) {
+            unfocused += new Date() - lastBlur;
+        }
+
+        lastBlur = null
+    });
+
+
     if (screen.width > 576 || screen.width == 0) {
         return
     }
@@ -168,8 +192,13 @@ function collectStats(params) {
     params.px = window.devicePixelRatio
     params.v = window.visitorData.id
 
-    if (new URL(document.referrer).hostname !== window.location.hostname) {
+    if (document.referrer && new URL(document.referrer).hostname !== window.location.hostname) {
         params.ref = document.referrer
+    }
+
+    // mobile portrait mode.
+    if (screen.width !== 0 && screen.width <= 576 && window.matchMedia && window.matchMedia("(orientation: portrait)").matches) {
+        params.prt = 1
     }
 
     $.get("/stats", params)
@@ -179,10 +208,11 @@ function collectThumbVisibility() {
     var visibleSince = {}
     var visibleFor = {}
     var lastFlush = new Date()
+    var lastBlur = null;
 
     var options = {threshold: 1.0};
     var observer = new IntersectionObserver(function (entries) {
-        var now = new Date();
+        var now = new Date() - unfocused;
         for (i in entries) {
             var e = entries[i];
             var h = $(e.target).data('hash')
@@ -638,12 +668,12 @@ function loadAlbum(params) {
             $('#exif-container').hide();
 
             if (currentImage.img) {
-                currentImage.time = Date.now() - currentImage.time;
+                currentImage.time = Date.now() - currentImage.time - unfocused;
                 collectStats(currentImage);
             }
 
             currentImage.img = $(content.data.element).data('hash')
-            currentImage.time = Date.now();
+            currentImage.time = Date.now() - unfocused;
             currentImage.w = content.displayedImageWidth
             currentImage.h = content.displayedImageHeight
         });
@@ -651,7 +681,7 @@ function loadAlbum(params) {
         lightbox.on('close', () => {
             $('#exif-container').hide();
             if (currentImage.img) {
-                currentImage.time = Date.now() - currentImage.time;
+                currentImage.time = Date.now() - currentImage.time - unfocused;
                 collectStats(currentImage);
                 currentImage.img = ""
             }
