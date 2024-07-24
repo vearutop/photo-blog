@@ -3,14 +3,15 @@ package visitor
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/pkg/webstats"
 )
 
 type StatsRepository struct {
@@ -30,12 +31,18 @@ type StatsRepository struct {
 
 	collectPageSuffix      string
 	collectDailyPageSuffix string
+
+	mu             sync.Mutex
+	recentVisitors map[uniq.Hash]visitor
+	isAdmin        map[uniq.Hash]bool
 }
 
-func NewStats(st *sqluct.Storage, l ctxd.Logger) *StatsRepository {
+func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 	s := &StatsRepository{
-		l:  l,
-		st: st,
+		l:              l,
+		st:             st,
+		recentVisitors: make(map[uniq.Hash]visitor),
+		isAdmin:        make(map[uniq.Hash]bool),
 	}
 
 	s.is = &imageStats{}
@@ -95,7 +102,36 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) *StatsRepository {
 		&s.dps.Views, &s.dps.Views,
 	)
 
-	return s
+	if err := s.populateAdmins(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func (s *StatsRepository) IsAdmin(v uniq.Hash) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.isAdmin[v]
+}
+
+func (s *StatsRepository) populateAdmins() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	q := s.st.SelectStmt(visitorTable, visitor{}).Where(squirrel.Eq{s.ref.Ref(&s.v.IsAdmin): 1})
+
+	var rows []visitor
+	if err := s.st.Select(context.Background(), q, &rows); err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		s.isAdmin[row.Hash] = true
+	}
+
+	return nil
 }
 
 func (s *StatsRepository) CollectMain(ctx context.Context, visitor uniq.Hash, referer string, date time.Time) {
@@ -162,9 +198,11 @@ func (s *StatsRepository) updateImageUniq(ctx context.Context, hashes ...uniq.Ha
 	sel := s.st.QueryBuilder().
 		Select(s.ref.Ref(&s.iv.Image), s.ref.Fmt("count(distinct %s) as uniq", &s.iv.Visitor)).
 		From(imageVisitorsTable).
+		// LeftJoin(s.ref.Fmt(visitorTable+" ON %s = %s", &s.iv.Visitor, &s.v.Hash)).
 		Where(squirrel.Eq{
 			s.ref.Ref(&s.iv.Image): hashes,
 		}).
+		// Where(s.ref.Fmt("%s = 0 AND %s = 0", &s.v.IsAdmin, &s.v.IsBot)).
 		GroupBy(s.ref.Ref(&s.iv.Image))
 
 	q := s.st.QueryBuilder().Insert(imageStatsTable).
@@ -275,7 +313,9 @@ func (s *StatsRepository) updatePageUniq(ctx context.Context, hashes ...uniq.Has
 	sel := s.st.QueryBuilder().
 		Select(s.ref.Ref(&s.pv.Page), s.ref.Fmt("count(distinct %s) as uniq", &s.pv.Visitor)).
 		From(pageVisitorsTable).
+		// LeftJoin(s.ref.Fmt(visitorTable+" ON %s = %s", &s.pv.Visitor, &s.v.Hash)).
 		Where(squirrel.Eq{s.ref.Ref(&s.pv.Page): hashes}).
+		// Where(s.ref.Fmt("%s = 0 AND %s = 0", &s.v.IsAdmin, &s.v.IsBot)).
 		GroupBy(s.ref.Ref(&s.pv.Page))
 
 	q := s.st.QueryBuilder().Insert(pageStatsTable).
@@ -293,8 +333,10 @@ func (s *StatsRepository) updateDailyPageUniq(ctx context.Context, d int64, hash
 	sel := s.st.QueryBuilder().
 		Select(s.ref.Ref(&s.pv.Page), s.ref.Ref(&s.pv.Date), s.ref.Fmt("count(distinct %s) as uniq", &s.pv.Visitor)).
 		From(pageVisitorsTable).
+		// LeftJoin(s.ref.Fmt(visitorTable+" ON %s = %s", &s.pv.Visitor, &s.v.Hash)).
 		Where(squirrel.Eq{s.ref.Ref(&s.pv.Page): hashes}).
 		Where(squirrel.Eq{s.ref.Ref(&s.pv.Date): d}).
+		// Where(s.ref.Fmt("%s = 0 AND %s = 0", &s.v.IsAdmin, &s.v.IsBot)).
 		GroupBy(s.ref.Ref(&s.pv.Page))
 
 	q := s.st.QueryBuilder().Insert(dailyPageStatsTable).
@@ -343,9 +385,23 @@ type visitor struct {
 	IsBot     bool      `db:"is_bot" description:"Visitor is bot"`
 	IsAdmin   bool      `db:"is_admin" description:"Visitor is admin"`
 	Referer   string    `db:"referer" description:"Referer"`
+
+	ScreenHeight int     `db:"scr_h" description:"Visitor screen height"`
+	ScreenWidth  int     `db:"scr_w" description:"Visitor screen width"`
+	PixelRatio   float64 `db:"px_r" description:"Visitor pixel ratio"`
 }
 
-func (s *StatsRepository) CollectVisitor(h uniq.Hash, r *http.Request) {
+func atoi(s string) int {
+	i, _ := strconv.Atoi(s)
+	return i
+}
+
+func atof(s string) float64 {
+	f, _ := strconv.ParseFloat(s, 64)
+	return f
+}
+
+func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, r *http.Request) {
 	hd := r.Header
 	ua := r.UserAgent()
 	v := visitor{
@@ -359,18 +415,75 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, r *http.Request) {
 				strings.Trim(hd.Get("Sec-Ch-Ua-Platform"), `"`) + " " +
 				strings.Trim(hd.Get("Sec-Ch-Ua-Platform-Version"), `"`),
 		),
-		IsBot:   webstats.IsBot(ua),
+		IsBot:   isBot,
+		IsAdmin: isAdmin,
 		Referer: hd.Get("Referer"),
+
+		ScreenWidth:  atoi(r.URL.Query().Get("sw")),
+		ScreenHeight: atoi(r.URL.Query().Get("sh")),
+		PixelRatio:   atof(r.URL.Query().Get("px")),
 	}
 
 	ctx := r.Context()
 
-	_, err := s.st.InsertStmt(visitorTable, v, func(o *sqluct.Options) {
-		o.InsertIgnore = true
+	if rv, recent := s.isRecentVisitor(v); recent {
+		var columns []string
+
+		if !rv.IsBot && v.IsBot {
+			columns = append(columns, s.ref.Col(&s.v.IsBot))
+		}
+
+		if !rv.IsAdmin && v.IsAdmin {
+			columns = append(columns, s.ref.Col(&s.v.IsAdmin))
+		}
+
+		if rv.ScreenWidth == 0 && v.ScreenWidth != 0 {
+			columns = append(columns, s.ref.Col(&s.v.ScreenWidth), s.ref.Col(&s.v.ScreenHeight), s.ref.Col(&s.v.PixelRatio))
+		}
+
+		if len(columns) == 0 {
+			return
+		}
+
+		_, err := s.st.UpdateStmt(visitorTable, v, func(options *sqluct.Options) {
+			options.Columns = columns
+		}).Where(squirrel.Eq{s.ref.Ref(&s.v.Hash): v.Hash}).ExecContext(ctx)
+		if err != nil {
+			s.l.Error(ctx, "failed to update visitor", "error", err)
+		}
+
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.recentVisitors[v.Hash] = v
+
+		return
+	}
+
+	_, err := s.st.InsertStmt(visitorTable, v, func(options *sqluct.Options) {
+		options.InsertIgnore = true
 	}).ExecContext(ctx)
 	if err != nil {
 		s.l.Error(ctx, "failed to collect visitor", "error", err)
 	}
+}
+
+func (s *StatsRepository) isRecentVisitor(v visitor) (visitor, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if v.IsAdmin && !s.isAdmin[v.Hash] {
+		s.isAdmin[v.Hash] = true
+	}
+
+	rv, ok := s.recentVisitors[v.Hash]
+	if !ok {
+		// TODO: eviction.
+		s.recentVisitors[v.Hash] = v
+
+		return v, false
+	}
+
+	return rv, ok
 }
 
 /////

@@ -49,8 +49,13 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 					strings.Trim(r.Header.Get("Sec-Ch-Ua-Platform-Version"), `"`),
 			)
 
+			ctx := r.Context()
+
+			isAdmin := IsAdmin(ctx)
+			isBot := webstats.IsBot(r.UserAgent())
+
 			setNewVisitorCookie := func(ctx context.Context) (h uniq.Hash) {
-				if webstats.IsBot(r.UserAgent()) {
+				if isBot {
 					h = uniq.Hash(xxhash.Sum64String(r.UserAgent())) // Fixed value of visitor for bots.
 				} else {
 					h, _ = recentVisitors.Get(ctx, []byte(r.UserAgent()+device+r.Header.Get("Accept-Language")+r.Header.Get("X-Forwarded-For")),
@@ -70,8 +75,6 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 			}
 
 			if visitors.Tag {
-				ctx := r.Context()
-
 				var h uniq.Hash
 
 				c, err := r.Cookie("v")
@@ -101,7 +104,7 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 					r = r.WithContext(ContextWithVisitor(ctxd.AddFields(r.Context(), "visitor", h), h))
 				}
 
-				st.CollectVisitor(h, r)
+				st.CollectVisitor(h, isBot, isAdmin, r)
 			}
 
 			if logger != nil && visitors.AccessLog {
@@ -114,7 +117,8 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 					"device", device,
 					"referer", h.Get("Referer"),
 					"forwarded_for", h.Get("X-Forwarded-For"),
-					"admin", IsAdmin(r.Context()),
+					"admin", isAdmin,
+					"bot", isBot,
 					"lang", r.Header.Get("Accept-Language"),
 				)
 			}

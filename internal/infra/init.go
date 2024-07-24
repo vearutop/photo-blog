@@ -136,7 +136,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
-	l.VisitorStatsInstance = visitor.NewStats(statsStorage, l.CtxdLogger())
+	l.VisitorStatsInstance, err = visitor.NewStats(statsStorage, l.CtxdLogger())
+	if err != nil {
+		return nil, err
+	}
 
 	thumbStorage, err := setupThumbStorage(l, "thumbs.sqlite")
 	if err != nil {

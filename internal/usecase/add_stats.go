@@ -50,7 +50,7 @@ func CollectStats(deps collectStatsDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input collectStatsRequest, output *struct{}) error {
 		deps.CtxdLogger().Info(ctx, "stats", "input", input, "admin", auth.IsAdmin(ctx))
 
-		if webstats.IsBot(input.Request().UserAgent()) {
+		if webstats.IsBot(input.Request().UserAgent()) || deps.VisitorStats().IsAdmin(input.Visitor) {
 			return nil
 		}
 
