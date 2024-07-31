@@ -11,7 +11,9 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/webstats"
 )
 
 type StatsRepository struct {
@@ -401,12 +403,12 @@ func atof(s string) float64 {
 	return f
 }
 
-func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, r *http.Request) {
+func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts time.Time, r *http.Request) {
 	hd := r.Header
 	ua := r.UserAgent()
 	v := visitor{
 		Hash:      h,
-		CreatedAt: time.Now(),
+		CreatedAt: ts,
 		Lang:      hd.Get("Accept-Language"),
 		IPAddr:    hd.Get("X-Forwarded-For"),
 		UserAgent: ua,
@@ -484,6 +486,31 @@ func (s *StatsRepository) isRecentVisitor(v visitor) (visitor, bool) {
 	}
 
 	return rv, ok
+}
+
+func (s *StatsRepository) CollectRequest(ctx context.Context, input CollectStats, ts time.Time) {
+	if webstats.IsBot(input.Request().UserAgent()) || s.IsAdmin(input.Visitor) {
+		return
+	}
+
+	switch {
+	// /stats?main=1&sw=1920&sh=1080&px=2&v=k...g
+	case input.Main:
+		s.CollectMain(ctx, input.Visitor, input.Referer, ts)
+
+	// /stats?album=featured&img=3d3kr8ydrb8l4&time=4169&w=1475&h=983&mw=1620&mh=1080&sw=1920&sh=1080&px=2&v=k...g
+	case input.Image != 0:
+		zoomedIn := float64(input.MaxWidth)/float64(input.Width) > 1.1 // At least 10% zoom in.
+		s.CollectImage(ctx, input.Visitor, input.Image, input.Time, zoomedIn)
+
+	// /stats?album=2024-07-13-aloevera&sw=1280&sh=800&px=2&v=qtuf2cgx08i4
+	case input.Album != "":
+		s.CollectAlbum(ctx, input.Visitor, photo.AlbumHash(input.Album), input.Referer, ts)
+
+	// /stats?thumb=%7B%2234suxvlfx0lz8%22%3A36704%2C%221z4zoegvmke8n%22%3A36704%2C%223b45tgt52cnms%22%3A36704%2C%221d2ujpqi6nbb4%22%3A36704%2C%221shlwpftv8av4%22%3A36704%7D&sw=1792&sh=1120&px=2&v=1...w
+	case len(input.Thumb) > 0:
+		s.CollectThumbs(ctx, input.Visitor, input.MobilePortraitMode, input.Thumb)
+	}
 }
 
 /////

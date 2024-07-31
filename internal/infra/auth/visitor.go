@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -42,11 +43,12 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			visitors := cfg.Visitors()
 			isNew := true
+			hd := r.Header
 
 			device := strings.TrimSpace(
-				strings.Trim(r.Header.Get("Sec-Ch-Ua-Model"), `"`) + " " +
-					strings.Trim(r.Header.Get("Sec-Ch-Ua-Platform"), `"`) + " " +
-					strings.Trim(r.Header.Get("Sec-Ch-Ua-Platform-Version"), `"`),
+				strings.Trim(hd.Get("Sec-Ch-Ua-Model"), `"`) + " " +
+					strings.Trim(hd.Get("Sec-Ch-Ua-Platform"), `"`) + " " +
+					strings.Trim(hd.Get("Sec-Ch-Ua-Platform-Version"), `"`),
 			)
 
 			ctx := r.Context()
@@ -58,7 +60,7 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 				if isBot {
 					h = uniq.Hash(xxhash.Sum64String(r.UserAgent())) // Fixed value of visitor for bots.
 				} else {
-					h, _ = recentVisitors.Get(ctx, []byte(r.UserAgent()+device+r.Header.Get("Accept-Language")+r.Header.Get("X-Forwarded-For")),
+					h, _ = recentVisitors.Get(ctx, []byte(r.UserAgent()+device+hd.Get("Accept-Language")+hd.Get("X-Forwarded-For")),
 						func(ctx context.Context) (uniq.Hash, error) {
 							return uniq.Hash(rand.Int()), nil
 						})
@@ -104,19 +106,31 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 					r = r.WithContext(ContextWithVisitor(ctxd.AddFields(r.Context(), "visitor", h), h))
 				}
 
-				st.CollectVisitor(h, isBot, isAdmin, r)
+				st.CollectVisitor(h, isBot, isAdmin, time.Now(), r)
+
+				if ref := hd.Get("Referer"); ref != "" {
+					skipRef := false
+					if ru, err := url.Parse(ref); err == nil {
+						if ru.Host == r.Host {
+							skipRef = true
+						}
+					}
+
+					if !skipRef {
+						st.CollectRefer(r.Context(), h, time.Now(), ref, r.URL.String())
+					}
+				}
 			}
 
 			if logger != nil && visitors.AccessLog {
-				h := r.Header
 				logger.Important(r.Context(), "access",
 					"new_visitor", isNew,
 					"host", r.Host,
 					"url", r.URL.String(),
 					"user_agent", r.UserAgent(),
 					"device", device,
-					"referer", h.Get("Referer"),
-					"forwarded_for", h.Get("X-Forwarded-For"),
+					"referer", hd.Get("Referer"),
+					"forwarded_for", hd.Get("X-Forwarded-For"),
 					"admin", isAdmin,
 					"bot", isBot,
 					"lang", r.Header.Get("Accept-Language"),

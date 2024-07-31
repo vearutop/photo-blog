@@ -3,6 +3,14 @@ package webstats
 import "strings"
 
 func IsBot(ua string) bool {
+	if ua == "" {
+		return true
+	}
+
+	if !strings.HasPrefix(ua, "Mozilla/") && !strings.HasPrefix(ua, "Opera/9") {
+		return true
+	}
+
 	if strings.Contains(ua, "bot") {
 		return true
 	}
