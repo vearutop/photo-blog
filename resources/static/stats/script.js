@@ -3,7 +3,11 @@ function renderTableContent(a) {
     var res = '<thead><tr>';
     for (k in a[0]) {
         cols.push(k)
-        res += '<th>' + k + '</th>'
+        if (typeof a[0][k] == "number") {
+            res += '<th data-sortas="numeric">' + k + '</th>'
+        } else {
+            res += '<th>' + k + '</th>'
+        }
     }
     res += "</tr></thead>\n"
 
