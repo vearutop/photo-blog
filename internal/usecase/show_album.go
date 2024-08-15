@@ -126,7 +126,14 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			d.MapTiles = "/map-tile/{r}/{z}/{x}/{y}.png"
 		}
 
+		if album.Settings.MapTiles != "" {
+			d.MapTiles = album.Settings.MapTiles
+		}
+
 		d.MapAttribution = maps.Attribution
+		if album.Settings.MapAttribution != "" {
+			d.MapAttribution = album.Settings.MapAttribution
+		}
 
 		// TotalSize controls visibility of batch download button.
 		privacy := deps.Settings().Privacy()
