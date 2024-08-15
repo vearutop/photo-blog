@@ -1,12 +1,16 @@
 package sprite
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/jpeg"
+	"io"
 	"os"
 	"strconv"
+
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 )
 
 type Vertical struct {
@@ -15,7 +19,7 @@ type Vertical struct {
 	MaxHeight     int
 	fileNumber    int
 	currentHeight int
-	pending       []string
+	pending       []photo.Thumb
 	sprite        *image.RGBA
 }
 
@@ -48,8 +52,31 @@ func (s *Vertical) AddFile(fn string) (spritePath string, offset int, err error)
 		}
 	}
 
+	th := photo.Thumb{
+		FilePath: fn,
+		Width:    uint(cfg.Width),
+		Height:   uint(cfg.Height),
+	}
+
 	s.currentHeight += cfg.Height
-	s.pending = append(s.pending, fn)
+	s.pending = append(s.pending, th)
+
+	return s.filename(), offset, nil
+}
+
+func (s *Vertical) AddThumb(th photo.Thumb) (spritePath string, offset int, err error) {
+	if s.currentHeight+int(th.Height) > s.MaxHeight {
+		offset = 0
+
+		if err := s.Flush(); err != nil {
+			return "", 0, err
+		}
+	}
+
+	offset = s.currentHeight
+
+	s.currentHeight += int(th.Height)
+	s.pending = append(s.pending, th)
 
 	return s.filename(), offset, nil
 }
@@ -65,7 +92,11 @@ func (s *Vertical) processFile(fn string) error {
 	}
 	defer f.Close()
 
-	img, err := jpeg.Decode(f)
+	return s.processBytes(f)
+}
+
+func (s *Vertical) processBytes(data io.Reader) error {
+	img, err := jpeg.Decode(data)
 	if err != nil {
 		return err
 	}
@@ -93,9 +124,15 @@ func (s *Vertical) Flush() error {
 	s.sprite = image.NewRGBA(r)
 	s.currentHeight = 0
 
-	for _, fn := range s.pending {
-		if err := s.processFile(fn); err != nil {
-			return err
+	for _, th := range s.pending {
+		if th.FilePath != "" {
+			if err := s.processFile(th.FilePath); err != nil {
+				return err
+			}
+		} else if len(th.Data) > 0 {
+			if err := s.processBytes(bytes.NewReader(th.Data)); err != nil {
+				return err
+			}
 		}
 	}
 
