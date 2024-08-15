@@ -114,10 +114,6 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Post("/message/approve", control.ApproveMessage(deps))
 
-		if err := upload.MountTus(s, deps); err != nil {
-			panic(err)
-		}
-
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
 		s.Get("/login", control.Login())
@@ -130,14 +126,26 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/stats/daily.html", stats.ShowDailyTotal(deps))
 	})
 
+	maybeAuth := auth.MaybeAuth(deps.Settings())
+
+	// CollabKey or Admin
+	s.Group(func(r chi.Router) {
+		s := fork(s, r)
+
+		s.Use(maybeAuth)
+
+		if err := upload.MountTus(s, deps); err != nil {
+			panic(err)
+		}
+	})
+
 	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))
 
 	// Visitors access log.
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
-		adminAuth := auth.MaybeAuth(deps.Settings())
-		s.Use(adminAuth)
+		s.Use(maybeAuth)
 
 		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings(), deps.VisitorStats()))
 

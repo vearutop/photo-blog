@@ -44,7 +44,7 @@
             display: none !important;
         }/*{{end}}*/
     </style>
-    {{if .IsAdmin}}
+    {{if or .IsAdmin .CollabKey}}
     <link rel="stylesheet" href="/static/tus/uppy.min.css">
     <script src="/static/tus/uppy.legacy.min.js"></script>
     {{end}}
@@ -63,7 +63,9 @@
 
     <div style="display: inline-block;position: relative; top: -0.35em">
         <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a>
-        <a title="Upload files" class="control-panel ctrl-btn upload-icon" id="uppyModalOpener" href="#"></a>
+        {{if or .IsAdmin .CollabKey}}
+        <a title="Upload files" class="ctrl-btn upload-icon" id="uppyModalOpener" href="#"></a>
+        {{end}}
         {{if gt .Count 0 }}
         <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
         {{end}}
@@ -99,7 +101,7 @@
         albumData: {{.AlbumData}}
     });
     collectThumbVisibility();
-    {{if .IsAdmin}}
+    {{if or .IsAdmin .CollabKey}}
     enableDragNDropImagesReordering();
 
     {
@@ -114,7 +116,7 @@
                 limit: 1,
                 endpoint: window.location.protocol + '//' + window.location.host + '/files',
                 chunkSize: 900000, // 900K to fit in 1MiB default client_max_body_size of nginx.
-                headers: {"X-Album-Name": "{{.Name}}"},
+                headers: {"X-Album-Name": "{{.Name}}", "X-Collab-Key": "{{.CollabKey}}"},
             })
     }
     {{end}}
