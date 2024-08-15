@@ -43,8 +43,9 @@ type addRemoteDeps interface {
 // AddRemote creates use case interactor to add remote directory of photos to an album.
 func AddRemote(deps addRemoteDeps) usecase.Interactor {
 	type addDirInput struct {
-		URL  string `formData:"url" description:"URL to JSON list file."`
-		Name string `path:"name" description:"Album name."`
+		URL        string `formData:"url" description:"URL to JSON list file."`
+		Name       string `path:"name" description:"Album name."`
+		AddMissing bool   `query:"add_missing" description:"Add missing images to album."`
 	}
 
 	type addDirOutput struct {
@@ -149,7 +150,7 @@ func AddRemote(deps addRemoteDeps) usecase.Interactor {
 				imgHashes = append(imgHashes, img.Hash)
 			}
 
-			if len(imgHashes) > 0 {
+			if len(imgHashes) > 0 && in.AddMissing {
 				if err := deps.PhotoAlbumImageAdder().AddImages(ctx, a.Hash, imgHashes...); err != nil {
 					return fmt.Errorf("add album images: %w", err)
 				}
