@@ -22,10 +22,10 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
-	"github.com/vearutop/photo-blog/internal/usecase/control/debug"
 	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
 	"github.com/vearutop/photo-blog/internal/usecase/help"
 	"github.com/vearutop/photo-blog/internal/usecase/stats"
+	"github.com/vearutop/photo-blog/pkg/dbcon"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"golang.org/x/text/language"
 )
@@ -118,9 +118,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Get("/login", control.Login())
 
-		s.Get("/db.html", debug.DBConsole(deps))
-		s.Post("/query-db", debug.DBQuery(deps))
-		s.Get("/query-db.csv", debug.DBQueryCSV(deps))
+		dbcon.Mount(s, deps)
 
 		// Stats.
 		s.Get("/stats/daily.html", stats.ShowDailyTotal(deps))

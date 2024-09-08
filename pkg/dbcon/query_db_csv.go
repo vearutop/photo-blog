@@ -1,24 +1,26 @@
-package debug
+package dbcon
 
 import (
 	"context"
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/swaggest/usecase"
-	"github.com/vearutop/photo-blog/internal/infra/service"
 )
 
-func DBQueryCSV(deps *service.Locator) usecase.Interactor {
+func DBQueryCSV(instances map[string]*sql.DB) usecase.Interactor {
 	type request struct {
+		Instance  string `query:"instance" enum:"default,stats"`
 		Statement string `query:"statement" formType:"textarea" title:"Statement" description:"SQL Statement to execute."`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, input request, output *usecase.OutputWithEmbeddedWriter) error {
-		rows, err := deps.Storage.DB().QueryContext(ctx, input.Statement)
+		rows, err := instances[input.Instance].QueryContext(ctx, input.Statement)
 		if err != nil {
 			return err
 		}
@@ -50,6 +52,10 @@ func DBQueryCSV(deps *service.Locator) usecase.Interactor {
 			for i := range cols {
 				v := columns[i]
 
+				if iv, ok := v.(int64); ok {
+					v = strconv.Itoa(int(iv))
+				}
+
 				j, err := json.Marshal(v)
 				if err != nil {
 					return err
@@ -60,6 +66,8 @@ func DBQueryCSV(deps *service.Locator) usecase.Interactor {
 
 			_ = w.Write(values)
 		}
+
+		w.Flush()
 
 		return nil
 	})

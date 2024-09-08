@@ -1,6 +1,8 @@
 package service
 
 import (
+	"database/sql"
+
 	"github.com/bool64/brick"
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/jsonform-go"
@@ -121,4 +123,11 @@ func (l *Locator) OpenRouteService() *ors.Client {
 
 func (l *Locator) VisitorStats() *visitor.StatsRepository {
 	return l.VisitorStatsInstance
+}
+
+func (l *Locator) DBInstances() map[string]*sql.DB {
+	return map[string]*sql.DB{
+		"default": l.Storage.DB().DB,
+		"stats":   l.VisitorStatsInstance.DB(),
+	}
 }

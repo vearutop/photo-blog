@@ -1,7 +1,8 @@
-package debug
+package dbcon
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
 	jsonform "github.com/swaggest/jsonform-go"
@@ -10,12 +11,13 @@ import (
 	"github.com/swaggest/usecase/status"
 )
 
-type dbConsoleDeps interface {
+type Deps interface {
 	SchemaRepository() *jsonform.Repository
+	DBInstances() map[string]*sql.DB
 }
 
 // DBConsole creates use case interactor to show DB console.
-func DBConsole(deps dbConsoleDeps) usecase.Interactor {
+func DBConsole(deps Deps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *response.EmbeddedSetter) error {
 		p := jsonform.Page{}
 
@@ -33,11 +35,9 @@ func DBConsole(deps dbConsoleDeps) usecase.Interactor {
 <div style="margin: 2em">
 
 <a href="#" style="display:none;margin-bottom: 10px" id="dl-csv" class="btn btn-primary" target="_blank">Download CSV</a> <span id="num-rows"></span>
-<table id="query-result" class="pure-table">
+<div id="query-results">
 
-</table>
-
-
+</div>
 </div>
 `
 		return deps.SchemaRepository().Render(out.ResponseWriter(), p,

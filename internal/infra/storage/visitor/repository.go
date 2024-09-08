@@ -2,6 +2,7 @@ package visitor
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"strconv"
 	"strings"
@@ -158,6 +159,10 @@ type imageStats struct {
 type imageVisitor struct {
 	Visitor uniq.Hash `db:"visitor" description:"Visitor"`
 	Image   uniq.Hash `db:"image" description:"Image hash"`
+}
+
+func (s *StatsRepository) DB() *sql.DB {
+	return s.st.DB().DB
 }
 
 func (s *StatsRepository) CollectImage(ctx context.Context, visitor, image uniq.Hash, viewTimeMs int, zoomedIn bool) {
