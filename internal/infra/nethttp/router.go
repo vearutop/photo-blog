@@ -22,9 +22,10 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
-	"github.com/vearutop/photo-blog/internal/usecase/control/debug"
 	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
 	"github.com/vearutop/photo-blog/internal/usecase/help"
+	"github.com/vearutop/photo-blog/internal/usecase/stats"
+	"github.com/vearutop/photo-blog/pkg/dbcon"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"golang.org/x/text/language"
 )
@@ -113,17 +114,27 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Post("/message/approve", control.ApproveMessage(deps))
 
-		if err := upload.MountTus(s, deps); err != nil {
-			panic(err)
-		}
-
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
 		s.Get("/login", control.Login())
 
-		s.Get("/db.html", debug.DBConsole(deps))
-		s.Post("/query-db", debug.DBQuery(deps))
-		s.Get("/query-db.csv", debug.DBQueryCSV(deps))
+		dbcon.Mount(s, deps)
+
+		// Stats.
+		s.Get("/stats/daily.html", stats.ShowDailyTotal(deps))
+	})
+
+	maybeAuth := auth.MaybeAuth(deps.Settings())
+
+	// CollabKey or Admin
+	s.Group(func(r chi.Router) {
+		s := fork(s, r)
+
+		s.Use(maybeAuth)
+
+		if err := upload.MountTus(s, deps); err != nil {
+			panic(err)
+		}
 	})
 
 	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))
@@ -132,10 +143,9 @@ func NewRouter(deps *service.Locator) *web.Service {
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
-		adminAuth := auth.MaybeAuth(deps.Settings())
-		s.Use(adminAuth)
+		s.Use(maybeAuth)
 
-		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings()))
+		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings(), deps.VisitorStats()))
 
 		s.Use(func(handler http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

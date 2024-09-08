@@ -25,8 +25,9 @@ type showAlbumAtImageInput struct {
 type showAlbumInput struct {
 	request.EmbeddedSetter
 
-	Name    string `path:"name"`
-	imgHash uniq.Hash
+	Name      string `path:"name"`
+	CollabKey string `query:"collab_key" description:"Access key to enable content upload and management."`
+	imgHash   uniq.Hash
 }
 
 func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) usecase.Interactor {
@@ -61,6 +62,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		Name        string
 		CoverImage  string
 		IsAdmin     bool
+		CollabKey   string
 		Public      bool
 		Hash        string
 
@@ -93,6 +95,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			return fmt.Errorf("get album contents: %w", err)
 		}
 
+		if in.CollabKey != "" && in.CollabKey != cont.Album.Settings.CollabKey {
+			return status.Wrap(errors.New("wrong collab_key"), status.PermissionDenied)
+		}
+
 		if cont.Album.Settings.Redirect != "" {
 			http.Redirect(out.ResponseWriter(), in.Request(), cont.Album.Settings.Redirect, http.StatusMovedPermanently)
 		}
@@ -105,6 +111,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Description = template.HTML(album.Settings.Description)
 		d.Name = album.Name
 		d.IsAdmin = auth.IsAdmin(ctx)
+		d.CollabKey = in.CollabKey
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
@@ -126,7 +133,14 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			d.MapTiles = "/map-tile/{r}/{z}/{x}/{y}.png"
 		}
 
+		if album.Settings.MapTiles != "" {
+			d.MapTiles = album.Settings.MapTiles
+		}
+
 		d.MapAttribution = maps.Attribution
+		if album.Settings.MapAttribution != "" {
+			d.MapAttribution = album.Settings.MapAttribution
+		}
 
 		// TotalSize controls visibility of batch download button.
 		privacy := deps.Settings().Privacy()
@@ -152,7 +166,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 	})
 
 	u.SetTags("Album")
-	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
+	u.SetExpectedErrors(status.Unknown, status.InvalidArgument, status.PermissionDenied)
 
 	return u
 }

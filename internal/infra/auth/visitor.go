@@ -5,23 +5,18 @@ import (
 	"errors"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
+	"github.com/cespare/xxhash/v2"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
+	"github.com/vearutop/photo-blog/pkg/webstats"
 )
-
-type Visitor struct {
-	uniq.Head
-	Latest      time.Time `db:"latest"`
-	Hits        int       `db:"hits"`
-	UserAgent   string    `db:"user_agent"`
-	Referrer    string    `db:"referrer"`
-	Destination string    `db:"destination"`
-	RemoteAddr  string    `db:"remote_addr"`
-}
 
 type visitorCtxKey struct{}
 
@@ -39,11 +34,47 @@ func VisitorFromContext(ctx context.Context) uniq.Hash {
 	return 0
 }
 
-func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler http.Handler) http.Handler {
+func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.StatsRepository) func(handler http.Handler) http.Handler {
+	recentVisitors := cache.NewFailoverOf[uniq.Hash](func(cfg *cache.FailoverConfigOf[uniq.Hash]) {
+		cfg.BackendConfig.TimeToLive = 15 * time.Minute
+	})
+
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			visitors := cfg.Visitors()
 			isNew := true
+			hd := r.Header
+
+			device := strings.TrimSpace(
+				strings.Trim(hd.Get("Sec-Ch-Ua-Model"), `"`) + " " +
+					strings.Trim(hd.Get("Sec-Ch-Ua-Platform"), `"`) + " " +
+					strings.Trim(hd.Get("Sec-Ch-Ua-Platform-Version"), `"`),
+			)
+
+			ctx := r.Context()
+
+			isAdmin := IsAdmin(ctx)
+			isBot := webstats.IsBot(r.UserAgent())
+
+			setNewVisitorCookie := func(ctx context.Context) (h uniq.Hash) {
+				if isBot {
+					h = uniq.Hash(xxhash.Sum64String(r.UserAgent())) // Fixed value of visitor for bots.
+				} else {
+					h, _ = recentVisitors.Get(ctx, []byte(r.UserAgent()+device+hd.Get("Accept-Language")+hd.Get("X-Forwarded-For")),
+						func(ctx context.Context) (uniq.Hash, error) {
+							return uniq.Hash(rand.Int()), nil
+						})
+				}
+
+				c := http.Cookie{
+					Name: "v", Value: h.String(),
+					SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+				} // Around 3 years.
+
+				http.SetCookie(w, &c)
+
+				return h
+			}
 
 			if visitors.Tag {
 				var h uniq.Hash
@@ -51,53 +82,58 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values) func(handler htt
 				c, err := r.Cookie("v")
 				if err == nil {
 					if err = h.UnmarshalText([]byte(c.Value)); err != nil || h == 0 {
-						h = uniq.Hash(rand.Int())
+						h = setNewVisitorCookie(ctx)
+					} else {
+						isNew = false
 					}
-
-					c := http.Cookie{
-						Name: "v", Value: h.String(),
-						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
-					} // Around 3 years.
-
-					http.SetCookie(w, &c)
-
-					isNew = false
 				} else if errors.Is(err, http.ErrNoCookie) {
 					if v := r.URL.Query().Get("v"); v != "" {
 						_ = h.UnmarshalText([]byte(v))
 						isNew = false
+
+						c := http.Cookie{
+							Name: "v", Value: h.String(),
+							SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
+						} // Around 3 years.
+
+						http.SetCookie(w, &c)
 					} else {
-						h = uniq.Hash(rand.Int())
+						h = setNewVisitorCookie(ctx)
 					}
-
-					c := http.Cookie{
-						Name: "v", Value: h.String(),
-						SameSite: http.SameSiteStrictMode, MaxAge: 3 * 365 * 86400,
-					} // Around 3 years.
-
-					http.SetCookie(w, &c)
 				}
 
 				if h != 0 {
 					r = r.WithContext(ContextWithVisitor(ctxd.AddFields(r.Context(), "visitor", h), h))
 				}
+
+				st.CollectVisitor(h, isBot, isAdmin, time.Now(), r)
+
+				if ref := hd.Get("Referer"); ref != "" {
+					skipRef := false
+					if ru, err := url.Parse(ref); err == nil {
+						if ru.Host == r.Host {
+							skipRef = true
+						}
+					}
+
+					if !skipRef {
+						st.CollectRefer(r.Context(), h, time.Now(), ref, r.URL.String())
+					}
+				}
 			}
 
 			if logger != nil && visitors.AccessLog {
-				h := r.Header
 				logger.Important(r.Context(), "access",
 					"new_visitor", isNew,
 					"host", r.Host,
 					"url", r.URL.String(),
-					"user_agent", h.Get("User-Agent"),
-					"device", strings.TrimSpace(
-						strings.Trim(h.Get("Sec-Ch-Ua-Model"), `"`)+" "+
-							strings.Trim(h.Get("Sec-Ch-Ua-Platform"), `"`)+" "+
-							strings.Trim(h.Get("Sec-Ch-Ua-Platform-Version"), `"`),
-					),
-					"referer", h.Get("Referer"),
-					"forwarded_for", h.Get("X-Forwarded-For"),
-					"admin", IsAdmin(r.Context()),
+					"user_agent", r.UserAgent(),
+					"device", device,
+					"referer", hd.Get("Referer"),
+					"forwarded_for", hd.Get("X-Forwarded-For"),
+					"admin", isAdmin,
+					"bot", isBot,
+					"lang", r.Header.Get("Accept-Language"),
 				)
 			}
 

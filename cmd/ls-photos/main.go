@@ -5,15 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand/v2"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/bool64/ctxd"
+	"github.com/bool64/zapctxd"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/image"
@@ -25,6 +27,7 @@ func main() {
 		mu        sync.Mutex
 		files     []image.Data
 		semaphore = make(chan struct{}, runtime.NumCPU())
+		log       = zapctxd.New(zapctxd.Config{ColoredOutput: true})
 	)
 
 	ctx := context.Background()
@@ -54,14 +57,14 @@ func main() {
 				}()
 
 				if err := d.Image.SetPath(ctx, p); err != nil {
-					log.Println(err.Error())
+					ctxd.LogError(ctx, err, log.Error)
 					return
 				}
 
 				hashSuffix := fmt.Sprintf(".%s.jpg", d.Image.Hash)
 				if !strings.HasSuffix(l, hashSuffix) {
 					if err := os.Rename(p, p+hashSuffix); err != nil {
-						log.Println("failed to rename with hashed suffix:", err.Error())
+						ctxd.LogError(ctx, fmt.Errorf("rename with hashed suffix: %w", err), log.Error)
 						return
 					}
 
@@ -69,13 +72,13 @@ func main() {
 				}
 
 				if err := d.Fill(ctx); err != nil {
-					log.Println(err.Error())
+					ctxd.LogError(ctx, err, log.Error)
 					return
 				}
 
 				for i, th := range d.Thumbs {
 					if err := ts.Write(&th); err != nil {
-						log.Println(err.Error())
+						ctxd.LogError(ctx, err, log.Error)
 						continue
 					}
 					d.Thumbs[i] = th
@@ -91,7 +94,7 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		log.Println(err.Error())
+		ctxd.LogError(ctx, err, log.Error)
 	}
 
 	// Wait for goroutines to finish by acquiring all slots.
@@ -100,20 +103,20 @@ func main() {
 	}
 
 	if err := ts.Close(); err != nil {
-		log.Println(err.Error())
+		ctxd.LogError(ctx, err, log.Error)
 	}
 
 	j, err := json.MarshalIndent(files, "", "  ")
 	if err != nil {
-		log.Println(err.Error())
+		ctxd.LogError(ctx, err, log.Error)
 	}
 
-	listFn := fmt.Sprintf("%s.json", uniq.Hash(rand.Int64()))
+	listFn := fmt.Sprintf("ls_%s.json", uniq.Hash(rand.Int64()))
 	if err := os.WriteFile(listFn, j, 0o600); err != nil {
-		log.Println(err.Error())
+		ctxd.LogError(ctx, err, log.Error)
 	}
 
-	log.Println("done, list written to:", listFn)
+	log.Info(ctx, "done, list written to: "+listFn)
 }
 
 type thumbStorer struct {
@@ -171,7 +174,22 @@ func (t *thumbStorer) Write(th *photo.Thumb) error {
 			t.s = make(map[int]*sprite.Vertical)
 		}
 
-		t.s[th.Width] = append(t.s[th.Width], &thc)
+		w := int(th.Width)
+
+		ts := t.s[w]
+		if ts == nil {
+			ts = sprite.NewVertical(w)
+			ts.BaseName = "thumbs/sprite_w" + strconv.Itoa(w)
+			t.s[w] = ts
+		}
+
+		spr, ofs, err := ts.AddThumb(*th)
+		if err != nil {
+			return err
+		}
+
+		th.SpriteFile = spr
+		th.SpriteOffset = ofs
 	}
 
 	w := t.z[th.Format]

@@ -18,11 +18,13 @@ type Thumbnailer interface {
 
 type Thumb struct {
 	uniq.Head
-	Width    uint      `db:"width" json:"width"`
-	Height   uint      `db:"height" json:"height"`
-	Data     []byte    `db:"data" json:"data,omitempty"`
-	FilePath string    `db:"file_path" json:"file_path,omitempty"`
-	Format   ThumbSize `db:"-" json:"format,omitempty"`
+	Width        uint      `db:"width" json:"width"`
+	Height       uint      `db:"height" json:"height"`
+	Data         []byte    `db:"data" json:"data,omitempty"`
+	FilePath     string    `db:"file_path" json:"file_path,omitempty"`
+	Format       ThumbSize `db:"-" json:"format,omitempty"`
+	SpriteFile   string    `db:"-" json:"sprite_file,omitempty"`
+	SpriteOffset int       `db:"-" json:"sprite_offset,omitempty"`
 }
 
 func (t Thumb) ReadSeeker() io.ReadSeeker {

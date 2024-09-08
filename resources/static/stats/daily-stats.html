@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Stats</title>
+    <link rel="stylesheet" href="/json-form/pure.css">
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+    <script
+            src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+            integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+            crossorigin="anonymous"></script>
+    <script src="/static/stats/script.js"></script>
+</head>
+<body>
+
+<div style="margin-left: 2em">
+    <table id="result" class="pure-table"></table>
+</div>
+
+<script>
+    var rows = {{.Rows}};
+
+    if (!$.fn.fancyTable) {
+        $.fn.fancyTable = fancyTable
+    }
+
+    $('#result').html(renderTableContent(rows)).fancyTable({
+        sortable: true,
+        searchable: true,
+        pagination: false,
+        globalSearch:true
+    });
+</script>
+
+</body>
+</html>

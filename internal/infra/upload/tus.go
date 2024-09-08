@@ -14,6 +14,9 @@ import (
 	"github.com/swaggest/rest/web"
 	"github.com/tus/tusd/v2/pkg/filestore"
 	tusd "github.com/tus/tusd/v2/pkg/handler"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 )
 
@@ -45,6 +48,22 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 
 		if strings.HasPrefix(r.Header.Get("Origin"), "https://") {
 			r.TLS = &tls.ConnectionState{}
+		}
+
+		if !auth.IsAdmin(r.Context()) {
+			albumName := r.Header.Get("X-Album-Name")
+			collabKey := r.Header.Get("X-Collab-Key")
+
+			if collabKey == "" || albumName == "" {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			album, err := deps.PhotoAlbumFinder().FindByHash(r.Context(), photo.AlbumHash(albumName))
+			if err != nil || album.Settings.CollabKey != collabKey {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
 		}
 
 		tusHandler.ServeHTTP(w, r)
@@ -137,6 +156,7 @@ func siteUpload(ctx context.Context, deps TusHandlerDeps, event tusd.HookEvent) 
 type TusHandlerDeps interface {
 	CtxdLogger() ctxd.Logger
 	FilesProcessor() *files.Processor
+	PhotoAlbumFinder() uniq.Finder[photo.Album]
 }
 
 func TusUploadsButton() template.HTML {
