@@ -128,11 +128,11 @@ var lastBlur = null;
 var unfocused = 0;
 
 (function () {
-    window.addEventListener('blur', function() {
+    window.addEventListener('blur', function () {
         lastBlur = new Date();
     });
 
-    window.addEventListener('focus', function() {
+    window.addEventListener('focus', function () {
         if (lastBlur) {
             unfocused += new Date() - lastBlur;
         }
@@ -140,7 +140,7 @@ var unfocused = 0;
         lastBlur = null
     });
 
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', function () {
         if (lastBlur) {
             unfocused += new Date() - lastBlur;
         }
@@ -159,9 +159,13 @@ var unfocused = 0;
         margin-left: 0;
         margin-right: 0;
     }
-    .thumb, a.image, .thumb canvas {
+    .thumb.landscape, a.image.landscape, .thumb.landscape canvas {
         width: ` + screen.width + `px;
         height: ` + Math.trunc(screen.width / 1.5) + `px;
+    }
+    .thumb.portrait, a.image.portrait, .thumb.portrait canvas {
+        width: ` + screen.width + `px;
+        height: ` + Math.trunc(screen.width * 1.5) + `px;
     }
 }
 `
@@ -353,14 +357,21 @@ function loadAlbum(params) {
                 idxByHash[img.hash] = idx
                 idx++
 
+                var landscape = ""
+                if (img.width / img.height >= 1.499) {
+                    landscape = " landscape"
+                } else {
+                    landscape = " portrait"
+                }
+
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
                 a.attr("data-hash", img.hash)
 
                 if (i < 4) {
-                    a.attr("class", "image img" + i)
+                    a.attr("class", "image img" + i + landscape)
                 } else {
-                    a.attr("class", "image")
+                    a.attr("class", "image" + landscape)
                 }
                 if (hideOriginal) {
                     a.attr("href", "#")
@@ -514,17 +525,12 @@ function loadAlbum(params) {
                     }
                 }
 
-                var landscape = ""
-                if (img.width / img.height >= 1.499) {
-                    landscape = " landscape"
-                } else {
-                    landscape = " portrait"
-                }
+                var aspectRatio = img.width / img.height
 
                 a.attr("data-pswp-srcset", srcSet)
                 a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                    '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg 2x" /></div>')
+                    '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, /thumb/300w/' + img.hash + '.jpg 300w, /thumb/600w/' + img.hash + '.jpg 600w" /></div>')
                 a.attr("data-ts", img.time)
 
                 a.append('<div class="pswp-caption-content" style="display: none">' + img_description + '</div>')
