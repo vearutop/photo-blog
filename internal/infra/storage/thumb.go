@@ -58,7 +58,7 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size 
 		return th, err
 	}
 
-	if err := tr.Add(ctx, th); err != nil {
+	if _, err := tr.Ensure(ctx, th); err != nil {
 		return th, augmentErr(err)
 	}
 

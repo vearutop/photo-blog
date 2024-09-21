@@ -17,8 +17,9 @@ type ImageIndexer interface {
 }
 
 type IndexingFlags struct {
-	RebuildExif bool `formData:"rebuild_exif"`
-	RebuildGps  bool `formData:"rebuild_gps"`
+	RebuildExif      bool `formData:"rebuild_exif"`
+	RebuildGps       bool `formData:"rebuild_gps"`
+	RebuildImageSize bool `formData:"rebuild_image_size"`
 }
 
 type Image struct {
@@ -34,6 +35,7 @@ type Image struct {
 type ImageSettings struct {
 	Description string   `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an image, can contain HTML."`
 	HTTPSources []string `json:"http_sources,omitempty"`
+	Rotate      int      `json:"rotate,omitempty"`
 }
 
 // TODO: generalize scanner with generics.

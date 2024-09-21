@@ -146,6 +146,38 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	return th, nil
 }
 
+func rot90(jimg image.Image) *image.RGBA {
+	bounds := jimg.Bounds()
+	width, height := bounds.Max.X, bounds.Max.Y
+	bounds.Max.X, bounds.Max.Y = bounds.Max.Y, bounds.Max.X
+
+	dimg := image.NewRGBA(bounds)
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			org := jimg.At(x, y)
+			dimg.Set(height-y, x, org)
+		}
+	}
+
+	return dimg
+}
+
+func rot180(jimg image.Image) *image.RGBA {
+	bounds := jimg.Bounds()
+	width, height := bounds.Max.X, bounds.Max.Y
+
+	dimg := image.NewRGBA(bounds)
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			dimg.Set(width-1-x, height-1-y, jimg.At(x, y))
+		}
+	}
+
+	return dimg
+}
+
 func loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
 	lt := LargerThumbFromContext(ctx)
 	if lt != nil && (lt.Width >= w || lt.Height >= h) {
@@ -160,6 +192,16 @@ func loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, erro
 	img, err := loadJPEG(ctx, i.Path)
 	if err != nil {
 		return img, fmt.Errorf("failed to load JPEG: %w", err)
+	}
+
+	switch i.Settings.Rotate {
+	case 90:
+		img = rot90(img)
+	case 180:
+		img = rot180(img)
+	case 270:
+		img = rot180(img)
+		img = rot90(img)
 	}
 
 	return img, nil
@@ -201,8 +243,6 @@ func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer
 	ctx, finish := opencensus.AddSpan(ctx)
 	defer finish(&err)
 
-	// image to width 1000 using Lanczos resampling
-	// and preserve aspect ratio
 	m := resize.Resize(width, height, img, r.Interp)
 
 	o := jpeg.Options{}

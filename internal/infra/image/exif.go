@@ -17,6 +17,7 @@ type Meta struct {
 	exif map[string]any
 	photo.Exif
 	GpsInfo *photo.Gps `json:"gps_info,omitempty"`
+	Rotate  int        `json:"orientation,omitempty" example:"90"`
 }
 
 func (m Meta) ExifData() map[string]any {
@@ -180,6 +181,18 @@ func readExif(r io.Reader, res *Meta) error {
 			digTime, _ = ite.Format()
 		case "IFD/Exif/OffsetTime":
 			digTimeOffset, _ = ite.Format()
+		case "IFD/Orientation":
+			i := extractExifInt(v)
+			switch i {
+			case 6:
+				res.Rotate = 90
+			case 1:
+				res.Rotate = 0 // No rotation.
+			case 8:
+				res.Rotate = 270
+			case 3:
+				res.Rotate = 180
+			}
 		}
 
 		if digTime != "" {

@@ -1,6 +1,6 @@
 module github.com/vearutop/photo-blog
 
-go 1.21
+go 1.23.0
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
@@ -8,7 +8,7 @@ require (
 	github.com/bool64/brick v0.2.5
 	github.com/bool64/cache v0.4.7
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.35
+	github.com/bool64/dev v0.2.36
 	github.com/bool64/sqluct v0.2.3
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.1.1
@@ -28,13 +28,13 @@ require (
 	github.com/swaggest/form/v5 v5.1.1
 	github.com/swaggest/jsonform-go v0.2.0
 	github.com/swaggest/jsonschema-go v0.3.72
-	github.com/swaggest/openapi-go v0.2.53
+	github.com/swaggest/openapi-go v0.2.54
 	github.com/swaggest/refl v1.3.0
 	github.com/swaggest/rest v0.2.66
 	github.com/swaggest/swgui v1.8.1
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
-	github.com/tus/tusd/v2 v2.4.0
+	github.com/tus/tusd/v2 v2.5.0
 	github.com/vearutop/statigz v1.4.0
 	github.com/yuin/goldmark v1.7.4
 	go.opencensus.io v0.24.0
@@ -43,7 +43,7 @@ require (
 	golang.org/x/image v0.20.0
 	golang.org/x/net v0.29.0
 	golang.org/x/text v0.18.0
-	modernc.org/sqlite v1.33.0
+	modernc.org/sqlite v1.33.1
 )
 
 require (
@@ -77,22 +77,24 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.19.0 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.48.0 // indirect
-	github.com/prometheus/procfs v0.12.0 // indirect
+	github.com/prometheus/client_golang v1.20.2 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/statsd_exporter v0.22.8 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	github.com/rs/zerolog v1.32.0 // indirect
+	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
@@ -104,16 +106,17 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678 // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
-	google.golang.org/api v0.166.0 // indirect
+	google.golang.org/api v0.195.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/grpc v1.66.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a // indirect
+	modernc.org/libc v1.61.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect

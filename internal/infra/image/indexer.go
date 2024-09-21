@@ -120,6 +120,38 @@ func (i *Indexer) QueueIndex(ctx context.Context, img photo.Image, flags photo.I
 	}
 }
 
+func ensureImageDimensions(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) (updated bool, err error) {
+	if img.Height > 0 && img.Width > 0 && !flags.RebuildImageSize {
+		return false, nil
+	}
+
+	f, err := os.Open(img.Path)
+	if err != nil {
+		return false, ctxd.WrapError(ctx, err, "open image file")
+	}
+	defer func() {
+		if clErr := f.Close(); clErr != nil && err == nil {
+			err = clErr
+		}
+	}()
+
+	c, err := jpeg.DecodeConfig(f)
+	if err != nil {
+		return false, ctxd.WrapError(ctx, err, "image dimensions")
+	}
+
+	img.Width = int64(c.Width)
+	img.Height = int64(c.Height)
+
+	// Swap dimensions of rotated image.
+	if img.Settings.Rotate == 90 || img.Settings.Rotate == 270 {
+		img.Width = int64(c.Height)
+		img.Height = int64(c.Width)
+	}
+
+	return true, nil
+}
+
 func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
 	ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))
 	defer done(&err)
@@ -143,28 +175,16 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		}
 	}
 
-	if img.Width == 0 {
-		f, err := os.Open(img.Path)
-		if err != nil {
-			return ctxd.WrapError(ctx, err, "open image file")
-		}
-		c, err := jpeg.DecodeConfig(f)
-		i.closeFile(ctx, f)
-
-		if err != nil {
-			return ctxd.WrapError(ctx, err, "image dimensions")
-		}
-
-		img.Width = int64(c.Width)
-		img.Height = int64(c.Height)
-
-		if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
-			return ctxd.WrapError(ctx, err, "update image")
-		}
+	if err := i.ensureExif(ctx, &img, flags); err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to ensure exif", "error", err)
 	}
 
-	if err := i.ensureExif(ctx, img, flags); err != nil {
-		i.deps.CtxdLogger().Error(ctx, "failed to ensure exif", "error", err)
+	if updated, err := ensureImageDimensions(ctx, &img, flags); err != nil {
+		return err
+	} else if updated {
+		if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
+			return ctxd.WrapError(ctx, err, "update image to ensure dimensions")
+		}
 	}
 
 	if img.TakenAt == nil {
@@ -450,7 +470,31 @@ func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.IndexingFlags) error {
+func readMeta(ctx context.Context, img *photo.Image) (m Meta, err error) {
+	f, err := os.Open(img.Path)
+	if err != nil {
+		return m, ctxd.WrapError(ctx, err, "open image file")
+	}
+
+	defer func() {
+		if clErr := f.Close(); clErr != nil && err == nil {
+			err = clErr
+		}
+	}()
+
+	m, err = ReadMeta(f)
+	if err != nil {
+		return m, ctxd.WrapError(ctx, err, "read image meta")
+	}
+
+	img.Settings.Rotate = m.Rotate
+
+	exifQuirks(&m.Exif)
+
+	return m, nil
+}
+
+func (i *Indexer) ensureExif(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) error {
 	exifExists, err := i.deps.PhotoExifFinder().Exists(ctx, img.Hash)
 	if err != nil {
 		return ctxd.WrapError(ctx, err, "check existing exif")
@@ -468,18 +512,10 @@ func (i *Indexer) ensureExif(ctx context.Context, img photo.Image, flags photo.I
 	ctx = ctxd.AddFields(ctx, "exifExists", exifExists, "gpsExists", gpsExists,
 		"rebuildExif", flags.RebuildExif, "rebuildGps", flags.RebuildGps)
 
-	f, err := os.Open(img.Path)
+	m, err := readMeta(ctx, img)
 	if err != nil {
-		return ctxd.WrapError(ctx, err, "open image file")
+		return err
 	}
-
-	m, err := ReadMeta(f)
-	i.closeFile(ctx, f)
-	if err != nil {
-		return ctxd.WrapError(ctx, err, "read image meta")
-	}
-
-	exifQuirks(&m.Exif)
 
 	m.Exif.Hash = img.Hash
 
