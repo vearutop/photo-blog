@@ -385,7 +385,7 @@ func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 			if existing != nil {
 				*candidate = *existing
 			}
-			candidate.Data.Val.Faces = f
+			candidate.Data.Val.Faces = &f
 		},
 	}); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)

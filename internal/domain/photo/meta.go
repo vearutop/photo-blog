@@ -39,11 +39,11 @@ type PercentBox struct {
 }
 
 type MetaData struct {
-	ImageClassification []ImageLabel       `json:"image_classification,omitempty"`
-	Faces               []faces.GoFaceFace `json:"faces,omitempty"`
-	GeoLabel            *string            `json:"geo_label,omitempty"`
-	CFResnet50          []Label            `json:"cf_resnet_50,omitempty"`
-	CFLlavaDescription  *string            `json:"cf_llava_description,omitempty"`
-	CFDetrResnet        []Label            `json:"cf_detr_resnet,omitempty"`
-	FaceVectors         []Face             `json:"face_vectors,omitempty"`
+	ImageClassification []ImageLabel        `json:"image_classification,omitempty"`
+	Faces               *[]faces.GoFaceFace `json:"faces,omitempty"`
+	GeoLabel            *string             `json:"geo_label,omitempty"`
+	CFResnet50          *[]Label            `json:"cf_resnet_50,omitempty"`
+	CFLlavaDescription  *string             `json:"cf_llava_description,omitempty"`
+	CFDetrResnet        *[]Label            `json:"cf_detr_resnet,omitempty"`
+	FaceVectors         *[]Face             `json:"face_vectors,omitempty"`
 }
