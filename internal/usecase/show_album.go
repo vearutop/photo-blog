@@ -116,6 +116,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
+		d.AlbumData.Album.Settings.CollabKey = ""
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())

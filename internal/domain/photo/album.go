@@ -54,7 +54,7 @@ type AlbumSettings struct {
 	MapTiles       string `json:"tiles" title:"Map tiles" description:"URL to custom map tiles, overrides app default." example:"https://retina-tiles.p.rapidapi.com/local/osm{r}/v1/{z}/{x}/{y}.png?rapidapi-key=YOUR-RAPIDAPI-KEY"`
 	MapAttribution string `json:"attribution" title:"Map attribution" description:"Map tiles attribution, overrides app default."`
 
-	CollabKey string `json:"collab_key" title:"Collaboration key, when provided, user can add/delete album content."`
+	CollabKey string `json:"collab_key,omitempty" title:"Collaboration key, when provided, user can add/delete album content."`
 }
 
 func (s *AlbumSettings) Scan(src any) error {
