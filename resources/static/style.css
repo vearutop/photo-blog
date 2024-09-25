@@ -17,25 +17,26 @@ body.dark-mode {
     background: #333;
 }
 
-.thumb, a.image, .thumb canvas {
+.thumb, a.image {
     width: 300px;
     height: 200px;
-    line-height: 197px;
 }
 
 .thumb.landscape img {
-    width: 100%;
+    max-width: 100%;
     vertical-align: middle;
 }
 
-.thumb.portrait img {
-    height: 100%;
+.thumb img {
+    max-height: 100%;
 }
 
 .thumb canvas {
     position: absolute;
     z-index: 1;
     display: block;
+    width: 300px;
+    height: 200px;
 }
 
 .thumb img {
@@ -101,7 +102,7 @@ h1 .ctrl-btn {
     fill: none;
     stroke: #646464;
     stroke-width: 1px;
-    stroke-dasharray: 2,2;
+    stroke-dasharray: 2, 2;
     stroke-linejoin: round;
 }
 
@@ -216,8 +217,8 @@ a.ctrl-btn:hover {
 }
 
 .chrono-text {
-    grid-column-start:1;
-    grid-column-end:-1;
+    grid-column-start: 1;
+    grid-column-end: -1;
 }
 
 .chrono-text .text {
@@ -232,6 +233,7 @@ a.ctrl-btn:hover {
     display: none;
     grid-column: 1 / -1;
 }
+
 .google-maps {
     background-image: url('/static/google_maps.svg');
     background-size: 15px;

@@ -159,13 +159,9 @@ var unfocused = 0;
         margin-left: 0;
         margin-right: 0;
     }
-    .thumb.landscape, a.image.landscape, .thumb.landscape canvas {
+    .thumb, a.image {
         width: ` + screen.width + `px;
-        height: ` + Math.trunc(screen.width / 1.5) + `px;
-    }
-    .thumb.portrait, a.image.portrait, .thumb.portrait canvas {
-        width: ` + screen.width + `px;
-        height: ` + Math.trunc(screen.width * 1.5) + `px;
+        height: fit-content;
     }
 }
 `
@@ -358,7 +354,7 @@ function loadAlbum(params) {
                 idx++
 
                 var landscape = ""
-                if (img.width / img.height >= 1.499) {
+                if (img.width >= img.height) {
                     landscape = " landscape"
                 } else {
                     landscape = " portrait"
