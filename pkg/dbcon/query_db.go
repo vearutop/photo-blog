@@ -2,7 +2,6 @@ package dbcon
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -16,7 +15,7 @@ type dbQuery struct {
 	Statement string `json:"statement" formType:"textarea" title:"Statement" description:"SQL statement to execute."`
 }
 
-func DBQuery(instances map[string]*sql.DB) usecase.Interactor {
+func DBQuery(deps Deps) usecase.Interactor {
 	type Result struct {
 		Statement string          `json:"statement"`
 		Columns   []string        `json:"columns"`
@@ -27,7 +26,7 @@ func DBQuery(instances map[string]*sql.DB) usecase.Interactor {
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, input dbQuery, output *[]Result) error {
-		db := instances[input.Instance]
+		db := deps.DBInstances()[input.Instance]
 
 		var results []Result
 

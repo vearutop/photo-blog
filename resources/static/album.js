@@ -179,7 +179,7 @@ var unfocused = 0;
  * @property {String} mapTiles
  * @property {String} mapAttribution
  * @property {Boolean} showMap
- * @property {UsecaseGetAlbumOutputCallback} albumData
+ * @property {UsecaseGetAlbumOutput} albumData
  * @property {String} gallery - CSS selector for gallery container
  * @property {String} galleryPano - CSS selector for gallery panoramas container
  * @property {String} baseUrl - base address to set on image close
@@ -492,15 +492,6 @@ function loadAlbum(params) {
                 if (typeof img.meta !== "undefined") {
                     img_description += '<div class="control-panel">'
                     var cl = img.meta.image_classification
-                    for (var ci in cl) {
-                        var l = cl[ci]
-
-                        if (l.model === "cf-uform-gen2") {
-                            continue
-                        }
-
-                        img_description += l.text + '<br/>'
-                    }
 
                     if (img.meta.faces && img.meta.faces.length > 0) {
                         img_description += img.meta.faces.length + ' face(s)<br/>'
@@ -545,6 +536,7 @@ function loadAlbum(params) {
             }
         }
 
+
         if (chronoTexts) {
             for (var ti = 0; ti < chronoTexts.length; ti++) {
                 var t = chronoTexts[ti]
@@ -580,6 +572,20 @@ function loadAlbum(params) {
                     gpsBounds.minLat = gpx.minLat
                 }
             }
+        }
+
+
+        if (albumSettings.map_min_lat) {
+            gpsBounds.minLat = albumSettings.map_min_lat
+        }
+        if (albumSettings.map_max_lat) {
+            gpsBounds.maxLat = albumSettings.map_max_lat
+        }
+        if (albumSettings.map_min_lon) {
+            gpsBounds.minLon = (albumSettings.map_min_lon)
+        }
+        if (albumSettings.map_max_lon) {
+            gpsBounds.maxLon = albumSettings.map_max_lon
         }
 
         var lightbox = new PhotoSwipeLightbox({

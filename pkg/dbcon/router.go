@@ -6,6 +6,6 @@ import (
 
 func Mount(s *web.Service, deps Deps) {
 	s.Get("/db.html", DBConsole(deps))
-	s.Post("/query-db", DBQuery(deps.DBInstances()))
-	s.Get("/query-db.csv", DBQueryCSV(deps.DBInstances()))
+	s.Post("/query-db", DBQuery(deps))
+	s.Get("/query-db.csv", DBQueryCSV(deps))
 }

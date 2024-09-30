@@ -2,7 +2,6 @@ package dbcon
 
 import (
 	"context"
-	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -13,14 +12,14 @@ import (
 	"github.com/swaggest/usecase"
 )
 
-func DBQueryCSV(instances map[string]*sql.DB) usecase.Interactor {
+func DBQueryCSV(deps Deps) usecase.Interactor {
 	type request struct {
 		Instance  string `query:"instance" enum:"default,stats"`
 		Statement string `query:"statement" formType:"textarea" title:"Statement" description:"SQL Statement to execute."`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, input request, output *usecase.OutputWithEmbeddedWriter) error {
-		rows, err := instances[input.Instance].QueryContext(ctx, input.Statement)
+		rows, err := deps.DBInstances()[input.Instance].QueryContext(ctx, input.Statement)
 		if err != nil {
 			return err
 		}

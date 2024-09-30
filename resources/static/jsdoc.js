@@ -29,14 +29,21 @@
 /**
  * @typedef PhotoAlbumSettings
  * @type {Object}
+ * @property {String} attribution - Map attribution. Map tiles attribution, overrides app default.
+ * @property {String} collab_key - Collaboration key, when provided, user can add/delete album content.
  * @property {Boolean} daily_rulers - Show date splits between the photos.
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
  * @property {Boolean} hide_map
  * @property {String} image_base_url - URL prefix to use for full-res images instead of local endpoint.
+ * @property {Number} map_max_lat - Map max latitude. Overrides map default boundary.
+ * @property {Number} map_max_lon - Map max longitude. Overrides map default boundary.
+ * @property {Number} map_min_lat - Map min latitude. Overrides map default boundary.
+ * @property {Number} map_min_lon - Map min longitude. Overrides map default boundary.
  * @property {Boolean} newest_first - Show newest images at the top.
  * @property {String} redirect - Relative or absolute URL to redirect to with HTTP 301 status.
  * @property {Array<PhotoChronoText>} texts - Chronological texts.
+ * @property {String} tiles - Map tiles. URL to custom map tiles, overrides app default.
  */
 
 /**
@@ -108,6 +115,31 @@
  */
 
 /**
+ * @typedef PhotoPercentBox
+ * @type {Object}
+ * @property {Number} h% - Height of the box in percent of image height.
+ * @property {Number} l% - Left position in percent of image width.
+ * @property {Number} t% - Top position in percent of image height.
+ * @property {Number} w% - Width of the box in percent of image width.
+ */
+
+/**
+ * @typedef PhotoLabel
+ * @type {Object}
+ * @property {PhotoPercentBox} box
+ * @property {Number} score
+ * @property {String} text
+ */
+
+/**
+ * @typedef PhotoFace
+ * @type {Object}
+ * @property {PhotoPercentBox} box
+ * @property {?Array<Number>} descriptor
+ * @property {?Array<PhotoPercentBox>} marks
+ */
+
+/**
  * @typedef FacesImagePoint
  * @type {Object}
  * @property {Number} X
@@ -140,9 +172,13 @@
 /**
  * @typedef PhotoMetaData
  * @type {Object}
+ * @property {?Array<PhotoLabel>} cf_detr_resnet
+ * @property {?String} cf_llava_description
+ * @property {?Array<PhotoLabel>} cf_resnet_50
+ * @property {?Array<PhotoFace>} face_vectors
  * @property {?Array<FacesGoFaceFace>} faces
  * @property {?String} geo_label
- * @property {?Array<PhotoImageLabel>} image_classification
+ * @property {Array<PhotoImageLabel>} image_classification
  */
 
 /**
@@ -258,6 +294,7 @@
 /**
  * @typedef ControlAddRemoteRequest
  * @type {Object}
+ * @property {Boolean} addMissing - Add missing images to album.
  * @property {String} name - Album name.
  * @property {String} url - URL to JSON list file.
  */
@@ -387,6 +424,7 @@
  * @type {Object}
  * @property {String} description - Description. Description of an image, can contain HTML.
  * @property {Array<String>} http_sources
+ * @property {Number} rotate
  */
 
 /**
@@ -460,6 +498,7 @@
  * @property {String} name - Album name, use '-' for all images and albums.
  * @property {Boolean} rebuildExif
  * @property {Boolean} rebuildGps
+ * @property {Boolean} rebuildImageSize
  */
 
 /**
@@ -610,25 +649,38 @@
  */
 
 /**
- * @typedef DebugDbQuery
+ * @typedef DbconDbQuery
  * @type {Object}
+ * @property {('default'|'stats')} instance
  * @property {String} statement - Statement. SQL statement to execute.
  */
 
 /**
- * @typedef ControlDebugDBQueryRequest
+ * @typedef PkgDbconDBQueryRequest
  * @type {Object}
- * @property {DebugDbQuery} body
+ * @property {DbconDbQuery} body
  */
 
 /**
- * @callback ArrayObjectStringCallback
- * @param {Array<Object.<String,*>>} value
+ * @typedef DbconResult
+ * @type {Object}
+ * @property {?Array<String>} columns
+ * @property {String} elapsed
+ * @property {String} error
+ * @property {String} instance
+ * @property {String} statement
+ * @property {?Array<Array<*>>} values
  */
 
 /**
- * @typedef ControlDebugDBQueryCSVRequest
+ * @callback ArrayDbconResultCallback
+ * @param {Array<DbconResult>} value
+ */
+
+/**
+ * @typedef PkgDbconDBQueryCSVRequest
  * @type {Object}
+ * @property {('default'|'stats')} instance
  * @property {String} statement - Statement. SQL Statement to execute.
  */
 
@@ -668,6 +720,8 @@
 /**
  * @typedef FacesRecognizerConfig
  * @type {Object}
+ * @property {Number} concurrencyLimit - Max simultaneous requests.
+ * @property {Number} delay - Cooldown delay between requests.
  * @property {String} url
  */
 
@@ -771,12 +825,14 @@
  * @typedef CollectStatsRequest
  * @type {Object}
  * @property {String} v - Visitor.
+ * @property {String} ref - Referer.
  * @property {Number} sw - Screen width.
  * @property {Number} sh - Screen height.
  * @property {Number} px - Device pixel ratio (retina factor).
  * @property {Boolean} main - Main page shown.
  * @property {String} album - Album with a name shown.
  * @property {?Object.<String,Number>} thumb - Thumb on-screen times, ms.
+ * @property {Boolean} prt - Mobile portrait mode.
  * @property {String} img - Image with a hash is shown individually.
  * @property {Number} w - Shown width of the image.
  * @property {Number} h - Shown height of the image.
@@ -801,6 +857,7 @@
 /**
  * @typedef ShowAlbumRequest
  * @type {Object}
+ * @property {String} collabKey - Access key to enable content upload and management.
  * @property {String} name
  */
 
@@ -814,6 +871,7 @@
 /**
  * @typedef ShowAlbumAtImageRequest
  * @type {Object}
+ * @property {String} collabKey - Access key to enable content upload and management.
  * @property {String} name
  * @property {String} hash
  */

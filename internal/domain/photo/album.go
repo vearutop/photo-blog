@@ -54,6 +54,11 @@ type AlbumSettings struct {
 	MapTiles       string `json:"tiles" title:"Map tiles" description:"URL to custom map tiles, overrides app default." example:"https://retina-tiles.p.rapidapi.com/local/osm{r}/v1/{z}/{x}/{y}.png?rapidapi-key=YOUR-RAPIDAPI-KEY"`
 	MapAttribution string `json:"attribution" title:"Map attribution" description:"Map tiles attribution, overrides app default."`
 
+	MapMinLon float64 `json:"map_min_lon,omitempty" title:"Map min longitude" description:"Overrides map default boundary."`
+	MapMaxLon float64 `json:"map_max_lon,omitempty" title:"Map max longitude" description:"Overrides map default boundary."`
+	MapMinLat float64 `json:"map_min_lat,omitempty" title:"Map min latitude" description:"Overrides map default boundary."`
+	MapMaxLat float64 `json:"map_max_lat,omitempty" title:"Map max latitude" description:"Overrides map default boundary."`
+
 	CollabKey string `json:"collab_key,omitempty" title:"Collaboration key, when provided, user can add/delete album content."`
 }
 

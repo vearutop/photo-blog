@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: go1.22.1
+     * Version: Version: dev, GoVersion: go1.23.0
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -615,6 +615,9 @@
 
         var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
         '/url?';
+        if (req.addMissing != null) {
+            url += 'add_missing=' + encodeURIComponent(req.addMissing) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("POST", url, true);
@@ -731,7 +734,7 @@
      * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlDebugDBConsole = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
+    Backend.prototype.pkgDbconDBConsole = function (req, onNoContent, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1667,6 +1670,9 @@
         if (typeof req.rebuildGps !== 'undefined') {
             formData.append('rebuild_gps', req.rebuildGps);
         }
+        if (typeof req.rebuildImageSize !== 'undefined') {
+            formData.append('rebuild_image_size', req.rebuildImageSize);
+        }
 
         x.send(formData);
     };
@@ -2219,11 +2225,11 @@
 
     /**
      * DB Query
-     * @param {ControlDebugDBQueryRequest} req - request parameters.
-     * @param {ArrayObjectStringCallback} onOK
+     * @param {PkgDbconDBQueryRequest} req - request parameters.
+     * @param {ArrayDbconResultCallback} onOK
      * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.controlDebugDBQuery = function (req, onOK, onUnauthorized) {
+    Backend.prototype.pkgDbconDBQuery = function (req, onOK, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2264,11 +2270,11 @@
 
     /**
      * DB Query CSV
-     * @param {ControlDebugDBQueryCSVRequest} req - request parameters.
+     * @param {PkgDbconDBQueryCSVRequest} req - request parameters.
      * @param {RawCallback} onOK
      * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.controlDebugDBQueryCSV = function (req, onOK, onUnauthorized) {
+    Backend.prototype.pkgDbconDBQueryCSV = function (req, onOK, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2292,6 +2298,9 @@
         };
 
         var url = this.baseURL + '/query-db.csv?';
+        if (req.instance != null) {
+            url += 'instance=' + encodeURIComponent(req.instance) + '&';
+        }
         if (req.statement != null) {
             url += 'statement=' + encodeURIComponent(req.statement) + '&';
         }
@@ -2727,9 +2736,12 @@
             }
         };
 
-        var url = this.baseURL + '/visitor?';
+        var url = this.baseURL + '/stats?';
         if (req.v != null) {
             url += 'v=' + encodeURIComponent(req.v) + '&';
+        }
+        if (req.ref != null) {
+            url += 'ref=' + encodeURIComponent(req.ref) + '&';
         }
         if (req.sw != null) {
             url += 'sw=' + encodeURIComponent(req.sw) + '&';
@@ -2749,6 +2761,9 @@
         if (req.thumb != null) {
             url += 'thumb=' + encodeURIComponent(JSON.stringify(req.thumb)) + '&';
         }
+        if (req.prt != null) {
+            url += 'prt=' + encodeURIComponent(req.prt) + '&';
+        }
         if (req.img != null) {
             url += 'img=' + encodeURIComponent(req.img) + '&';
         }
@@ -2767,6 +2782,46 @@
         if (req.time != null) {
             url += 'time=' + encodeURIComponent(req.time) + '&';
         }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Daily Total
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.statsShowDailyTotal = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/stats/daily.html?';
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
@@ -2853,9 +2908,10 @@
      * @param {ShowAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
      * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onForbidden
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.showAlbum = function (req, onNoContent, onBadRequest, onInternalServerError) {
+    Backend.prototype.showAlbum = function (req, onNoContent, onBadRequest, onForbidden, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2873,6 +2929,11 @@
                         onBadRequest(JSON.parse(x.responseText));
                     }
                     break;
+                case 403:
+                    if (typeof (onForbidden) === 'function') {
+                        onForbidden(JSON.parse(x.responseText));
+                    }
+                    break;
                 case 500:
                     if (typeof (onInternalServerError) === 'function') {
                         onInternalServerError(JSON.parse(x.responseText));
@@ -2885,6 +2946,9 @@
 
         var url = this.baseURL + '/' + encodeURIComponent(req.name) +
         '/?';
+        if (req.collabKey != null) {
+            url += 'collab_key=' + encodeURIComponent(req.collabKey) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
@@ -2981,6 +3045,9 @@
         var url = this.baseURL + '/' + encodeURIComponent(req.name) +
         '/photo-' + encodeURIComponent(req.hash) +
         '.html?';
+        if (req.collabKey != null) {
+            url += 'collab_key=' + encodeURIComponent(req.collabKey) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
