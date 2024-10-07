@@ -11,7 +11,7 @@ require (
 	github.com/bool64/dev v0.2.36
 	github.com/bool64/sqluct v0.2.3
 	github.com/bool64/stats v0.2.2
-	github.com/bool64/zapctxd v1.1.1
+	github.com/bool64/zapctxd v1.2.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/corona10/goimagehash v1.1.0
@@ -30,7 +30,7 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.72
 	github.com/swaggest/openapi-go v0.2.54
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.66
+	github.com/swaggest/rest v0.2.67
 	github.com/swaggest/swgui v1.8.2
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
@@ -39,10 +39,10 @@ require (
 	github.com/yuin/goldmark v1.7.4
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.27.0
-	golang.org/x/image v0.20.0
-	golang.org/x/net v0.29.0
-	golang.org/x/text v0.18.0
+	golang.org/x/crypto v0.28.0
+	golang.org/x/image v0.21.0
+	golang.org/x/net v0.30.0
+	golang.org/x/text v0.19.0
 	modernc.org/sqlite v1.33.1
 )
 
@@ -108,7 +108,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	google.golang.org/api v0.195.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/grpc v1.66.0 // indirect
