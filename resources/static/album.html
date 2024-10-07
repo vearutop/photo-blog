@@ -69,6 +69,9 @@
         {{if gt .Count 0 }}
         <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
         {{end}}
+        {{if .Visits}}
+        <span class="ctrl-btn view-icon"></span><span title="Unique/Views/External refers">{{.Visits}}</span>
+        {{end}}
     </div>
 
     <div>

@@ -31,7 +31,7 @@ require (
 	github.com/swaggest/openapi-go v0.2.54
 	github.com/swaggest/refl v1.3.0
 	github.com/swaggest/rest v0.2.66
-	github.com/swaggest/swgui v1.8.1
+	github.com/swaggest/swgui v1.8.2
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.5.0

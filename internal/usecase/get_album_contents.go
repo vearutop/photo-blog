@@ -17,6 +17,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
@@ -31,6 +32,7 @@ type getAlbumImagesDeps interface {
 	PhotoMetaFinder() uniq.Finder[photo.Meta]
 	Settings() settings.Values
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
+	VisitorStats() *visitor.StatsRepository
 
 	service.TxtRendererProvider
 }

@@ -3,6 +3,7 @@ package visitor
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -530,4 +531,43 @@ func (s *StatsRepository) DailyTotal(ctx context.Context, minDate, maxDate time.
 	err := s.st.Select(ctx, q, &res)
 
 	return res, err
+}
+
+func (s *StatsRepository) TopAlbums(ctx context.Context) ([]PageStats, error) {
+	var res []PageStats
+	q := s.st.SelectStmt(pageStatsTable, res).OrderByClause(s.ref.Fmt("%s DESC", &s.ps.Uniq))
+
+	err := s.st.Select(ctx, q, &res)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (s *StatsRepository) TopImages(ctx context.Context) ([]imageStats, error) {
+	var res []imageStats
+	q := s.st.SelectStmt(imageStatsTable, res).OrderByClause(s.ref.Fmt("%s DESC", &s.is.Uniq)).Limit(300)
+
+	err := s.st.Select(ctx, q, &res)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (s *StatsRepository) AlbumViews(ctx context.Context, hash uniq.Hash) (PageStats, error) {
+	res := PageStats{}
+	q := s.st.SelectStmt(pageStatsTable, res).Where(squirrel.Eq{s.ref.Ref(&s.ps.Hash): hash})
+
+	err := s.st.Select(ctx, q, &res)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return res, err
+	}
+
+	return res, nil
 }

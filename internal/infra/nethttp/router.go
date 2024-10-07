@@ -122,6 +122,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		// Stats.
 		s.Get("/stats/daily.html", stats.ShowDailyTotal(deps))
+		s.Get("/stats/top-pages.html", stats.TopPages(deps))
+		s.Get("/stats/top-images.html", stats.TopImages(deps))
 	})
 
 	maybeAuth := auth.MaybeAuth(deps.Settings())

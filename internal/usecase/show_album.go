@@ -71,6 +71,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		Count     int
 		TotalSize string
+		Visits    string
 
 		MapTiles       string
 		MapAttribution string
@@ -152,6 +153,15 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			}
 
 			d.TotalSize = units.HumanSize(float64(totalSize))
+		}
+
+		if d.IsAdmin {
+			ps, err := deps.VisitorStats().AlbumViews(ctx, album.Hash)
+			if err != nil {
+				deps.CtxdLogger().Error(ctx, "failed to get album views", "error", err)
+			} else {
+				d.Visits = fmt.Sprintf("%d/%d/%d", ps.Uniq, ps.Views, ps.Refers)
+			}
 		}
 
 		switch {
