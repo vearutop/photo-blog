@@ -12,8 +12,9 @@ import (
 
 // Names of special "albums".
 const (
-	Orphan = "orphan-photos"
-	Broken = "broken-photos"
+	Orphan   = "orphan-photos"
+	Broken   = "broken-photos"
+	Favorite = "favorite-photos"
 )
 
 type AlbumImageAdder interface {

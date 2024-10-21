@@ -69,9 +69,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		Images    []Image
 		Panoramas []Image
 
-		Count     int
-		TotalSize string
-		Visits    string
+		Count          int
+		TotalSize      string
+		Visits         string
+		EnableFavorite bool
 
 		MapTiles       string
 		MapAttribution string
@@ -153,6 +154,10 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			}
 
 			d.TotalSize = units.HumanSize(float64(totalSize))
+		}
+
+		if deps.Settings().Visitors().Tag {
+			d.EnableFavorite = true
 		}
 
 		if d.IsAdmin {

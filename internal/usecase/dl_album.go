@@ -18,6 +18,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
 )
 
 type dlAlbumDeps interface {
@@ -26,10 +27,12 @@ type dlAlbumDeps interface {
 	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 	Settings() settings.Values
+	FavoriteRepository() *storage.FavoriteRepository
 }
 
 type dlAlbumInput struct {
-	Name string `path:"name"`
+	Name     string `path:"name"`
+	Favorite bool   `query:"favorite"`
 }
 
 func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
@@ -46,7 +49,18 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			return err
 		}
 
-		images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, album.Hash)
+		var images []photo.Image
+		if in.Favorite {
+			visitorHash := auth.VisitorFromContext(ctx)
+			if visitorHash == 0 {
+				return status.PermissionDenied
+			}
+
+			images, err = deps.FavoriteRepository().FindAlbumImages(ctx, visitorHash, album.Hash)
+		} else {
+			images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, album.Hash)
+		}
+
 		if err != nil {
 			return err
 		}

@@ -445,6 +445,15 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 			candidate.Referer = existing.Referer
 		}
 
+		if candidate.IPAddr == "" {
+			candidate.IPAddr = existing.IPAddr
+		} else {
+			if !strings.Contains(existing.IPAddr, candidate.IPAddr) && len(existing.IPAddr) < 240 {
+				skipUpdate = false
+				candidate.IPAddr = strings.TrimPrefix(",", existing.IPAddr+","+candidate.IPAddr)
+			}
+		}
+
 		if skipUpdate && candidate.IsBot && !existing.IsBot {
 			skipUpdate = false
 		}
@@ -467,11 +476,6 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 
 		if skipUpdate && candidate.ScreenWidth != 0 && existing.ScreenWidth == 0 {
 			skipUpdate = false
-		}
-
-		if !strings.Contains(existing.IPAddr, candidate.IPAddr) && len(existing.IPAddr) < 240 {
-			skipUpdate = false
-			candidate.IPAddr = strings.TrimPrefix(",", existing.IPAddr+","+candidate.IPAddr)
 		}
 
 		if skipUpdate && candidate.LastSeen.Sub(existing.LastSeen) > time.Minute {

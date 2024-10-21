@@ -17,6 +17,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
@@ -33,6 +34,7 @@ type getAlbumImagesDeps interface {
 	Settings() settings.Values
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 	VisitorStats() *visitor.StatsRepository
+	FavoriteRepository() *storage.FavoriteRepository
 
 	service.TxtRendererProvider
 }
@@ -131,6 +133,16 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 
 	switch name {
 	case "list":
+
+	case photo.Favorite:
+		visitorHash := auth.VisitorFromContext(ctx)
+		if visitorHash == 0 {
+			return out, status.PermissionDenied
+		}
+
+		album.Title = "Favorite Photos"
+		album.Name = photo.Favorite
+		images, err = deps.FavoriteRepository().FindImages(ctx, visitorHash)
 
 	case "search":
 		if !auth.IsAdmin(ctx) {

@@ -5,6 +5,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/site"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
@@ -114,4 +115,8 @@ type CommentThreadEnsurerProvider interface {
 
 type CommentThreadFinderProvider interface {
 	CommentThreadFinder() uniq.Finder[comment.Thread]
+}
+
+type FavoriteRepositoryProvider interface {
+	FavoriteRepository() *storage.FavoriteRepository
 }

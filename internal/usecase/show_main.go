@@ -69,12 +69,9 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 	type pageData struct {
 		pageCommon
 
-		Name              string
 		CoverImage        string
 		Secure            bool
 		IsAdmin           bool
-		Public            bool
-		Hash              string
 		Featured          string
 		FeaturedAlbumData getAlbumOutput
 		Albums            []getAlbumOutput

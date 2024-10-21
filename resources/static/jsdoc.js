@@ -358,6 +358,29 @@
  */
 
 /**
+ * @typedef DeleteFavoriteRequest
+ * @type {Object}
+ * @property {String} imageHash
+ */
+
+/**
+ * @typedef GetFavoriteRequest
+ * @type {Object}
+ * @property {String} albumHash
+ */
+
+/**
+ * @callback ArrayStringCallback
+ * @param {Array<String>} value
+ */
+
+/**
+ * @typedef AddFavoriteRequest
+ * @type {Object}
+ * @property {String} imageHash
+ */
+
+/**
  * @typedef ControlGatherFilesRequest
  * @type {Object}
  * @property {Boolean} checkMissing

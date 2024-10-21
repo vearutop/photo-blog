@@ -131,6 +131,9 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
 
+	fr := storage.NewFavoriteRepository(l.Storage)
+	l.FavoriteRepositoryProvider = fr
+
 	statsStorage, err := setupStatsStorage(l, "stats.sqlite")
 	if err != nil {
 		return nil, err

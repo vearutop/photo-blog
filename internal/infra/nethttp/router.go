@@ -221,6 +221,10 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Get("/site/{file}", usecase.ServeSiteFile(deps))
 		s.Get("/stats", usecase.CollectStats(deps))
+
+		s.Post("/favorite", usecase.AddFavorite(deps))
+		s.Delete("/favorite", usecase.DeleteFavorite(deps))
+		s.Get("/favorite", usecase.GetFavorite(deps))
 	})
 
 	s.Get("/favicon.ico", usecase.ServeFavicon(deps))

@@ -41,6 +41,54 @@ function addToFeatured(imageHash) {
     })
 }
 
+function fillFavorite(albumHash) {
+    var b = new Backend('');
+    b.getFavorite({
+        albumHash: albumHash
+    }, function (res) {
+        var idx = {}
+        for (var i in res) {
+            idx[res[i]] = true;
+        }
+
+        $('.pswp-caption-content').each(function () {
+            var h = $(this).data('hash')
+
+            if (idx[h]) {
+                $(this).prepend('<a title="Remove from favorites" data-favorite="yes" class="ctrl-btn heart-icon" href="#" onclick="toggleFavorite(\''+h+'\', this);return false"></a>')
+            } else {
+                $(this).prepend('<a title="Add to favorites" data-favorite="no" class="ctrl-btn heart-empty-icon" href="#" onclick="toggleFavorite(\''+h+'\', this);return false"></a>')
+            }
+        })
+    }, function (x) {
+        alert("Failed: " + x.error)
+    })
+}
+
+function toggleFavorite(imageHash, a) {
+    console.log(a)
+
+    var b = new Backend('');
+
+    var req = {
+        imageHash: imageHash
+    }
+
+    if ($(a).data("favorite") === 'yes') {
+        b.deleteFavorite({
+            imageHash: imageHash
+        }, function () {
+            $(a).attr("title", "Add to favorite").data('favorite', 'no').removeClass('heart-icon').addClass('heart-empty-icon')
+            console.log("favorite deleted")
+        })
+    } else {
+        b.addFavorite(req, function () {
+            $(a).attr("title", "Remove from favorites").data('favorite', 'yes').removeClass('heart-empty-icon').addClass('heart-icon')
+            console.log("favorite added")
+        })
+    }
+}
+
 function removeImage(albumName, imageHash) {
     if (!window.confirm("This photo is about to be removed from the album '" + albumName + "'")) {
         return
@@ -184,6 +232,7 @@ var unfocused = 0;
  * @property {String} galleryPano - CSS selector for gallery panoramas container
  * @property {String} baseUrl - base address to set on image close
  * @property {String} imageBaseUrl - base address to link to full-res images
+ * @property {Boolean} enableFavorite - allow favorite pictures
  */
 
 function collectStats(params) {
@@ -520,7 +569,7 @@ function loadAlbum(params) {
                     '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, /thumb/300w/' + img.hash + '.jpg 300w, /thumb/600w/' + img.hash + '.jpg 600w" /></div>')
                 a.attr("data-ts", img.time)
 
-                a.append('<div class="pswp-caption-content" style="display: none">' + img_description + '</div>')
+                a.append('<div class="pswp-caption-content" data-hash="'+img.hash+'" style="display: none">' + img_description + '</div>')
 
                 $(params.gallery).append(a)
                 if (typeof img.blur_hash !== "undefined") {
@@ -929,6 +978,9 @@ function loadAlbum(params) {
 
     if (params.albumData != null) {
         renderAlbum(params.albumData)
+        if (params.enableFavorite) {
+            fillFavorite(params.albumData.album.hash)
+        }
     } else {
         client.getAlbumContents({
             name: params.albumName
