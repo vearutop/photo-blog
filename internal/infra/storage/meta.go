@@ -13,7 +13,7 @@ const (
 
 func NewMetaRepository(storage *sqluct.Storage) *MetaRepository {
 	return &MetaRepository{
-		hashedRepo: hashedRepo[photo.Meta, *photo.Meta]{
+		HashedRepo: HashedRepo[photo.Meta, *photo.Meta]{
 			StorageOf: sqluct.Table[photo.Meta](storage, MetaTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewMetaRepository(storage *sqluct.Storage) *MetaRepository {
 
 // MetaRepository saves meta data of hashed entities to database.
 type MetaRepository struct {
-	hashedRepo[photo.Meta, *photo.Meta]
+	HashedRepo[photo.Meta, *photo.Meta]
 }
 
 func (ir *MetaRepository) PhotoMetaEnsurer() uniq.Ensurer[photo.Meta] {

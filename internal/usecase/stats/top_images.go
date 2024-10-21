@@ -53,7 +53,7 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 
 		for _, row := range st {
 			r := dateRow{}
-			r.Preview = `<a href="/list-` + row.Hash.String() + `/"><img src="/thumb/300w/` + row.Hash.String() + `.jpg" src="/thumb/600w/` + row.Hash.String() + `.jpg 2x"/></a>`
+			r.Preview = `<a href="/list-` + row.Hash.String() + `/"><img style="width: 300px" src="/thumb/300w/` + row.Hash.String() + `.jpg" src="/thumb/600w/` + row.Hash.String() + `.jpg 2x"/></a>`
 			r.Hash = row.Hash.String()
 			r.Views = row.Views
 			r.Uniq = row.Uniq

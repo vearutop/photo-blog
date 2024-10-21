@@ -42,7 +42,9 @@ func AddMessage(deps addMessageDeps) usecase.Interactor {
 		thread.Hash = uniq.StringHash(th)
 
 		if _, err := deps.CommentThreadEnsurer().Ensure(ctx, thread, uniq.EnsureOption[comment.Thread]{
-			SkipUpdate: true,
+			Prepare: func(candidate *comment.Thread, existing *comment.Thread) (skipUpdate bool) {
+				return true
+			},
 		}); err != nil {
 			return err
 		}
@@ -55,7 +57,9 @@ func AddMessage(deps addMessageDeps) usecase.Interactor {
 		message.Text = input.Text
 
 		*output, err = deps.CommentMessageEnsurer().Ensure(ctx, message, uniq.EnsureOption[comment.Message]{
-			SkipUpdate: true,
+			Prepare: func(candidate *comment.Message, existing *comment.Message) (skipUpdate bool) {
+				return true
+			},
 		})
 		if err != nil {
 			return err

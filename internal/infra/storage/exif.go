@@ -13,7 +13,7 @@ const (
 
 func NewExifRepository(storage *sqluct.Storage) *ExifRepository {
 	return &ExifRepository{
-		hashedRepo: hashedRepo[photo.Exif, *photo.Exif]{
+		HashedRepo: HashedRepo[photo.Exif, *photo.Exif]{
 			StorageOf: sqluct.Table[photo.Exif](storage, ExifTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewExifRepository(storage *sqluct.Storage) *ExifRepository {
 
 // ExifRepository saves images to database.
 type ExifRepository struct {
-	hashedRepo[photo.Exif, *photo.Exif]
+	HashedRepo[photo.Exif, *photo.Exif]
 }
 
 func (ir *ExifRepository) PhotoExifEnsurer() uniq.Ensurer[photo.Exif] {

@@ -13,7 +13,7 @@ const (
 
 func NewThreadRepository(storage *sqluct.Storage) *ThreadRepository {
 	return &ThreadRepository{
-		hashedRepo: hashedRepo[comment.Thread, *comment.Thread]{
+		HashedRepo: HashedRepo[comment.Thread, *comment.Thread]{
 			StorageOf: sqluct.Table[comment.Thread](storage, ThreadTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewThreadRepository(storage *sqluct.Storage) *ThreadRepository {
 
 // ThreadRepository saves images to database.
 type ThreadRepository struct {
-	hashedRepo[comment.Thread, *comment.Thread]
+	HashedRepo[comment.Thread, *comment.Thread]
 }
 
 func (ir *ThreadRepository) CommentThreadEnsurer() uniq.Ensurer[comment.Thread] {

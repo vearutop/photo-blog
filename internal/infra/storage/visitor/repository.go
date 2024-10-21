@@ -30,6 +30,8 @@ type StatsRepository struct {
 	pv  *pageVisitor
 	v   *visitor
 
+	visitorRepository *visitorRepository
+
 	collectImageSuffix  string
 	collectThumbsSuffix string
 
@@ -54,7 +56,9 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 	s.ps = &PageStats{}
 	s.dps = &DailyPageStats{}
 	s.pv = &pageVisitor{}
-	s.v = &visitor{}
+
+	s.visitorRepository = newVisitorRepository(st)
+	s.v = s.visitorRepository.R
 
 	s.ref = st.MakeReferencer()
 	s.ref.AddTableAlias(s.is, "")
@@ -381,24 +385,6 @@ func (s *StatsRepository) CollectRefer(ctx context.Context, visitor uniq.Hash, t
 	}
 }
 
-const visitorTable = "visitor"
-
-type visitor struct {
-	Hash      uniq.Hash `db:"hash" description:"Visitor hash"`
-	CreatedAt time.Time `db:"created_at" description:"Timestamp created"`
-	Lang      string    `db:"lang" description:"Visitor lang"`
-	IPAddr    string    `db:"ip_addr" description:"Visitor IP address"`
-	UserAgent string    `db:"user_agent" description:"Visitor user agent"`
-	Device    string    `db:"device" description:"Device"`
-	IsBot     bool      `db:"is_bot" description:"Visitor is bot"`
-	IsAdmin   bool      `db:"is_admin" description:"Visitor is admin"`
-	Referer   string    `db:"referer" description:"Referer"`
-
-	ScreenHeight int     `db:"scr_h" description:"Visitor screen height"`
-	ScreenWidth  int     `db:"scr_w" description:"Visitor screen width"`
-	PixelRatio   float64 `db:"px_r" description:"Visitor pixel ratio"`
-}
-
 func atoi(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
@@ -413,8 +399,7 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 	hd := r.Header
 	ua := r.UserAgent()
 	v := visitor{
-		Hash:      h,
-		CreatedAt: ts,
+		LastSeen:  ts,
 		Lang:      hd.Get("Accept-Language"),
 		IPAddr:    hd.Get("X-Forwarded-For"),
 		UserAgent: ua,
@@ -432,66 +417,108 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 		PixelRatio:   atof(r.URL.Query().Get("px")),
 	}
 
+	v.Hash = h
+	v.CreatedAt = ts
+
 	ctx := r.Context()
 
-	if rv, recent := s.isRecentVisitor(v); recent {
-		var columns []string
+	skipUpdate := func(candidate *visitor, existing *visitor) (skipUpdate bool) {
+		skipUpdate = true
 
-		if !rv.IsBot && v.IsBot {
-			columns = append(columns, s.ref.Col(&s.v.IsBot))
+		if existing.IsAdmin {
+			candidate.IsAdmin = true
 		}
 
-		if !rv.IsAdmin && v.IsAdmin {
-			columns = append(columns, s.ref.Col(&s.v.IsAdmin))
+		if existing.IsBot {
+			candidate.IsBot = true
 		}
 
-		if rv.ScreenWidth == 0 && v.ScreenWidth != 0 {
-			columns = append(columns, s.ref.Col(&s.v.ScreenWidth), s.ref.Col(&s.v.ScreenHeight), s.ref.Col(&s.v.PixelRatio))
+		if candidate.Device == "" {
+			candidate.Device = existing.Device
 		}
 
-		if len(columns) == 0 {
-			return
+		if candidate.Lang == "" {
+			candidate.Lang = existing.Lang
 		}
 
-		_, err := s.st.UpdateStmt(visitorTable, v, func(options *sqluct.Options) {
-			options.Columns = columns
-		}).Where(squirrel.Eq{s.ref.Ref(&s.v.Hash): v.Hash}).ExecContext(ctx)
-		if err != nil {
-			s.l.Error(ctx, "failed to update visitor", "error", err)
+		if candidate.Referer == "" {
+			candidate.Referer = existing.Referer
 		}
 
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		s.recentVisitors[v.Hash] = v
+		if skipUpdate && candidate.IsBot && !existing.IsBot {
+			skipUpdate = false
+		}
+
+		if skipUpdate && candidate.IsAdmin && !existing.IsAdmin {
+			skipUpdate = false
+		}
+
+		if skipUpdate && candidate.Device != "" && existing.Device == "" {
+			skipUpdate = false
+		}
+
+		if skipUpdate && candidate.Lang != "" && existing.Lang == "" {
+			skipUpdate = false
+		}
+
+		if skipUpdate && candidate.Referer != "" && existing.Referer == "" {
+			skipUpdate = false
+		}
+
+		if skipUpdate && candidate.ScreenWidth != 0 && existing.ScreenWidth == 0 {
+			skipUpdate = false
+		}
+
+		if !strings.Contains(existing.IPAddr, candidate.IPAddr) && len(existing.IPAddr) < 240 {
+			skipUpdate = false
+			candidate.IPAddr = strings.TrimPrefix(",", existing.IPAddr+","+candidate.IPAddr)
+		}
+
+		if skipUpdate && candidate.LastSeen.Sub(existing.LastSeen) > time.Minute {
+			skipUpdate = false
+		}
+
+		return skipUpdate
+	}
+
+	// Nothing to update.
+	if rv, ok := s.recentVisitor(v.Hash); ok && skipUpdate(&v, &rv) {
+		s.l.Info(ctx, "skip cached visitor", "visitor", v)
 
 		return
 	}
 
-	_, err := s.st.InsertStmt(visitorTable, v, func(options *sqluct.Options) {
-		options.InsertIgnore = true
-	}).ExecContext(ctx)
+	s.l.Info(ctx, "collect visitor", "visitor", v)
+
+	ev, err := s.visitorRepository.Ensure(ctx, v, uniq.EnsureOption[visitor]{
+		Prepare: skipUpdate,
+	})
 	if err != nil {
-		s.l.Error(ctx, "failed to collect visitor", "error", err)
+		s.l.Error(ctx, "failed to ensure visitor", "error", err)
+		return
 	}
+
+	s.setRecentVisitor(ev)
 }
 
-func (s *StatsRepository) isRecentVisitor(v visitor) (visitor, bool) {
+func (s *StatsRepository) recentVisitor(hash uniq.Hash) (visitor, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	v, ok := s.recentVisitors[hash]
+
+	return v, ok
+}
+
+func (s *StatsRepository) setRecentVisitor(v visitor) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.recentVisitors[v.Hash] = v
 
 	if v.IsAdmin && !s.isAdmin[v.Hash] {
 		s.isAdmin[v.Hash] = true
 	}
-
-	rv, ok := s.recentVisitors[v.Hash]
-	if !ok {
-		// TODO: eviction.
-		s.recentVisitors[v.Hash] = v
-
-		return v, false
-	}
-
-	return rv, ok
 }
 
 func (s *StatsRepository) CollectRequest(ctx context.Context, input CollectStats, ts time.Time) {

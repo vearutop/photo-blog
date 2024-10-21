@@ -13,7 +13,7 @@ const (
 
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 	return &ImageRepository{
-		hashedRepo: hashedRepo[photo.Image, *photo.Image]{
+		HashedRepo: HashedRepo[photo.Image, *photo.Image]{
 			StorageOf: sqluct.Table[photo.Image](storage, ImageTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 
 // ImageRepository saves images to database.
 type ImageRepository struct {
-	hashedRepo[photo.Image, *photo.Image]
+	HashedRepo[photo.Image, *photo.Image]
 }
 
 func (ir *ImageRepository) PhotoImageEnsurer() uniq.Ensurer[photo.Image] {

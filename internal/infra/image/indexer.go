@@ -239,11 +239,13 @@ func (i *Indexer) ensureGeoLabel(ctx context.Context, hash uniq.Hash) {
 	}
 
 	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
-		Prepare: func(candidate, existing *photo.Meta) {
+		Prepare: func(candidate, existing *photo.Meta) bool {
 			if existing != nil {
 				*candidate = *existing
 			}
 			candidate.Data.Val.GeoLabel = &label
+
+			return false
 		},
 	}); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
@@ -273,11 +275,13 @@ func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
 
 	i.deps.CloudflareImageClassifier().Classify(ctx, img.Hash, func(labels []photo.ImageLabel) {
 		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
-			Prepare: func(candidate, existing *photo.Meta) {
+			Prepare: func(candidate, existing *photo.Meta) bool {
 				if existing != nil {
 					*candidate = *existing
 				}
 				candidate.Data.Val.ImageClassification = append(candidate.Data.Val.ImageClassification, labels...)
+
+				return false
 			},
 		}); err != nil {
 			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
@@ -308,11 +312,13 @@ func (i *Indexer) ensureCFDescription(ctx context.Context, img photo.Image) {
 
 	i.deps.CloudflareImageDescriber().Describe(ctx, img.Hash, func(label photo.ImageLabel) {
 		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
-			Prepare: func(candidate, existing *photo.Meta) {
+			Prepare: func(candidate, existing *photo.Meta) bool {
 				if existing != nil {
 					*candidate = *existing
 				}
 				candidate.Data.Val.ImageClassification = append(candidate.Data.Val.ImageClassification, label)
+
+				return false
 			},
 		}); err != nil {
 			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
@@ -381,11 +387,13 @@ func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 	}
 
 	if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
-		Prepare: func(candidate, existing *photo.Meta) {
+		Prepare: func(candidate, existing *photo.Meta) bool {
 			if existing != nil {
 				*candidate = *existing
 			}
 			candidate.Data.Val.Faces = &f
+
+			return false
 		},
 	}); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)

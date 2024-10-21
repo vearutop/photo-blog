@@ -32,7 +32,7 @@ type AlbumImage struct {
 func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository, mr *MetaRepository) *AlbumRepository {
 	ar := &AlbumRepository{
 		st: storage,
-		hashedRepo: hashedRepo[photo.Album, *photo.Album]{
+		HashedRepo: HashedRepo[photo.Album, *photo.Album]{
 			StorageOf: sqluct.Table[photo.Album](storage, AlbumTable),
 		},
 	}
@@ -45,7 +45,7 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository, mr *MetaRe
 	ar.Referencer.AddTableAlias(ar.m.R, MetaTable)
 	ar.Referencer.AddTableAlias(ar.i.R, ImageTable)
 
-	ar.hashedRepo.prepare = func(ctx context.Context, v *photo.Album) error {
+	ar.HashedRepo.prepare = func(ctx context.Context, v *photo.Album) error {
 		t := v.Settings.Texts
 		if len(t) > 0 {
 			sort.Slice(t, func(i, j int) bool {
@@ -62,7 +62,7 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository, mr *MetaRe
 // AlbumRepository saves images to database.
 type AlbumRepository struct {
 	st *sqluct.Storage
-	hashedRepo[photo.Album, *photo.Album]
+	HashedRepo[photo.Album, *photo.Album]
 
 	ai sqluct.StorageOf[AlbumImage]
 	i  *ImageRepository

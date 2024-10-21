@@ -13,7 +13,7 @@ const (
 
 func NewVisitorRepository(storage *sqluct.Storage) *VisitorRepository {
 	return &VisitorRepository{
-		hashedRepo: hashedRepo[site.Visitor, *site.Visitor]{
+		HashedRepo: HashedRepo[site.Visitor, *site.Visitor]{
 			StorageOf: sqluct.Table[site.Visitor](storage, VisitorTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewVisitorRepository(storage *sqluct.Storage) *VisitorRepository {
 
 // VisitorRepository saves images to database.
 type VisitorRepository struct {
-	hashedRepo[site.Visitor, *site.Visitor]
+	HashedRepo[site.Visitor, *site.Visitor]
 }
 
 func (ir *VisitorRepository) SiteVisitorEnsurer() uniq.Ensurer[site.Visitor] {

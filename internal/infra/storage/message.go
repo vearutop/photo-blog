@@ -13,7 +13,7 @@ const (
 
 func NewMessageRepository(storage *sqluct.Storage) *MessageRepository {
 	return &MessageRepository{
-		hashedRepo: hashedRepo[comment.Message, *comment.Message]{
+		HashedRepo: HashedRepo[comment.Message, *comment.Message]{
 			StorageOf: sqluct.Table[comment.Message](storage, MessageTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewMessageRepository(storage *sqluct.Storage) *MessageRepository {
 
 // MessageRepository saves images to database.
 type MessageRepository struct {
-	hashedRepo[comment.Message, *comment.Message]
+	HashedRepo[comment.Message, *comment.Message]
 }
 
 func (ir *MessageRepository) CommentMessageEnsurer() uniq.Ensurer[comment.Message] {

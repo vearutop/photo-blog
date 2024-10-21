@@ -13,7 +13,7 @@ const (
 
 func NewGpxRepository(storage *sqluct.Storage) *GpxRepository {
 	return &GpxRepository{
-		hashedRepo: hashedRepo[photo.Gpx, *photo.Gpx]{
+		HashedRepo: HashedRepo[photo.Gpx, *photo.Gpx]{
 			StorageOf: sqluct.Table[photo.Gpx](storage, GpxTable),
 		},
 	}
@@ -21,7 +21,7 @@ func NewGpxRepository(storage *sqluct.Storage) *GpxRepository {
 
 // GpxRepository saves images to database.
 type GpxRepository struct {
-	hashedRepo[photo.Gpx, *photo.Gpx]
+	HashedRepo[photo.Gpx, *photo.Gpx]
 }
 
 func (ir *GpxRepository) PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx] {

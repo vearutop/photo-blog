@@ -56,14 +56,17 @@ func augmentResErr[V any](res V, err error) (V, error) {
 	return res, err
 }
 
-type hashedRepo[V any, T interface {
-	*V
-
+type HashedEntity interface {
 	HashPtr() *uniq.Hash
 	CreatedAtPtr() *time.Time
 
 	SetCreatedAt(t time.Time)
 	GetCreatedAt() time.Time
+}
+
+type HashedRepo[V any, T interface {
+	*V
+	HashedEntity
 }] struct {
 	mu sync.Mutex
 	sqluct.StorageOf[V]
@@ -72,15 +75,15 @@ type hashedRepo[V any, T interface {
 	prepare func(ctx context.Context, v *V) error
 }
 
-func (ir *hashedRepo[V, T]) hashCol() *uniq.Hash {
+func (ir *HashedRepo[V, T]) hashCol() *uniq.Hash {
 	return T(ir.R).HashPtr()
 }
 
-func (ir *hashedRepo[V, T]) hashEq(h uniq.Hash) squirrel.Eq {
+func (ir *HashedRepo[V, T]) hashEq(h uniq.Hash) squirrel.Eq {
 	return ir.Eq(ir.hashCol(), h)
 }
 
-func (ir *hashedRepo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, error) {
+func (ir *HashedRepo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, error) {
 	col := ir.Col(ir.hashCol())
 
 	q := ir.SelectStmt(func(options *sqluct.Options) {
@@ -99,12 +102,12 @@ func (ir *hashedRepo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, e
 	return false, augmentErr(err)
 }
 
-func (ir *hashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, error) {
+func (ir *HashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, error) {
 	q := ir.SelectStmt().Where(ir.hashEq(hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
 
-func (ir *hashedRepo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]V, error) {
+func (ir *HashedRepo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]V, error) {
 	if len(hashes) == 0 {
 		return nil, nil
 	}
@@ -114,18 +117,18 @@ func (ir *hashedRepo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Has
 	return augmentResErr(ir.List(ctx, q))
 }
 
-func (ir *hashedRepo[V, T]) findBaseByHash(ctx context.Context, hash uniq.Hash) (V, error) {
+func (ir *HashedRepo[V, T]) findBaseByHash(ctx context.Context, hash uniq.Hash) (V, error) {
 	q := ir.SelectStmt(func(options *sqluct.Options) {
 		options.Columns = []string{ir.Col(T(ir.R).CreatedAtPtr())}
 	}).Where(ir.hashEq(hash))
 	return augmentResErr(ir.Get(ctx, q))
 }
 
-func (ir *hashedRepo[V, T]) FindAll(ctx context.Context) ([]V, error) {
+func (ir *HashedRepo[V, T]) FindAll(ctx context.Context) ([]V, error) {
 	return augmentResErr(ir.List(ctx, ir.SelectStmt()))
 }
 
-func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq.EnsureOption[V]) (V, error) {
+func (ir *HashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq.EnsureOption[V]) (V, error) {
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -146,10 +149,6 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 		skipUpdate := false
 
 		for _, o := range options {
-			if o.SkipUpdate {
-				skipUpdate = true
-			}
-
 			if o.OnUpdate != nil {
 				opts = append(opts, func(opt *sqluct.Options) {
 					o.OnUpdate(ir.StorageOf, opt)
@@ -157,7 +156,7 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 			}
 
 			if o.Prepare != nil {
-				o.Prepare(v, vv)
+				skipUpdate = o.Prepare(v, vv)
 			}
 		}
 
@@ -216,7 +215,7 @@ func (ir *hashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 	return value, nil
 }
 
-func (ir *hashedRepo[V, T]) Add(ctx context.Context, value V) error {
+func (ir *HashedRepo[V, T]) Add(ctx context.Context, value V) error {
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -235,7 +234,7 @@ func (ir *hashedRepo[V, T]) Add(ctx context.Context, value V) error {
 	return augmentReturnErr(ir.InsertRow(ctx, value))
 }
 
-func (ir *hashedRepo[V, T]) Update(ctx context.Context, value V) error {
+func (ir *HashedRepo[V, T]) Update(ctx context.Context, value V) error {
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -252,6 +251,6 @@ func (ir *hashedRepo[V, T]) Update(ctx context.Context, value V) error {
 	return augmentReturnErr(ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx))
 }
 
-func (ir *hashedRepo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
+func (ir *HashedRepo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
 	return augmentReturnErr(ir.DeleteStmt().Where(ir.hashEq(h)).ExecContext(ctx))
 }

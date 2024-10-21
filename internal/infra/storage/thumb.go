@@ -22,7 +22,7 @@ func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer, log
 	return &ThumbRepository{
 		upstream: upstream,
 		logger:   logger,
-		hashedRepo: hashedRepo[photo.Thumb, *photo.Thumb]{
+		HashedRepo: HashedRepo[photo.Thumb, *photo.Thumb]{
 			StorageOf: sqluct.Table[photo.Thumb](storage, ThumbTable),
 		},
 	}
@@ -32,7 +32,7 @@ func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer, log
 type ThumbRepository struct {
 	upstream photo.Thumbnailer
 	logger   ctxd.Logger
-	hashedRepo[photo.Thumb, *photo.Thumb]
+	HashedRepo[photo.Thumb, *photo.Thumb]
 }
 
 func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {

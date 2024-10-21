@@ -36,7 +36,7 @@ require (
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.5.0
 	github.com/vearutop/statigz v1.4.0
-	github.com/yuin/goldmark v1.7.4
+	github.com/yuin/goldmark v1.7.8
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.28.0
