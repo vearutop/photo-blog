@@ -7,6 +7,7 @@
     <link rel="icon" href="{{.Favicon}}" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/menu.css">
     <link rel="stylesheet" href="/static/photoswipe/photoswipe.css">
     <link rel="stylesheet" href="/static/photoswipe/photoswipe-dynamic-caption-plugin.css">
 
@@ -43,8 +44,35 @@
 <body class="dark-mode">
 {{.Header}}
 
-<div class="main">
-    <h1>{{.Title}}</h1>
+<div id="layout" class="main">
+    <!-- Menu toggle -->
+    <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+    </a>
+
+    <div id="menu">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><a href="/" class="pure-menu-link">Home</a></li>
+                <li class="pure-menu-item control-panel"><a title="Settings" class="pure-menu-link" href="/edit/settings.html">Settings</a></li>
+                <li class="pure-menu-item control-panel"><a title="Add Album" class="pure-menu-link" href="/add-album.html">Add Album</a></li>
+                {{ if .Secure }}
+                <li class="pure-menu-item control-panel"><a title="Log out" class="pure-menu-link" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')">Log out</a></li>
+                {{ if .ShowLoginButton }}
+                <li class="pure-menu-item not-control-panel"><a title="Log in" class="pure-menu-link" href="/login">Log in</a></li>
+                {{ end }}
+                {{ else }}
+                <li class="pure-menu-item"><a title="Enable Admin Password" class="pure-menu-link" href="/edit/password.html">Set Password</a></li>
+                {{ end }}
+                <li class="pure-menu-item control-panel"><a title="Help" class="pure-menu-link" href="/help/">Help</a></li>
+                <li class="pure-menu-item"><a title="Favorite Photos" class="pure-menu-link" href="/favorite-photos/">Favorite Photos</a></li>
+                <li class="pure-menu-item"><a title="About" class="pure-menu-link" href="/about/">About</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <h1 class="main-title">{{.Title}}</h1>
 
     <div id="exif-container" class="exif"></div>
 
@@ -95,5 +123,7 @@
 </div>
 
 {{.Footer}}
+
+<script src="/static/menu.js"></script>
 </body>
 </html>

@@ -7,6 +7,7 @@
     <link rel="icon" href="{{.Favicon}}" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/menu.css">
     <link rel="stylesheet" href="/static/photoswipe/photoswipe.css">
     <link rel="stylesheet" href="/static/photoswipe/photoswipe-dynamic-caption-plugin.css">
 
@@ -39,24 +40,60 @@
     <script type="text/javascript" src="/static/Control.FullScreen.min.js"></script>
     <script type="text/javascript" src="/static/leaflet/L.Control.Locate.js"></script>
     <script type="text/javascript" src="/static/leaflet-omnivore.min.js"></script>
-    <style>
-        /*{{if not .IsAdmin}}*/.control-panel {
-            display: none !important;
-        }/*{{end}}*/
-    </style>
+
     {{if or .IsAdmin .CollabKey}}
     <link rel="stylesheet" href="/static/tus/uppy.min.css">
     <script src="/static/tus/uppy.legacy.min.js"></script>
     {{end}}
+
+    <style>
+        /*{{if .IsAdmin}}*/
+        .not-control-panel {
+            display: none !important;
+        }
+        /*{{else}}*/
+        .control-panel {
+            display: none !important;
+        }
+        /*{{end}}*/
+    </style>
+
 {{.Head}}
 </head>
 
 <body class="dark-mode">
 {{.Header}}
 
-<div class="main">
-    <h1 id="album-title" style="display: inline-block; margin-right: 50px;">
-        <a href="/#{{.Name}}" title="Back to home page" class="ctrl-btn home-icon"></a> {{if not .Public}}
+<div id="layout" class="main">
+    <!-- Menu toggle -->
+    <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+    </a>
+
+    <div id="menu">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><a href="/#{{.Name}}" class="pure-menu-link">Home</a></li>
+                <li class="pure-menu-item control-panel"><a title="Settings" class="pure-menu-link" href="/edit/settings.html">Settings</a></li>
+                <li class="pure-menu-item control-panel"><a title="Add Album" class="pure-menu-link" href="/add-album.html">Add Album</a></li>
+                {{ if .Secure }}
+                <li class="pure-menu-item control-panel"><a title="Log out" class="pure-menu-link" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')">Log out</a></li>
+                {{ if .ShowLoginButton }}
+                <li class="pure-menu-item not-control-panel"><a title="Log in" class="pure-menu-link" href="/login">Log in</a></li>
+                {{ end }}
+                {{ else }}
+                <li class="pure-menu-item"><a title="Enable Admin Password" class="pure-menu-link" href="/edit/password.html">Set Password</a></li>
+                {{ end }}
+                <li class="pure-menu-item control-panel"><a title="Help" class="pure-menu-link" href="/help/">Help</a></li>
+                <li class="pure-menu-item"><a title="Favorite Photos" class="pure-menu-link" href="/favorite-photos/">Favorite Photos</a></li>
+                <li class="pure-menu-item"><a title="About" class="pure-menu-link" href="/about/">About</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <h1 class="main-title" id="album-title" style="display: inline-block; margin-right: 50px;">
+        <!--a href="/#{{.Name}}" title="Back to home page" class="ctrl-btn home-icon"></a--> {{if not .Public}}
         <div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div>
         {{end}}{{.Title}}
     </h1>
@@ -127,5 +164,7 @@
 </script>
 
 {{.Footer}}
+
+<script src="/static/menu.js"></script>
 </body>
 </html>

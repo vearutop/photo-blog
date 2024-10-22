@@ -38,25 +38,33 @@ type pageCommon struct {
 	Head    template.HTML
 	Header  template.HTML
 	Footer  template.HTML
+
+	Secure          bool
+	IsAdmin         bool
+	ShowLoginButton bool
 }
 
-func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Appearance) {
+func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Values) {
 	if p.Title == "" {
-		p.Title = r.MustRenderLang(ctx, a.SiteTitle, func(o *txt.RenderOptions) {
+		p.Title = r.MustRenderLang(ctx, a.Appearance().SiteTitle, func(o *txt.RenderOptions) {
 			o.StripTags = true
 		})
 	}
 
 	p.Lang = txt.Language(ctx)
 
-	p.Head = template.HTML(r.MustRenderLang(ctx, a.SiteHead))
-	p.Header = template.HTML(r.MustRenderLang(ctx, a.SiteHeader))
-	p.Footer = template.HTML(r.MustRenderLang(ctx, a.SiteFooter))
-	p.Favicon = a.SiteFavicon
+	p.Head = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteHead))
+	p.Header = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteHeader))
+	p.Footer = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteFooter))
+	p.Favicon = a.Appearance().SiteFavicon
 
 	if p.Favicon == "" {
 		p.Favicon = "/static/favicon.png"
 	}
+
+	p.IsAdmin = auth.IsAdmin(ctx)
+	p.Secure = !a.Security().Disabled()
+	p.ShowLoginButton = !a.Privacy().HideLoginButton
 }
 
 // ShowMain creates use case interactor to show album.
@@ -70,12 +78,9 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		pageCommon
 
 		CoverImage        string
-		Secure            bool
-		IsAdmin           bool
 		Featured          string
 		FeaturedAlbumData getAlbumOutput
 		Albums            []getAlbumOutput
-		ShowLoginButton   bool
 	}
 
 	cacheName := "main-page"
@@ -92,12 +97,9 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 
-			d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+			d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 
-			d.IsAdmin = auth.IsAdmin(ctx)
-			d.Secure = !deps.Settings().Security().Disabled()
 			d.Featured = deps.Settings().Appearance().FeaturedAlbumName
-			d.ShowLoginButton = !deps.Settings().Privacy().HideLoginButton
 
 			if d.Featured != "" {
 				cont, err := getAlbumContents(ctx, deps, d.Featured, false)

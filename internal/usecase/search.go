@@ -85,7 +85,7 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		d.AlbumData = cont
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
-		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
 		d.OGSiteName = deps.Settings().Appearance().SiteTitle

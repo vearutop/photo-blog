@@ -317,3 +317,7 @@ a.ctrl-btn:hover {
     background: #0078A8;
     padding: 10px;
 }
+
+.main-title {
+    margin: 7px 25px
+}

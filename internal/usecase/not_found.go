@@ -36,7 +36,7 @@ func NotFound(deps notFoundDeps) usecase.IOInteractorOf[struct{}, web.Page] {
 		deps.StatsTracker().Add(ctx, "not_found", 1)
 
 		d := pageData{}
-		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 
 		d.Description = `There is nothing to be shown at this page. Please check the <a href="/">home page</a> instead.`
 

@@ -61,7 +61,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		OGSiteName  string
 		Name        string
 		CoverImage  string
-		IsAdmin     bool
 		CollabKey   string
 		Public      bool
 		Hash        string
@@ -121,7 +120,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.AlbumData.Album.Settings.CollabKey = ""
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
-		d.fill(ctx, deps.TxtRenderer(), deps.Settings().Appearance())
+		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
 		d.OGSiteName = deps.Settings().Appearance().SiteTitle
