@@ -15,6 +15,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
@@ -35,6 +36,7 @@ type getAlbumImagesDeps interface {
 	PhotoGpxFinder() uniq.Finder[photo.Gpx]
 	VisitorStats() *visitor.StatsRepository
 	FavoriteRepository() *storage.FavoriteRepository
+	DepCache() *dep.Cache
 
 	service.TxtRendererProvider
 }

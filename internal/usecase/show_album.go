@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/bool64/brick"
 	"github.com/docker/go-units"
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -83,11 +87,22 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		ShowMap      bool
 	}
 
+	cacheName := "album-data"
+	c := brick.MakeCacheOf[getAlbumOutput](deps, cacheName, time.Hour)
+
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Info(ctx, "showing album", "name", in.Name)
 
-		cont, err := getAlbumContents(ctx, deps, in.Name, false)
+		cacheKey := []byte(in.Name + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx))
+		cont, err := c.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
+			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
+			deps.DepCache().AlbumDependency(cacheName, cacheKey, in.Name)
+
+			out.ResponseWriter().Header().Set("X-Cache-Miss", "1")
+
+			return getAlbumContents(ctx, deps, in.Name, false)
+		})
 		if err != nil {
 			if errors.Is(err, status.NotFound) {
 				return notFound.Invoke(ctx, struct{}{}, out)
@@ -123,7 +138,9 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
-		d.OGSiteName = deps.Settings().Appearance().SiteTitle
+		d.OGSiteName = deps.TxtRenderer().MustRenderLang(ctx, deps.Settings().Appearance().SiteTitle, func(o *txt.RenderOptions) {
+			o.StripTags = true
+		})
 
 		d.ImageBaseURL = album.Settings.ImageBaseURL
 		d.ShowMap = !album.Settings.HideMap
