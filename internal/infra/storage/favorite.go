@@ -113,6 +113,7 @@ func (r *FavoriteRepository) AddImages(ctx context.Context, visitorHash uniq.Has
 		fi := FavoriteImage{}
 		fi.ImageHash = imageHash
 		fi.VisitorHash = visitorHash
+		fi.CreatedAt = time.Now()
 
 		rows = append(rows, fi)
 	}
