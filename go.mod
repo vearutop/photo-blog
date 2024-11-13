@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
 	github.com/bool64/brick v0.2.5
-	github.com/bool64/cache v0.4.7
+	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.36
 	github.com/bool64/sqluct v0.2.3
@@ -20,8 +20,10 @@ require (
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
 	github.com/go-chi/chi/v5 v5.1.0
+	github.com/leonelquinteros/gotext v1.7.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/snapcore/go-gettext v0.0.0-20230721153050-9082cdc2db05
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggest/assertjson v1.9.0
@@ -30,7 +32,7 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.72
 	github.com/swaggest/openapi-go v0.2.54
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.67
+	github.com/swaggest/rest v0.2.68
 	github.com/swaggest/swgui v1.8.2
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
@@ -43,7 +45,7 @@ require (
 	golang.org/x/image v0.21.0
 	golang.org/x/net v0.30.0
 	golang.org/x/text v0.19.0
-	modernc.org/sqlite v1.33.1
+	modernc.org/sqlite v1.32.0
 )
 
 require (
@@ -106,7 +108,7 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	google.golang.org/api v0.195.0 // indirect
@@ -115,7 +117,7 @@ require (
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a // indirect
+	modernc.org/gc/v3 v3.0.0-20241004144649-1aea3fae8852 // indirect
 	modernc.org/libc v1.61.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
