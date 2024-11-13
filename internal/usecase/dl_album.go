@@ -9,8 +9,10 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync/atomic"
 
 	"github.com/bool64/ctxd"
+	"github.com/bool64/stats"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -23,6 +25,7 @@ import (
 
 type dlAlbumDeps interface {
 	CtxdLogger() ctxd.Logger
+	StatsTracker() stats.Tracker
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
@@ -36,6 +39,8 @@ type dlAlbumInput struct {
 }
 
 func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
+	var inProgress int64
+
 	u := usecase.NewInteractor(func(ctx context.Context, in dlAlbumInput, out *response.EmbeddedSetter) (err error) {
 		privacy := deps.Settings().Privacy()
 		if (privacy.HideOriginal || privacy.HideBatchDownload) && !auth.IsAdmin(ctx) {
@@ -64,6 +69,12 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 		if err != nil {
 			return err
 		}
+
+		deps.StatsTracker().Set(ctx, "dl_in_progress", float64(atomic.AddInt64(&inProgress, 1)))
+
+		defer func() {
+			deps.StatsTracker().Set(ctx, "dl_in_progress", float64(atomic.AddInt64(&inProgress, -1)))
+		}()
 
 		rw.Header().Set("Content-Type", "application/zip")
 		rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", album.Name))
