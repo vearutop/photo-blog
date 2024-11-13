@@ -63,7 +63,11 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 				r.Name = `<a href="/">[main page]</a>`
 			} else {
 				name := nameByHash[row.Hash]
-				r.Name = `<a href="/` + name + `/">` + name + `</a>`
+				if name == "" {
+					r.Name = "[not found: " + row.Hash.String() + "]"
+				} else {
+					r.Name = `<a href="/` + name + `/">` + name + `</a>`
+				}
 			}
 			r.Views = row.Views
 			r.Uniq = row.Uniq
