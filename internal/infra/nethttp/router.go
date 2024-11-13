@@ -4,6 +4,7 @@ package nethttp
 import (
 	"context"
 	"net/http"
+	"runtime/coverage"
 	"strings"
 	"time"
 
@@ -50,6 +51,22 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 	s := brick.NewBaseWebService(deps.BaseLocator)
 	deps.CtxdLogger().Important(context.Background(), "initializing router")
+
+	deps.BaseLocator.DebugRouter.Get("/coverage-meta", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "binary/octet-stream")
+		if err := coverage.WriteMeta(w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	deps.BaseLocator.DebugRouter.AddLink("coverage-meta", "Coverage Meta")
+
+	deps.BaseLocator.DebugRouter.Get("/coverage-counters", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "binary/octet-stream")
+		if err := coverage.WriteCounters(w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	deps.BaseLocator.DebugRouter.AddLink("coverage-counters", "Coverage Counters")
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
@@ -203,8 +220,9 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/help/{file}", help.ServeFile(deps))
 
 		s.Get("/", usecase.ShowMain(deps))
-		s.Get("/{name}/", usecase.ShowAlbum(deps))
-		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(usecase.ShowAlbum(deps)))
+		showAlbum := usecase.ShowAlbum(deps)
+		s.Get("/{name}/", showAlbum)
+		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(showAlbum))
 
 		s.Get("/search/", usecase.SearchImages(deps))
 
