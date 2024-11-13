@@ -300,6 +300,18 @@ a.ctrl-btn:hover {
         padding-left: 1em;
         width: 100%;
     }
+
+    .main-title {
+        margin: 11px 53px !important;
+        font-size: 22px;
+    }
+}
+
+/* hide extra images on main page on mobile devices */
+@media (max-width: 950px) {
+    .preview .img2 {
+        display: none;
+    }
 }
 
 /* hide extra images on main page on mobile devices */
