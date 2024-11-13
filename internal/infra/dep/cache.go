@@ -5,16 +5,19 @@ import (
 	"fmt"
 
 	"github.com/bool64/cache"
+	"github.com/bool64/ctxd"
 )
 
-func NewCache(index *cache.InvalidationIndex) *Cache {
+func NewCache(index *cache.InvalidationIndex, logger ctxd.Logger) *Cache {
 	return &Cache{
-		index: index,
+		logger: logger,
+		index:  index,
 	}
 }
 
 type Cache struct {
-	index *cache.InvalidationIndex
+	index  *cache.InvalidationIndex
+	logger ctxd.Logger
 }
 
 func (n *Cache) AlbumListDependency(cacheName string, cacheKey []byte) {
@@ -39,6 +42,8 @@ func (n *Cache) AlbumListChanged(ctx context.Context) error {
 }
 
 func (n *Cache) AlbumChanged(ctx context.Context, name string) error {
+	n.logger.Debug(ctx, "album changed", "name", name)
+
 	_, err := n.index.InvalidateByLabels(ctx, "album/"+name)
 	if err != nil {
 		err = fmt.Errorf("album %s changed: %w", name, err)
