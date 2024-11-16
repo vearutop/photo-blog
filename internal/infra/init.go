@@ -86,7 +86,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		},
 	)
 
-	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex())
+	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex(), l.CtxdLogger())
 
 	if err = setupUploadStorage(cfg.StoragePath); err != nil {
 		return nil, err

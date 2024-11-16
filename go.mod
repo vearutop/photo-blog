@@ -20,10 +20,8 @@ require (
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
 	github.com/go-chi/chi/v5 v5.1.0
-	github.com/leonelquinteros/gotext v1.7.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/snapcore/go-gettext v0.0.0-20230721153050-9082cdc2db05
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggest/assertjson v1.9.0
@@ -32,7 +30,7 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.72
 	github.com/swaggest/openapi-go v0.2.54
 	github.com/swaggest/refl v1.3.0
-	github.com/swaggest/rest v0.2.68
+	github.com/swaggest/rest v0.2.69
 	github.com/swaggest/swgui v1.8.2
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
@@ -41,11 +39,11 @@ require (
 	github.com/yuin/goldmark v1.7.8
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.28.0
-	golang.org/x/image v0.21.0
-	golang.org/x/net v0.30.0
-	golang.org/x/text v0.19.0
-	modernc.org/sqlite v1.32.0
+	golang.org/x/crypto v0.29.0
+	golang.org/x/image v0.22.0
+	golang.org/x/net v0.31.0
+	golang.org/x/text v0.20.0
+	modernc.org/sqlite v1.34.1
 )
 
 require (
@@ -108,9 +106,9 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 	google.golang.org/api v0.195.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/grpc v1.66.0 // indirect
