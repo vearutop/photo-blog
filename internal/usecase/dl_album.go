@@ -1,9 +1,7 @@
 package usecase
 
 import (
-	"archive/zip"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -21,6 +19,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
+	"github.com/vearutop/photo-blog/pkg/servezip"
 )
 
 type dlAlbumDeps interface {
@@ -76,78 +75,67 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			deps.StatsTracker().Set(ctx, "dl_in_progress", float64(atomic.AddInt64(&inProgress, -1)))
 		}()
 
-		rw.Header().Set("Content-Type", "application/zip")
-		rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", album.Name))
-
-		// Create a new zip archive.
-		w := zip.NewWriter(rw)
-		defer func() {
-			// Make sure to check the error on Close.
-			clErr := w.Close()
-			if clErr != nil {
-				if err == nil {
-					err = clErr
+		copyImg := func(img photo.Image) func(f io.Writer) error {
+			return func(f io.Writer) error {
+				if len(img.Settings.HTTPSources) > 0 {
+					resp, err := http.Get(img.Settings.HTTPSources[0])
+					if err != nil {
+						deps.CtxdLogger().Error(ctx, "failed to open remote image",
+							"error", err, "img", img)
+						return err
+					}
+					defer func() {
+						if err := resp.Body.Close(); err != nil {
+							deps.CtxdLogger().Error(ctx, "failed to close remote image")
+						}
+					}()
+					if _, err = io.Copy(f, resp.Body); err != nil {
+						return err
+					}
 				} else {
-					deps.CtxdLogger().Error(ctx, "failed to close zip writer", "error", clErr)
-				}
-			}
-		}()
-
-		copyImg := func(ctx context.Context, f io.Writer, img photo.Image) error {
-			if len(img.Settings.HTTPSources) > 0 {
-				resp, err := http.Get(img.Settings.HTTPSources[0])
-				if err != nil {
-					deps.CtxdLogger().Error(ctx, "failed to open remote image",
-						"error", err, "img", img)
-					return err
-				}
-				defer func() {
-					if err := resp.Body.Close(); err != nil {
-						deps.CtxdLogger().Error(ctx, "failed to close remote image")
+					src, err := os.Open(img.Path)
+					if err != nil {
+						deps.CtxdLogger().Error(ctx, "failed to open image",
+							"error", err, "img", img)
+						return err
 					}
-				}()
-				if _, err = io.Copy(f, resp.Body); err != nil {
-					return err
-				}
-			} else {
-				src, err := os.Open(img.Path)
-				if err != nil {
-					deps.CtxdLogger().Error(ctx, "failed to open image",
-						"error", err, "img", img)
-					return err
-				}
-				defer func() {
-					if err := src.Close(); err != nil {
-						deps.CtxdLogger().Error(ctx, "failed to close image")
+					defer func() {
+						if err := src.Close(); err != nil {
+							deps.CtxdLogger().Error(ctx, "failed to close image")
+						}
+					}()
+
+					if _, err = io.Copy(f, src); err != nil {
+						return err
 					}
-				}()
-
-				if _, err = io.Copy(f, src); err != nil {
-					return err
 				}
-			}
 
-			return nil
+				return nil
+			}
+		}
+
+		h := servezip.NewHandler(album.Name)
+		h.OnError = func(err error) {
+			deps.CtxdLogger().Error(ctx, "serve zip", "error", err)
 		}
 
 		for _, img := range images {
-			if img.TakenAt == nil {
-				img.TakenAt = &img.CreatedAt
+			takenAt := img.CreatedAt
+			if img.TakenAt != nil {
+				takenAt = *img.TakenAt
 			}
 
-			f, err := w.CreateHeader(&zip.FileHeader{
-				Name:     path.Base(strings.TrimSuffix(img.Path, "."+img.Hash.String()+".jpg")),
-				Method:   zip.Store,
-				Modified: *img.TakenAt,
-			})
-			if err != nil {
-				return err
-			}
-
-			if err := copyImg(ctx, f, img); err != nil {
+			if err := h.AddFile(servezip.FileSource{
+				Path:     path.Base(strings.TrimSuffix(img.Path, "."+img.Hash.String()+".jpg")),
+				Modified: takenAt,
+				Size:     img.Size,
+				Data:     copyImg(img),
+			}); err != nil {
 				return err
 			}
 		}
+
+		h.ServeHTTP(rw, nil)
 
 		return nil
 	})
