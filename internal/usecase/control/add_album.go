@@ -33,7 +33,7 @@ func AddAlbum(deps editAlbumPageDeps) usecase.Interactor {
 				AppendHTML: template.HTML(`
 <script>
 document.addEventListener("DOMContentLoaded", () => {
- document.getElementById("jsonform-1-elt-name").value += "` + time.Now().Format(time.DateOnly) + "-...-" + uniq.Hash(rand.Int()).String() + `";
+ document.getElementById("jsonform-1-elt-name").value += "` + time.Now().Format(time.DateOnly) + "-meaningful-name-" + uniq.Hash(rand.Int()).String() + `";
 });
 </script>`),
 			},
