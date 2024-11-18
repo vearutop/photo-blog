@@ -173,6 +173,19 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
 			return ctxd.WrapError(ctx, err, "dedup image sources")
 		}
+	} else if len(img.Settings.HTTPSources) == 0 {
+		fi, err := os.Stat(img.Path)
+		if err != nil {
+			return ctxd.WrapError(ctx, err, "stat image file")
+		}
+
+		if fi.Size() != img.Size {
+			img.Size = fi.Size()
+
+			if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
+				return ctxd.WrapError(ctx, err, "update image size")
+			}
+		}
 	}
 
 	if err := i.ensureExif(ctx, &img, flags); err != nil {
