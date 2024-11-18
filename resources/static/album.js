@@ -174,8 +174,21 @@ function enableDragNDropImagesReordering() {
 
 var lastBlur = null;
 var unfocused = 0;
+var currentImage = {
+    album: "", // Album name.
+    img: "" // Image hash.
+};
 
 (function () {
+    document.addEventListener('keyup', function (e) {
+        if (e.ctrlKey && e.key === "x") { // Ctrl+X: delete image.
+            if (currentImage.img) {
+                removeImage(currentImage.album, currentImage.img);
+            }
+        }
+        // console.log("key pressed", e)
+    }, false);
+
     window.addEventListener('blur', function () {
         lastBlur = new Date();
     });
@@ -711,7 +724,7 @@ function loadAlbum(params) {
             type: 'aside',
         });
 
-        var currentImage = {
+        currentImage = {
             album: params.albumName
         }
 
