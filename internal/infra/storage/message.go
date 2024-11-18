@@ -4,6 +4,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/comment"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 func NewMessageRepository(storage *sqluct.Storage) *MessageRepository {
 	return &MessageRepository{
-		HashedRepo: HashedRepo[comment.Message, *comment.Message]{
+		Repo: hashed.Repo[comment.Message, *comment.Message]{
 			StorageOf: sqluct.Table[comment.Message](storage, MessageTable),
 		},
 	}
@@ -21,7 +22,7 @@ func NewMessageRepository(storage *sqluct.Storage) *MessageRepository {
 
 // MessageRepository saves images to database.
 type MessageRepository struct {
-	HashedRepo[comment.Message, *comment.Message]
+	hashed.Repo[comment.Message, *comment.Message]
 }
 
 func (ir *MessageRepository) CommentMessageEnsurer() uniq.Ensurer[comment.Message] {

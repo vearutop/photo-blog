@@ -559,11 +559,11 @@ func (s *StatsRepository) CollectRequest(ctx context.Context, input CollectStats
 func (s *StatsRepository) DailyTotal(ctx context.Context, minDate, maxDate time.Time) ([]DailyPageStats, error) {
 	q := s.st.SelectStmt(dailyPageStatsTable, DailyPageStats{}).
 		// LeftJoin(s.ref.Fmt(visitorTable+" ON %s = %s", &s.iv.Visitor, &s.v.Hash)).
-		//LeftJoin(s.ref.Fmt("%s ON %s = %s", s.v)).
+		// LeftJoin(s.ref.Fmt("%s ON %s = %s", s.v)).
 		Where(squirrel.GtOrEq{s.ref.Ref(&s.dps.Date): dateTs(minDate)}).
 		Where(squirrel.LtOrEq{s.ref.Ref(&s.dps.Date): dateTs(maxDate)}).
 		OrderByClause(s.ref.Fmt("%s DESC, %s DESC, %s DESC, %s != 0 ASC ", &s.dps.Date, &s.dps.Uniq, &s.dps.Views, &s.dps.Hash)) //.
-	//GroupBy(s.ref.Fmt("%s, %s", &s.dps.Hash, &s.dps.Date))
+	// GroupBy(s.ref.Fmt("%s, %s", &s.dps.Hash, &s.dps.Date))
 
 	var res []DailyPageStats
 	err := s.st.Select(ctx, q, &res)

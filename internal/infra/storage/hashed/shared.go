@@ -1,4 +1,4 @@
-package storage
+package hashed
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/dbwrap"
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -18,7 +19,7 @@ import (
 
 const ErrMissingHash = ctxd.SentinelError("missing hash")
 
-func augmentErr(err error) error {
+func AugmentErr(err error) error {
 	if err == nil {
 		return nil
 	}
@@ -38,8 +39,8 @@ func augmentErr(err error) error {
 	return err
 }
 
-func augmentReturnErr[V any](res V, err error) error {
-	err = augmentErr(err)
+func AugmentReturnErr[V any](res V, err error) error {
+	err = AugmentErr(err)
 	if err != nil {
 		err = fmt.Errorf("find %T: %w", res, err)
 	}
@@ -47,8 +48,8 @@ func augmentReturnErr[V any](res V, err error) error {
 	return err
 }
 
-func augmentResErr[V any](res V, err error) (V, error) {
-	err = augmentErr(err)
+func AugmentResErr[V any](res V, err error) (V, error) {
+	err = AugmentErr(err)
 	if err != nil {
 		err = fmt.Errorf("find %T: %w", res, err)
 	}
@@ -56,7 +57,7 @@ func augmentResErr[V any](res V, err error) (V, error) {
 	return res, err
 }
 
-type HashedEntity interface {
+type Entity interface {
 	HashPtr() *uniq.Hash
 	CreatedAtPtr() *time.Time
 
@@ -64,26 +65,29 @@ type HashedEntity interface {
 	GetCreatedAt() time.Time
 }
 
-type HashedRepo[V any, T interface {
+type Repo[V any, T interface {
 	*V
-	HashedEntity
+	Entity
 }] struct {
 	mu sync.Mutex
 	sqluct.StorageOf[V]
 
-	// prepare is optional, it is called on the value to validate/prepare before create/update.
-	prepare func(ctx context.Context, v *V) error
+	// Prepare is optional, it is called on the value to validate/prepare before create/update.
+	Prepare func(ctx context.Context, v *V) error
 }
 
-func (ir *HashedRepo[V, T]) hashCol() *uniq.Hash {
+func (ir *Repo[V, T]) hashCol() *uniq.Hash {
 	return T(ir.R).HashPtr()
 }
 
-func (ir *HashedRepo[V, T]) hashEq(h uniq.Hash) squirrel.Eq {
+func (ir *Repo[V, T]) hashEq(h uniq.Hash) squirrel.Eq {
 	return ir.Eq(ir.hashCol(), h)
 }
 
-func (ir *HashedRepo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, error) {
+func (ir *Repo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, error) {
+	var v V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("Exists:%T", v))
+
 	col := ir.Col(ir.hashCol())
 
 	q := ir.SelectStmt(func(options *sqluct.Options) {
@@ -99,36 +103,52 @@ func (ir *HashedRepo[V, T]) Exists(ctx context.Context, hash uniq.Hash) (bool, e
 		return false, nil
 	}
 
-	return false, augmentErr(err)
+	return false, AugmentErr(err)
 }
 
-func (ir *HashedRepo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, error) {
+func (ir *Repo[V, T]) FindByHash(ctx context.Context, hash uniq.Hash) (V, error) {
+	var v V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("FindByHash:%T", v))
+
+	return ir.findByHash(ctx, hash)
+}
+
+func (ir *Repo[V, T]) findByHash(ctx context.Context, hash uniq.Hash) (V, error) {
 	q := ir.SelectStmt().Where(ir.hashEq(hash))
-	return augmentResErr(ir.Get(ctx, q))
+	return AugmentResErr(ir.Get(ctx, q))
 }
 
-func (ir *HashedRepo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]V, error) {
+func (ir *Repo[V, T]) FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]V, error) {
+	var v V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("FindByHashes:%T", v))
+
 	if len(hashes) == 0 {
 		return nil, nil
 	}
 
 	q := ir.SelectStmt().Where(ir.Eq(ir.hashCol(), hashes))
 
-	return augmentResErr(ir.List(ctx, q))
+	return AugmentResErr(ir.List(ctx, q))
 }
 
-func (ir *HashedRepo[V, T]) findBaseByHash(ctx context.Context, hash uniq.Hash) (V, error) {
+func (ir *Repo[V, T]) findBaseByHash(ctx context.Context, hash uniq.Hash) (V, error) {
 	q := ir.SelectStmt(func(options *sqluct.Options) {
 		options.Columns = []string{ir.Col(T(ir.R).CreatedAtPtr())}
 	}).Where(ir.hashEq(hash))
-	return augmentResErr(ir.Get(ctx, q))
+	return AugmentResErr(ir.Get(ctx, q))
 }
 
-func (ir *HashedRepo[V, T]) FindAll(ctx context.Context) ([]V, error) {
-	return augmentResErr(ir.List(ctx, ir.SelectStmt()))
+func (ir *Repo[V, T]) FindAll(ctx context.Context) ([]V, error) {
+	var v V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("FindAll:%T", v))
+
+	return AugmentResErr(ir.List(ctx, ir.SelectStmt()))
 }
 
-func (ir *HashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq.EnsureOption[V]) (V, error) {
+func (ir *Repo[V, T]) Ensure(ctx context.Context, value V, options ...uniq.EnsureOption[V]) (V, error) {
+	var x V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("Ensure:%T", x))
+
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -141,7 +161,7 @@ func (ir *HashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 
 	var opts []func(o *sqluct.Options)
 
-	if val, err := ir.FindByHash(ctx, h); err == nil {
+	if val, err := ir.findByHash(ctx, h); err == nil {
 		// Update.
 		vv := T(&val)
 		v.SetCreatedAt(vv.GetCreatedAt())
@@ -164,8 +184,8 @@ func (ir *HashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 			return value, nil
 		}
 
-		if ir.prepare != nil {
-			if err := ir.prepare(ctx, &value); err != nil {
+		if ir.Prepare != nil {
+			if err := ir.Prepare(ctx, &value); err != nil {
 				return value, fmt.Errorf("prepare value: %w", err)
 			}
 		}
@@ -179,11 +199,11 @@ func (ir *HashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 		ctx = ctxd.AddFields(ctx, "statement", stmt, "args", args)
 
 		if _, err := q.ExecContext(ctx); err != nil {
-			return value, ctxd.WrapError(ctx, augmentErr(err), "update")
+			return value, ctxd.WrapError(ctx, AugmentErr(err), "update")
 		}
 	} else {
 		if !errors.Is(err, sql.ErrNoRows) {
-			return value, ctxd.WrapError(ctx, augmentErr(err), "find")
+			return value, ctxd.WrapError(ctx, AugmentErr(err), "find")
 		}
 
 		for _, o := range options {
@@ -201,21 +221,24 @@ func (ir *HashedRepo[V, T]) Ensure(ctx context.Context, value V, options ...uniq
 		// Insert.
 		v.SetCreatedAt(time.Now())
 
-		if ir.prepare != nil {
-			if err := ir.prepare(ctx, &value); err != nil {
+		if ir.Prepare != nil {
+			if err := ir.Prepare(ctx, &value); err != nil {
 				return value, fmt.Errorf("prepare value: %w", err)
 			}
 		}
 
 		if _, err := ir.InsertRow(ctx, value, opts...); err != nil {
-			return value, ctxd.WrapError(ctx, augmentErr(err), "insert")
+			return value, ctxd.WrapError(ctx, AugmentErr(err), "insert")
 		}
 	}
 
 	return value, nil
 }
 
-func (ir *HashedRepo[V, T]) Add(ctx context.Context, value V) error {
+func (ir *Repo[V, T]) Add(ctx context.Context, value V) error {
+	var x V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("Add:%T", x))
+
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -225,16 +248,19 @@ func (ir *HashedRepo[V, T]) Add(ctx context.Context, value V) error {
 
 	v.SetCreatedAt(time.Now())
 
-	if ir.prepare != nil {
-		if err := ir.prepare(ctx, v); err != nil {
+	if ir.Prepare != nil {
+		if err := ir.Prepare(ctx, v); err != nil {
 			return fmt.Errorf("prepare value: %w", err)
 		}
 	}
 
-	return augmentReturnErr(ir.InsertRow(ctx, value))
+	return AugmentReturnErr(ir.InsertRow(ctx, value))
 }
 
-func (ir *HashedRepo[V, T]) Update(ctx context.Context, value V) error {
+func (ir *Repo[V, T]) Update(ctx context.Context, value V) error {
+	var x V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("Update:%T", x))
+
 	v := T(&value)
 	h := *v.HashPtr()
 
@@ -242,15 +268,18 @@ func (ir *HashedRepo[V, T]) Update(ctx context.Context, value V) error {
 		return ErrMissingHash
 	}
 
-	if ir.prepare != nil {
-		if err := ir.prepare(ctx, v); err != nil {
+	if ir.Prepare != nil {
+		if err := ir.Prepare(ctx, v); err != nil {
 			return fmt.Errorf("prepare value: %w", err)
 		}
 	}
 
-	return augmentReturnErr(ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx))
+	return AugmentReturnErr(ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx))
 }
 
-func (ir *HashedRepo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
-	return augmentReturnErr(ir.DeleteStmt().Where(ir.hashEq(h)).ExecContext(ctx))
+func (ir *Repo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
+	var x V
+	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("Delete:%T", x))
+
+	return AugmentReturnErr(ir.DeleteStmt().Where(ir.hashEq(h)).ExecContext(ctx))
 }

@@ -226,6 +226,7 @@ func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 	cfg.MaxIdle = 1
 	cfg.DSN = filepath + "?_time_format=sqlite"
 	cfg.ApplyMigrations = true
+	cfg.MethodSkipPackages = []string{"github.com/vearutop/photo-blog/internal/infra/storage/hashed"}
 
 	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
 	start := time.Now()
@@ -234,6 +235,15 @@ func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 		return nil, err
 	}
 	l.CtxdLogger().Info(context.Background(), "thumb storage setup complete", "elapsed", time.Since(start).String())
+
+	st.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
+		return context.WithoutCancel(ctx), func(err error) {
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				l.CtxdLogger().Warn(ctx, "sql failed",
+					"stmt", stmt, "args", args, "error", err.Error())
+			}
+		}
+	}
 
 	return st, nil
 }
@@ -245,6 +255,7 @@ func setupStatsStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 	cfg.MaxIdle = 1
 	cfg.DSN = filepath + "?_time_format=sqlite"
 	cfg.ApplyMigrations = true
+	cfg.MethodSkipPackages = []string{"github.com/vearutop/photo-blog/internal/infra/storage/hashed"}
 
 	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
 	start := time.Now()
@@ -253,6 +264,15 @@ func setupStatsStorage(l *service.Locator, filepath string) (*sqluct.Storage, er
 		return nil, err
 	}
 	l.CtxdLogger().Info(context.Background(), "visitor stats storage setup complete", "elapsed", time.Since(start).String())
+
+	st.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
+		return context.WithoutCancel(ctx), func(err error) {
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				l.CtxdLogger().Warn(ctx, "sql failed",
+					"stmt", stmt, "args", args, "error", err.Error())
+			}
+		}
+	}
 
 	return st, nil
 }
@@ -264,6 +284,7 @@ func setupStorage(l *service.Locator, filepath string) error {
 	cfg.MaxIdle = 1
 	cfg.DSN = filepath + "?_time_format=sqlite"
 	cfg.ApplyMigrations = true
+	cfg.MethodSkipPackages = []string{"github.com/vearutop/photo-blog/internal/infra/storage/hashed"}
 
 	var err error
 
@@ -276,7 +297,7 @@ func setupStorage(l *service.Locator, filepath string) error {
 	l.CtxdLogger().Info(context.Background(), "storage setup complete", "elapsed", time.Since(start).String())
 
 	l.Storage.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
-		return ctx, func(err error) {
+		return context.WithoutCancel(ctx), func(err error) {
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				l.CtxdLogger().Warn(ctx, "sql failed",
 					"stmt", stmt, "args", args, "error", err.Error())

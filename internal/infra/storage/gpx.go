@@ -4,6 +4,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 func NewGpxRepository(storage *sqluct.Storage) *GpxRepository {
 	return &GpxRepository{
-		HashedRepo: HashedRepo[photo.Gpx, *photo.Gpx]{
+		Repo: hashed.Repo[photo.Gpx, *photo.Gpx]{
 			StorageOf: sqluct.Table[photo.Gpx](storage, GpxTable),
 		},
 	}
@@ -21,7 +22,7 @@ func NewGpxRepository(storage *sqluct.Storage) *GpxRepository {
 
 // GpxRepository saves images to database.
 type GpxRepository struct {
-	HashedRepo[photo.Gpx, *photo.Gpx]
+	hashed.Repo[photo.Gpx, *photo.Gpx]
 }
 
 func (ir *GpxRepository) PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx] {

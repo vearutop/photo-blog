@@ -11,6 +11,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	image "github.com/vearutop/photo-blog/internal/infra/image"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -22,7 +23,7 @@ func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer, log
 	return &ThumbRepository{
 		upstream: upstream,
 		logger:   logger,
-		HashedRepo: HashedRepo[photo.Thumb, *photo.Thumb]{
+		Repo: hashed.Repo[photo.Thumb, *photo.Thumb]{
 			StorageOf: sqluct.Table[photo.Thumb](storage, ThumbTable),
 		},
 	}
@@ -32,7 +33,7 @@ func NewThumbRepository(storage *sqluct.Storage, upstream photo.Thumbnailer, log
 type ThumbRepository struct {
 	upstream photo.Thumbnailer
 	logger   ctxd.Logger
-	HashedRepo[photo.Thumb, *photo.Thumb]
+	hashed.Repo[photo.Thumb, *photo.Thumb]
 }
 
 func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
@@ -77,7 +78,7 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size 
 	}
 
 	if err := tr.Add(ctx, th); err != nil {
-		return th, augmentErr(err)
+		return th, hashed.AugmentErr(err)
 	}
 
 	return th, nil
@@ -98,7 +99,7 @@ func (tr *ThumbRepository) FindLarger(ctx context.Context, imageHash uniq.Hash, 
 	row, err := tr.Get(ctx, q)
 	if err != nil {
 		return photo.Thumb{}, fmt.Errorf("find thumb by image %q and size %dx%d: %w",
-			imageHash, width, height, augmentErr(err))
+			imageHash, width, height, hashed.AugmentErr(err))
 	}
 
 	return row, nil
@@ -119,7 +120,7 @@ func (tr *ThumbRepository) Find(ctx context.Context, imageHash uniq.Hash, width,
 	row, err := tr.Get(ctx, q)
 	if err != nil {
 		return photo.Thumb{}, fmt.Errorf("find thumb by image %q and size %dx%d: %w",
-			imageHash, width, height, augmentErr(err))
+			imageHash, width, height, hashed.AugmentErr(err))
 	}
 
 	return row, nil

@@ -4,6 +4,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 func NewMetaRepository(storage *sqluct.Storage) *MetaRepository {
 	return &MetaRepository{
-		HashedRepo: HashedRepo[photo.Meta, *photo.Meta]{
+		Repo: hashed.Repo[photo.Meta, *photo.Meta]{
 			StorageOf: sqluct.Table[photo.Meta](storage, MetaTable),
 		},
 	}
@@ -21,7 +22,7 @@ func NewMetaRepository(storage *sqluct.Storage) *MetaRepository {
 
 // MetaRepository saves meta data of hashed entities to database.
 type MetaRepository struct {
-	HashedRepo[photo.Meta, *photo.Meta]
+	hashed.Repo[photo.Meta, *photo.Meta]
 }
 
 func (ir *MetaRepository) PhotoMetaEnsurer() uniq.Ensurer[photo.Meta] {

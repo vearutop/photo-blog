@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
-	github.com/bool64/brick v0.2.5
+	github.com/bool64/brick v0.3.1
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dev v0.2.36
@@ -52,7 +52,7 @@ require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bool64/dbwrap v0.1.3 // indirect
+	github.com/bool64/dbwrap v0.1.4 // indirect
 	github.com/bool64/logz v1.3.2 // indirect
 	github.com/bool64/prom-stats v0.1.3 // indirect
 	github.com/bool64/shared v0.1.5 // indirect

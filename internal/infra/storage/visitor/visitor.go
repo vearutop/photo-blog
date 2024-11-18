@@ -5,12 +5,12 @@ import (
 
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/storage"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 func newVisitorRepository(st *sqluct.Storage) *visitorRepository {
 	return &visitorRepository{
-		HashedRepo: storage.HashedRepo[visitor, *visitor]{
+		Repo: hashed.Repo[visitor, *visitor]{
 			StorageOf: sqluct.Table[visitor](st, visitorTable),
 		},
 	}
@@ -18,7 +18,7 @@ func newVisitorRepository(st *sqluct.Storage) *visitorRepository {
 
 // VisitorRepository saves images to database.
 type visitorRepository struct {
-	storage.HashedRepo[visitor, *visitor]
+	hashed.Repo[visitor, *visitor]
 }
 
 const visitorTable = "visitor"

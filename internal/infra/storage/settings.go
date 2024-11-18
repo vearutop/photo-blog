@@ -7,6 +7,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/sqluct"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -36,7 +37,7 @@ func (r *SettingsRepository) Get(ctx context.Context, name string, value any) er
 
 	s, err := r.s.Get(ctx, q)
 	if err != nil {
-		return augmentErr(fmt.Errorf("get settings %q: %w", name, err))
+		return hashed.AugmentErr(fmt.Errorf("get settings %q: %w", name, err))
 	}
 
 	if err := json.Unmarshal([]byte(s.Value), value); err != nil {
@@ -61,8 +62,8 @@ func (r *SettingsRepository) Set(ctx context.Context, name string, value any) er
 
 	_, err = r.s.Get(ctx, r.s.SelectStmt().Where(cond))
 	if err == nil {
-		return augmentReturnErr(r.s.UpdateStmt(s).Where(cond).ExecContext(ctx))
+		return hashed.AugmentReturnErr(r.s.UpdateStmt(s).Where(cond).ExecContext(ctx))
 	}
 
-	return augmentReturnErr(r.s.InsertRow(ctx, s))
+	return hashed.AugmentReturnErr(r.s.InsertRow(ctx, s))
 }

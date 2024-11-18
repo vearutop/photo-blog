@@ -8,6 +8,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -58,7 +59,7 @@ func (r *FavoriteRepository) FindImages(ctx context.Context, visitorHash uniq.Ha
 		).
 		OrderByClause(r.r.Fmt("%s DESC", &r.fi.R.CreatedAt))
 
-	return augmentResErr(r.i.List(ctx, q))
+	return hashed.AugmentResErr(r.i.List(ctx, q))
 }
 
 func (r *FavoriteRepository) FindAlbumImages(ctx context.Context, visitorHash, albumHash uniq.Hash) ([]photo.Image, error) {
@@ -73,7 +74,7 @@ func (r *FavoriteRepository) FindAlbumImages(ctx context.Context, visitorHash, a
 		).
 		OrderByClause(r.r.Fmt("%s DESC", &r.fi.R.CreatedAt))
 
-	return augmentResErr(r.i.List(ctx, q))
+	return hashed.AugmentResErr(r.i.List(ctx, q))
 }
 
 func (r *FavoriteRepository) FindImageHashes(ctx context.Context, visitorHash uniq.Hash, albumHash uniq.Hash) ([]uniq.Hash, error) {
@@ -86,7 +87,7 @@ func (r *FavoriteRepository) FindImageHashes(ctx context.Context, visitorHash un
 		)
 	}
 
-	rows, err := augmentResErr(r.fi.List(ctx, q))
+	rows, err := hashed.AugmentResErr(r.fi.List(ctx, q))
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (r *FavoriteRepository) FindImageHashes(ctx context.Context, visitorHash un
 }
 
 func (r *FavoriteRepository) DeleteImages(ctx context.Context, visitorHash uniq.Hash, imageHashes ...uniq.Hash) error {
-	return augmentReturnErr(r.fi.DeleteStmt().
+	return hashed.AugmentReturnErr(r.fi.DeleteStmt().
 		Where(r.r.Eq(&r.fi.R.VisitorHash, visitorHash)).
 		Where(r.r.Eq(&r.fi.R.ImageHash, imageHashes)).
 		ExecContext(ctx))
@@ -119,7 +120,7 @@ func (r *FavoriteRepository) AddImages(ctx context.Context, visitorHash uniq.Has
 	}
 
 	if _, err := r.fi.InsertRows(ctx, rows, sqluct.InsertIgnore); err != nil {
-		return ctxd.WrapError(ctx, augmentErr(err), "store favorite images", "rows", rows)
+		return ctxd.WrapError(ctx, hashed.AugmentErr(err), "store favorite images", "rows", rows)
 	}
 
 	return nil

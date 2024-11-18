@@ -4,6 +4,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 	return &ImageRepository{
-		HashedRepo: HashedRepo[photo.Image, *photo.Image]{
+		Repo: hashed.Repo[photo.Image, *photo.Image]{
 			StorageOf: sqluct.Table[photo.Image](storage, ImageTable),
 		},
 	}
@@ -21,7 +22,7 @@ func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
 
 // ImageRepository saves images to database.
 type ImageRepository struct {
-	HashedRepo[photo.Image, *photo.Image]
+	hashed.Repo[photo.Image, *photo.Image]
 }
 
 func (ir *ImageRepository) PhotoImageEnsurer() uniq.Ensurer[photo.Image] {

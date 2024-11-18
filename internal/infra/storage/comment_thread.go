@@ -4,6 +4,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/comment"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 func NewThreadRepository(storage *sqluct.Storage) *ThreadRepository {
 	return &ThreadRepository{
-		HashedRepo: HashedRepo[comment.Thread, *comment.Thread]{
+		Repo: hashed.Repo[comment.Thread, *comment.Thread]{
 			StorageOf: sqluct.Table[comment.Thread](storage, ThreadTable),
 		},
 	}
@@ -21,7 +22,7 @@ func NewThreadRepository(storage *sqluct.Storage) *ThreadRepository {
 
 // ThreadRepository saves images to database.
 type ThreadRepository struct {
-	HashedRepo[comment.Thread, *comment.Thread]
+	hashed.Repo[comment.Thread, *comment.Thread]
 }
 
 func (ir *ThreadRepository) CommentThreadEnsurer() uniq.Ensurer[comment.Thread] {
