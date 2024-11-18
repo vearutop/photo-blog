@@ -99,6 +99,7 @@ function removeImage(albumName, imageHash) {
         name: albumName,
         hash: imageHash,
     }, function (x) {
+        $('#img'+imageHash).remove()
         // alert("Photo is removed from the album")
     }, function (x) {
         alert("Failed to remove photo from the album: " + x.error)
