@@ -10,20 +10,20 @@ import (
 
 func newVisitorRepository(st *sqluct.Storage) *visitorRepository {
 	return &visitorRepository{
-		Repo: hashed.Repo[visitor, *visitor]{
-			StorageOf: sqluct.Table[visitor](st, visitorTable),
+		Repo: hashed.Repo[Visitor, *Visitor]{
+			StorageOf: sqluct.Table[Visitor](st, visitorTable),
 		},
 	}
 }
 
 // VisitorRepository saves images to database.
 type visitorRepository struct {
-	hashed.Repo[visitor, *visitor]
+	hashed.Repo[Visitor, *Visitor]
 }
 
 const visitorTable = "visitor"
 
-type visitor struct {
+type Visitor struct {
 	uniq.Head
 	LastSeen  time.Time `db:"last_seen" description:"Last seen"`
 	Lang      string    `db:"lang" description:"Visitor lang"`

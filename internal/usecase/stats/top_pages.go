@@ -22,11 +22,6 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 		Refers int    `json:"refers"`
 	}
 
-	type pageData struct {
-		Title string    `json:"title"`
-		Rows  []dateRow `json:"rows"`
-	}
-
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *web.Page) error {
 		st, err := deps.VisitorStats().TopAlbums(ctx)
 		if err != nil {
@@ -53,9 +48,10 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 			nameByHash[a.Hash] = a.Name
 		}
 
-		d := pageData{
-			Title: "Top Pages",
-		}
+		d := pageData{}
+		d.Title = "Top Pages"
+
+		var rows []dateRow
 
 		for _, row := range st {
 			r := dateRow{}
@@ -73,8 +69,12 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 			r.Uniq = row.Uniq
 			r.Refers = row.Refers
 
-			d.Rows = append(d.Rows, r)
+			rows = append(rows, r)
 		}
+
+		d.Tables = append(d.Tables, Table{
+			Rows: rows,
+		})
 
 		return out.Render(tmpl, d)
 	})

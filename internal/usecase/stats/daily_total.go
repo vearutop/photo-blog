@@ -36,11 +36,6 @@ func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {
 		Refers int    `json:"refers"`
 	}
 
-	type pageData struct {
-		Title string    `json:"title"`
-		Rows  []dateRow `json:"rows"`
-	}
-
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "daily_total", 1)
 		deps.CtxdLogger().Info(ctx, "showing daily total")
@@ -51,29 +46,10 @@ func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {
 			return err
 		}
 
-		var hashes []uniq.Hash
+		d := pageData{}
+		d.Title = "Daily Total"
 
-		for _, row := range st {
-			if row.Hash == 0 {
-				continue
-			}
-
-			hashes = append(hashes, row.Hash)
-		}
-
-		albums, err := deps.PhotoAlbumFinder().FindByHashes(ctx, hashes...)
-		if err != nil {
-			return err
-		}
-
-		nameByHash := make(map[uniq.Hash]string, len(hashes))
-		for _, a := range albums {
-			nameByHash[a.Hash] = a.Name
-		}
-
-		d := pageData{
-			Title: "Daily Total",
-		}
+		var rows []dateRow
 
 		for _, row := range st {
 			r := dateRow{}
@@ -81,19 +57,18 @@ func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {
 			if row.Hash == 0 {
 				r.Name = `<a href="/">[main page]</a>`
 			} else {
-				name := nameByHash[row.Hash]
-				if name == "" {
-					r.Name = "[not found: " + row.Hash.String() + "]"
-				} else {
-					r.Name = `<a href="/` + name + `/">` + name + `</a>`
-				}
+				r.Name = albumLink(ctx, row.Hash, deps.PhotoAlbumFinder())
 			}
 			r.Views = row.Views
 			r.Uniq = row.Uniq
 			r.Refers = row.Refers
 
-			d.Rows = append(d.Rows, r)
+			rows = append(rows, r)
 		}
+
+		d.Tables = append(d.Tables, Table{
+			Rows: rows,
+		})
 
 		return out.Render(tmpl, d)
 	})

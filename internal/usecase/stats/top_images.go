@@ -26,11 +26,6 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 		ThumbPrtTime float64 `json:"preview_mobile_stripe_minutes"`
 	}
 
-	type pageData struct {
-		Title string    `json:"title"`
-		Rows  []dateRow `json:"rows"`
-	}
-
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *web.Page) error {
 		st, err := deps.VisitorStats().TopImages(ctx)
 		if err != nil {
@@ -47,9 +42,10 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 			hashes = append(hashes, row.Hash)
 		}
 
-		d := pageData{
-			Title: "Top Images",
-		}
+		d := pageData{}
+		d.Title = "Top Images"
+
+		var rows []dateRow
 
 		for _, row := range st {
 			r := dateRow{}
@@ -62,8 +58,12 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 			r.ThumbTime = float64(row.ThumbMs) / float64(60*1000)
 			r.ThumbPrtTime = float64(row.ThumbPrtMs) / float64(60*1000)
 
-			d.Rows = append(d.Rows, r)
+			rows = append(rows, r)
 		}
+
+		d.Tables = append(d.Tables, Table{
+			Rows: rows,
+		})
 
 		return out.Render(tmpl, d)
 	})

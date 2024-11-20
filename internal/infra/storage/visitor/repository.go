@@ -27,8 +27,9 @@ type StatsRepository struct {
 	iv  *imageVisitor
 	ps  *PageStats
 	dps *DailyPageStats
-	pv  *pageVisitor
-	v   *visitor
+	pv  *PageVisitor
+	v   *Visitor
+	rf  *Refer
 
 	visitorRepository *visitorRepository
 
@@ -39,7 +40,7 @@ type StatsRepository struct {
 	collectDailyPageSuffix string
 
 	mu             sync.Mutex
-	recentVisitors map[uniq.Hash]visitor
+	recentVisitors map[uniq.Hash]Visitor
 	isAdmin        map[uniq.Hash]bool
 }
 
@@ -47,7 +48,7 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 	s := &StatsRepository{
 		l:              l,
 		st:             st,
-		recentVisitors: make(map[uniq.Hash]visitor),
+		recentVisitors: make(map[uniq.Hash]Visitor),
 		isAdmin:        make(map[uniq.Hash]bool),
 	}
 
@@ -55,7 +56,8 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 	s.iv = &imageVisitor{}
 	s.ps = &PageStats{}
 	s.dps = &DailyPageStats{}
-	s.pv = &pageVisitor{}
+	s.pv = &PageVisitor{}
+	s.rf = &Refer{}
 
 	s.visitorRepository = newVisitorRepository(st)
 	s.v = s.visitorRepository.R
@@ -67,6 +69,7 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 	s.ref.AddTableAlias(s.dps, "")
 	s.ref.AddTableAlias(s.pv, "")
 	s.ref.AddTableAlias(s.v, "")
+	s.ref.AddTableAlias(s.rf, "")
 
 	s.collectImageSuffix = s.ref.Fmt(
 		"ON CONFLICT(%s) "+
@@ -128,9 +131,9 @@ func (s *StatsRepository) populateAdmins() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	q := s.st.SelectStmt(visitorTable, visitor{}).Where(squirrel.Eq{s.ref.Ref(&s.v.IsAdmin): 1})
+	q := s.st.SelectStmt(visitorTable, Visitor{}).Where(squirrel.Eq{s.ref.Ref(&s.v.IsAdmin): 1})
 
-	var rows []visitor
+	var rows []Visitor
 	if err := s.st.Select(context.Background(), q, &rows); err != nil {
 		return err
 	}
@@ -258,7 +261,7 @@ const (
 	dailyPageStatsTable = "daily_page_stats"
 )
 
-type pageVisitor struct {
+type PageVisitor struct {
 	Visitor uniq.Hash `db:"visitor" description:"Visitor"`
 	Page    uniq.Hash `db:"page" description:"Album hash or 0 for main page"`
 	Date    int64     `db:"date" description:"Date as truncated unix timestamp"`
@@ -306,7 +309,7 @@ func (s *StatsRepository) CollectAlbum(ctx context.Context, visitor, album uniq.
 		s.l.Error(ctx, "failed to collect daily page stats", "error", err)
 	}
 
-	_, err = s.st.InsertStmt(pageVisitorsTable, pageVisitor{
+	_, err = s.st.InsertStmt(pageVisitorsTable, PageVisitor{
 		Visitor: visitor,
 		Page:    album,
 		Date:    d,
@@ -364,7 +367,7 @@ func (s *StatsRepository) updateDailyPageUniq(ctx context.Context, d int64, hash
 
 const refersTable = "refers"
 
-type refer struct {
+type Refer struct {
 	TS      int64     `db:"ts" description:"Timestamp as unix timestamp"`
 	Visitor uniq.Hash `db:"visitor" description:"Visitor"`
 	Referer string    `db:"referer" description:"Referer URL"`
@@ -372,7 +375,7 @@ type refer struct {
 }
 
 func (s *StatsRepository) CollectRefer(ctx context.Context, visitor uniq.Hash, ts time.Time, referer, url string) {
-	r := refer{
+	r := Refer{
 		TS:      ts.Unix(),
 		Visitor: visitor,
 		Referer: referer,
@@ -398,7 +401,7 @@ func atof(s string) float64 {
 func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts time.Time, r *http.Request) {
 	hd := r.Header
 	ua := r.UserAgent()
-	v := visitor{
+	v := Visitor{
 		LastSeen:  ts,
 		Lang:      hd.Get("Accept-Language"),
 		IPAddr:    hd.Get("X-Forwarded-For"),
@@ -422,7 +425,7 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 
 	ctx := r.Context()
 
-	skipUpdate := func(candidate *visitor, existing *visitor) (skipUpdate bool) {
+	skipUpdate := func(candidate *Visitor, existing *Visitor) (skipUpdate bool) {
 		skipUpdate = true
 
 		if existing == nil {
@@ -498,7 +501,7 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 
 	s.l.Info(ctx, "collect visitor", "visitor", v)
 
-	ev, err := s.visitorRepository.Ensure(ctx, v, uniq.EnsureOption[visitor]{
+	ev, err := s.visitorRepository.Ensure(ctx, v, uniq.EnsureOption[Visitor]{
 		Prepare: skipUpdate,
 	})
 	if err != nil {
@@ -509,7 +512,7 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 	s.setRecentVisitor(ev)
 }
 
-func (s *StatsRepository) recentVisitor(hash uniq.Hash) (visitor, bool) {
+func (s *StatsRepository) recentVisitor(hash uniq.Hash) (Visitor, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -518,7 +521,7 @@ func (s *StatsRepository) recentVisitor(hash uniq.Hash) (visitor, bool) {
 	return v, ok
 }
 
-func (s *StatsRepository) setRecentVisitor(v visitor) {
+func (s *StatsRepository) setRecentVisitor(v Visitor) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -590,6 +593,44 @@ func (s *StatsRepository) TopImages(ctx context.Context) ([]imageStats, error) {
 
 	err := s.st.Select(ctx, q, &res)
 
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (s *StatsRepository) LatestRefers(ctx context.Context) ([]Refer, error) {
+	var res []Refer
+
+	q := s.st.SelectStmt(refersTable, res).OrderByClause(s.ref.Fmt("%s DESC", &s.rf.TS)).Limit(100)
+
+	err := s.st.Select(ctx, q, &res)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (s *StatsRepository) VisitorInfo(ctx context.Context, hash uniq.Hash) (Visitor, error) {
+	var res Visitor
+
+	q := s.st.SelectStmt(visitorTable, res).Where(squirrel.Eq{s.ref.Ref(&s.v.Hash): hash})
+
+	err := s.st.Select(ctx, q, &res)
+
+	return res, err
+}
+
+func (s *StatsRepository) PageVisits(ctx context.Context, hash uniq.Hash) ([]PageVisitor, error) {
+	var res []PageVisitor
+
+	q := s.st.SelectStmt(pageVisitorsTable, res).Where(squirrel.Eq{
+		s.ref.Ref(&s.pv.Visitor): hash,
+	}).OrderByClause(s.ref.Fmt("%s DESC", &s.pv.Date))
+
+	err := s.st.Select(ctx, q, &res)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return res, err
 	}

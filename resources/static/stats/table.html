@@ -13,24 +13,53 @@
 </head>
 <body>
 
+<div class="pure-menu pure-menu-horizontal">
+    <ul class="pure-menu-list">
+        <li class="pure-menu-item">
+            <a href="/stats/daily.html" class="pure-menu-link">Daily Total</a>
+        </li>
+        <li class="pure-menu-item">
+            <a href="/stats/top-images.html" class="pure-menu-link">Top Images</a>
+        </li>
+        <li class="pure-menu-item">
+            <a href="/stats/top-pages.html" class="pure-menu-link">Top Pages</a>
+        </li>
+        <li class="pure-menu-item">
+            <a href="/stats/refers.html" class="pure-menu-link">Refers</a>
+        </li>
+    </ul>
+</div>
+
 <div style="margin-left: 2em">
     <h1>{{.Title}}</h1>
+    <div>{{.Description}}</div>
+    <div id="results"></div>
     <table id="result" class="pure-table"></table>
 </div>
 
 <script>
-    var rows = {{.Rows}};
-
     if (!$.fn.fancyTable) {
         $.fn.fancyTable = fancyTable
     }
 
-    $('#result').html(renderTableContent(rows)).fancyTable({
-        sortable: true,
-        searchable: true,
-        pagination: false,
-        globalSearch:true
-    });
+    var tables = {{.Tables}};
+
+    for (var i in tables) {
+        var t = tables[i]
+
+        if (t.title) {
+            $("#results").append('<h2>' + t.title + '</h2>')
+        }
+        $("#results").append('<table id="result'+i+'" class="pure-table"></table>')
+        $('#result' + i).html(renderTableContent(t.rows)).fancyTable({
+            sortable: true,
+            searchable: true,
+            pagination: false,
+            globalSearch:true
+        });
+    }
+
+
 </script>
 
 </body>
