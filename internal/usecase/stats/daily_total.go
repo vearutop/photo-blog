@@ -54,11 +54,7 @@ func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {
 		for _, row := range st {
 			r := dateRow{}
 			r.Date = time.Unix(row.Date, 0).Format("2006-01-02")
-			if row.Hash == 0 {
-				r.Name = `<a href="/">[main page]</a>`
-			} else {
-				r.Name = albumLink(ctx, row.Hash, deps.PhotoAlbumFinder())
-			}
+			r.Name = albumLink(ctx, row.Hash, deps.PhotoAlbumFinder())
 			r.Views = row.Views
 			r.Uniq = row.Uniq
 			r.Refers = row.Refers

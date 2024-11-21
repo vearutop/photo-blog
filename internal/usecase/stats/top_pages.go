@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/swaggest/usecase"
-	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
@@ -28,26 +27,6 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 			return err
 		}
 
-		var hashes []uniq.Hash
-
-		for _, row := range st {
-			if row.Hash == 0 {
-				continue
-			}
-
-			hashes = append(hashes, row.Hash)
-		}
-
-		albums, err := deps.PhotoAlbumFinder().FindByHashes(ctx, hashes...)
-		if err != nil {
-			return err
-		}
-
-		nameByHash := make(map[uniq.Hash]string, len(hashes))
-		for _, a := range albums {
-			nameByHash[a.Hash] = a.Name
-		}
-
 		d := pageData{}
 		d.Title = "Top Pages"
 
@@ -55,16 +34,7 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 
 		for _, row := range st {
 			r := dateRow{}
-			if row.Hash == 0 {
-				r.Name = `<a href="/">[main page]</a>`
-			} else {
-				name := nameByHash[row.Hash]
-				if name == "" {
-					r.Name = "[not found: " + row.Hash.String() + "]"
-				} else {
-					r.Name = `<a href="/` + name + `/">` + name + `</a>`
-				}
-			}
+			r.Name = albumLink(ctx, row.Hash, deps.PhotoAlbumFinder())
 			r.Views = row.Views
 			r.Uniq = row.Uniq
 			r.Refers = row.Refers
