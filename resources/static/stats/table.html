@@ -47,6 +47,10 @@
     for (var i in tables) {
         var t = tables[i]
 
+        if (!t.rows) {
+            continue;
+        }
+
         if (t.title) {
             $("#results").append('<h2>' + t.title + '</h2>')
         }
