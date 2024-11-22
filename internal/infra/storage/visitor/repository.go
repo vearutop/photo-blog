@@ -66,8 +66,8 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 	s.ref.AddTableAlias(s.is, "")
 	s.ref.AddTableAlias(s.iv, "")
 	s.ref.AddTableAlias(s.ps, "")
-	s.ref.AddTableAlias(s.dps, "")
-	s.ref.AddTableAlias(s.pv, "")
+	s.ref.AddTableAlias(s.dps, "daily_page_stats")
+	s.ref.AddTableAlias(s.pv, "page_visitors")
 	s.ref.AddTableAlias(s.v, "")
 	s.ref.AddTableAlias(s.rf, "")
 
@@ -557,18 +557,24 @@ func (s *StatsRepository) CollectRequest(ctx context.Context, input CollectStats
 	}
 }
 
-/////
+type DPSVisitors struct {
+	DailyPageStats
+	Visitors string `db:"visitors"`
+}
 
-func (s *StatsRepository) DailyTotal(ctx context.Context, minDate, maxDate time.Time) ([]DailyPageStats, error) {
-	q := s.st.SelectStmt(dailyPageStatsTable, DailyPageStats{}).
-		// LeftJoin(s.ref.Fmt(visitorTable+" ON %s = %s", &s.iv.Visitor, &s.v.Hash)).
-		// LeftJoin(s.ref.Fmt("%s ON %s = %s", s.v)).
+func (s *StatsRepository) DailyTotal(ctx context.Context, minDate, maxDate time.Time) ([]DPSVisitors, error) {
+	q := s.st.SelectStmt(dailyPageStatsTable, nil).
+		Columns(s.ref.Cols(s.dps)...).
+		Columns(s.ref.Fmt("GROUP_CONCAT(%s) AS visitors", &s.pv.Visitor)).
+		LeftJoin(s.ref.Fmt("%s ON %s = %s AND %s = %s", s.pv,
+			&s.dps.Hash, &s.pv.Page,
+			&s.dps.Date, &s.pv.Date)).
 		Where(squirrel.GtOrEq{s.ref.Ref(&s.dps.Date): dateTs(minDate)}).
 		Where(squirrel.LtOrEq{s.ref.Ref(&s.dps.Date): dateTs(maxDate)}).
-		OrderByClause(s.ref.Fmt("%s DESC, %s DESC, %s DESC, %s != 0 ASC ", &s.dps.Date, &s.dps.Uniq, &s.dps.Views, &s.dps.Hash)) //.
-	// GroupBy(s.ref.Fmt("%s, %s", &s.dps.Hash, &s.dps.Date))
+		OrderByClause(s.ref.Fmt("%s DESC, %s DESC, %s DESC, %s != 0 ASC ", &s.dps.Date, &s.dps.Uniq, &s.dps.Views, &s.dps.Hash)).
+		GroupBy(s.ref.Fmt("%s, %s", &s.dps.Hash, &s.dps.Date))
 
-	var res []DailyPageStats
+	var res []DPSVisitors
 	err := s.st.Select(ctx, q, &res)
 
 	return res, err

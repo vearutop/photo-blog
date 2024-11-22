@@ -2,6 +2,8 @@ package stats
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bool64/ctxd"
@@ -29,11 +31,12 @@ func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {
 	}
 
 	type dateRow struct {
-		Name   string `json:"name"`
-		Date   string `json:"date"`
-		Uniq   int    `json:"uniq"`
-		Views  int    `json:"views"`
-		Refers int    `json:"refers"`
+		Name     string `json:"name"`
+		Date     string `json:"date"`
+		Uniq     int    `json:"uniq"`
+		Views    int    `json:"views"`
+		Refers   int    `json:"refers"`
+		Visitors string `json:"visitors"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *web.Page) error {
@@ -58,6 +61,14 @@ func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {
 			r.Views = row.Views
 			r.Uniq = row.Uniq
 			r.Refers = row.Refers
+			for _, v := range strings.Split(row.Visitors, ",") {
+				i64, err := strconv.ParseInt(v, 10, 64)
+				if err == nil {
+					h := uniq.Hash(i64)
+
+					r.Visitors += `<a href="/stats/visitor/` + h.String() + `.html">` + h.String() + `</a> `
+				}
+			}
 
 			rows = append(rows, r)
 		}
