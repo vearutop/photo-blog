@@ -5,11 +5,14 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"strings"
 
+	qr "github.com/Baozisoftware/qrcode-terminal-go"
 	"github.com/bool64/brick"
 	"github.com/vearutop/photo-blog/internal/infra"
 	"github.com/vearutop/photo-blog/internal/infra/nethttp"
 	"github.com/vearutop/photo-blog/internal/infra/service"
+	"github.com/vearutop/photo-blog/pkg/net"
 )
 
 func main() {
@@ -22,6 +25,16 @@ func main() {
 
 	brick.Start(&cfg, func(docsMode bool) (*brick.BaseLocator, http.Handler) {
 		cfg.HTTPListenAddr = *listen
+
+		if strings.HasPrefix(cfg.HTTPListenAddr, "LAN:") {
+			lan, err := net.LAN()
+			if err != nil {
+				log.Fatal("failed to find LAN IP:", err)
+			}
+
+			cfg.HTTPListenAddr = lan + strings.TrimPrefix(cfg.HTTPListenAddr, "LAN")
+			qr.New().Get("http://" + cfg.HTTPListenAddr).Print()
+		}
 
 		// Initialize application resources.
 		sl, err := infra.NewServiceLocator(cfg, docsMode)
