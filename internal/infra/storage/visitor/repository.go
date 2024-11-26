@@ -77,10 +77,12 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 			"%s = %s + 1, "+
 			"%s = %s + excluded.%s, "+
 			"%s = %s + excluded.%s",
-		&s.is.Hash,
-		&s.is.Views, &s.is.Views,
-		&s.is.ViewMs, &s.is.ViewMs, &s.is.ViewMs,
-		&s.is.Zooms, &s.is.Zooms, &s.is.Zooms,
+		sqluct.NoTableAll(
+			&s.is.Hash,
+			&s.is.Views, &s.is.Views,
+			&s.is.ViewMs, &s.is.ViewMs, &s.is.ViewMs,
+			&s.is.Zooms, &s.is.Zooms, &s.is.Zooms,
+		)...,
 	)
 
 	s.collectThumbsSuffix = s.ref.Fmt(
@@ -88,9 +90,11 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 			"DO UPDATE SET "+
 			"%s = %s + excluded.%s, "+
 			"%s = %s + excluded.%s",
-		&s.is.Hash,
-		&s.is.ThumbMs, &s.is.ThumbMs, &s.is.ThumbMs,
-		&s.is.ThumbPrtMs, &s.is.ThumbPrtMs, &s.is.ThumbPrtMs,
+		sqluct.NoTableAll(
+			&s.is.Hash,
+			&s.is.ThumbMs, &s.is.ThumbMs, &s.is.ThumbMs,
+			&s.is.ThumbPrtMs, &s.is.ThumbPrtMs, &s.is.ThumbPrtMs,
+		)...,
 	)
 
 	s.collectPageSuffix = s.ref.Fmt(
@@ -98,9 +102,11 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 			"DO UPDATE SET "+
 			"%s = %s + excluded.%s, "+
 			"%s = %s + 1",
-		&s.ps.Hash,
-		&s.ps.Refers, &s.ps.Refers, &s.ps.Refers,
-		&s.ps.Views, &s.ps.Views,
+		sqluct.NoTableAll(
+			&s.ps.Hash,
+			&s.ps.Refers, &s.ps.Refers, &s.ps.Refers,
+			&s.ps.Views, &s.ps.Views,
+		)...,
 	)
 
 	s.collectDailyPageSuffix = s.ref.Fmt(
@@ -108,9 +114,11 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 			"DO UPDATE SET "+
 			"%s = %s + excluded.%s, "+
 			"%s = %s + 1",
-		&s.dps.Hash, &s.dps.Date,
-		&s.dps.Refers, &s.dps.Refers, &s.dps.Refers,
-		&s.dps.Views, &s.dps.Views,
+		sqluct.NoTableAll(
+			&s.dps.Hash, &s.dps.Date,
+			&s.dps.Refers, &s.dps.Refers, &s.dps.Refers,
+			&s.dps.Views, &s.dps.Views,
+		)...,
 	)
 
 	if err := s.populateAdmins(); err != nil {
@@ -223,7 +231,7 @@ func (s *StatsRepository) updateImageUniq(ctx context.Context, hashes ...uniq.Ha
 	q := s.st.QueryBuilder().Insert(imageStatsTable).
 		Columns(s.ref.Ref(&s.is.Hash), s.ref.Ref(&s.is.Uniq)).
 		Select(sel).
-		Suffix(s.ref.Fmt("ON CONFLICT DO UPDATE SET %s = excluded.%s", &s.is.Uniq, &s.is.Uniq))
+		Suffix(s.ref.Fmt("ON CONFLICT DO UPDATE SET %s = excluded.%s", sqluct.NoTableAll(&s.is.Uniq, &s.is.Uniq)...))
 
 	_, err := q.ExecContext(ctx)
 	if err != nil {
@@ -334,9 +342,11 @@ func (s *StatsRepository) updatePageUniq(ctx context.Context, hashes ...uniq.Has
 		GroupBy(s.ref.Ref(&s.pv.Page))
 
 	q := s.st.QueryBuilder().Insert(pageStatsTable).
-		Columns(s.ref.Ref(&s.ps.Hash), s.ref.Ref(&s.ps.Uniq)).
+		Columns(s.ref.Refs(sqluct.NoTableAll(&s.ps.Hash, &s.ps.Uniq)...)...).
 		Select(sel).
-		Suffix(s.ref.Fmt("ON CONFLICT DO UPDATE SET %s = excluded.%s", &s.ps.Uniq, &s.ps.Uniq))
+		Suffix(s.ref.Fmt("ON CONFLICT DO UPDATE SET %s = excluded.%s",
+			sqluct.NoTableAll(&s.ps.Uniq, &s.ps.Uniq)...),
+		)
 
 	_, err := q.ExecContext(ctx)
 	if err != nil {
@@ -355,9 +365,9 @@ func (s *StatsRepository) updateDailyPageUniq(ctx context.Context, d int64, hash
 		GroupBy(s.ref.Ref(&s.pv.Page))
 
 	q := s.st.QueryBuilder().Insert(dailyPageStatsTable).
-		Columns(s.ref.Ref(&s.dps.Hash), s.ref.Ref(&s.dps.Date), s.ref.Ref(&s.dps.Uniq)).
+		Columns(s.ref.Refs(sqluct.NoTableAll(&s.dps.Hash, &s.dps.Date, &s.dps.Uniq)...)...).
 		Select(sel).
-		Suffix(s.ref.Fmt("ON CONFLICT DO UPDATE SET %s = excluded.%s", &s.dps.Uniq, &s.dps.Uniq))
+		Suffix(s.ref.Fmt("ON CONFLICT DO UPDATE SET %s = excluded.%s", sqluct.NoTableAll(&s.dps.Uniq, &s.dps.Uniq)...))
 
 	_, err := q.ExecContext(ctx)
 	if err != nil {
