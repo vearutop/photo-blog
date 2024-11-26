@@ -106,27 +106,38 @@ function removeImage(albumName, imageHash) {
     })
 }
 
+var fullscreenEnabled = false;
 function toggleFullscreen() {
-    if (document.fullscreenElement) {
-        document.exitFullscreen()
+    if (fullscreenEnabled) {
+        if (document.fullscreenElement) {
+            document.exitFullscreen()
+        }
+        fullscreenEnabled = false;
         $('html body').css("overflow", "auto").removeClass("fullscreen")
     } else {
+        fullscreenEnabled = true
         $('html body').css("overflow", "hidden").addClass("fullscreen")
         var el = $('html')[0]
-        el.requestFullscreen()
 
-        el.addEventListener("fullscreenchange", function () {
-            if (!document.fullscreenElement) {
-                $('html body').css("overflow", "auto").removeClass("fullscreen")
-            }
-        });
+        if (typeof document.exitFullscreen == 'function') {
+            el.requestFullscreen()
+
+            el.addEventListener("fullscreenchange", function () {
+                if (!document.fullscreenElement) {
+                    $('html body').css("overflow", "auto").removeClass("fullscreen")
+                    fullscreenEnabled = false
+                }
+            });
+        }
+
     }
 }
 
 function exitFullscreen() {
+    fullscreenEnabled = false;
+    $('html body').css("overflow", "auto").removeClass("fullscreen")
     if (document.fullscreenElement) {
         document.exitFullscreen()
-        $('html body').css("overflow", "auto").removeClass("fullscreen")
     }
 }
 
@@ -677,7 +688,7 @@ function loadAlbum(params) {
             });
         });
 
-        if (fullscreenSupported) {
+        // if (fullscreenSupported) {
             lightbox.on('uiRegister', function () {
                 lightbox.pswp.ui.registerElement({
                     name: 'fullscreen-button',
@@ -690,7 +701,7 @@ function loadAlbum(params) {
                     }
                 });
             });
-        }
+        // }
 
         // Download image button.
         lightbox.on('uiRegister', function () {

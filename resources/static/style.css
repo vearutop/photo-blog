@@ -272,6 +272,10 @@ a.ctrl-btn:hover {
     display: none;
 }
 
+.fullscreen .pswp__dynamic-caption {
+    display: none;
+}
+
 .dark-mode a:link {
     color: lightskyblue;
 }
