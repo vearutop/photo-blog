@@ -10,9 +10,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
 
-var (
-	albumNameCache = cache.NewFailoverOf[string]()
-)
+var albumNameCache = cache.NewFailoverOf[string]()
 
 func albumLink(ctx context.Context, hash uniq.Hash, finder uniq.Finder[photo.Album]) string {
 	if hash == 0 {
@@ -27,7 +25,6 @@ func albumLink(ctx context.Context, hash uniq.Hash, finder uniq.Finder[photo.Alb
 
 		return album.Name, nil
 	})
-
 	if err != nil {
 		if errors.Is(err, status.NotFound) {
 			return "[not found: " + hash.String() + "]"

@@ -1,9 +1,10 @@
 package stats
 
 import (
-	"github.com/swaggest/refl"
 	"reflect"
 	"strings"
+
+	"github.com/swaggest/refl"
 )
 
 type pageData struct {

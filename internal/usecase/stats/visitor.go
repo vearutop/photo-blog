@@ -2,11 +2,12 @@ package stats
 
 import (
 	"context"
+	"time"
+
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
-	"time"
 )
 
 func ShowVisitor(deps showDailyStatsDeps) usecase.Interactor {
