@@ -3,13 +3,15 @@ module github.com/vearutop/photo-blog
 go 1.23.0
 
 require (
+	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
 	github.com/bool64/brick v0.3.1
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
+	github.com/bool64/dbwrap v0.1.4
 	github.com/bool64/dev v0.2.36
-	github.com/bool64/sqluct v0.2.3
+	github.com/bool64/sqluct v0.2.4
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.2.0
 	github.com/buckket/go-blurhash v1.1.0
@@ -52,7 +54,6 @@ require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bool64/dbwrap v0.1.4 // indirect
 	github.com/bool64/logz v1.3.2 // indirect
 	github.com/bool64/prom-stats v0.1.3 // indirect
 	github.com/bool64/shared v0.1.5 // indirect
@@ -98,6 +99,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/vearutop/dynhist-go v1.2.3 // indirect
