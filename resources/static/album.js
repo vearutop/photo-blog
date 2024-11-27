@@ -384,11 +384,6 @@ function loadAlbum(params) {
         var albumSettings = result.album.settings
         var chronoTexts = result.album.settings.texts
 
-        var fullscreenSupported = false
-        if (typeof document.exitFullscreen == 'function') {
-            fullscreenSupported = true
-        }
-
         var exifHtml = {}
 
         for (var i = 0; i < result.images.length; i++) {
