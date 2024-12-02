@@ -11,6 +11,7 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -19,9 +20,12 @@ import (
 type showDailyStatsDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
+	Settings() settings.Values
+
 	VisitorStats() *visitor.StatsRepository
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoImageFinder() uniq.Finder[photo.Image]
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
 }
 
 func ShowDailyTotal(deps showDailyStatsDeps) usecase.Interactor {

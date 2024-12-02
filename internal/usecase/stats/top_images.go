@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/swaggest/usecase"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -26,8 +27,26 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 		ThumbPrtTime float64 `json:"preview_mobile_stripe_minutes"`
 	}
 
-	u := usecase.NewInteractor(func(ctx context.Context, in struct{}, out *web.Page) error {
-		st, err := deps.VisitorStats().TopImages(ctx)
+	type topImagesFilter struct {
+		AlbumName string `query:"album_name"`
+	}
+
+	u := usecase.NewInteractor(func(ctx context.Context, in topImagesFilter, out *web.Page) error {
+		var imageHashes []uniq.Hash
+
+		if in.AlbumName != "" {
+			res, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.AlbumName))
+			if err != nil {
+				return err
+			}
+
+			imageHashes = make([]uniq.Hash, len(res))
+			for i, img := range res {
+				imageHashes[i] = img.Hash
+			}
+		}
+
+		st, err := deps.VisitorStats().TopImages(ctx, imageHashes...)
 		if err != nil {
 			return err
 		}
@@ -47,16 +66,26 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 
 		var rows []dateRow
 
+		thumbBase := deps.Settings().Appearance().ThumbBaseURL
+		if thumbBase == "" {
+			thumbBase = "/thumb"
+		}
+
+		ms2min := func(ms int) float64 {
+			f := float64(ms) / float64(60*1000)
+			return float64(int(100*f)) / 100.0
+		}
+
 		for _, row := range st {
 			r := dateRow{}
-			r.Preview = `<a href="/list-` + row.Hash.String() + `/"><img style="width: 300px" src="/thumb/300w/` + row.Hash.String() + `.jpg" src="/thumb/600w/` + row.Hash.String() + `.jpg 2x"/></a>`
+			r.Preview = `<a href="/list-` + row.Hash.String() + `/"><img style="width: 300px" src="` + thumbBase + `/300w/` + row.Hash.String() + `.jpg" src="` + thumbBase + `/600w/` + row.Hash.String() + `.jpg 2x"/></a>`
 			r.Hash = row.Hash.String()
 			r.Views = row.Views
 			r.Uniq = row.Uniq
 			r.Zooms = row.Zooms
-			r.ViewTime = float64(row.ViewMs) / float64(60*1000)
-			r.ThumbTime = float64(row.ThumbMs) / float64(60*1000)
-			r.ThumbPrtTime = float64(row.ThumbPrtMs) / float64(60*1000)
+			r.ViewTime = ms2min(row.ViewMs)
+			r.ThumbTime = ms2min(row.ThumbMs)
+			r.ThumbPrtTime = ms2min(row.ThumbPrtMs)
 
 			rows = append(rows, r)
 		}
