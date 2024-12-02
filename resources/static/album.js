@@ -55,9 +55,9 @@ function fillFavorite(albumHash) {
             var h = $(this).data('hash')
 
             if (idx[h]) {
-                $(this).prepend('<a title="Remove from favorites" data-favorite="yes" class="ctrl-btn heart-icon" href="#" onclick="toggleFavorite(\''+h+'\', this);return false"></a>')
+                $(this).prepend('<a title="Remove from favorites" data-favorite="yes" class="ctrl-btn heart-icon" href="#" onclick="toggleFavorite(\'' + h + '\', this);return false"></a>')
             } else {
-                $(this).prepend('<a title="Add to favorites" data-favorite="no" class="ctrl-btn heart-empty-icon" href="#" onclick="toggleFavorite(\''+h+'\', this);return false"></a>')
+                $(this).prepend('<a title="Add to favorites" data-favorite="no" class="ctrl-btn heart-empty-icon" href="#" onclick="toggleFavorite(\'' + h + '\', this);return false"></a>')
             }
         })
     }, function (x) {
@@ -99,7 +99,7 @@ function removeImage(albumName, imageHash) {
         name: albumName,
         hash: imageHash,
     }, function (x) {
-        $('#img'+imageHash).remove()
+        $('#img' + imageHash).remove()
         // alert("Photo is removed from the album")
     }, function (x) {
         alert("Failed to remove photo from the album: " + x.error)
@@ -107,6 +107,7 @@ function removeImage(albumName, imageHash) {
 }
 
 var fullscreenEnabled = false;
+
 function toggleFullscreen() {
     if (fullscreenEnabled) {
         if (document.fullscreenElement) {
@@ -258,6 +259,7 @@ var currentImage = {
  * @property {String} baseUrl - base address to set on image close
  * @property {String} imageBaseUrl - base address to link to full-res images
  * @property {Boolean} enableFavorite - allow favorite pictures
+ * @property {String} thumbBaseUrl - thumbnail base URL
  */
 
 function collectStats(params) {
@@ -365,6 +367,11 @@ function loadAlbum(params) {
         originalPath = window.location.toString();
     }
 
+    var thumbBase = params.thumbBaseUrl
+    if (thumbBase == "") {
+        thumbBase = "/thumb"
+    }
+
     /**
      *
      * @param {UsecaseGetAlbumOutput} result
@@ -450,13 +457,13 @@ function loadAlbum(params) {
                 a.attr("target", "_blank")
                 a.attr("data-idx", i)
 
-                var srcSet = "/thumb/300w/" + img.hash + ".jpg 300w" +
-                    ", /thumb/600w/" + img.hash + ".jpg 600w" +
-                    ", /thumb/1200w/" + img.hash + ".jpg 1200w"
+                var srcSet = thumbBase + "/300w/" + img.hash + ".jpg 300w" +
+                    ", " + thumbBase + "/600w/" + img.hash + ".jpg 600w" +
+                    ", " + thumbBase + "/1200w/" + img.hash + ".jpg 1200w"
 
 
                 if (!visitorData.lowRes) {
-                    srcSet += ", /thumb/2400w/" + img.hash + ".jpg 2400w"
+                    srcSet += ", " + thumbBase + "/2400w/" + img.hash + ".jpg 2400w"
                 }
 
                 if (img.width > 0 && img.height > 0) {
@@ -586,10 +593,10 @@ function loadAlbum(params) {
                 a.attr("data-pswp-srcset", srcSet)
                 a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                    '<img alt="photo" src="/thumb/200h/' + img.hash + '.jpg" srcset="/thumb/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, /thumb/300w/' + img.hash + '.jpg 300w, /thumb/600w/' + img.hash + '.jpg 600w" /></div>')
+                    '<img alt="photo" src="'+thumbBase+'/200h/' + img.hash + '.jpg" srcset="'+thumbBase+'/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, '+thumbBase+'/300w/' + img.hash + '.jpg 300w, '+thumbBase+'/600w/' + img.hash + '.jpg 600w" /></div>')
                 a.attr("data-ts", img.time)
 
-                a.append('<div class="pswp-caption-content" data-hash="'+img.hash+'" style="display: none">' + img_description + '</div>')
+                a.append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')
 
                 $(params.gallery).append(a)
                 if (typeof img.blur_hash !== "undefined") {
@@ -599,7 +606,7 @@ function loadAlbum(params) {
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
                 a.attr("href", "/" + params.albumName + "/pano-" + img.hash + ".html")
-                a.html('<img alt="" src="/thumb/300w/' + img.hash + '.jpg" srcset="/thumb/600w/' + img.hash + '.jpg 2x" />')
+                a.html('<img alt="" src="'+thumbBase+'/300w/' + img.hash + '.jpg" srcset="'+thumbBase+'/600w/' + img.hash + '.jpg 2x" />')
 
                 $(params.galleryPano).show().append(a)
             }
@@ -684,18 +691,18 @@ function loadAlbum(params) {
         });
 
         // if (fullscreenSupported) {
-            lightbox.on('uiRegister', function () {
-                lightbox.pswp.ui.registerElement({
-                    name: 'fullscreen-button',
-                    ariaLabel: 'Toggle full screen',
-                    order: 8,
-                    isButton: true,
-                    html: '<i title="Toggle full screen" class="screen-icon ctrl-btn"></i>',
-                    onClick: (event, el) => {
-                        toggleFullscreen()
-                    }
-                });
+        lightbox.on('uiRegister', function () {
+            lightbox.pswp.ui.registerElement({
+                name: 'fullscreen-button',
+                ariaLabel: 'Toggle full screen',
+                order: 8,
+                isButton: true,
+                html: '<i title="Toggle full screen" class="screen-icon ctrl-btn"></i>',
+                onClick: (event, el) => {
+                    toggleFullscreen()
+                }
             });
+        });
         // }
 
         // Download image button.
@@ -841,7 +848,7 @@ function loadAlbum(params) {
                 images.push(L.marker([m.latitude, m.longitude],
                     {
                         icon: L.icon({
-                            iconUrl: '/thumb/' + thumbSize + '/' + m.hash + '.jpg',
+                            iconUrl: thumbBase+'/' + thumbSize + '/' + m.hash + '.jpg',
                             iconSize: [40],
                             className: 'image-marker'
                         })
@@ -851,7 +858,7 @@ function loadAlbum(params) {
                             .setContent(
                                 text +
                                 '<a href="#" onclick="openByHash(\'' + m.hash + '\');return false">' +
-                                '<img style="width: ' + w + 'px" src="/thumb/200h/' + m.hash + '.jpg" srcset="/thumb/400h/' + m.hash + '.jpg 2x" /></a>'
+                                '<img style="width: ' + w + 'px" src="'+thumbBase+'/200h/' + m.hash + '.jpg" srcset="'+thumbBase+'/400h/' + m.hash + '.jpg 2x" /></a>'
                             )
                     )
                     .addTo(map)

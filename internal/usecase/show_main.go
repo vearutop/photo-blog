@@ -42,6 +42,8 @@ type pageCommon struct {
 	Secure          bool
 	IsAdmin         bool
 	ShowLoginButton bool
+
+	ThumbBaseURL string
 }
 
 func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Values) {
@@ -57,6 +59,8 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Value
 	p.Header = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteHeader))
 	p.Footer = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteFooter))
 	p.Favicon = a.Appearance().SiteFavicon
+
+	p.ThumbBaseURL = a.Appearance().ThumbBaseURL
 
 	if p.Favicon == "" {
 		p.Favicon = "/static/favicon.png"
