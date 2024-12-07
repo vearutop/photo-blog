@@ -70,8 +70,8 @@ var currentImage = {
  * @property {String} gallery - CSS selector for gallery container
  * @property {String} galleryPano - CSS selector for gallery panoramas container
  * @property {String} baseUrl - base address to set on image close
- * @property {String} imageBaseUrl - base address to link to full-res images
  * @property {Boolean} enableFavorite - allow favorite pictures
+ * @property {String} imageBaseUrl - base address to link to full-res images
  * @property {String} thumbBaseUrl - thumbnail base URL
  */
 
@@ -125,6 +125,12 @@ function loadAlbum(params) {
     if (!thumbBase) {
         thumbBase = "/thumb"
     }
+
+    var imageBase = params.imageBaseUrl
+    if (!imageBase) {
+        imageBase = "/image"
+    }
+
 
     /**
      *
@@ -202,11 +208,7 @@ function loadAlbum(params) {
                 if (hideOriginal) {
                     a.attr("href", "#")
                 } else {
-                    if (params.imageBaseUrl) {
-                        a.attr("href", params.imageBaseUrl + img.name)
-                    } else {
-                        a.attr("href", "/image/" + img.hash + ".jpg")
-                    }
+                    a.attr("href", imageBase + "/" + img.hash + ".jpg")
                 }
                 a.attr("target", "_blank")
                 a.attr("data-idx", i)
@@ -222,11 +224,7 @@ function loadAlbum(params) {
 
                 if (img.width > 0 && img.height > 0) {
                     if (!hideOriginal && !visitorData.lowRes) {
-                        if (params.imageBaseUrl) {
-                            srcSet += ", " + params.imageBaseUrl + img.name + " " + img.width + "w"
-                        } else {
-                            srcSet += ", /image/" + img.hash + ".jpg " + img.width + "w"
-                        }
+                        srcSet += ", "+imageBase+"/" + img.hash + ".jpg " + img.width + "w"
                     }
 
                     a.attr("data-pswp-width", img.width)

@@ -54,8 +54,7 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 
 		AlbumData getAlbumOutput
 
-		ImageBaseURL string
-		ShowMap      bool
+		ShowMap bool
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in searchInput, out *web.Page) error {
@@ -90,7 +89,6 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
 		d.OGSiteName = deps.Settings().Appearance().SiteTitle
 
-		d.ImageBaseURL = album.Settings.ImageBaseURL
 		d.ShowMap = !album.Settings.HideMap
 
 		maps := deps.Settings().Maps()

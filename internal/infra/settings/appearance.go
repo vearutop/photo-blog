@@ -18,6 +18,7 @@ type Appearance struct {
 
 	Languages    []string `json:"languages" title:"Languages" description:"Supported content languages."`
 	ThumbBaseURL string   `json:"thumb_base_url" title:"Thumbnails Base URL" description:"Optional custom URL for thumbnails." example:"https://example.org/thumb"`
+	ImageBaseURL string   `json:"image_base_url" title:"Images Base URL" description:"Optional custom URL for images." example:"https://example.org/image"`
 
 	languageMatcher language.Matcher
 }

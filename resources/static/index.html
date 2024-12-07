@@ -86,6 +86,7 @@
             gallery: "#{{.Featured}}",
             baseUrl: "/",
             thumbBaseUrl: "{{.ThumbBaseURL}}",
+            imageBaseUrl: "{{.ImageBaseURL}}",
             albumData: {{.FeaturedAlbumData}},
         });
     </script>
@@ -101,6 +102,7 @@
             gallery: "#a{{$a.Album.Hash}}",
             baseUrl: "/",
             thumbBaseUrl: "{{$.ThumbBaseURL}}",
+            imageBaseUrl: "{{$.ImageBaseURL}}",
             albumData: {{$a}},
         });
     </script>

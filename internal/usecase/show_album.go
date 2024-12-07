@@ -83,8 +83,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		AlbumData getAlbumOutput
 
-		ImageBaseURL string
-		ShowMap      bool
+		ShowMap bool
 	}
 
 	cacheName := "album-data"
@@ -142,7 +141,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			o.StripTags = true
 		})
 
-		d.ImageBaseURL = album.Settings.ImageBaseURL
 		d.ShowMap = !album.Settings.HideMap
 
 		maps := deps.Settings().Maps()

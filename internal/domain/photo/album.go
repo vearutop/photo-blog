@@ -48,9 +48,7 @@ type AlbumSettings struct {
 	Texts           []ChronoText `json:"texts,omitempty" title:"Chronological texts"`
 	// Deprecated: TODO remove and implement as separate entity.
 	Redirect string `json:"redirect,omitempty" title:"Relative or absolute URL to redirect to with HTTP 301 status."`
-	// Deprecated: TODO remove and implement on images.
-	ImageBaseURL string `json:"image_base_url,omitempty" title:"URL prefix to use for full-res images instead of local endpoint."`
-	HideMap      bool   `json:"hide_map,omitempty" noTitle:"true" inlineTitle:"Hide map on album page."`
+	HideMap  bool   `json:"hide_map,omitempty" noTitle:"true" inlineTitle:"Hide map on album page."`
 
 	MapTiles       string `json:"tiles" title:"Map tiles" description:"URL to custom map tiles, overrides app default." example:"https://retina-tiles.p.rapidapi.com/local/osm{r}/v1/{z}/{x}/{y}.png?rapidapi-key=YOUR-RAPIDAPI-KEY"`
 	MapAttribution string `json:"attribution" title:"Map attribution" description:"Map tiles attribution, overrides app default."`

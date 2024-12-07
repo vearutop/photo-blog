@@ -44,6 +44,7 @@ type pageCommon struct {
 	ShowLoginButton bool
 
 	ThumbBaseURL string
+	ImageBaseURL string
 }
 
 func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Values) {
@@ -61,6 +62,7 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Value
 	p.Favicon = a.Appearance().SiteFavicon
 
 	p.ThumbBaseURL = a.Appearance().ThumbBaseURL
+	p.ImageBaseURL = a.Appearance().ImageBaseURL
 
 	if p.Favicon == "" {
 		p.Favicon = "/static/favicon.png"
