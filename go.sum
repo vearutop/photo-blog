@@ -85,12 +85,6 @@ github.com/bool64/prom-stats v0.1.3 h1:ZmqTpW1CWFO1zO1z2Fa2GNScEYLAQLc7uoYOcw54h
 github.com/bool64/prom-stats v0.1.3/go.mod h1:uAydOHn7rCblxGm4TkhSAFjTOsTgduxMIVB8yh8Ja7I=
 github.com/bool64/shared v0.1.5 h1:fp3eUhBsrSjNCQPcSdQqZxxh9bBwrYiZ+zOKFkM0/2E=
 github.com/bool64/shared v0.1.5/go.mod h1:081yz68YC9jeFB3+Bbmno2RFWvGKv1lPKkMP6MHJlPs=
-github.com/bool64/sqluct v0.2.3 h1:fMF/5hwqbKOLcOeGGHWmbNBmU+UVtXaWVFD3+O0Z0Xk=
-github.com/bool64/sqluct v0.2.3/go.mod h1:Ha+dDE4U/O+s2KcFJJ97ZpoHQNPBdmmv8v62OeL/U84=
-github.com/bool64/sqluct v0.2.4-0.20241126192440-41e3038fe4b1 h1:ytjQYm3+DB9ZXFP7hFgudrw9QapDv4X9FtlbjKsNOZM=
-github.com/bool64/sqluct v0.2.4-0.20241126192440-41e3038fe4b1/go.mod h1:3HQviUcavzBhDAC2tX5MYvvTMFSLVDPMOHVj6QWiUkM=
-github.com/bool64/sqluct v0.2.4-0.20241126194350-18b0820a27c8 h1:i4RoiUhXmgztdP5c/Pot5MHn3PY7yxi0AsUcGvUMpdU=
-github.com/bool64/sqluct v0.2.4-0.20241126194350-18b0820a27c8/go.mod h1:3HQviUcavzBhDAC2tX5MYvvTMFSLVDPMOHVj6QWiUkM=
 github.com/bool64/sqluct v0.2.4 h1:4dpa3/k0v+V9mUN2SHzCgmMAH0iqhHczXg9e8YuoWwY=
 github.com/bool64/sqluct v0.2.4/go.mod h1:3HQviUcavzBhDAC2tX5MYvvTMFSLVDPMOHVj6QWiUkM=
 github.com/bool64/stats v0.2.2 h1:BRfpJk/4KKMo4K+c9jv4aGemyekHCvCQFRljbmHC7gk=
@@ -420,8 +414,8 @@ github.com/swaggest/openapi-go v0.2.54 h1:WnFKIHAgR2RIOiYys3qvSuYmsFd2a17MIoC9Tc
 github.com/swaggest/openapi-go v0.2.54/go.mod h1:2Q7NpuG9NgpGeTaNOo852GSR6cCzSP4IznA9DNdUTQw=
 github.com/swaggest/refl v1.3.0 h1:PEUWIku+ZznYfsoyheF97ypSduvMApYyGkYF3nabS0I=
 github.com/swaggest/refl v1.3.0/go.mod h1:3Ujvbmh1pfSbDYjC6JGG7nMgPvpG0ehQL4iNonnLNbg=
-github.com/swaggest/rest v0.2.69 h1:h0QdL+izv4b3UaBb95USf5xQ6g+6BoanVGDFddBM71w=
-github.com/swaggest/rest v0.2.69/go.mod h1:jf/wNhDFY7TPEsSGooy2ZEimtaNEnvpaU6SPlTaWTO4=
+github.com/swaggest/rest v0.2.70 h1:rIexSxo9iflP9/vsh4jJWdzce4LDF2MYFWUG+s/Ydgs=
+github.com/swaggest/rest v0.2.70/go.mod h1:jf/wNhDFY7TPEsSGooy2ZEimtaNEnvpaU6SPlTaWTO4=
 github.com/swaggest/swgui v1.8.2 h1:JGpRCLGLZ7EqTwHsBEOo//kx8CM7Rv3RchgvfNpB+6E=
 github.com/swaggest/swgui v1.8.2/go.mod h1:nkzGeyMfq5FstGGNJKr1LORvM4RdsjTmvWvqvyZeDDc=
 github.com/swaggest/usecase v1.3.1 h1:JdKV30MTSsDxAXxkldLNcEn8O2uf565khyo6gr5sS+w=

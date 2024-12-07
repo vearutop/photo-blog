@@ -52,6 +52,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 	s := brick.NewBaseWebService(deps.BaseLocator)
 	deps.CtxdLogger().Important(context.Background(), "initializing router")
 
+	s.AddHeadToGet = true
+
 	deps.BaseLocator.DebugRouter.Get("/coverage-meta", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "binary/octet-stream")
 		if err := coverage.WriteMeta(w); err != nil {
