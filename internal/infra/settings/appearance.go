@@ -7,6 +7,12 @@ import (
 	"golang.org/x/text/language"
 )
 
+type MenuItem struct {
+	Text      string `json:"text" title:"Text" formType:"textarea"`
+	URL       string `json:"url" title:"URL"`
+	AdminOnly bool   `json:"admin,omitempty" inlineTitle:"Admin only" noTitle:"true"`
+}
+
 type Appearance struct {
 	SiteTitle   string `json:"site_title" title:"Title" formType:"textarea" description:"The title of this site."`
 	SiteFavicon string `json:"site_favicon" title:"Link to favicon" description:"Defaults to /static/favicon.png, you can upload your own and use, for example, /site/favicon.png."`
@@ -19,6 +25,8 @@ type Appearance struct {
 	Languages    []string `json:"languages" title:"Languages" description:"Supported content languages."`
 	ThumbBaseURL string   `json:"thumb_base_url" title:"Thumbnails Base URL" description:"Optional custom URL for thumbnails." example:"https://example.org/thumb"`
 	ImageBaseURL string   `json:"image_base_url" title:"Images Base URL" description:"Optional custom URL for images." example:"https://example.org/image"`
+
+	MainMenu []MenuItem `json:"main_menu,omitempty" title:"Main Menu"`
 
 	languageMatcher language.Matcher
 }
