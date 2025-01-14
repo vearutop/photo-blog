@@ -13,6 +13,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/image"
 )
 
 type ProcessorDeps interface {
@@ -27,6 +28,8 @@ type ProcessorDeps interface {
 	PhotoImageIndexer() photo.ImageIndexer
 
 	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
+
+	PhotoThumbnailer() photo.Thumbnailer
 
 	DepCache() *dep.Cache
 }
@@ -43,7 +46,28 @@ const (
 	ErrSkip = ctxd.SentinelError("unsupported file skipped")
 )
 
-func (p *Processor) AddFile(ctx context.Context, albumName string, filePath string, after ...func(hash uniq.Hash)) (err error) {
+func (p *Processor) AddThumbnail(ctx context.Context, imgHash uniq.Hash, size photo.ThumbSize, filePath string) error {
+	img := photo.Image{}
+	img.Hash = imgHash
+
+	var err error
+
+	th := photo.Thumb{}
+	th.Hash = imgHash
+	th.Format = size
+	th.Data, err = os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	ctx = image.LargerThumbToContext(ctx, th)
+
+	p.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
+
+	return nil
+}
+
+func (p *Processor) AddFile(ctx context.Context, albumName string, filePath string, after ...func(hash uniq.Hash)) (h uniq.Hash, idx func(), err error) {
 	lName := strings.ToLower(filePath)
 
 	defer func() {
@@ -55,15 +79,16 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 	if strings.HasSuffix(lName, ".jpg") || strings.HasSuffix(lName, ".jpeg") {
 		d := photo.Image{}
 		if err := d.SetPath(ctx, filePath); err != nil {
-			return fmt.Errorf("set image path: %w", err)
+			return 0, nil, fmt.Errorf("set image path: %w", err)
 		}
 
 		img, err := p.deps.PhotoImageEnsurer().Ensure(ctx, d)
 		if err != nil {
-			return fmt.Errorf("ensure image: %w", err)
+			return 0, nil, fmt.Errorf("ensure image: %w", err)
 		} else if err := p.deps.PhotoAlbumImageAdder().AddImages(ctx, uniq.StringHash(albumName), img.Hash); err != nil {
-			return fmt.Errorf("add image to album: %w", err)
-		} else {
+			return 0, nil, fmt.Errorf("add image to album: %w", err)
+		}
+		return img.Hash, func() {
 			p.deps.PhotoImageIndexer().QueueIndex(ctx, img, photo.IndexingFlags{})
 			p.deps.PhotoImageIndexer().QueueCallback(ctx, func(ctx context.Context) {
 				for _, cb := range after {
@@ -71,32 +96,30 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 				}
 				_ = p.deps.DepCache().AlbumChanged(ctx, albumName)
 			})
-		}
-
-		return nil
+		}, nil
 	}
 
 	if strings.HasSuffix(lName, ".gpx") {
 		d := photo.Gpx{}
 		if err := d.SetPath(ctx, filePath); err != nil {
-			return fmt.Errorf("set gpx path: %w", err)
+			return 0, nil, fmt.Errorf("set gpx path: %w", err)
 		}
 
 		if err := d.Index(); err != nil {
-			return fmt.Errorf("index gpx: %w", err)
+			return 0, nil, fmt.Errorf("index gpx: %w", err)
 		}
 
 		p.deps.CtxdLogger().Info(ctx, "gpx", "settings", d.Settings.Val)
 
 		d, err := p.deps.PhotoGpxEnsurer().Ensure(ctx, d)
 		if err != nil {
-			return fmt.Errorf("ensure gpx: %w", err)
+			return 0, nil, fmt.Errorf("ensure gpx: %w", err)
 		} else {
 			// TODO: migrate album_images to album_contents with hashed items of different types
 			// (e.g. gpx, or gps poi, or even comments/descriptions?).
 			a, err := p.deps.PhotoAlbumFinder().FindByHash(ctx, uniq.StringHash(albumName))
 			if err != nil {
-				return fmt.Errorf("find album %s: %w", albumName, err)
+				return 0, nil, fmt.Errorf("find album %s: %w", albumName, err)
 			}
 
 			found := false
@@ -112,7 +135,7 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 				a.Settings.GpxTracksHashes = append(a.Settings.GpxTracksHashes, d.Hash)
 
 				if _, err = p.deps.PhotoAlbumEnsurer().Ensure(ctx, a); err != nil {
-					return fmt.Errorf("ensure album %s: %w", albumName, err)
+					return 0, nil, fmt.Errorf("ensure album %s: %w", albumName, err)
 				}
 			}
 
@@ -120,11 +143,11 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 				cb(d.Hash)
 			}
 
-			return nil
+			return d.Hash, nil, nil
 		}
 	}
 
-	return ErrSkip
+	return 0, nil, ErrSkip
 }
 
 func (p *Processor) AddDirectory(ctx context.Context, albumName string, dirPath string) ([]string, error) {
@@ -149,12 +172,15 @@ func (p *Processor) AddDirectory(ctx context.Context, albumName string, dirPath 
 	)
 
 	for _, name := range names {
-		if err := p.AddFile(ctx, albumName, path.Join(dirPath, name)); err != nil {
+		if _, idx, err := p.AddFile(ctx, albumName, path.Join(dirPath, name)); err != nil {
 			if !errors.Is(err, ErrSkip) {
 				errs = append(errs, name+": "+err.Error())
 			}
 		} else {
 			added = append(added, name)
+			if idx != nil {
+				idx()
+			}
 		}
 	}
 

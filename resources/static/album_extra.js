@@ -25,6 +25,57 @@ function deleteAlbum(name) {
     })
 }
 
+function beforeUploadRequest(req, file, allFiles) {
+   console.log("before upload", req, file, allFiles)
+
+    var name = file.data.name;
+    var relativePath = file.data.relativePath;
+
+    console.log(name, relativePath)
+
+    const thumbSizes = ["300w", "600w", "1200w", "2400w"]
+
+    if (relativePath) {
+        for (var j = 0; j < thumbSizes.length; j++) {
+            var t = thumbSizes[j]
+            if (relativePath.includes(t)) {
+                return;
+            }
+        }
+    }
+
+    var thumbs = [];
+
+    for (var i = 0; i<allFiles.length; i++) {
+        var f = allFiles[i].data;
+
+        if (!f.relativePath) {
+            continue;
+        }
+
+        if (f.name !== name) {
+            continue;
+        }
+
+        for (var j = 0; j < thumbSizes.length; j++) {
+            var t = thumbSizes[j]
+            if (f.relativePath.includes(t)) {
+                thumbs.push(t)
+                break;
+            }
+        }
+    }
+
+    /**
+     * @var {XMLHttpRequest} xhr
+     */
+    var xhr = req.getUnderlyingObject()
+
+    if (thumbs) {
+        xhr.setRequestHeader("X-Expect-Thumbnails", thumbs.join(","))
+    }
+}
+
 var featured = "featured"
 
 function addToFeatured(imageHash) {
@@ -207,7 +258,6 @@ function collectThumbVisibility() {
     var visibleSince = {}
     var visibleFor = {}
     var lastFlush = new Date()
-    var lastBlur = null;
 
     var options = {threshold: 1.0};
     var observer = new IntersectionObserver(function (entries) {
@@ -243,4 +293,28 @@ function collectThumbVisibility() {
     $("a.image").each(function (i, e) {
         observer.observe(e);
     })
+}
+
+
+// GPS related.
+
+function getDarkColor() {
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += Math.floor(Math.random() * 12).toString(16);
+    }
+    return color;
+}
+
+
+// distance returns 2D distance between two points in meters.
+function distance(lat1, lon1, lat2, lon2) {
+    var toRad = Math.PI / 180
+    var dLat = toRad * (lat1 - lat2)
+    var dLon = toRad * (lon1 - lon2)
+
+    var a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(toRad * lat1) * Math.cos(toRad * lat2)
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+    return 6371000 * c
 }

@@ -58,7 +58,22 @@ func makeThumbnail(
 
 	lt := LargerThumbFromContext(ctx)
 	if lt != nil && lt.Format == size {
-		return *lt, nil
+		th = *lt
+
+		if th.CreatedAt.IsZero() {
+			th.CreatedAt = time.Now()
+		}
+
+		if th.Width == 0 || lt.Height == 0 {
+			i, err := thumbJPEG(ctx, th)
+			if err != nil {
+				return th, err
+			}
+
+			th.Width, th.Height = uint(i.Bounds().Dx()), uint(i.Bounds().Dy())
+		}
+
+		return th, nil
 	}
 
 	th.Hash = i.Hash
@@ -95,7 +110,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	defer t.mu.Unlock()
 
 	start := time.Now()
-	ctx = ctxd.AddFields(ctx, "img", i.Path, "size", size)
+	ctx = ctxd.AddFields(ctx, "img", i.Path, "hash", i.Hash, "size", size)
 	t.deps.CtxdLogger().Info(ctx, "starting thumb")
 
 	ctx, finish := opencensus.AddSpan(ctx,

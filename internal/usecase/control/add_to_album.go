@@ -134,7 +134,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 				return err
 			}
 
-			err = deps.FilesProcessor().AddFile(ctx, in.DstAlbumName, dstFilePath, func(hash uniq.Hash) {
+			_, idx, err := deps.FilesProcessor().AddFile(ctx, in.DstAlbumName, dstFilePath, func(hash uniq.Hash) {
 				ctx := detachedContext{
 					parent: ctx,
 				}
@@ -189,6 +189,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 				return err
 			}
 
+			idx()
 		}
 
 		if err == nil {

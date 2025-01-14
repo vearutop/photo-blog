@@ -5,10 +5,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/web"
@@ -18,6 +20,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/files"
+	"golang.org/x/exp/slog"
 )
 
 func MountTus(s *web.Service, deps TusHandlerDeps) error {
@@ -31,20 +34,25 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 		RespectForwardedHeaders: true,
 		StoreComposer:           composer,
 		NotifyCompleteUploads:   true,
+		Logger:                  slog.New(slog.NewTextHandler(io.Discard, nil)), // TODO: use ctxd.Logger.
 	})
 	if err != nil {
 		return err
 	}
 
+	up := &uploadProcessor{
+		thumbWait: make(map[string]thumbWaiter),
+	}
+
 	go func() {
 		for {
 			event := <-tusHandler.CompleteUploads
-			processUpload(deps, event)
+			up.processUpload(deps, event)
 		}
 	}()
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deps.CtxdLogger().Info(r.Context(), "request headers", r.Header)
+		// deps.CtxdLogger().Info(r.Context(), "request headers", "header", r.Header)
 
 		if strings.HasPrefix(r.Header.Get("Origin"), "https://") {
 			r.TLS = &tls.ConnectionState{}
@@ -75,7 +83,18 @@ func MountTus(s *web.Service, deps TusHandlerDeps) error {
 	return nil
 }
 
-func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
+type uploadProcessor struct {
+	mu        sync.Mutex
+	thumbWait map[string]thumbWaiter // Key is album-name:file-name
+}
+
+type thumbWaiter struct {
+	thumbsLeft []string
+	hash       uniq.Hash
+	idx        func()
+}
+
+func (up *uploadProcessor) processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 	ctx := event.Context
 	deps.CtxdLogger().Info(ctx, "upload finished", "event", event)
 
@@ -106,14 +125,66 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 		return
 	}
 
-	filePath := AlbumFilePath(albumPath, event.Upload.MetaData["filename"])
+	md := event.Upload.MetaData
+
+	filePath := AlbumFilePath(albumPath, md["filename"])
+
+	// Check for thumbnail.
+	if relPath := md["relativePath"]; relPath != "null" {
+		for _, th := range photo.ThumbSizes {
+			if strings.Contains(relPath, string(th)) {
+				deps.CtxdLogger().Info(ctx, "thumbnail uploaded", "album", albumName, "path", filePath, "size", th)
+
+				up.mu.Lock()
+				defer up.mu.Unlock()
+
+				tw := up.thumbWait[filePath]
+
+				tl := tw.thumbsLeft
+				for i, thl := range tl {
+					if string(th) == thl {
+						tl[i] = tl[len(tl)-1]
+						tl = tl[:len(tl)-1]
+
+						break
+					}
+				}
+				tw.thumbsLeft = tl
+
+				if err := deps.FilesProcessor().AddThumbnail(ctx, tw.hash, th, event.Upload.Storage["Path"]); err != nil {
+					deps.CtxdLogger().Error(ctx, "failed to add uploaded thumb", "error", err)
+					return
+				}
+
+				if len(tl) == 0 {
+					deps.CtxdLogger().Info(ctx, "all thumbs uploaded", "album", albumName, "path", filePath, "size", th)
+					if tw.idx != nil {
+						tw.idx()
+					}
+
+					delete(up.thumbWait, filePath)
+				} else {
+					up.thumbWait[filePath] = tw
+				}
+
+				return
+			}
+		}
+	}
+
 	if err := os.Rename(event.Upload.Storage["Path"], filePath); err != nil {
 		deps.CtxdLogger().Error(ctx, "failed to move uploaded file", "error", err)
 
 		return
 	}
 
-	if err := deps.FilesProcessor().AddFile(ctx, albumName, filePath); err != nil {
+	tw := thumbWaiter{
+		thumbsLeft: strings.Split(event.HTTPRequest.Header.Get("X-Expect-Thumbnails"), ","),
+	}
+
+	var err error
+
+	if tw.hash, tw.idx, err = deps.FilesProcessor().AddFile(ctx, albumName, filePath); err != nil {
 		if errors.Is(err, files.ErrSkip) {
 			if err := os.Remove(filePath); err != nil {
 				deps.CtxdLogger().Error(ctx, "failed to remove skipped file",
@@ -124,6 +195,15 @@ func processUpload(deps TusHandlerDeps, event tusd.HookEvent) {
 			deps.CtxdLogger().Error(ctx, "failed to process uploaded file",
 				"error", err,
 				"filePath", filePath)
+		}
+	} else {
+		if len(tw.thumbsLeft) > 0 {
+			up.mu.Lock()
+			defer up.mu.Unlock()
+
+			up.thumbWait[filePath] = tw
+		} else {
+			tw.idx()
 		}
 	}
 }
@@ -197,6 +277,9 @@ func TusAlbumHTMLButton(albumName string) template.HTML {
 				endpoint: window.location.protocol + '//' + window.location.host + '/files',
 				chunkSize: 900000, // 900K to fit in 1MiB default client_max_body_size of nginx.
 				headers: {"X-Album-Name": "` + albumName + `"},
+				onBeforeRequest: function (req, file) {
+					beforeUploadRequest(req, file, uppy.getFiles())
+				}
 			})
     }
 </script>

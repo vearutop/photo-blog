@@ -112,6 +112,8 @@ func (i *Indexer) QueueCallback(ctx context.Context, cb func(ctx context.Context
 }
 
 func (i *Indexer) QueueIndex(ctx context.Context, img photo.Image, flags photo.IndexingFlags) {
+	i.deps.CtxdLogger().Info(ctx, "queueing image indexing", "img", img, "flags", flags)
+
 	atomic.AddInt64(&i.queueSize, 1)
 	i.queue <- indexJob{
 		ctx:   detachedContext{parent: ctx},
@@ -211,14 +213,17 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		}
 	}
 
-	i.ensureThumbs(ctx, img)
-	i.ensureBlurHash(ctx, &img)
-	i.ensurePHash(ctx, &img)
+	if !flags.SkipThumbnail {
+		i.ensureThumbs(ctx, img)
+		i.ensureBlurHash(ctx, &img)
+		i.ensurePHash(ctx, &img)
+
+		go i.ensureFacesRecognized(ctx, img)
+		go i.ensureCFClassification(ctx, img)
+		go i.ensureCFDescription(ctx, img)
+	}
 
 	go i.ensureGeoLabel(ctx, img.Hash)
-	go i.ensureFacesRecognized(ctx, img)
-	go i.ensureCFClassification(ctx, img)
-	go i.ensureCFDescription(ctx, img)
 
 	return nil
 }

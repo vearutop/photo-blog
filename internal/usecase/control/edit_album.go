@@ -42,6 +42,7 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
     <script src="/static/album.js"></script>
+    <script src="/static/album_extra.js"></script>
     <link rel="stylesheet" href="/static/tus/uppy.min.css">
     <script src="/static/tus/uppy.legacy.min.js"></script>
 

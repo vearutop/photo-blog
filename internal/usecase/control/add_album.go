@@ -28,6 +28,7 @@ func AddAlbum(deps editAlbumPageDeps) usecase.Interactor {
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
     <script src="/static/album.js"></script>
+    <script src="/static/album_extra.js"></script>
 
 `,
 				AppendHTML: template.HTML(`

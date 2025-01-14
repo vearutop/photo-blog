@@ -46,10 +46,12 @@ func (tr *ThumbRepository) Thumbnail(ctx context.Context, img photo.Image, size 
 
 	th, err = tr.Find(ctx, img.Hash, w, h)
 	if err == nil {
-		if (th.Width > th.Height) == (img.Width > img.Height) {
+		return th, nil
+
+		if ((th.Width > th.Height) == (img.Width > img.Height)) || img.Width == 0 {
 			return th, nil
 		} else {
-			tr.logger.Warn(ctx, "deleting invalid thumbnails", "hash", th.Hash)
+			tr.logger.Warn(ctx, "deleting invalid thumbnails", "hash", th.Hash, "thumb", th, "img", img)
 			if th.FilePath != "" {
 				if err = os.Remove(th.FilePath); err != nil {
 					tr.logger.Error(ctx, "failed to delete thumb file",
