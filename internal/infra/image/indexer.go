@@ -213,16 +213,13 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		}
 	}
 
-	if !flags.SkipThumbnail {
-		i.ensureThumbs(ctx, img)
-		i.ensureBlurHash(ctx, &img)
-		i.ensurePHash(ctx, &img)
+	i.ensureThumbs(ctx, img)
+	i.ensureBlurHash(ctx, &img)
+	i.ensurePHash(ctx, &img)
 
-		go i.ensureFacesRecognized(ctx, img)
-		go i.ensureCFClassification(ctx, img)
-		go i.ensureCFDescription(ctx, img)
-	}
-
+	go i.ensureFacesRecognized(ctx, img)
+	go i.ensureCFClassification(ctx, img)
+	go i.ensureCFDescription(ctx, img)
 	go i.ensureGeoLabel(ctx, img.Hash)
 
 	return nil
