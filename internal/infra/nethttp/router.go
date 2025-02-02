@@ -14,6 +14,7 @@ import (
 	"github.com/swaggest/rest/chirouter"
 	"github.com/swaggest/rest/nethttp"
 	"github.com/swaggest/rest/web"
+	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
@@ -26,7 +27,6 @@ import (
 	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
 	"github.com/vearutop/photo-blog/internal/usecase/help"
 	"github.com/vearutop/photo-blog/internal/usecase/stats"
-	"github.com/vearutop/photo-blog/pkg/dbcon"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"golang.org/x/text/language"
 )
@@ -69,6 +69,9 @@ func NewRouter(deps *service.Locator) *web.Service {
 		}
 	})
 	deps.BaseLocator.DebugRouter.AddLink("coverage-counters", "Coverage Counters")
+
+	deps.BaseLocator.DebugRouter.Mount("/db", dbcon.Handler("/debug/db/", deps))
+	deps.BaseLocator.DebugRouter.AddLink("db", "DB Console")
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
@@ -136,8 +139,6 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
 		s.Get("/login", control.Login())
-
-		dbcon.Mount(s, deps)
 
 		// Stats.
 		s.Get("/stats/daily.html", stats.ShowDailyTotal(deps))

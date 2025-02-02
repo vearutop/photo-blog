@@ -1,11 +1,11 @@
 package service
 
 import (
-	"database/sql"
-
 	"github.com/bool64/brick"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
 	"github.com/swaggest/jsonform-go"
+	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
@@ -127,9 +127,17 @@ func (l *Locator) VisitorStats() *visitor.StatsRepository {
 	return l.VisitorStatsInstance
 }
 
-func (l *Locator) DBInstances() map[string]*sql.DB {
-	return map[string]*sql.DB{
-		"default": l.Storage.DB().DB,
-		"stats":   l.VisitorStatsInstance.DB(),
+func (l *Locator) DBInstances() []dbcon.DBInstance {
+	return []dbcon.DBInstance{
+		{
+			Name:     "main",
+			Instance: l.Storage.DB().DB,
+			Dialect:  sqluct.DialectSQLite3,
+		},
+		{
+			Name:     "stats",
+			Instance: l.VisitorStatsInstance.DB(),
+			Dialect:  sqluct.DialectSQLite3,
+		},
 	}
 }
