@@ -25,6 +25,18 @@ function deleteAlbum(name) {
     })
 }
 
+function reindexAlbum(name) {
+    var b = new Backend('');
+    b.controlIndexAlbum({
+        name: name,
+    }, function (x) {
+        alert("Reindexing started")
+    }, function (x) {
+        alert("Failed to reindex album: " + x.error)
+    })
+}
+
+
 function beforeUploadRequest(req, file, allFiles) {
    console.log("before upload", req, file, allFiles)
 

@@ -50,12 +50,13 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 			PrependHTML: template.HTML(`<a style="margin-left: 2em" href ="/`+a.Name+`">Back to album</a> `) +
 				upload.TusAlbumHTMLButton(a.Name) +
 				`<script>
-function formSaved(x, ctx) { $(ctx.result).html('Saved.') } 
-function formDone(x, ctx) { $(ctx.result).html('Done.') } 
+function formSaved(x, ctx) { $(ctx.result).html('Saved.').show() } 
+function formDone(x, ctx) { $(ctx.result).html('Done.').show() } 
 </script>`,
 			AppendHTML: template.HTML(`
 <hr />
 <button style="margin: 2em" class="btn btn-danger" onclick="deleteAlbum('` + a.Name + `')">Delete this album</button>
+<button style="margin: 2em" class="btn" onclick="reindexAlbum('` + a.Name + `')">Reindex this album</button>
 `),
 		}
 
