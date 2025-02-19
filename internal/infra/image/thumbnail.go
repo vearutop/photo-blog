@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -204,7 +205,17 @@ func loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, erro
 		return img, nil
 	}
 
-	img, err := loadJPEG(ctx, i.Path)
+	var (
+		img image.Image
+		err error
+	)
+
+	if len(i.Settings.HTTPSources) > 0 {
+		img, err = loadJPEGFromURL(ctx, i.Settings.HTTPSources[0])
+	} else {
+		img, err = loadJPEG(ctx, i.Path)
+	}
+
 	if err != nil {
 		return img, fmt.Errorf("failed to load JPEG: %w", err)
 	}
@@ -244,6 +255,21 @@ func loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
 
 	// decode jpeg into image.Image
 	return jpeg.Decode(f)
+}
+
+func loadJPEGFromURL(ctx context.Context, u string) (img image.Image, err error) {
+	ctx, finish := opencensus.AddSpan(ctx)
+	defer finish(&err)
+
+	resp, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	// decode jpeg into image.Image
+	return jpeg.Decode(resp.Body)
 }
 
 func thumbJPEG(ctx context.Context, t photo.Thumb) (image.Image, error) {

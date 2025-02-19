@@ -23,6 +23,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
+	"github.com/vearutop/photo-blog/internal/infra/image/sharpness"
 	"go.opencensus.io/trace"
 )
 
@@ -216,6 +217,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	i.ensureThumbs(ctx, img)
 	i.ensureBlurHash(ctx, &img)
 	i.ensurePHash(ctx, &img)
+	i.ensureSharpness(ctx, &img)
 
 	go i.ensureFacesRecognized(ctx, img)
 	go i.ensureCFClassification(ctx, img)
@@ -442,6 +444,31 @@ func (i *Indexer) ensurePHash(ctx context.Context, img *photo.Image) {
 	}
 
 	img.PHash = uniq.Hash(h.GetHash())
+
+	if err := i.deps.PhotoImageUpdater().Update(ctx, *img); err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to save image",
+			"error", err.Error())
+	}
+}
+
+func (i *Indexer) ensureSharpness(ctx context.Context, img *photo.Image) {
+	if img.Sharpness != nil {
+		return
+	}
+
+	jpg, err := loadImage(ctx, *img, 10000, 10000)
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to load image",
+			"error", err.Error())
+	}
+
+	sh, err := sharpness.FirstPercentile(Gray(jpg))
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to calc sharpness",
+			"error", err.Error())
+	}
+
+	img.Sharpness = &sh
 
 	if err := i.deps.PhotoImageUpdater().Update(ctx, *img); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to save image",
