@@ -178,8 +178,10 @@ func (up *uploadProcessor) processUpload(deps TusHandlerDeps, event tusd.HookEve
 		return
 	}
 
-	tw := thumbWaiter{
-		thumbsLeft: strings.Split(event.HTTPRequest.Header.Get("X-Expect-Thumbnails"), ","),
+	tw := thumbWaiter{}
+
+	if hd := event.HTTPRequest.Header.Get("X-Expect-Thumbnails"); hd != "" {
+		tw.thumbsLeft = strings.Split(hd, ",")
 	}
 
 	var err error
