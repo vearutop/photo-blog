@@ -55,20 +55,28 @@
     <div id="menu">
         <div class="pure-menu">
             <ul class="pure-menu-list">
-                <li class="pure-menu-item"><a href="/" class="pure-menu-link">Home</a></li>
-                <li class="pure-menu-item control-panel"><a title="Settings" class="pure-menu-link" href="/edit/settings.html">Settings</a></li>
-                <li class="pure-menu-item control-panel"><a title="Add Album" class="pure-menu-link" href="/add-album.html">Add Album</a></li>
+                {{range $k, $item := .MainMenu}}
+                <li class="pure-menu-item"><a href="{{$item.URL}}" class="pure-menu-link">{{$item.Text}}</a></li>
+                {{end}}
+
+                {{ if .IsAdmin }}
+                <li class="pure-menu-item control-panel"><a class="pure-menu-link" href="/edit/settings.html">Settings</a></li>
+                <li class="pure-menu-item control-panel"><a class="pure-menu-link" href="/add-album.html">Add Album</a></li>
+                <li class="pure-menu-item control-panel"><a class="pure-menu-link" href="/help/">Help</a></li>
+                {{ end }}
+
                 {{ if .Secure }}
-                <li class="pure-menu-item control-panel"><a title="Log out" class="pure-menu-link" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')">Log out</a></li>
-                {{ if .ShowLoginButton }}
-                <li class="pure-menu-item not-control-panel"><a title="Log in" class="pure-menu-link" href="/login">Log in</a></li>
-                {{ end }}
+                    {{ if .ShowLoginButton }}
+                <li class="pure-menu-item not-control-panel"><a class="pure-menu-link" href="/login">Log in</a></li>
+                    {{ end }}
+
+                    {{ if .IsAdmin }}
+                <li class="pure-menu-item control-panel"><a class="pure-menu-link" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')">Log out</a></li>
+                    {{ end }}
+
                 {{ else }}
-                <li class="pure-menu-item"><a title="Enable Admin Password" class="pure-menu-link" href="/edit/password.html">Set Password</a></li>
+                <li class="pure-menu-item"><a class="pure-menu-link" href="/edit/password.html">Set Password</a></li>
                 {{ end }}
-                <li class="pure-menu-item control-panel"><a title="Help" class="pure-menu-link" href="/help/">Help</a></li>
-                <li class="pure-menu-item"><a title="Favorite Photos" class="pure-menu-link" href="/favorite-photos/">Favorite Photos</a></li>
-                <li class="pure-menu-item"><a title="About" class="pure-menu-link" href="/about/">About</a></li>
             </ul>
         </div>
     </div>
@@ -111,20 +119,6 @@
     <script>
         collectThumbVisibility();
     </script>
-
-    <div style="margin-top: 30px">
-        <a title="Settings" class="control-panel ctrl-btn gear-icon" href="/edit/settings.html"></a>
-        <a title="Add Album" class="control-panel ctrl-btn film-icon" href="/add-album.html"></a>
-        {{ if .Secure }}
-        <a title="Log out" class="control-panel ctrl-btn lock-icon" href="/" onclick="window.location = window.location.href.replace(window.location.protocol + '//', window.location.protocol + '//' + 'logout:password@')"></a>
-        {{ if .ShowLoginButton }}
-        <a title="Log in" class="not-control-panel ctrl-btn unlock-icon" href="/login"></a>
-        {{ end }}
-        {{ else }}
-        <a title="Enable Admin Password" class="ctrl-btn alert-icon" href="/edit/password.html"></a>
-        {{ end }}
-        <a title="Help" class="control-panel ctrl-btn help-icon" href="/help/"></a>
-    </div>
 </div>
 
 {{.Footer}}

@@ -52,7 +52,7 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 				Title: "Settings",
 				PrependHTML: `<a style="margin-left: 2em" href ="/">Back to main page</a> ` +
 					upload.TusUploadsButton() +
-					`<script>function formSaved(x, ctx) { $(ctx.result).html('Saved.') } </script>`,
+					`<script>function formSaved(x, ctx) { $(ctx.result).html('Saved.').show() } </script>`,
 				AppendHTML: `<div style="margin:2em">` + template.HTML(version.Info().String()) + `</div>`,
 			},
 			form("Appearance", "/settings/appearance.json", deps.Settings().Appearance()),

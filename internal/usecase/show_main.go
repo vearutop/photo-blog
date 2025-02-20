@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bool64/brick"
@@ -32,12 +33,13 @@ type showMainDeps interface {
 }
 
 type pageCommon struct {
-	Title   string
-	Lang    string
-	Favicon string
-	Head    template.HTML
-	Header  template.HTML
-	Footer  template.HTML
+	Title    string
+	Lang     string
+	Favicon  string
+	Head     template.HTML
+	Header   template.HTML
+	Footer   template.HTML
+	MainMenu []settings.MenuItem
 
 	Secure          bool
 	IsAdmin         bool
@@ -48,21 +50,23 @@ type pageCommon struct {
 }
 
 func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Values) {
+	ap := a.Appearance()
+
 	if p.Title == "" {
-		p.Title = r.MustRenderLang(ctx, a.Appearance().SiteTitle, func(o *txt.RenderOptions) {
+		p.Title = r.MustRenderLang(ctx, ap.SiteTitle, func(o *txt.RenderOptions) {
 			o.StripTags = true
 		})
 	}
 
 	p.Lang = txt.Language(ctx)
 
-	p.Head = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteHead))
-	p.Header = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteHeader))
-	p.Footer = template.HTML(r.MustRenderLang(ctx, a.Appearance().SiteFooter))
-	p.Favicon = a.Appearance().SiteFavicon
+	p.Head = template.HTML(r.MustRenderLang(ctx, ap.SiteHead))
+	p.Header = template.HTML(r.MustRenderLang(ctx, ap.SiteHeader))
+	p.Footer = template.HTML(r.MustRenderLang(ctx, ap.SiteFooter))
+	p.Favicon = ap.SiteFavicon
 
-	p.ThumbBaseURL = a.Appearance().ThumbBaseURL
-	p.ImageBaseURL = a.Appearance().ImageBaseURL
+	p.ThumbBaseURL = ap.ThumbBaseURL
+	p.ImageBaseURL = ap.ImageBaseURL
 
 	if p.Favicon == "" {
 		p.Favicon = "/static/favicon.png"
@@ -71,6 +75,26 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Value
 	p.IsAdmin = auth.IsAdmin(ctx)
 	p.Secure = !a.Security().Disabled()
 	p.ShowLoginButton = !a.Privacy().HideLoginButton
+
+	for _, i := range ap.MainMenu {
+		if i.AdminOnly && !p.IsAdmin {
+			continue
+		}
+
+		p.MainMenu = append(p.MainMenu, settings.MenuItem{
+			URL: i.URL,
+			Text: strings.TrimSpace(r.MustRenderLang(ctx, i.Text, func(o *txt.RenderOptions) {
+				o.StripTags = true
+			})),
+		})
+	}
+
+	if len(p.MainMenu) == 0 {
+		p.MainMenu = append(p.MainMenu, settings.MenuItem{
+			URL:  "/",
+			Text: "Home",
+		})
+	}
 }
 
 // ShowMain creates use case interactor to show album.
