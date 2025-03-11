@@ -1,4 +1,3 @@
-// Package main provides an app to calculate image sharpness using Laplace edge-detection.
 package main
 
 import (
@@ -30,5 +29,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(sharpness.Sobel9x9(image.ToRGBA(j)))
+	fmt.Println(sharpness.NoiseScore(image.ToRGBA(j)))
 }
