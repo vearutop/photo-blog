@@ -32,29 +32,29 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.73
 	github.com/swaggest/openapi-go v0.2.57
 	github.com/swaggest/refl v1.3.1
-	github.com/swaggest/rest v0.2.72
+	github.com/swaggest/rest v0.2.73
 	github.com/swaggest/swgui v1.8.2
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
-	github.com/tus/tusd/v2 v2.6.0
-	github.com/vearutop/dbcon v0.2.4
+	github.com/tus/tusd/v2 v2.7.1
+	github.com/vearutop/dbcon v0.2.8
 	github.com/vearutop/statigz v1.4.3
 	github.com/yuin/goldmark v1.7.8
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.33.0
-	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa
-	golang.org/x/image v0.24.0
-	golang.org/x/net v0.35.0
-	golang.org/x/text v0.22.0
-	modernc.org/sqlite v1.35.0
+	golang.org/x/crypto v0.36.0
+	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
+	golang.org/x/image v0.25.0
+	golang.org/x/net v0.37.0
+	golang.org/x/text v0.23.0
+	modernc.org/sqlite v1.36.1
 )
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
-	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bool64/logz v1.3.2 // indirect
@@ -69,6 +69,7 @@ require (
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
+	github.com/go-sql-driver/mysql v1.9.0 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -108,10 +109,10 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	google.golang.org/api v0.221.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	google.golang.org/api v0.223.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -120,5 +121,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
 )
-
-replace github.com/swaggest/jsonform-go => /Users/vearutop/gohack/github.com/swaggest/jsonform-go
