@@ -67,7 +67,7 @@ func EditImage(deps editImagePageDeps) usecase.Interactor {
     <img alt="" style="width:100%" src="/thumb/600w/` + img.Hash.String() + `.jpg" />
 </div>` +
 					`<script>
-function formSaved(x, ctx) { $(ctx.result).html('Saved.') } 
+function formSaved(x, ctx) { $(ctx.result).html('Saved.').show() } 
 </script>`),
 			},
 			jsonform.Form{
