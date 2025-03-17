@@ -603,7 +603,7 @@ func (s *StatsRepository) TopAlbums(ctx context.Context) ([]PageStats, error) {
 	return res, nil
 }
 
-func (s *StatsRepository) TopImages(ctx context.Context, imageHashes ...uniq.Hash) ([]imageStats, error) {
+func (s *StatsRepository) TopImages(ctx context.Context, imageHashes []uniq.Hash) ([]imageStats, error) {
 	var res []imageStats
 	q := s.st.SelectStmt(imageStatsTable, res).
 		OrderByClause(s.ref.Fmt("%s DESC", &s.is.Uniq)).

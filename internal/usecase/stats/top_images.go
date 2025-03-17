@@ -46,7 +46,7 @@ func TopImages(deps showDailyStatsDeps) usecase.Interactor {
 			}
 		}
 
-		st, err := deps.VisitorStats().TopImages(ctx, imageHashes...)
+		st, err := deps.VisitorStats().TopImages(ctx, imageHashes)
 		if err != nil {
 			return err
 		}
