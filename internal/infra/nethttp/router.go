@@ -70,7 +70,24 @@ func NewRouter(deps *service.Locator) *web.Service {
 	})
 	deps.BaseLocator.DebugRouter.AddLink("coverage-counters", "Coverage Counters")
 
-	deps.BaseLocator.DebugRouter.Mount("/db", dbcon.Handler("/debug/db/", deps))
+	deps.BaseLocator.DebugRouter.Mount("/db", dbcon.Handler("/debug/db/", deps, func(options *dbcon.Options) {
+		options.AddValueProcessor("hash", func(v any) any {
+			if i, ok := v.(int64); ok {
+				return uniq.Hash(i).String()
+			}
+
+			return v
+		})
+
+		options.AddValueProcessor("thumb", func(v any) any {
+			if i, ok := v.(int64); ok {
+				s := uniq.Hash(i).String()
+				return `<a href="/list-` + s + `/"><img src="/thumb/300w/` + s + `.jpg" /></a>`
+			}
+
+			return v
+		})
+	}))
 	deps.BaseLocator.DebugRouter.AddLink("db", "DB Console")
 
 	s.Group(func(r chi.Router) {
