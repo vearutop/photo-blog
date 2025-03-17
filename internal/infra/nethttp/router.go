@@ -87,6 +87,14 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 			return v
 		})
+
+		options.AddValueProcessor("msDuration", func(v any) any {
+			if i, ok := v.(int64); ok {
+				return (time.Duration(i) * time.Millisecond).String()
+			}
+
+			return v
+		})
 	}))
 	deps.BaseLocator.DebugRouter.AddLink("db", "DB Console")
 
