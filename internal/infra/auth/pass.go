@@ -17,14 +17,29 @@ func Hash(in HashInput) string {
 	return base64.RawStdEncoding.EncodeToString(key)
 }
 
-type ctxKey struct{}
+type (
+	adminCtxKey struct{}
+	botCtxKey   struct{}
+)
 
 func SetAdmin(ctx context.Context) context.Context {
-	return context.WithValue(ctx, ctxKey{}, true)
+	return context.WithValue(ctx, adminCtxKey{}, true)
 }
 
 func IsAdmin(ctx context.Context) bool {
-	if ctx.Value(ctxKey{}) != nil {
+	if ctx.Value(adminCtxKey{}) != nil {
+		return true
+	}
+
+	return false
+}
+
+func SetBot(ctx context.Context) context.Context {
+	return context.WithValue(ctx, botCtxKey{}, true)
+}
+
+func IsBot(ctx context.Context) bool {
+	if ctx.Value(botCtxKey{}) != nil {
 		return true
 	}
 

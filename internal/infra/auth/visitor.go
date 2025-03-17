@@ -56,6 +56,11 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 			isAdmin := IsAdmin(ctx)
 			isBot := webstats.IsBot(r.UserAgent())
 
+			if isBot {
+				ctx = SetBot(ctx)
+				r.WithContext(ctx)
+			}
+
 			setNewVisitorCookie := func(ctx context.Context) (h uniq.Hash) {
 				if isBot {
 					h = uniq.Hash(xxhash.Sum64String(r.UserAgent())) // Fixed value of visitor for bots.

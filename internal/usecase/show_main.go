@@ -43,6 +43,7 @@ type pageCommon struct {
 
 	Secure          bool
 	IsAdmin         bool
+	IsBot           bool
 	ShowLoginButton bool
 
 	ThumbBaseURL string
@@ -73,6 +74,7 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Value
 	}
 
 	p.IsAdmin = auth.IsAdmin(ctx)
+	p.IsBot = auth.IsBot(ctx)
 	p.Secure = !a.Security().Disabled()
 	p.ShowLoginButton = !a.Privacy().HideLoginButton
 
