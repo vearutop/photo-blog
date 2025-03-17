@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bool64/ctxd"
+	"github.com/swaggest/rest/request"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -18,13 +19,9 @@ type showThumbDeps interface {
 }
 
 type showThumbInput struct {
+	request.EmbeddedSetter
 	Size photo.ThumbSize `path:"size"`
 	Hash uniq.Hash       `path:"hash"`
-	req  *http.Request
-}
-
-func (s *showThumbInput) SetRequest(r *http.Request) {
-	s.req = r
 }
 
 func ShowThumb(deps showThumbDeps) usecase.Interactor {
@@ -46,13 +43,13 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 
 		if cont.FilePath != "" {
 			if strings.HasPrefix(cont.FilePath, "https://") || strings.HasPrefix(cont.FilePath, "http://") {
-				http.Redirect(rw, in.req, cont.FilePath, http.StatusMovedPermanently)
+				http.Redirect(rw, in.Request(), cont.FilePath, http.StatusMovedPermanently)
 				return nil
 			}
 
-			http.ServeFile(rw, in.req, cont.FilePath)
+			http.ServeFile(rw, in.Request(), cont.FilePath)
 		} else {
-			http.ServeContent(rw, in.req, "thumb.jpg", image.CreatedAt, cont.ReadSeeker())
+			http.ServeContent(rw, in.Request(), "thumb.jpg", image.CreatedAt, cont.ReadSeeker())
 		}
 
 		return nil
