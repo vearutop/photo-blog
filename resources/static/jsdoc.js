@@ -35,7 +35,6 @@
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
  * @property {Boolean} hide_map
- * @property {String} image_base_url - URL prefix to use for full-res images instead of local endpoint.
  * @property {Number} map_max_lat - Map max latitude. Overrides map default boundary.
  * @property {Number} map_max_lon - Map max longitude. Overrides map default boundary.
  * @property {Number} map_min_lat - Map min latitude. Overrides map default boundary.
@@ -170,6 +169,14 @@
  */
 
 /**
+ * @typedef MultiResult
+ * @type {Object}
+ * @property {String} model
+ * @property {String} prompt
+ * @property {String} text
+ */
+
+/**
  * @typedef PhotoMetaData
  * @type {Object}
  * @property {?Array<PhotoLabel>} cf_detr_resnet
@@ -179,6 +186,7 @@
  * @property {?Array<FacesGoFaceFace>} faces
  * @property {?String} geo_label
  * @property {Array<PhotoImageLabel>} image_classification
+ * @property {Array<MultiResult>} image_descriptions
  */
 
 /**
@@ -225,6 +233,13 @@
  */
 
 /**
+ * @typedef GetAlbumContents2Request
+ * @type {Object}
+ * @property {String} name
+ * @property {String} locale
+ */
+
+/**
  * @typedef ControlReq
  * @type {Object}
  * @property {String} album_name
@@ -240,6 +255,12 @@
 
 /**
  * @typedef ControlGetPhotoAlbumRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ControlGetPhotoAlbum2Request
  * @type {Object}
  * @property {String} hash
  */
@@ -270,6 +291,14 @@
 /**
  * @typedef DownloadAlbumRequest
  * @type {Object}
+ * @property {Boolean} favorite
+ * @property {String} name
+ */
+
+/**
+ * @typedef DownloadAlbum2Request
+ * @type {Object}
+ * @property {Boolean} favorite
  * @property {String} name
  */
 
@@ -335,7 +364,19 @@
  */
 
 /**
+ * @typedef ControlEditAlbum2Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
  * @typedef ControlEditImageRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ControlEditImage2Request
  * @type {Object}
  * @property {String} hash
  */
@@ -358,6 +399,12 @@
  */
 
 /**
+ * @typedef ControlGetPhotoExif2Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
  * @typedef DeleteFavoriteRequest
  * @type {Object}
  * @property {String} imageHash
@@ -372,6 +419,12 @@
 /**
  * @callback ArrayStringCallback
  * @param {Array<String>} value
+ */
+
+/**
+ * @typedef GetFavorite2Request
+ * @type {Object}
+ * @property {String} albumHash
  */
 
 /**
@@ -431,13 +484,31 @@
  */
 
 /**
+ * @typedef ControlGetPhotoGps2Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
  * @typedef HelpServeFileRequest
  * @type {Object}
  * @property {String} file
  */
 
 /**
+ * @typedef HelpServeFile2Request
+ * @type {Object}
+ * @property {String} file
+ */
+
+/**
  * @typedef HelpMarkdownRequest
+ * @type {Object}
+ * @property {String} file
+ */
+
+/**
+ * @typedef HelpMarkdown2Request
  * @type {Object}
  * @property {String} file
  */
@@ -460,6 +531,7 @@
  * @property {String} path - File Path.
  * @property {String} phash - PerceptionHash.
  * @property {PhotoImageSettings} settings
+ * @property {?Number} sharpness - Sharpness.
  * @property {Number} size - File Size.
  * @property {?String} taken_at - Taken At.
  * @property {Number} width - Width, px.
@@ -493,13 +565,32 @@
  */
 
 /**
- * @typedef ShowImage2Request
+ * @typedef GetImageInfo2Request
+ * @type {Object}
+ * @property {Boolean} readMeta - Read meta from original file.
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ShowImage3Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ShowImage4Request
  * @type {Object}
  * @property {String} hash
  */
 
 /**
  * @typedef ShowImageRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ShowImage2Request
  * @type {Object}
  * @property {String} hash
  */
@@ -513,6 +604,12 @@
 /**
  * @callback PhotoImageCallback
  * @param {PhotoImage} value
+ */
+
+/**
+ * @typedef ControlGetPhotoImage2Request
+ * @type {Object}
+ * @property {String} hash
  */
 
 /**
@@ -533,6 +630,8 @@
 /**
  * @typedef JsonformGoFormItem
  * @type {Object}
+ * @property {String} aceMode
+ * @property {String} aceTheme
  * @property {String} activeClass - Button mode for radio buttons.
  * @property {String} append
  * @property {String} fieldHtmlClass
@@ -564,7 +663,22 @@
  */
 
 /**
+ * @typedef SwaggestJsonformGoRepositoryGetSchema2Request
+ * @type {Object}
+ * @property {('')} name
+ */
+
+/**
  * @typedef MapTileRequest
+ * @type {Object}
+ * @property {String} r
+ * @property {String} z
+ * @property {String} x
+ * @property {String} y
+ */
+
+/**
+ * @typedef MapTile2Request
  * @type {Object}
  * @property {String} r
  * @property {String} z
@@ -672,39 +786,9 @@
  */
 
 /**
- * @typedef DbconDbQuery
+ * @typedef DownloadImagesPoiGpx2Request
  * @type {Object}
- * @property {('default'|'stats')} instance
- * @property {String} statement - Statement. SQL statement to execute.
- */
-
-/**
- * @typedef PkgDbconDBQueryRequest
- * @type {Object}
- * @property {DbconDbQuery} body
- */
-
-/**
- * @typedef DbconResult
- * @type {Object}
- * @property {?Array<String>} columns
- * @property {String} elapsed
- * @property {String} error
- * @property {String} instance
- * @property {String} statement
- * @property {?Array<Array<*>>} values
- */
-
-/**
- * @callback ArrayDbconResultCallback
- * @param {Array<DbconResult>} value
- */
-
-/**
- * @typedef PkgDbconDBQueryCSVRequest
- * @type {Object}
- * @property {('default'|'stats')} instance
- * @property {String} statement - Statement. SQL Statement to execute.
+ * @property {String} name
  */
 
 /**
@@ -714,15 +798,32 @@
  */
 
 /**
+ * @typedef SearchImages2Request
+ * @type {Object}
+ * @property {String} q
+ */
+
+/**
+ * @typedef SettingsMenuItem
+ * @type {Object}
+ * @property {Boolean} admin
+ * @property {String} text - Text.
+ * @property {String} url - URL.
+ */
+
+/**
  * @typedef SettingsAppearance
  * @type {Object}
  * @property {String} featured_album_name - Featured album name. The name of an album to show on the main page.
+ * @property {String} image_base_url - Images Base URL. Optional custom URL for images.
  * @property {?Array<String>} languages - Languages. Supported content languages.
+ * @property {Array<SettingsMenuItem>} main_menu - Main Menu.
  * @property {String} site_favicon - Link to favicon. Defaults to /static/favicon.png, you can upload your own and use, for example, /site/favicon.png.
  * @property {String} site_footer - Footer. Injected at page end.
  * @property {String} site_head - HTML Head. Injected at the end of page &lt;html&gt;&lt;head&gt; element.
  * @property {String} site_header - Header. Injected at page start.
  * @property {String} site_title - Title. The title of this site.
+ * @property {String} thumb_base_url - Thumbnails Base URL. Optional custom URL for thumbnails.
  */
 
 /**
@@ -767,6 +868,42 @@
  * @typedef ControlSettingsSetExternalAPIRequest
  * @type {Object}
  * @property {SettingsExternalAPI} body
+ */
+
+/**
+ * @typedef MultiWeightedPrompt
+ * @type {Object}
+ * @property {String} prompt - Prompt text.
+ * @property {Number} weight - Prompt weight, prompts with higher weight are picked more often.
+ */
+
+/**
+ * @typedef MultiProvider
+ * @type {Object}
+ * @property {String} auth_key - Auth/API key when applicable.
+ * @property {String} base_url - Base URL (for cloudflare, ollama).
+ * @property {String} model - Model.
+ * @property {('gemini'|'cloudflare'|'ollama'|'openai')} type
+ */
+
+/**
+ * @typedef MultiWeightedProvider
+ * @type {Object}
+ * @property {MultiProvider} provider
+ * @property {Number} weight - Provider weight, providers with higher weight are picked more often.
+ */
+
+/**
+ * @typedef MultiConfig
+ * @type {Object}
+ * @property {?Array<MultiWeightedPrompt>} prompts - Prompts.
+ * @property {?Array<MultiWeightedProvider>} providers - LLM Providers.
+ */
+
+/**
+ * @typedef ControlSettingsSetImagePromptRequest
+ * @type {Object}
+ * @property {MultiConfig} body
  */
 
 /**
@@ -845,6 +982,12 @@
  */
 
 /**
+ * @typedef ServeSiteFile2Request
+ * @type {Object}
+ * @property {String} file
+ */
+
+/**
  * @typedef CollectStatsRequest
  * @type {Object}
  * @property {String} v - Visitor.
@@ -865,7 +1008,58 @@
  */
 
 /**
+ * @typedef CollectStats2Request
+ * @type {Object}
+ * @property {String} v - Visitor.
+ * @property {String} ref - Referer.
+ * @property {Number} sw - Screen width.
+ * @property {Number} sh - Screen height.
+ * @property {Number} px - Device pixel ratio (retina factor).
+ * @property {Boolean} main - Main page shown.
+ * @property {String} album - Album with a name shown.
+ * @property {?Object.<String,Number>} thumb - Thumb on-screen times, ms.
+ * @property {Boolean} prt - Mobile portrait mode.
+ * @property {String} img - Image with a hash is shown individually.
+ * @property {Number} w - Shown width of the image.
+ * @property {Number} h - Shown height of the image.
+ * @property {Number} mw - Max shown width of the image (zoom).
+ * @property {Number} mh - Max shown height of the image (zoom).
+ * @property {Number} time - Image view time, ms.
+ */
+
+/**
+ * @typedef StatsTopImagesRequest
+ * @type {Object}
+ * @property {String} albumName
+ */
+
+/**
+ * @typedef StatsTopImages2Request
+ * @type {Object}
+ * @property {String} albumName
+ */
+
+/**
+ * @typedef StatsShowVisitorRequest
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef StatsShowVisitor2Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
  * @typedef ShowThumbRequest
+ * @type {Object}
+ * @property {('2400w'|'1200w'|'600w'|'300w'|'200h'|'400h')} size
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ShowThumb2Request
  * @type {Object}
  * @property {('2400w'|'1200w'|'600w'|'300w'|'200h'|'400h')} size
  * @property {String} hash
@@ -878,7 +1072,20 @@
  */
 
 /**
+ * @typedef DownloadGpx2Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
  * @typedef ShowAlbumRequest
+ * @type {Object}
+ * @property {String} collabKey - Access key to enable content upload and management.
+ * @property {String} name
+ */
+
+/**
+ * @typedef ShowAlbum2Request
  * @type {Object}
  * @property {String} collabKey - Access key to enable content upload and management.
  * @property {String} name
@@ -892,7 +1099,22 @@
  */
 
 /**
+ * @typedef ShowPano2Request
+ * @type {Object}
+ * @property {String} name
+ * @property {String} hash
+ */
+
+/**
  * @typedef ShowAlbumAtImageRequest
+ * @type {Object}
+ * @property {String} collabKey - Access key to enable content upload and management.
+ * @property {String} name
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ShowAlbumAtImage2Request
  * @type {Object}
  * @property {String} collabKey - Access key to enable content upload and management.
  * @property {String} name

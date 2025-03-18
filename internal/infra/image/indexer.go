@@ -18,6 +18,8 @@ import (
 	blurhash "github.com/buckket/go-blurhash"
 	"github.com/corona10/goimagehash"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/image-prompt/imageprompt"
+	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
@@ -48,6 +50,7 @@ type indexerDeps interface {
 	CloudflareImageDescriber() *cloudflare.ImageDescriber
 	FacesRecognizer() *faces.Recognizer
 	OpenRouteService() *ors.Client
+	ImagePrompter() *multi.ImagePrompter
 }
 
 func NewIndexer(deps indexerDeps) *Indexer {
@@ -223,6 +226,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	go i.ensureCFClassification(ctx, img)
 	go i.ensureCFDescription(ctx, img)
 	go i.ensureGeoLabel(ctx, img.Hash)
+	go i.ensureLLMDescription(ctx, img)
 
 	return nil
 }
@@ -304,6 +308,66 @@ func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
 			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
 		}
 	})
+}
+
+func (i *Indexer) ensureLLMDescription(ctx context.Context, img photo.Image) {
+	ctx = ctxd.AddFields(ctx, "action", "cf_describe")
+
+	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
+	if err != nil && !errors.Is(err, status.NotFound) {
+		i.deps.CtxdLogger().Error(ctx, "failed to find photo metadata", "error", err)
+
+		return
+	}
+
+	m.Hash = img.Hash
+
+	if len(m.Data.Val.ImageDescriptions) > 0 {
+		return
+	}
+
+	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, photo.ThumbMid)
+	if err != nil {
+		i.deps.CtxdLogger().Error(ctx, "failed to get thumb", "error", err)
+	}
+
+	for {
+		rd, err := th.Reader()
+		if err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to read thumb", "error", err)
+			return
+		}
+
+		res, err := i.deps.ImagePrompter().PromptImage(ctx, rd)
+		rd.Close()
+
+		if err != nil {
+			if !errors.Is(err, imageprompt.ErrResourceExhausted) {
+				i.deps.CtxdLogger().Warn(ctx, "image prompter failed", "error", err)
+				return
+			}
+
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		if _, err := i.deps.PhotoMetaEnsurer().Ensure(ctx, m, uniq.EnsureOption[photo.Meta]{
+			Prepare: func(candidate, existing *photo.Meta) bool {
+				if existing != nil {
+					*candidate = *existing
+				}
+				candidate.Data.Val.ImageDescriptions = append(candidate.Data.Val.ImageDescriptions, res)
+
+				return false
+			},
+		}); err != nil {
+			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
+		}
+
+		i.deps.CtxdLogger().Info(ctx, "added LLM description", "result", res)
+
+		return
+	}
 }
 
 func (i *Indexer) ensureCFDescription(ctx context.Context, img photo.Image) {

@@ -38,6 +38,7 @@ require (
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.7.1
 	github.com/vearutop/dbcon v0.2.8
+	github.com/vearutop/image-prompt v0.1.0
 	github.com/vearutop/statigz v1.4.3
 	github.com/yuin/goldmark v1.7.8
 	go.opencensus.io v0.24.0

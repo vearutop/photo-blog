@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -33,6 +34,19 @@ func (t Thumb) ReadSeeker() io.ReadSeeker {
 	}
 
 	return bytes.NewReader(t.Data)
+}
+
+func (t Thumb) Reader() (io.ReadCloser, error) {
+	if t.FilePath != "" {
+		f, err := os.Open(t.FilePath)
+		if err != nil {
+			return nil, err
+		}
+
+		return f, nil
+	}
+
+	return io.NopCloser(bytes.NewReader(t.Data)), nil
 }
 
 type ThumbSize string
@@ -72,4 +86,7 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 	return 0, 0, fmt.Errorf("unexpected size: %s", t)
 }
 
-var ThumbSizes = []ThumbSize{"2400w", "1200w", "600w", "300w", "200h", "400h"}
+var (
+	ThumbSizes = []ThumbSize{"2400w", "1200w", "600w", "300w", "200h", "400h"}
+	ThumbMid   = ThumbSize("1200w")
+)

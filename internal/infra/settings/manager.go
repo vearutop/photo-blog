@@ -14,6 +14,7 @@ import (
 	"github.com/swaggest/form/v5"
 	"github.com/swaggest/refl"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
@@ -36,6 +37,7 @@ type Manager struct {
 	storage     Storage
 	privacy     Privacy
 	externalAPI ExternalAPI
+	imagePrompt multi.Config
 }
 
 type Values interface {
@@ -50,6 +52,8 @@ type Values interface {
 	CFImageClassifier() cloudflare.ImageWorkerConfig
 	CFImageDescriber() cloudflare.ImageWorkerConfig
 	ORSConfig() ors.Config
+
+	ImagePrompt() multi.Config
 }
 
 func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
@@ -65,6 +69,7 @@ func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
 		m.get(ctx, "storage", &m.storage),
 		m.get(ctx, "privacy", &m.privacy),
 		m.get(ctx, "external_api", &m.externalAPI),
+		m.get(ctx, "image_prompt", &m.imagePrompt),
 	)
 }
 

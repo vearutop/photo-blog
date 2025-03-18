@@ -20,6 +20,7 @@ import (
 	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
+	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
@@ -108,6 +109,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.CloudflareImageDescriberInstance = cloudflare.NewImageDescriber(l.CtxdLogger(), l.Settings().CFImageDescriber)
 	l.FacesRecognizerInstance = faces.NewRecognizer(l.CtxdLogger(), l.Settings().ExternalAPI().FacesRecognizer)
 	l.ORS = ors.NewORS(l, l.Settings().ORSConfig)
+	l.ImagePrompterInstance = multi.NewImagePrompter(l.Settings().ImagePrompt)
 
 	if err = setupAccessLog(l); err != nil {
 		return nil, err

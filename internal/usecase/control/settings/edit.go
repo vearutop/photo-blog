@@ -10,6 +10,7 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/upload"
 )
@@ -73,6 +74,7 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 				SubmitText:    "Save",
 			},
 			form("External API Integration", "/settings/external_api.json", deps.Settings().ExternalAPI()),
+			form("Image Descriptions (LLM)", "/settings/image_prompt.json", deps.Settings().ImagePrompt()),
 		)
 	})
 
@@ -85,6 +87,14 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 func SetExternalAPI(deps setSettingsDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input settings.ExternalAPI, output *struct{}) error {
 		return deps.SettingsManager().SetExternalAPI(ctx, input)
+	})
+
+	return u
+}
+
+func SetImagePrompt(deps setSettingsDeps) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, input multi.Config, output *struct{}) error {
+		return deps.SettingsManager().SetImagePrompt(ctx, input)
 	})
 
 	return u

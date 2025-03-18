@@ -54,49 +54,51 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 	s.AddHeadToGet = true
 
-	deps.BaseLocator.DebugRouter.Get("/coverage-meta", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "binary/octet-stream")
-		if err := coverage.WriteMeta(w); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-	deps.BaseLocator.DebugRouter.AddLink("coverage-meta", "Coverage Meta")
-
-	deps.BaseLocator.DebugRouter.Get("/coverage-counters", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "binary/octet-stream")
-		if err := coverage.WriteCounters(w); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-	deps.BaseLocator.DebugRouter.AddLink("coverage-counters", "Coverage Counters")
-
-	deps.BaseLocator.DebugRouter.Mount("/db", dbcon.Handler("/debug/db/", deps, func(options *dbcon.Options) {
-		options.AddValueProcessor("hash", func(v any) any {
-			if i, ok := v.(int64); ok {
-				return uniq.Hash(i).String()
+	if deps.DebugRouter != nil {
+		deps.DebugRouter.Get("/coverage-meta", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "binary/octet-stream")
+			if err := coverage.WriteMeta(w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-
-			return v
 		})
+		deps.DebugRouter.AddLink("coverage-meta", "Coverage Meta")
 
-		options.AddValueProcessor("thumb", func(v any) any {
-			if i, ok := v.(int64); ok {
-				s := uniq.Hash(i).String()
-				return `<a href="/list-` + s + `/"><img src="/thumb/300w/` + s + `.jpg" /></a>`
+		deps.DebugRouter.Get("/coverage-counters", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "binary/octet-stream")
+			if err := coverage.WriteCounters(w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-
-			return v
 		})
+		deps.DebugRouter.AddLink("coverage-counters", "Coverage Counters")
 
-		options.AddValueProcessor("msDuration", func(v any) any {
-			if i, ok := v.(int64); ok {
-				return (time.Duration(i) * time.Millisecond).String()
-			}
+		deps.DebugRouter.Mount("/db", dbcon.Handler("/debug/db/", deps, func(options *dbcon.Options) {
+			options.AddValueProcessor("hash", func(v any) any {
+				if i, ok := v.(int64); ok {
+					return uniq.Hash(i).String()
+				}
 
-			return v
-		})
-	}))
-	deps.BaseLocator.DebugRouter.AddLink("db", "DB Console")
+				return v
+			})
+
+			options.AddValueProcessor("thumb", func(v any) any {
+				if i, ok := v.(int64); ok {
+					s := uniq.Hash(i).String()
+					return `<a href="/list-` + s + `/"><img src="/thumb/300w/` + s + `.jpg" /></a>`
+				}
+
+				return v
+			})
+
+			options.AddValueProcessor("msDuration", func(v any) any {
+				if i, ok := v.(int64); ok {
+					return (time.Duration(i) * time.Millisecond).String()
+				}
+
+				return v
+			})
+		}))
+		deps.DebugRouter.AddLink("db", "DB Console")
+	}
 
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
@@ -144,6 +146,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Post("/settings/storage.json", settings.SetStorage(deps))
 		s.Post("/settings/privacy.json", settings.SetPrivacy(deps))
 		s.Post("/settings/external_api.json", settings.SetExternalAPI(deps))
+		s.Post("/settings/image_prompt.json", settings.SetImagePrompt(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))

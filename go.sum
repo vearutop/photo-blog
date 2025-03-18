@@ -433,6 +433,8 @@ github.com/vearutop/dynhist-go v1.2.3 h1:EIMWszSDm6b7zmqySgx8zW2qNctE3IXUJggGlDF
 github.com/vearutop/dynhist-go v1.2.3/go.mod h1:liiiYiwAi8ixC3DbkxooEhASTF6ysJSXy+piCrBtxEg=
 github.com/vearutop/gooselite v0.1.1 h1:C2CoI2Attj63yNsaEug9OVPRM5eeJlzqlZIbq4Za+Ok=
 github.com/vearutop/gooselite v0.1.1/go.mod h1:7DgIIzvRsv10pvQrCt4dV4pOR9OBGw+n//TViMeLLIo=
+github.com/vearutop/image-prompt v0.1.0 h1:DCiX7AubY0IpsWSXrrrnH4Q8MwgXRbk9oJ5a/4dW6Fk=
+github.com/vearutop/image-prompt v0.1.0/go.mod h1:dFpzepnjw1iuqapUgH4yvnAMLh33ikXAzGnjkT3RxF0=
 github.com/vearutop/lograte v1.2.2 h1:uB6VPc+ZYiljWi97aqATYVacv64iG1qI3vpr4owtZ3Y=
 github.com/vearutop/lograte v1.2.2/go.mod h1:WowwfH/eQVjXGfx104R/w7RCWfuiPyhr6Azd0+A3he4=
 github.com/vearutop/statigz v1.4.3 h1:eDWkkbQuiG1h8Eu4feV3Rb1x6048LMNIudT77a7Husc=

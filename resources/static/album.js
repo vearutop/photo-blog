@@ -327,11 +327,26 @@ function loadAlbum(params) {
 
                     img_description += '</div>'
 
+                    var llmDescFound = false
+                    for (var ci in img.meta.image_descriptions) {
+                        var l = img.meta.image_descriptions[ci]
+
+                        if (!l.text) {
+                            console.log("INVALID L", l)
+
+                            continue
+                        }
+
+                        llmDescFound = true
+
+                        img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em title="'+l.model+': ' + l.prompt+'">AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
+                    }
+
                     for (var ci in cl) {
                         var l = cl[ci]
 
-                        if (l.model === "cf-uform-gen2") {
-                            img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text + '</div>'
+                        if (l.model === "cf-uform-gen2" && !llmDescFound) {
+                            img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
                         }
                     }
 

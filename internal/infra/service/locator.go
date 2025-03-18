@@ -6,6 +6,7 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/dbcon/dbcon"
+	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
@@ -76,6 +77,8 @@ type Locator struct {
 
 	FacesRecognizerInstance *faces.Recognizer
 	ORS                     *ors.Client
+
+	ImagePrompterInstance *multi.ImagePrompter
 }
 
 // ServiceConfig gives access to service configuration.
@@ -117,6 +120,10 @@ func (l *Locator) CloudflareImageDescriber() *cloudflare.ImageDescriber {
 
 func (l *Locator) FacesRecognizer() *faces.Recognizer {
 	return l.FacesRecognizerInstance
+}
+
+func (l *Locator) ImagePrompter() *multi.ImagePrompter {
+	return l.ImagePrompterInstance
 }
 
 func (l *Locator) OpenRouteService() *ors.Client {

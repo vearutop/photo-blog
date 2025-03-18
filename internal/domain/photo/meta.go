@@ -2,6 +2,7 @@ package photo
 
 import (
 	"github.com/bool64/sqluct"
+	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 )
@@ -46,4 +47,5 @@ type MetaData struct {
 	CFLlavaDescription  *string             `json:"cf_llava_description,omitempty"`
 	CFDetrResnet        *[]Label            `json:"cf_detr_resnet,omitempty"`
 	FaceVectors         *[]Face             `json:"face_vectors,omitempty"`
+	ImageDescriptions   []multi.Result      `json:"image_descriptions,omitempty"`
 }
