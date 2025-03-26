@@ -24,7 +24,6 @@ type addDirectoryDeps interface {
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
 
 	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
-	PhotoImageIndexer() photo.ImageIndexer
 
 	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
 

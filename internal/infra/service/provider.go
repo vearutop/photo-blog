@@ -49,10 +49,6 @@ type PhotoImageFinderProvider interface {
 	PhotoImageFinder() uniq.Finder[photo.Image]
 }
 
-type PhotoImageIndexerProvider interface {
-	PhotoImageIndexer() photo.ImageIndexer
-}
-
 type PhotoThumbnailerProvider interface {
 	PhotoThumbnailer() photo.Thumbnailer
 }

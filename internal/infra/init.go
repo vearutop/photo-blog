@@ -14,12 +14,14 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
+	"github.com/bool64/cache"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
+	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -38,6 +40,8 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_stats"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
+	"github.com/vearutop/photo-blog/pkg/qlite"
+	"github.com/vearutop/photo-blog/pkg/sqlitec"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
@@ -87,8 +91,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		},
 	)
 
-	l.DepCacheInstance = dep.NewCache(l.CacheInvalidationIndex(), l.CtxdLogger())
-
 	if err = setupUploadStorage(cfg.StoragePath); err != nil {
 		return nil, err
 	}
@@ -97,9 +99,34 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, fmt.Errorf("change dir to storage path: %w", err)
 	}
 
-	if err = setupStorage(l, "db.sqlite"); err != nil {
+	if l.Storage, err = setupStorage(l, "db", sqlite.Migrations); err != nil {
 		return nil, err
 	}
+
+	queueStorage, err := setupStorage(l, "queue", qlite.Migrations)
+	if err != nil {
+		return nil, err
+	}
+
+	l.QueueBrokerInstance = qlite.NewBroker(queueStorage)
+	l.QueueBroker().Logger = l.CtxdLogger()
+
+	l.DepCacheInstance = dep.NewCache(l)
+
+	mapTilesStorage, err := setupStorage(l, "map-tiles", sqlitec.Migrations)
+	if err != nil {
+		return nil, err
+	}
+
+	l.MapTilesCacheInstance = brick.MakeCacheOf[[]byte](l, "map-tiles", 7*24*time.Hour,
+		func(cfg *cache.FailoverConfigOf[[]byte]) {
+			cfg.Backend = sqlitec.NewDBMapOf[[]byte](mapTilesStorage, func(cfg *cache.Config) {
+				cfg.CountSoftLimit = 1000
+				cfg.DeleteExpiredJobInterval = time.Hour
+				cfg.DeleteExpiredAfter = 2 * time.Hour
+			})
+		},
+	)
 
 	if l.SettingsManagerInstance, err = settings.NewManager(storage.NewSettingsRepository(l.Storage), l.DepCache()); err != nil {
 		return nil, err
@@ -136,7 +163,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	fr := storage.NewFavoriteRepository(l.Storage)
 	l.FavoriteRepositoryProvider = fr
 
-	statsStorage, err := setupStatsStorage(l, "stats.sqlite")
+	statsStorage, err := setupStorage(l, "stats", sqlite_stats.Migrations)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +173,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
-	thumbStorage, err := setupThumbStorage(l, "thumbs.sqlite")
+	thumbStorage, err := setupStorage(l, "thumbs", sqlite_thumbs.Migrations)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +203,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.CommentThreadEnsurerProvider = threadRepo
 	l.CommentThreadFinderProvider = threadRepo
 
-	idx := image.NewIndexer(l)
-	l.PhotoImageIndexerProvider = idx
+	image.StartIndexer(l)
 	l.TxtRendererProvider = txt.NewRenderer()
 
 	l.FilesProcessorInstance = files.NewProcessor(l)
@@ -191,6 +217,13 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	}
 
 	l.CtxdLogger().Important(ctx, "service locator initialized successfully")
+
+	go func() {
+		for {
+			l.QueueBroker().Poll()
+			<-time.Tick(time.Minute)
+		}
+	}()
 
 	return l, nil
 }
@@ -221,93 +254,41 @@ func setupAccessLog(l *service.Locator) error {
 	return nil
 }
 
-func setupThumbStorage(l *service.Locator, filepath string) (*sqluct.Storage, error) {
+func setupStorage(l *service.Locator, name string, migrations fs.FS) (*sqluct.Storage, error) {
 	cfg := database.Config{}
 	cfg.DriverName = "sqlite"
 	cfg.MaxOpen = 1
 	cfg.MaxIdle = 1
-	cfg.DSN = filepath + "?_time_format=sqlite"
-	cfg.ApplyMigrations = true
-	cfg.MethodSkipPackages = []string{"github.com/vearutop/photo-blog/internal/infra/storage/hashed"}
-
-	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
-	start := time.Now()
-	st, err := database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), sqlite_thumbs.Migrations)
-	if err != nil {
-		return nil, err
-	}
-	l.CtxdLogger().Info(context.Background(), "thumb storage setup complete", "elapsed", time.Since(start).String())
-
-	st.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
-		return context.WithoutCancel(ctx), func(err error) {
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				l.CtxdLogger().Warn(ctx, "sql failed",
-					"stmt", stmt, "args", args, "error", err.Error())
-			}
-		}
-	}
-
-	return st, nil
-}
-
-func setupStatsStorage(l *service.Locator, filepath string) (*sqluct.Storage, error) {
-	cfg := database.Config{}
-	cfg.DriverName = "sqlite"
-	cfg.MaxOpen = 1
-	cfg.MaxIdle = 1
-	cfg.DSN = filepath + "?_time_format=sqlite"
-	cfg.ApplyMigrations = true
-	cfg.MethodSkipPackages = []string{"github.com/vearutop/photo-blog/internal/infra/storage/hashed"}
-
-	l.CtxdLogger().Info(context.Background(), "setting up thumb storage")
-	start := time.Now()
-	st, err := database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), sqlite_stats.Migrations)
-	if err != nil {
-		return nil, err
-	}
-	l.CtxdLogger().Info(context.Background(), "visitor stats storage setup complete", "elapsed", time.Since(start).String())
-
-	st.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
-		return context.WithoutCancel(ctx), func(err error) {
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				l.CtxdLogger().Warn(ctx, "sql failed",
-					"stmt", stmt, "args", args, "error", err.Error())
-			}
-		}
-	}
-
-	return st, nil
-}
-
-func setupStorage(l *service.Locator, filepath string) error {
-	cfg := database.Config{}
-	cfg.DriverName = "sqlite"
-	cfg.MaxOpen = 1
-	cfg.MaxIdle = 1
-	cfg.DSN = filepath + "?_time_format=sqlite"
+	cfg.DSN = name + ".sqlite?_time_format=sqlite"
 	cfg.ApplyMigrations = true
 	cfg.MethodSkipPackages = []string{"github.com/vearutop/photo-blog/internal/infra/storage/hashed"}
 
 	var err error
 
-	l.CtxdLogger().Info(context.Background(), "setting up storage")
+	l.CtxdLogger().Info(context.Background(), "setting up storage", "name", name)
 	start := time.Now()
-	l.Storage, err = database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), sqlite.Migrations)
+	st, err := database.SetupStorageDSN(cfg, l.CtxdLogger(), l.StatsTracker(), migrations)
 	if err != nil {
-		return fmt.Errorf("main db: %w", err)
+		return nil, fmt.Errorf("%s db: %w", name, err)
 	}
-	l.CtxdLogger().Info(context.Background(), "storage setup complete", "elapsed", time.Since(start).String())
+	l.CtxdLogger().Info(context.Background(), "storage setup complete", "name", name, "elapsed", time.Since(start).String())
 
-	l.Storage.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
+	st.Trace = func(ctx context.Context, stmt string, args []interface{}) (newCtx context.Context, onFinish func(error)) {
 		return context.WithoutCancel(ctx), func(err error) {
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				l.CtxdLogger().Warn(ctx, "sql failed",
-					"stmt", stmt, "args", args, "error", err.Error())
+					"name", name, "stmt", stmt, "args", args, "error", err.Error())
 			}
 		}
 	}
 
-	return nil
+	l.AddDBConInstance(dbcon.DBInstance{
+		Name:     name,
+		Dialect:  sqluct.DialectSQLite3,
+		Instance: st.DB().DB,
+	})
+
+	return st, nil
 }
 
 func setupUploadStorage(p string) error {

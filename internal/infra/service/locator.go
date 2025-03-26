@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/bool64/brick"
+	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
-	"github.com/bool64/sqluct"
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/image-prompt/multi"
@@ -14,20 +14,24 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
+	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
 // Locator defines application resources.
 type Locator struct {
 	*brick.BaseLocator
 
-	SchemaRepo           *jsonform.Repository
-	AccessLogger         ctxd.Logger
-	VisitorStatsInstance *visitor.StatsRepository
+	SchemaRepo            *jsonform.Repository
+	AccessLogger          ctxd.Logger
+	VisitorStatsInstance  *visitor.StatsRepository
+	MapTilesCacheInstance *cache.FailoverOf[[]byte]
 
 	DepCacheInstance       *dep.Cache
 	FilesProcessorInstance *files.Processor
 
 	SettingsManagerInstance *settings.Manager
+
+	QueueBrokerInstance *qlite.Broker
 
 	Config Config
 
@@ -43,7 +47,6 @@ type Locator struct {
 	PhotoImageEnsurerProvider
 	PhotoImageUpdaterProvider
 	PhotoImageFinderProvider
-	PhotoImageIndexerProvider
 
 	PhotoThumbnailerProvider
 
@@ -79,6 +82,8 @@ type Locator struct {
 	ORS                     *ors.Client
 
 	ImagePrompterInstance *multi.ImagePrompter
+
+	dbInstances []dbcon.DBInstance
 }
 
 // ServiceConfig gives access to service configuration.
@@ -134,17 +139,18 @@ func (l *Locator) VisitorStats() *visitor.StatsRepository {
 	return l.VisitorStatsInstance
 }
 
+func (l *Locator) AddDBConInstance(db dbcon.DBInstance) {
+	l.dbInstances = append(l.dbInstances, db)
+}
+
 func (l *Locator) DBInstances() []dbcon.DBInstance {
-	return []dbcon.DBInstance{
-		{
-			Name:     "main",
-			Instance: l.Storage.DB().DB,
-			Dialect:  sqluct.DialectSQLite3,
-		},
-		{
-			Name:     "stats",
-			Instance: l.VisitorStatsInstance.DB(),
-			Dialect:  sqluct.DialectSQLite3,
-		},
-	}
+	return l.dbInstances
+}
+
+func (l *Locator) QueueBroker() *qlite.Broker {
+	return l.QueueBrokerInstance
+}
+
+func (l *Locator) MapTilesCache() *cache.FailoverOf[[]byte] {
+	return l.MapTilesCacheInstance
 }

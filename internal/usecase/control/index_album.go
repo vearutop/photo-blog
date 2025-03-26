@@ -9,8 +9,9 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/topic"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
 type indexAlbumDeps interface {
@@ -20,10 +21,9 @@ type indexAlbumDeps interface {
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoAlbumUpdater() uniq.Updater[photo.Album]
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
-	PhotoImageIndexer() photo.ImageIndexer
 	PhotoImageFinder() uniq.Finder[photo.Image]
 
-	DepCache() *dep.Cache
+	QueueBroker() *qlite.Broker
 }
 
 type indexAlbumInput struct {
@@ -72,12 +72,12 @@ func IndexAlbum(deps indexAlbumDeps) usecase.IOInteractorOf[indexAlbumInput, str
 		}
 
 		for _, img := range images {
-			deps.PhotoImageIndexer().QueueIndex(ctx, img, in.IndexingFlags)
+			if err := deps.QueueBroker().Publish(ctx, topic.IndexImage, img, func(msg *qlite.Message) {
+				msg.PublishOnSuccess(topic.AlbumChanged, in.Name)
+			}); err != nil {
+				return err
+			}
 		}
-
-		deps.PhotoImageIndexer().QueueCallback(ctx, func(ctx context.Context) {
-			_ = deps.DepCache().AlbumChanged(ctx, in.Name)
-		})
 
 		return nil
 	})
