@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/bool64/brick/opencensus"
@@ -21,17 +20,20 @@ import (
 	"github.com/vearutop/image-prompt/imageprompt"
 	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/topic"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/image/sharpness"
+	"github.com/vearutop/photo-blog/pkg/qlite"
 	"go.opencensus.io/trace"
 )
 
 type indexerDeps interface {
 	CtxdLogger() ctxd.Logger
 	StatsTracker() stats.Tracker
+	QueueBroker() *qlite.Broker
 
 	PhotoThumbnailer() photo.Thumbnailer
 
@@ -53,76 +55,36 @@ type indexerDeps interface {
 	ImagePrompter() *multi.ImagePrompter
 }
 
-func NewIndexer(deps indexerDeps) *Indexer {
-	i := &Indexer{
-		deps:  deps,
-		queue: make(chan indexJob, 10000),
+func StartIndexer(deps indexerDeps) {
+	i := &indexer{
+		deps: deps,
 	}
 
-	go i.consume()
-
-	return i
-}
-
-type Indexer struct {
-	deps      indexerDeps
-	queue     chan indexJob
-	queueSize int64
-}
-
-func (i *Indexer) PhotoImageIndexer() photo.ImageIndexer {
-	return i
-}
-
-func (i *Indexer) consume() {
-	for j := range i.queue {
-		qs := atomic.AddInt64(&i.queueSize, -1)
-		i.deps.StatsTracker().Set(context.Background(), "indexing_images_pending", float64(qs))
-
-		if j.cb != nil {
-			j.cb(j.ctx)
-			continue
-		}
-
-		if err := i.Index(j.ctx, j.img, j.flags); err != nil {
-			i.deps.CtxdLogger().Error(j.ctx, "failed to index image", "img", j.img, "error", err, "flags", j.flags)
-		}
+	if err := qlite.AddConsumer[IndexJob](deps.QueueBroker(), topic.IndexImage, i.index); err != nil {
+		panic(err)
 	}
 }
 
-func (i *Indexer) closeFile(ctx context.Context, f *os.File) {
+type indexer struct {
+	deps indexerDeps
+}
+
+type IndexJob struct {
+	Image photo.Image         `json:"image"`
+	Flags photo.IndexingFlags `json:"flags,omitzero"`
+}
+
+func (i *indexer) index(ctx context.Context, job IndexJob) error {
+	return i.Index(ctx, job.Image, job.Flags)
+}
+
+func (i *indexer) closeFile(ctx context.Context, f *os.File) {
 	if f == nil {
 		return
 	}
 
 	if err := f.Close(); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to close file", "error", err.Error())
-	}
-}
-
-type indexJob struct {
-	ctx   context.Context
-	img   photo.Image
-	flags photo.IndexingFlags
-	cb    func(ctx context.Context)
-}
-
-func (i *Indexer) QueueCallback(ctx context.Context, cb func(ctx context.Context)) {
-	atomic.AddInt64(&i.queueSize, 1)
-	i.queue <- indexJob{
-		ctx: detachedContext{parent: ctx},
-		cb:  cb,
-	}
-}
-
-func (i *Indexer) QueueIndex(ctx context.Context, img photo.Image, flags photo.IndexingFlags) {
-	i.deps.CtxdLogger().Info(ctx, "queueing image indexing", "img", img, "flags", flags)
-
-	atomic.AddInt64(&i.queueSize, 1)
-	i.queue <- indexJob{
-		ctx:   detachedContext{parent: ctx},
-		img:   img,
-		flags: flags,
 	}
 }
 
@@ -158,7 +120,7 @@ func ensureImageDimensions(ctx context.Context, img *photo.Image, flags photo.In
 	return true, nil
 }
 
-func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
+func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
 	ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))
 	defer done(&err)
 
@@ -231,7 +193,7 @@ func (i *Indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 	return nil
 }
 
-func (i *Indexer) ensureGeoLabel(ctx context.Context, hash uniq.Hash) {
+func (i *indexer) ensureGeoLabel(ctx context.Context, hash uniq.Hash) {
 	g, err := i.deps.PhotoGpsFinder().FindByHash(ctx, hash)
 	if err != nil {
 		if !errors.Is(err, status.NotFound) {
@@ -273,7 +235,7 @@ func (i *Indexer) ensureGeoLabel(ctx context.Context, hash uniq.Hash) {
 	}
 }
 
-func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
+func (i *indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
 	ctx = ctxd.AddFields(ctx, "action", "cf_classify")
 
 	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
@@ -310,8 +272,9 @@ func (i *Indexer) ensureCFClassification(ctx context.Context, img photo.Image) {
 	})
 }
 
-func (i *Indexer) ensureLLMDescription(ctx context.Context, img photo.Image) {
-	ctx = ctxd.AddFields(ctx, "action", "cf_describe")
+// Generate a detailed caption for this image, up to 100 words. Don't name the places, items or people unless you're sure.
+func (i *indexer) ensureLLMDescription(ctx context.Context, img photo.Image) {
+	ctx = ctxd.AddFields(ctx, "action", "llm_describe")
 
 	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
 	if err != nil && !errors.Is(err, status.NotFound) {
@@ -337,6 +300,8 @@ func (i *Indexer) ensureLLMDescription(ctx context.Context, img photo.Image) {
 			i.deps.CtxdLogger().Error(ctx, "failed to read thumb", "error", err)
 			return
 		}
+
+		st := time.Now()
 
 		res, err := i.deps.ImagePrompter().PromptImage(ctx, rd)
 		rd.Close()
@@ -364,13 +329,13 @@ func (i *Indexer) ensureLLMDescription(ctx context.Context, img photo.Image) {
 			i.deps.CtxdLogger().Error(ctx, "failed to ensure photo metadata", "error", err)
 		}
 
-		i.deps.CtxdLogger().Info(ctx, "added LLM description", "result", res)
+		i.deps.CtxdLogger().Info(ctx, "added LLM description", "st", st, "ela", time.Since(st).String(), "result", res)
 
 		return
 	}
 }
 
-func (i *Indexer) ensureCFDescription(ctx context.Context, img photo.Image) {
+func (i *indexer) ensureCFDescription(ctx context.Context, img photo.Image) {
 	ctx = ctxd.AddFields(ctx, "action", "cf_describe")
 
 	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
@@ -407,7 +372,7 @@ func (i *Indexer) ensureCFDescription(ctx context.Context, img photo.Image) {
 	})
 }
 
-func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
+func (i *indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 	ctx = ctxd.AddFields(ctx, "action", "faces")
 
 	m, err := i.deps.PhotoMetaFinder().FindByHash(ctx, img.Hash)
@@ -481,7 +446,7 @@ func (i *Indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 	}
 }
 
-func (i *Indexer) ensurePHash(ctx context.Context, img *photo.Image) {
+func (i *indexer) ensurePHash(ctx context.Context, img *photo.Image) {
 	if img.PHash != 0 {
 		return
 	}
@@ -515,7 +480,7 @@ func (i *Indexer) ensurePHash(ctx context.Context, img *photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureSharpness(ctx context.Context, img *photo.Image) {
+func (i *indexer) ensureSharpness(ctx context.Context, img *photo.Image) {
 	if img.Sharpness != nil {
 		return
 	}
@@ -540,7 +505,7 @@ func (i *Indexer) ensureSharpness(ctx context.Context, img *photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
+func (i *indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
 	if img.BlurHash != "" {
 		return
 	}
@@ -574,7 +539,7 @@ func (i *Indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
 	}
 }
 
-func (i *Indexer) ensureThumbs(ctx context.Context, img photo.Image) {
+func (i *indexer) ensureThumbs(ctx context.Context, img photo.Image) {
 	for _, size := range photo.ThumbSizes {
 		_, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
 		if err != nil {
@@ -608,7 +573,7 @@ func readMeta(ctx context.Context, img *photo.Image) (m Meta, err error) {
 	return m, nil
 }
 
-func (i *Indexer) ensureExif(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) error {
+func (i *indexer) ensureExif(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) error {
 	exifExists, err := i.deps.PhotoExifFinder().Exists(ctx, img.Hash)
 	if err != nil {
 		return ctxd.WrapError(ctx, err, "check existing exif")
