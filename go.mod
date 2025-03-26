@@ -21,6 +21,7 @@ require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
+	github.com/gen2brain/webp v0.5.4
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -37,7 +38,8 @@ require (
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.7.1
-	github.com/vearutop/dbcon v0.2.8
+	github.com/vearutop/dbcon v0.2.11
+	github.com/vearutop/httpzip v0.1.1
 	github.com/vearutop/image-prompt v0.1.0
 	github.com/vearutop/statigz v1.4.3
 	github.com/yuin/goldmark v1.7.8
@@ -48,7 +50,7 @@ require (
 	golang.org/x/image v0.25.0
 	golang.org/x/net v0.37.0
 	golang.org/x/text v0.23.0
-	modernc.org/sqlite v1.36.1
+	modernc.org/sqlite v1.36.2
 )
 
 require (
@@ -69,8 +71,9 @@ require (
 	github.com/dsoprea/go-utility v0.0.0-20200711062821-fab8125e9bdf // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/ebitengine/purego v0.8.2 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/go-sql-driver/mysql v1.9.0 // indirect
+	github.com/go-sql-driver/mysql v1.9.1 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -102,6 +105,7 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20230704072819-d1585fc322fa // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
+	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/vearutop/dynhist-go v1.2.3 // indirect
@@ -120,5 +124,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.8.2 // indirect
+	modernc.org/memory v1.9.1 // indirect
 )
+
+replace github.com/vearutop/image-prompt => /Users/vearutop/gohack/github.com/vearutop/image-prompt
+
+replace github.com/bool64/sqluct => /Users/vearutop/gohack/github.com/bool64/sqluct
