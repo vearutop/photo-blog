@@ -1,7 +1,6 @@
 package photo
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -9,12 +8,6 @@ import (
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 )
-
-type ImageIndexer interface {
-	Index(ctx context.Context, image Image, flags IndexingFlags) error
-	QueueIndex(ctx context.Context, img Image, flags IndexingFlags)
-	QueueCallback(ctx context.Context, cb func(ctx context.Context))
-}
 
 type IndexingFlags struct {
 	RebuildExif      bool `formData:"rebuild_exif"`
@@ -24,13 +17,13 @@ type IndexingFlags struct {
 
 type Image struct {
 	uniq.File
-	Width     int64         `db:"width" title:"Width, px" json:"width" readOnly:"true"`
-	Height    int64         `db:"height" title:"Height, px" json:"height" readOnly:"true"`
-	BlurHash  string        `db:"blurhash" title:"BlurHash" json:"blurhash" readOnly:"true"`
-	Sharpness *uint8        `db:"sharpness" title:"Sharpness" json:"sharpness" readOnly:"true"`
-	PHash     uniq.Hash     `db:"phash" title:"PerceptionHash" json:"phash" readonly:"true"` // uniq.Hash is used JSON accuracy.
-	TakenAt   *time.Time    `db:"taken_at" title:"Taken At" json:"taken_at"`
-	Settings  ImageSettings `db:"settings" json:"settings" title:"Settings" description:"Additional parameters for an album."`
+	Width     int64         `db:"width" title:"Width, px" json:"width,omitempty" readOnly:"true"`
+	Height    int64         `db:"height" title:"Height, px" json:"height,omitempty" readOnly:"true"`
+	BlurHash  string        `db:"blurhash" title:"BlurHash" json:"blurhash,omitempty" readOnly:"true"`
+	Sharpness *uint8        `db:"sharpness" title:"Sharpness" json:"sharpness,omitempty" readOnly:"true"`
+	PHash     uniq.Hash     `db:"phash" title:"PerceptionHash" json:"phash,omitempty" readonly:"true"` // uniq.Hash is used JSON accuracy.
+	TakenAt   *time.Time    `db:"taken_at" title:"Taken At" json:"taken_at,omitempty"`
+	Settings  ImageSettings `db:"settings" json:"settings,omitzero" title:"Settings" description:"Additional parameters for an album."`
 }
 
 type ImageSettings struct {
