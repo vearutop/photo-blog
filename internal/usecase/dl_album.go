@@ -14,12 +14,12 @@ import (
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/httpzip"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
-	"github.com/vearutop/photo-blog/pkg/servezip"
 )
 
 type dlAlbumDeps interface {
@@ -114,7 +114,7 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			}
 		}
 
-		h := servezip.NewHandler(album.Name)
+		h := httpzip.NewHandler(album.Name)
 		h.OnError = func(err error) {
 			deps.CtxdLogger().Error(ctx, "serve zip", "error", err)
 		}
@@ -125,7 +125,7 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 				takenAt = *img.TakenAt
 			}
 
-			if err := h.AddFile(servezip.FileSource{
+			if err := h.AddFile(httpzip.FileSource{
 				Path:     path.Base(strings.TrimSuffix(img.Path, "."+img.Hash.String()+".jpg")),
 				Modified: takenAt,
 				Size:     img.Size,
