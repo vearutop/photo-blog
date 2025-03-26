@@ -3,6 +3,7 @@ package nethttp
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 	"runtime/coverage"
 	"strings"
@@ -84,6 +85,25 @@ func NewRouter(deps *service.Locator) *web.Service {
 				if i, ok := v.(int64); ok {
 					s := uniq.Hash(i).String()
 					return `<a href="/list-` + s + `/"><img src="/thumb/300w/` + s + `.jpg" /></a>`
+				}
+
+				return v
+			})
+
+			options.AddValueProcessor("img", func(v any) any {
+				if b, ok := v.([]byte); ok {
+					ct := http.DetectContentType(b)
+					return `<img src="data:` + ct + `;base64,` + base64.StdEncoding.EncodeToString(b) + `" />`
+				}
+
+				if s, ok := v.(string); ok {
+					b, err := base64.StdEncoding.DecodeString(s)
+					if err != nil {
+						return err.Error()
+					}
+					ct := http.DetectContentType(b)
+
+					return `<img src="data:` + ct + `;base64,` + s + `" />`
 				}
 
 				return v
@@ -289,7 +309,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		http.Redirect(w, r, r.URL.Path+"/", http.StatusFound)
 	}))
 
-	s.Get("/map-tile/{r}/{z}/{x}/{y}.png", usecase.MapTile(deps))
+	// s.Get("/map-tile/{s}/{r}/{z}/{x}/{y}.png", usecase.MapTile(deps))
+	s.Get("/map-tile/{s}/{r}/{z}/{x}/{y}.webp", usecase.MapTile(deps))
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
 
