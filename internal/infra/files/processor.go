@@ -11,22 +11,23 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/topic"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/image"
+	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
 type ProcessorDeps interface {
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
+	QueueBroker() *qlite.Broker
 
 	PhotoAlbumFinder() uniq.Finder[photo.Album]
 	PhotoAlbumEnsurer() uniq.Ensurer[photo.Album]
 	PhotoAlbumImageAdder() photo.AlbumImageAdder
 
 	PhotoImageEnsurer() uniq.Ensurer[photo.Image]
-	PhotoImageIndexer() photo.ImageIndexer
-
 	PhotoGpxEnsurer() uniq.Ensurer[photo.Gpx]
 
 	PhotoThumbnailer() photo.Thumbnailer
@@ -89,13 +90,13 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 			return 0, nil, fmt.Errorf("add image to album: %w", err)
 		}
 		return img.Hash, func() {
-			p.deps.PhotoImageIndexer().QueueIndex(ctx, img, photo.IndexingFlags{})
-			p.deps.PhotoImageIndexer().QueueCallback(ctx, func(ctx context.Context) {
-				for _, cb := range after {
-					cb(img.Hash)
-				}
-				_ = p.deps.DepCache().AlbumChanged(ctx, albumName)
-			})
+			if err := p.deps.QueueBroker().Publish(ctx, topic.IndexImage, image.IndexJob{Image: img}, func(msg *qlite.Message) {
+				msg.PublishOnSuccess(topic.AlbumChanged, albumName)
+			}); err != nil {
+				p.deps.CtxdLogger().Error(ctx, "failed to publish indexing flags", "error", err)
+
+				return
+			}
 		}, nil
 	}
 

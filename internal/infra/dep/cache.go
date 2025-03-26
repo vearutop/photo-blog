@@ -6,13 +6,31 @@ import (
 
 	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
+	"github.com/vearutop/photo-blog/internal/domain/topic"
+	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
-func NewCache(index *cache.InvalidationIndex, logger ctxd.Logger) *Cache {
-	return &Cache{
-		logger: logger,
-		index:  index,
+type Deps interface {
+	CacheInvalidationIndex() *cache.InvalidationIndex
+	CtxdLogger() ctxd.Logger
+	QueueBroker() *qlite.Broker
+}
+
+func NewCache(deps Deps) *Cache {
+	c := &Cache{
+		logger: deps.CtxdLogger(),
+		index:  deps.CacheInvalidationIndex(),
 	}
+
+	if err := qlite.AddConsumer[string](deps.QueueBroker(), topic.AlbumChanged, func(ctx context.Context, v string) error {
+		return c.AlbumChanged(ctx, v)
+	}, func(o *qlite.ConsumerOptions) {
+		o.Concurrency = 10
+	}); err != nil {
+		panic(err)
+	}
+
+	return c
 }
 
 type Cache struct {
