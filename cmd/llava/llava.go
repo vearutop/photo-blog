@@ -20,24 +20,36 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/vearutop/image-prompt/cloudflare"
+	"github.com/vearutop/image-prompt/gemini"
+	"github.com/vearutop/image-prompt/imageprompt"
+	"github.com/vearutop/image-prompt/ollama"
+	"github.com/vearutop/image-prompt/openai"
 )
 
 func main() {
 	var (
-		prompt string
-		model  string
+		prompt    string
+		model     string
+		cfWorker  string
+		openaiKey string
+		geminiKey string
 	)
 
-	flag.StringVar(&prompt, "prompt", "Generate a detailed caption for this image, don't name the places or items unless you're sure.", "prompt")
+	flag.StringVar(&prompt, "prompt", "Generate a detailed caption for this image, don't name the places, items or people unless you're sure.", "prompt")
 	flag.StringVar(&model, "model", "llava:7b", "model name")
+	flag.StringVar(&cfWorker, "cf", "", "CloudFlare worker URL (example https://MY_AUTH_KEY@llava.xxxxxx.workers.dev/)")
+	flag.StringVar(&geminiKey, "gemini", "", "Gemini API KEY")
+	flag.StringVar(&openaiKey, "openai", "", "OpenAI API KEY")
 	flag.Parse()
 
 	if flag.NArg() != 1 {
@@ -46,62 +58,45 @@ func main() {
 	}
 
 	img := flag.Arg(0)
+	var (
+		image io.ReadCloser
+		err   error
+		p     imageprompt.Prompter
+	)
 
-	resp, err := http.Get(img)
+	if strings.HasPrefix(img, "http://") || strings.HasPrefix(img, "https://") {
+		resp, err := http.Get(img)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		image = resp.Body
+	} else {
+		image, err = os.Open(img)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if cfWorker != "" {
+		p, err = cloudflare.NewImagePrompter(cfWorker)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if openaiKey != "" {
+		p = &openai.ImagePrompter{AuthKey: openaiKey}
+	} else if geminiKey != "" {
+		p = &gemini.ImagePrompter{AuthKey: geminiKey}
+	} else {
+		p = &ollama.ImagePrompter{
+			Model: model,
+		}
+	}
+
+	result, err := p.PromptImage(context.Background(), prompt, image)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cont, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	type Req struct {
-		Model  string   `json:"model"`
-		Prompt string   `json:"prompt"`
-		Stream bool     `json:"stream"`
-		Images [][]byte `json:"images"`
-	}
-
-	r := Req{}
-
-	r.Model = model
-	r.Prompt = prompt
-	r.Stream = false
-	r.Images = append(r.Images, cont)
-
-	body, err := json.Marshal(r)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:11434/api/generate", bytes.NewReader(body))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resp, err = http.DefaultTransport.RoundTrip(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-
-	cont, err = io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	type Resp struct {
-		Response string `json:"response"`
-	}
-
-	re := Resp{}
-
-	if err := json.Unmarshal(cont, &re); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(strings.Trim(re.Response, `" \t`))
+	fmt.Println(result)
 }
