@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cespare/xxhash/v2"
@@ -44,8 +45,13 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 		u = strings.ReplaceAll(u, "{y}", input.Y)
 		u = strings.ReplaceAll(u, "{s}", input.S)
 
+		mu := sync.Mutex{}
+
 		t, err := deps.MapTilesCache().Get(ctx, []byte(u),
 			func(ctx context.Context) ([]byte, error) {
+				mu.Lock()
+				defer mu.Unlock()
+
 				req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 				if err != nil {
 					return nil, err
@@ -83,6 +89,7 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 				buf := bytes.NewBuffer(nil)
 
 				st := time.Now()
+
 				if err := webp.Encode(buf, img, webp.Options{Quality: 80, Method: 6}); err != nil {
 					return nil, err
 				}
