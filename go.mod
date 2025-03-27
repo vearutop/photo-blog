@@ -40,7 +40,7 @@ require (
 	github.com/tus/tusd/v2 v2.7.1
 	github.com/vearutop/dbcon v0.2.11
 	github.com/vearutop/httpzip v0.1.1
-	github.com/vearutop/image-prompt v0.1.0
+	github.com/vearutop/image-prompt v0.1.1
 	github.com/vearutop/statigz v1.4.3
 	github.com/yuin/goldmark v1.7.8
 	go.opencensus.io v0.24.0
@@ -126,7 +126,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.9.1 // indirect
 )
-
-replace github.com/vearutop/image-prompt => /Users/vearutop/gohack/github.com/vearutop/image-prompt
-
-replace github.com/bool64/sqluct => /Users/vearutop/gohack/github.com/bool64/sqluct
