@@ -75,6 +75,7 @@ func Edit(deps editSettingsDeps) usecase.Interactor {
 			},
 			form("External API Integration", "/settings/external_api.json", deps.Settings().ExternalAPI()),
 			form("Image Descriptions (LLM)", "/settings/image_prompt.json", deps.Settings().ImagePrompt()),
+			form("Indexing", "/settings/indexing.json", deps.Settings().Indexing()),
 		)
 	})
 
@@ -103,6 +104,14 @@ func SetImagePrompt(deps setSettingsDeps) usecase.Interactor {
 func SetAppearance(deps setSettingsDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input settings.Appearance, output *struct{}) error {
 		return deps.SettingsManager().SetAppearance(ctx, input)
+	})
+
+	return u
+}
+
+func SetIndexing(deps setSettingsDeps) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, input settings.Indexing, output *struct{}) error {
+		return deps.SettingsManager().SetIndexing(ctx, input)
 	})
 
 	return u
