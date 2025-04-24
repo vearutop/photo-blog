@@ -135,7 +135,11 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
-		d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
+		if len(cont.Images) > 1 {
+			d.OGTitle = fmt.Sprintf("%s (%d photos)", album.Title, len(cont.Images))
+		} else {
+			d.OGTitle = album.Title
+		}
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
 		d.OGSiteName = deps.TxtRenderer().MustRenderLang(ctx, deps.Settings().Appearance().SiteTitle, func(o *txt.RenderOptions) {
 			o.StripTags = true
@@ -210,7 +214,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 			cacheKey := []byte(a.Name + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx) + "::preview")
 			cont, err := c.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
-
 				return getAlbumContents(ctx, deps, a.Name, true)
 			})
 			if err != nil {
