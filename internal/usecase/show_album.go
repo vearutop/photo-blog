@@ -147,7 +147,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		d.MapTiles = maps.Tiles
 		if maps.Cache {
-			d.MapTiles = "/map-tile/{s}/{r}/{z}/{x}/{y}.webp"
+			d.MapTiles = "/map-tile/{s}/{r}/{z}/{x}/{y}.png"
 		}
 
 		if album.Settings.MapTiles != "" {

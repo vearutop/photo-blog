@@ -95,7 +95,7 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 
 		d.MapTiles = maps.Tiles
 		if maps.Cache {
-			d.MapTiles = "/map-tile/{s}/{r}/{z}/{x}/{y}.webp"
+			d.MapTiles = "/map-tile/{s}/{r}/{z}/{x}/{y}.png"
 		}
 
 		d.MapAttribution = maps.Attribution
