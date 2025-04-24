@@ -11,6 +11,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/topic"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
@@ -71,10 +72,13 @@ func IndexAlbum(deps indexAlbumDeps) usecase.IOInteractorOf[indexAlbumInput, str
 			}
 		}
 
+		deps.CtxdLogger().Info(ctx, "indexing album", "num_images", len(images))
+
 		for _, img := range images {
-			if err := deps.QueueBroker().Publish(ctx, topic.IndexImage, img, func(msg *qlite.Message) {
+			if err := deps.QueueBroker().Publish(ctx, topic.IndexImage, image.IndexJob{Image: img}, func(msg *qlite.Message) {
 				msg.PublishOnSuccess(topic.AlbumChanged, in.Name)
 			}); err != nil {
+				deps.CtxdLogger().Error(ctx, "error publishing album index", "error", err)
 				return err
 			}
 		}
