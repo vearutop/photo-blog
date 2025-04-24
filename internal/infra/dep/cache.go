@@ -38,6 +38,21 @@ type Cache struct {
 	logger ctxd.Logger
 }
 
+type labelsCtxKey struct{}
+
+// WithLabels adds cache labels to context.
+func WithLabels(ctx context.Context, name string) context.Context {
+	labels, _ := ctx.Value(labelsCtxKey{}).([]string)
+
+	return context.WithValue(ctx, labelsCtxKey{}, append(labels[0:len(labels):len(labels)], name))
+}
+
+func (n *Cache) AddLabel(ctx context.Context, cacheName string, cacheKey []byte) {
+	labels, _ := ctx.Value(labelsCtxKey{}).([]string)
+
+	n.index.AddLabels(cacheName, cacheKey, labels...)
+}
+
 func (n *Cache) AlbumListDependency(cacheName string, cacheKey []byte) {
 	n.index.AddLabels(cacheName, cacheKey, "album-list")
 }
