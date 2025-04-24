@@ -48,6 +48,8 @@ type pageCommon struct {
 
 	ThumbBaseURL string
 	ImageBaseURL string
+
+	SubAlbums []getAlbumOutput
 }
 
 func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Values) {
@@ -112,7 +114,6 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		CoverImage        string
 		Featured          string
 		FeaturedAlbumData getAlbumOutput
-		Albums            []getAlbumOutput
 	}
 
 	cacheName := "main-page"
@@ -177,7 +178,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 					continue
 				}
 
-				d.Albums = append(d.Albums, cont)
+				d.SubAlbums = append(d.SubAlbums, cont)
 				deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
 			}
 
