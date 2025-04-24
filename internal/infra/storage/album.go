@@ -54,6 +54,34 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository, mr *MetaRe
 			})
 		}
 
+		if names := v.Settings.SubAlbumNames; len(names) > 0 {
+			hashes := make([]uniq.Hash, len(names))
+			for i, name := range names {
+				hashes[i] = uniq.StringHash(name)
+			}
+
+			albums, err := ar.FindByHashes(ctx, hashes...)
+			if err != nil {
+				return err
+			}
+
+			if len(albums) != len(names) {
+				return fmt.Errorf("expected %d albums to find, got %d", len(names), len(albums))
+			}
+
+			sort.Slice(albums, func(i, j int) bool {
+				if v.Settings.NewestFirst {
+					return albums[i].CreatedAt.After(albums[j].CreatedAt)
+				} else {
+					return albums[i].CreatedAt.Before(albums[j].CreatedAt)
+				}
+			})
+
+			for i, album := range albums {
+				v.Settings.SubAlbumNames[i] = album.Name
+			}
+		}
+
 		return nil
 	}
 
@@ -217,9 +245,9 @@ func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.
 	return hashed.AugmentResErr(r.i.List(ctx, q))
 }
 
-func (r *AlbumRepository) FindByName(ctx context.Context, name string) (photo.Album, error) {
+func (r *AlbumRepository) FindByName(ctx context.Context, names ...string) (photo.Album, error) {
 	q := r.SelectStmt().
-		Where(r.Eq(&r.R.Name, name)).
+		Where(r.Eq(&r.R.Name, names)).
 		Limit(1)
 
 	return hashed.AugmentResErr(r.Get(ctx, q))

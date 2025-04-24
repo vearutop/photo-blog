@@ -192,6 +192,39 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 			d.CoverImage = "/thumb/1200w/" + cont.Images[0].Hash + ".jpg"
 		}
 
+		for _, name := range album.Settings.SubAlbumNames {
+			a, err := deps.PhotoAlbumFinder().FindByHash(ctx, uniq.StringHash(name))
+			if err != nil {
+				return err
+			}
+
+			if a.Hidden {
+				continue
+			}
+
+			if !a.Public || a.Name == "" {
+				if !d.IsAdmin {
+					continue
+				}
+			}
+
+			cacheKey := []byte(a.Name + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx) + "::preview")
+			cont, err := c.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
+
+				return getAlbumContents(ctx, deps, a.Name, true)
+			})
+			if err != nil {
+				return err
+			}
+
+			if len(cont.Images) == 0 && !d.IsAdmin {
+				continue
+			}
+
+			d.SubAlbums = append(d.SubAlbums, cont)
+			deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
+		}
+
 		return out.Render(tmpl, d)
 	})
 
