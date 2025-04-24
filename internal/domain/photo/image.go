@@ -10,9 +10,10 @@ import (
 )
 
 type IndexingFlags struct {
-	RebuildExif      bool `formData:"rebuild_exif"`
-	RebuildGps       bool `formData:"rebuild_gps"`
-	RebuildImageSize bool `formData:"rebuild_image_size"`
+	RebuildExif       bool `formData:"rebuild_exif"`
+	RebuildGps        bool `formData:"rebuild_gps"`
+	RebuildImageSize  bool `formData:"rebuild_image_size"`
+	RebuildThumbnails bool `formData:"rebuild_thumbnails"`
 }
 
 type Image struct {

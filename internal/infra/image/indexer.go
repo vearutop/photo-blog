@@ -26,6 +26,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/image/sharpness"
+	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/qlite"
 	"go.opencensus.io/trace"
 )
@@ -53,15 +54,34 @@ type indexerDeps interface {
 	FacesRecognizer() *faces.Recognizer
 	OpenRouteService() *ors.Client
 	ImagePrompter() *multi.ImagePrompter
+
+	Settings() settings.Values
 }
+
+const (
+	TopicSharpness = "index_sharpness"
+)
 
 func StartIndexer(deps indexerDeps) {
 	i := &indexer{
 		deps: deps,
 	}
 
-	if err := qlite.AddConsumer[IndexJob](deps.QueueBroker(), topic.IndexImage, i.index); err != nil {
-		panic(err)
+	b := deps.QueueBroker()
+
+	must(
+		qlite.AddConsumer[IndexJob](b, topic.IndexImage, i.index, func(o *qlite.ConsumerOptions) {
+			o.Concurrency = 10
+		}),
+		qlite.AddConsumer[photo.Image](b, TopicSharpness, i.ensureSharpness),
+	)
+}
+
+func must(errs ...error) {
+	for _, err := range errs {
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -179,16 +199,38 @@ func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		}
 	}
 
-	i.ensureThumbs(ctx, img)
-	i.ensureBlurHash(ctx, &img)
-	i.ensurePHash(ctx, &img)
-	i.ensureSharpness(ctx, &img)
+	s := i.deps.Settings().Indexing()
 
-	go i.ensureFacesRecognized(ctx, img)
-	go i.ensureCFClassification(ctx, img)
-	go i.ensureCFDescription(ctx, img)
-	go i.ensureGeoLabel(ctx, img.Hash)
-	go i.ensureLLMDescription(ctx, img)
+	i.ensureThumbs(ctx, img, flags)
+	i.ensureBlurHash(ctx, &img)
+
+	if s.Phash {
+		i.ensurePHash(ctx, &img)
+	}
+
+	if s.SharpnessV0 {
+		i.ensureSharpness(ctx, img)
+	}
+
+	if s.Faces {
+		go i.ensureFacesRecognized(ctx, img)
+	}
+
+	if s.CFClassification {
+		go i.ensureCFClassification(ctx, img)
+	}
+
+	if s.CFDescription {
+		go i.ensureCFDescription(ctx, img)
+	}
+
+	if s.GeoLabel {
+		go i.ensureGeoLabel(ctx, img.Hash)
+	}
+
+	if s.LLMDescription {
+		go i.ensureLLMDescription(ctx, img)
+	}
 
 	return nil
 }
@@ -389,7 +431,7 @@ func (i *indexer) ensureFacesRecognized(ctx context.Context, img photo.Image) {
 		return
 	}
 
-	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, "2400w")
+	th, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, "1200w")
 	if err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to find thumbnail", "error", err)
 
@@ -480,12 +522,12 @@ func (i *indexer) ensurePHash(ctx context.Context, img *photo.Image) {
 	}
 }
 
-func (i *indexer) ensureSharpness(ctx context.Context, img *photo.Image) {
+func (i *indexer) ensureSharpness(ctx context.Context, img photo.Image) error {
 	if img.Sharpness != nil {
-		return
+		return nil
 	}
 
-	jpg, err := loadImage(ctx, *img, 10000, 10000)
+	jpg, err := loadImage(ctx, img, 10000, 10000)
 	if err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to load image",
 			"error", err.Error())
@@ -499,10 +541,12 @@ func (i *indexer) ensureSharpness(ctx context.Context, img *photo.Image) {
 
 	img.Sharpness = &sh
 
-	if err := i.deps.PhotoImageUpdater().Update(ctx, *img); err != nil {
+	if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to save image",
 			"error", err.Error())
 	}
+
+	return nil
 }
 
 func (i *indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
@@ -539,8 +583,14 @@ func (i *indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
 	}
 }
 
-func (i *indexer) ensureThumbs(ctx context.Context, img photo.Image) {
+func (i *indexer) ensureThumbs(ctx context.Context, img photo.Image, flags photo.IndexingFlags) {
+	s := i.deps.Settings().Indexing()
+
 	for _, size := range photo.ThumbSizes {
+		if size == "2400w" && s.Skip2400wThumb {
+			continue
+		}
+
 		_, err := i.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
 		if err != nil {
 			i.deps.CtxdLogger().Error(ctx, "failed to get thumbnail",
