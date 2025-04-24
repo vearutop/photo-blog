@@ -90,6 +90,15 @@ func NewRouter(deps *service.Locator) *web.Service {
 				return v
 			})
 
+			options.AddValueProcessor("visitor", func(v any) any {
+				if i, ok := v.(int64); ok {
+					s := uniq.Hash(i).String()
+					return `<a href="/stats/visitor/` + s + `.html">` + s + `</a>`
+				}
+
+				return v
+			})
+
 			options.AddValueProcessor("img", func(v any) any {
 				if b, ok := v.([]byte); ok {
 					ct := http.DetectContentType(b)
@@ -142,7 +151,10 @@ func NewRouter(deps *service.Locator) *web.Service {
 		// End of WebDAV.
 
 		s.Post("/album", control.CreateAlbum(deps))
-		s.Post("/album/{name}/directory", control.AddDirectory(deps, control.IndexAlbum(deps)))
+
+		addDir := control.AddDirectory(deps, control.IndexAlbum(deps))
+		s.Post("/album/{name}/directory", addDir)
+		s.Post("/album/add-recursive", control.AddDirectoryRecursive(deps, addDir))
 		s.Post("/album/{name}/url", control.AddRemote(deps))
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
@@ -167,6 +179,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Post("/settings/privacy.json", settings.SetPrivacy(deps))
 		s.Post("/settings/external_api.json", settings.SetExternalAPI(deps))
 		s.Post("/settings/image_prompt.json", settings.SetImagePrompt(deps))
+		s.Post("/settings/indexing.json", settings.SetIndexing(deps))
 
 		s.Get("/album/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Album] { return deps.PhotoAlbumFinder() }))
 		s.Get("/image/{hash}.json", control.Get(deps, func() uniq.Finder[photo.Image] { return deps.PhotoImageFinder() }))
@@ -310,7 +323,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 	}))
 
 	// s.Get("/map-tile/{s}/{r}/{z}/{x}/{y}.png", usecase.MapTile(deps))
-	s.Get("/map-tile/{s}/{r}/{z}/{x}/{y}.webp", usecase.MapTile(deps))
+	s.Get("/map-tile/{s}/{r}/{z}/{x}/{y}.png", usecase.MapTile(deps))
 
 	s.Mount("/static/", http.StripPrefix("/static", ui.Static))
 
