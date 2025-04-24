@@ -204,7 +204,7 @@ func (up *uploadProcessor) processUpload(deps TusHandlerDeps, event tusd.HookEve
 			defer up.mu.Unlock()
 
 			up.thumbWait[filePath] = tw
-		} else {
+		} else if tw.idx != nil {
 			tw.idx()
 		}
 	}
