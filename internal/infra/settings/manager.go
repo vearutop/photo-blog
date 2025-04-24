@@ -38,6 +38,7 @@ type Manager struct {
 	privacy     Privacy
 	externalAPI ExternalAPI
 	imagePrompt multi.Config
+	indexing    Indexing
 }
 
 type Values interface {
@@ -54,6 +55,7 @@ type Values interface {
 	ORSConfig() ors.Config
 
 	ImagePrompt() multi.Config
+	Indexing() Indexing
 }
 
 func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
@@ -70,6 +72,7 @@ func NewManager(r Repository, dc *dep.Cache) (*Manager, error) {
 		m.get(ctx, "privacy", &m.privacy),
 		m.get(ctx, "external_api", &m.externalAPI),
 		m.get(ctx, "image_prompt", &m.imagePrompt),
+		m.get(ctx, "indexing", &m.indexing),
 	)
 }
 
