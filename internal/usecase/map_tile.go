@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"image"
 	"io"
 	"net/http"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cespare/xxhash/v2"
-	"github.com/gen2brain/webp"
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
@@ -47,7 +45,7 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 
 		mu := sync.Mutex{}
 
-		t, err := deps.MapTilesCache().Get(ctx, []byte(u),
+		t, err := deps.MapTilesCache().Get(ctx, []byte(u+"-png"),
 			func(ctx context.Context) ([]byte, error) {
 				mu.Lock()
 				defer mu.Unlock()
@@ -81,25 +79,7 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 					return nil, fmt.Errorf("unexpected status code: %d, %s", resp.StatusCode, string(d))
 				}
 
-				img, _, err := image.Decode(bytes.NewReader(d))
-				if err != nil {
-					return nil, err
-				}
-
-				buf := bytes.NewBuffer(nil)
-
-				st := time.Now()
-
-				if err := webp.Encode(buf, img, webp.Options{Quality: 80, Method: 6}); err != nil {
-					return nil, err
-				}
-
-				origLen := len(d)
-				d = buf.Bytes()
-				webpLen := len(d)
-
-				deps.CtxdLogger().Debug(ctx, "map tile cached",
-					"origSize", origLen, "newSize", webpLen, "time", time.Since(st))
+				deps.CtxdLogger().Debug(ctx, "map tile cached", "size", len(d))
 
 				return d, nil
 			},
@@ -109,9 +89,10 @@ func MapTile(deps *service.Locator) usecase.Interactor {
 		}
 
 		rw.Header().Set("Etag", strconv.FormatUint(xxhash.Sum64(t), 36))
-		rw.Header().Set("Content-Type", "image/webp")
+		rw.Header().Set("Content-Type", "image/png")
+		rw.Header().Set("Cache-Control", "max-age=31536000")
 
-		http.ServeContent(rw, input.Request(), "image.webp", time.Time{}, bytes.NewReader(t))
+		http.ServeContent(rw, input.Request(), "image.png", time.Time{}, bytes.NewReader(t))
 
 		return nil
 	})
