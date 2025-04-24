@@ -30,17 +30,17 @@ type addDirectoryDeps interface {
 	DepCache() *dep.Cache
 }
 
+type addDirInput struct {
+	Path string `formData:"path"`
+	Name string `path:"name" description:"Album name."`
+}
+
+type addDirOutput struct {
+	Names []string `json:"names"`
+}
+
 // AddDirectory creates use case interactor to add directory of photos to an album.
-func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlbumInput, struct{}]) usecase.Interactor {
-	type addDirInput struct {
-		Path string `formData:"path"`
-		Name string `path:"name" description:"Album name."`
-	}
-
-	type addDirOutput struct {
-		Names []string `json:"names"`
-	}
-
+func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlbumInput, struct{}]) usecase.IOInteractorOf[addDirInput, addDirOutput] {
 	u := usecase.NewInteractor(func(ctx context.Context, in addDirInput, out *addDirOutput) error {
 		deps.StatsTracker().Add(ctx, "add_dir", 1)
 		deps.CtxdLogger().Important(ctx, "adding directory", "path", in.Path)
@@ -52,7 +52,7 @@ func AddDirectory(deps addDirectoryDeps, indexer usecase.IOInteractorOf[indexAlb
 
 		dir, err := os.Open(in.Path)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		names, err := dir.Readdirnames(0)
