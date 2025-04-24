@@ -24,6 +24,8 @@ func DownloadGpx(deps dlGpxDeps) usecase.Interactor {
 		}
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
+		rw.Header().Set("Content-Type", "application/gpx+xml")
+
 		http.ServeFile(rw, in.Request(), gpx.Path)
 
 		return nil
