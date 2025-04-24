@@ -102,6 +102,7 @@ func makeThumbnail(
 	th.Format = size
 
 	th.Data = buf.Bytes()
+	th.Size = len(th.Data)
 
 	return th, nil
 }
@@ -112,7 +113,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 
 	start := time.Now()
 	ctx = ctxd.AddFields(ctx, "img", i.Path, "hash", i.Hash, "size", size)
-	t.deps.CtxdLogger().Info(ctx, "starting thumb")
+	t.deps.CtxdLogger().Debug(ctx, "starting thumb")
 
 	ctx, finish := opencensus.AddSpan(ctx,
 		trace.StringAttribute("path", i.Path),
@@ -157,7 +158,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	}
 
 	elapsed := time.Since(start)
-	t.deps.CtxdLogger().Info(ctx, "thumb done", "elapsed", elapsed.String())
+	t.deps.CtxdLogger().Debug(ctx, "thumb done", "elapsed", elapsed.String())
 
 	return th, nil
 }
