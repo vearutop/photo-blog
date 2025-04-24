@@ -6,6 +6,7 @@ require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
+	github.com/alexsergivan/transliterator v1.0.1
 	github.com/bool64/brick v0.3.3
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
@@ -21,7 +22,6 @@ require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
-	github.com/gen2brain/webp v0.5.4
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -33,24 +33,24 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.73
 	github.com/swaggest/openapi-go v0.2.57
 	github.com/swaggest/refl v1.3.1
-	github.com/swaggest/rest v0.2.73
-	github.com/swaggest/swgui v1.8.2
+	github.com/swaggest/rest v0.2.74
+	github.com/swaggest/swgui v1.8.3
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
-	github.com/tus/tusd/v2 v2.7.1
+	github.com/tus/tusd/v2 v2.8.0
 	github.com/vearutop/dbcon v0.2.11
 	github.com/vearutop/httpzip v0.1.1
 	github.com/vearutop/image-prompt v0.1.1
 	github.com/vearutop/statigz v1.4.3
-	github.com/yuin/goldmark v1.7.8
+	github.com/yuin/goldmark v1.7.10
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.36.0
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
-	golang.org/x/image v0.25.0
-	golang.org/x/net v0.37.0
-	golang.org/x/text v0.23.0
-	modernc.org/sqlite v1.36.2
+	golang.org/x/crypto v0.37.0
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
+	golang.org/x/image v0.26.0
+	golang.org/x/net v0.39.0
+	golang.org/x/text v0.24.0
+	modernc.org/sqlite v1.37.0
 )
 
 require (
@@ -71,7 +71,6 @@ require (
 	github.com/dsoprea/go-utility v0.0.0-20200711062821-fab8125e9bdf // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/ebitengine/purego v0.8.2 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-sql-driver/mysql v1.9.1 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
@@ -93,19 +92,18 @@ require (
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.21.0 // indirect
+	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/statsd_exporter v0.28.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	github.com/rs/zerolog v1.33.0 // indirect
+	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpgzip v0.0.0-20230704072819-d1585fc322fa // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
-	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/vearutop/dynhist-go v1.2.3 // indirect
@@ -114,15 +112,15 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	google.golang.org/api v0.223.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
-	google.golang.org/grpc v1.70.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	google.golang.org/api v0.224.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
+	google.golang.org/grpc v1.71.0 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.61.13 // indirect
+	modernc.org/libc v1.63.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.9.1 // indirect
+	modernc.org/memory v1.10.0 // indirect
 )
