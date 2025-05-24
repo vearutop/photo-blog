@@ -197,7 +197,7 @@ func rot180(jimg image.Image) *image.RGBA {
 
 func loadImage(ctx context.Context, i photo.Image, w, h uint) (image.Image, error) {
 	lt := LargerThumbFromContext(ctx)
-	if lt != nil && (lt.Width >= w || lt.Height >= h) {
+	if lt != nil && (lt.Width >= w && lt.Height >= h) {
 		img, err := thumbJPEG(ctx, *lt)
 		if err != nil {
 			return nil, fmt.Errorf("decoding larger thumb: %w", err)
