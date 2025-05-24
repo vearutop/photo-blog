@@ -72,6 +72,10 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 	lName := strings.ToLower(filePath)
 
 	defer func() {
+		for _, cb := range after {
+			cb(h)
+		}
+
 		if err == nil {
 			err = p.deps.DepCache().AlbumChanged(ctx, albumName)
 		}
@@ -138,10 +142,6 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 				if _, err = p.deps.PhotoAlbumEnsurer().Ensure(ctx, a); err != nil {
 					return 0, nil, fmt.Errorf("ensure album %s: %w", albumName, err)
 				}
-			}
-
-			for _, cb := range after {
-				cb(d.Hash)
 			}
 
 			return d.Hash, nil, nil
