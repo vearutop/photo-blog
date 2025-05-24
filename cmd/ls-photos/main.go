@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math/rand/v2"
 	"os"
@@ -23,18 +24,89 @@ import (
 )
 
 func main() {
+	if err := Main(); err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+}
+
+func Main() error {
 	var (
 		mu        sync.Mutex
 		files     []image.Data
+		filesMap  = make(map[string]int) // Name to files index.
 		semaphore = make(chan struct{}, runtime.NumCPU())
 		log       = zapctxd.New(zapctxd.Config{ColoredOutput: true})
+
+		listLists bool
 	)
+
+	flag.BoolVar(&listLists, "l", false, "List all available lists")
+	flag.Parse()
+
+	if listLists {
+		var list []string
+
+		err := filepath.Walk(".", func(p string, info os.FileInfo, err error) error {
+			// List found, e.g. ls_1s4za3zpktl61.json.
+			if strings.Contains(p, "/ls_") && strings.HasSuffix(p, ".json") {
+				list = append(list, p)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		j, err := json.Marshal(list)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(j))
+
+		return nil
+	}
 
 	ctx := context.Background()
 
 	ts := thumbStorer{}
 
+	listFn := ""
 	err := filepath.Walk(".", func(p string, info os.FileInfo, err error) error {
+		// List found, e.g. ls_1s4za3zpktl61.json.
+		if strings.HasPrefix(p, "ls_") && strings.HasSuffix(p, ".json") {
+			listFn = p
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if listFn == "" {
+		listFn = fmt.Sprintf("ls_%s.json", uniq.Hash(rand.Int64()))
+	} else {
+		log.Info(ctx, "existing list found", "list", listFn)
+
+		j, err := os.ReadFile(listFn)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(j, &files)
+		if err != nil {
+			return err
+		}
+
+		for i, f := range files {
+			filesMap[f.Image.Path] = i
+		}
+	}
+
+	err = filepath.Walk(".", func(p string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -48,7 +120,11 @@ func main() {
 		if strings.HasSuffix(l, ".jpeg") || strings.HasSuffix(l, ".jpg") {
 			println("processing", p)
 
+			i, alreadyListed := filesMap[p]
 			d := image.Data{}
+			if alreadyListed {
+				d = files[i]
+			}
 
 			semaphore <- struct{}{} // Acquire semaphore slot.
 			go func() {
@@ -56,7 +132,11 @@ func main() {
 					<-semaphore // Release semaphore slot.
 				}()
 
-				if err := d.Image.SetPath(ctx, p); err != nil {
+				if d.Image.Path == "" {
+					d.Image.Path = p
+				}
+
+				if err := d.Fill(ctx); err != nil {
 					ctxd.LogError(ctx, err, log.Error)
 					return
 				}
@@ -71,12 +151,11 @@ func main() {
 					d.Image.Path = p + hashSuffix
 				}
 
-				if err := d.Fill(ctx); err != nil {
-					ctxd.LogError(ctx, err, log.Error)
-					return
-				}
-
 				for i, th := range d.Thumbs {
+					if th.FilePath != "" || th.SpriteFile != "" {
+						continue
+					}
+
 					if err := ts.Write(&th); err != nil {
 						ctxd.LogError(ctx, err, log.Error)
 						continue
@@ -86,7 +165,13 @@ func main() {
 
 				mu.Lock()
 				defer mu.Unlock()
-				files = append(files, d)
+
+				if alreadyListed {
+					files[i] = d
+					delete(filesMap, p)
+				} else {
+					files = append(files, d)
+				}
 			}()
 		}
 
@@ -94,7 +179,23 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		ctxd.LogError(ctx, err, log.Error)
+		return err
+	}
+
+	if len(filesMap) > 0 {
+		result := make([]image.Data, 0, len(files)-len(filesMap))
+		deleted := make([]image.Data, 0, len(filesMap))
+		for _, f := range files {
+			if _, ok := filesMap[f.Image.Path]; !ok {
+				result = append(result, f)
+			} else {
+				deleted = append(deleted, f)
+			}
+		}
+
+		log.Info(ctx, "deleted files in the list", "files", deleted)
+
+		files = result
 	}
 
 	// Wait for goroutines to finish by acquiring all slots.
@@ -103,20 +204,34 @@ func main() {
 	}
 
 	if err := ts.Close(); err != nil {
-		ctxd.LogError(ctx, err, log.Error)
+		return err
 	}
 
-	j, err := json.MarshalIndent(files, "", "  ")
-	if err != nil {
-		ctxd.LogError(ctx, err, log.Error)
-	}
-
-	listFn := fmt.Sprintf("ls_%s.json", uniq.Hash(rand.Int64()))
-	if err := os.WriteFile(listFn, j, 0o600); err != nil {
-		ctxd.LogError(ctx, err, log.Error)
+	if j, err := json.MarshalIndent(files, "", "  "); err != nil {
+		return err
+	} else if err := os.WriteFile(listFn, j, 0o600); err != nil {
+		return err
 	}
 
 	log.Info(ctx, "done, list written to: "+listFn)
+
+	err = filepath.Walk(".", func(p string, info os.FileInfo, err error) error {
+		if p == ".DS_Store" { // MacOS garbage.
+			return os.Remove(p)
+		}
+		if strings.HasPrefix(p, "._") && info.Size() == 4096 { // MacOS garbage.
+			return os.Remove(p)
+		}
+		if strings.HasPrefix(p, "thumbs/._") && info.Size() == 4096 { // MacOS garbage.
+			return os.Remove(p)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type thumbStorer struct {
