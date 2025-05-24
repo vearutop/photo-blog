@@ -110,6 +110,18 @@ func (d *Data) imgHash(ctx context.Context) error {
 
 func (d *Data) thumbs(ctx context.Context) error {
 	for _, size := range photo.ThumbSizes {
+		alreadyExists := false
+		for _, th := range d.Thumbs {
+			if th.Format == size {
+				alreadyExists = true
+				break
+			}
+		}
+
+		if alreadyExists {
+			continue
+		}
+
 		th, err := makeThumbnail(ctx, d.Image, size)
 		if err != nil {
 			return err
