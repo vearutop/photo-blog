@@ -45,6 +45,7 @@ type addToAlbumInput struct {
 	SrcImageHash        uniq.Hash `json:"image_hash,omitempty" title:"Image Hash" description:"Hash of an image to add to album."`
 	SrcAlbumName        string    `json:"album_name,omitempty" title:"Source Album Name" description:"Name of a source album to add photos from."`
 	SrcImageURL         string    `json:"image_url,omitempty" title:"Fetch image from a publicly available URL."`
+	SrcImageTime        time.Time `json:"image_time,omitzero" title:"Set image time after adding from URL."`
 	SrcGPS              string    `json:"image_lat_lon,omitempty" title:"Set image GPS location after adding from URL." description:"In latitude,longitude format."`
 	SrcImageDescription string    `json:"image_description,omitempty" title:"Set image description after adding from URL." formType:"textarea" description:"Description of an image, can contain HTML."`
 }
@@ -168,7 +169,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 					}
 				}
 
-				if in.SrcImageDescription != "" {
+				if in.SrcImageDescription != "" || !in.SrcImageTime.IsZero() {
 					time.Sleep(time.Second)
 
 					img, err := deps.PhotoImageFinder().FindByHash(ctx, hash)
@@ -178,6 +179,9 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 					}
 
 					img.Settings.Description = in.SrcImageDescription
+					if !in.SrcImageTime.IsZero() {
+						img.TakenAt = &in.SrcImageTime
+					}
 
 					if _, err := deps.PhotoImageEnsurer().Ensure(ctx, img); err != nil {
 						deps.CtxdLogger().Error(ctx, "ensure image", "error", err)
