@@ -88,6 +88,6 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 }
 
 var (
-	ThumbSizes = []ThumbSize{"2400w", "1200w", "600w", "300w", "200h", "400h"}
+	ThumbSizes = []ThumbSize{"2400w", "1200w", "600w", "400h", "300w", "200h"}
 	ThumbMid   = ThumbSize("1200w")
 )
