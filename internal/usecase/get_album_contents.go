@@ -98,6 +98,10 @@ func reverse[S ~[]E, E any](s S) {
 }
 
 func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
+	return buildAlbumContents(ctx, deps, name, preview)
+}
+
+func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
 	albumHash := photo.AlbumHash(name)
 
 	var (
@@ -250,6 +254,8 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		}
 	}
 
+	textReplaces := append(deps.Settings().Appearance().TextReplaces, album.Settings.TextReplaces...)
+
 	for _, i := range images {
 		// Skip unprocessed images.
 		if i.BlurHash == "" {
@@ -262,7 +268,7 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			Width:       i.Width,
 			Height:      i.Height,
 			BlurHash:    i.BlurHash,
-			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description),
+			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description, textReplaces.Apply),
 			Size:        i.Size,
 		}
 
@@ -299,9 +305,8 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 						continue
 					}
 
-					links += `<br/><a href="/` + a.Name + `"><span class="icon-link film-icon"></span>` + deps.TxtRenderer().MustRenderLang(ctx, a.Title, func(o *txt.RenderOptions) {
-						o.StripTags = true
-					}) + `</a>`
+					links += `<br/><a href="/` + a.Name + `"><span class="icon-link film-icon"></span>` +
+						deps.TxtRenderer().MustRenderLang(ctx, a.Title, txt.StripTags, textReplaces.Apply) + `</a>`
 				}
 
 				if links != "" {
@@ -328,7 +333,7 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		for _, i := range out.Images {
 			d := i.Time.Format(time.DateOnly)
 			if d != prevDate {
-				album.Settings.Texts = append(album.Settings.Texts, photo.ChronoText{
+				album.Settings.Texts = append(album.Settings.Texts, txt.Chronological{
 					Time: i.Time.Add(dateShift),
 					Text: "### " + d + "\n",
 				})
@@ -358,7 +363,7 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 		}
 
 		for i, t := range album.Settings.Texts {
-			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text)
+			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text, textReplaces.Apply)
 			if err != nil {
 				return out, err
 			}
@@ -366,15 +371,13 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string,
 			album.Settings.Texts[i] = t
 		}
 
-		album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description)
+		album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description, textReplaces.Apply)
 		if err != nil {
 			return out, err
 		}
 	}
 
-	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, func(o *txt.RenderOptions) {
-		o.StripTags = true
-	})
+	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, txt.StripTags, textReplaces.Apply)
 	if err != nil {
 		return out, err
 	}

@@ -54,6 +54,10 @@ func NewAlbumRepository(storage *sqluct.Storage, ir *ImageRepository, mr *MetaRe
 			})
 		}
 
+		if _, err := v.Settings.TextReplaces.Replace("test"); err != nil {
+			return err
+		}
+
 		if names := v.Settings.SubAlbumNames; len(names) > 0 {
 			hashes := make([]uniq.Hash, len(names))
 			for i, name := range names {
@@ -220,6 +224,13 @@ func (r *AlbumRepository) FindBrokenImages(ctx context.Context) ([]photo.Image, 
 	}
 
 	return broken, nil
+}
+
+func (r *AlbumRepository) FindRemoteImages(ctx context.Context) ([]photo.Image, error) {
+	q := r.i.SelectStmt().
+		Where(r.i.Fmt("%s LIKE '%%https%%'", &r.i.R.Settings))
+
+	return r.i.List(ctx, q)
 }
 
 func (r *AlbumRepository) FindPreviewImages(ctx context.Context, albumHash uniq.Hash, coverImage uniq.Hash, limit uint64) ([]photo.Image, error) {
