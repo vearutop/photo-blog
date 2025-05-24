@@ -1,6 +1,6 @@
 module github.com/vearutop/photo-blog
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
@@ -25,31 +25,32 @@ require (
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/form/v5 v5.1.1
-	github.com/swaggest/jsonform-go v0.2.3
-	github.com/swaggest/jsonschema-go v0.3.73
-	github.com/swaggest/openapi-go v0.2.57
-	github.com/swaggest/refl v1.3.1
+	github.com/swaggest/jsonform-go v0.2.4
+	github.com/swaggest/jsonschema-go v0.3.78
+	github.com/swaggest/openapi-go v0.2.58
+	github.com/swaggest/refl v1.4.0
 	github.com/swaggest/rest v0.2.74
-	github.com/swaggest/swgui v1.8.3
+	github.com/swaggest/swgui v1.8.4
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.8.0
 	github.com/vearutop/dbcon v0.2.11
 	github.com/vearutop/httpzip v0.1.1
 	github.com/vearutop/image-prompt v0.1.1
-	github.com/vearutop/statigz v1.4.3
-	github.com/yuin/goldmark v1.7.10
+	github.com/vearutop/statigz v1.5.0
+	github.com/yuin/goldmark v1.7.12
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.37.0
+	golang.org/x/crypto v0.38.0
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
-	golang.org/x/image v0.26.0
-	golang.org/x/net v0.39.0
-	golang.org/x/text v0.24.0
+	golang.org/x/image v0.27.0
+	golang.org/x/net v0.40.0
+	golang.org/x/text v0.25.0
 	modernc.org/sqlite v1.37.0
 )
 
@@ -89,6 +90,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/oschwald/maxminddb-golang v1.13.0 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -112,8 +114,8 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	google.golang.org/api v0.224.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
 	google.golang.org/grpc v1.71.0 // indirect
