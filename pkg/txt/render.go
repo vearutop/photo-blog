@@ -55,6 +55,10 @@ func Language(ctx context.Context) string {
 	return "en"
 }
 
+func StripTags(o *RenderOptions) {
+	o.StripTags = true
+}
+
 type RenderOptions struct {
 	Lang string
 
@@ -63,18 +67,22 @@ type RenderOptions struct {
 
 	// StripTags strips all HTML tags.
 	StripTags bool
+
+	Replaces Replaces
 }
 
 func (r *Renderer) Render(source string, opts ...func(o *RenderOptions)) (string, error) {
-	buf := bytes.NewBuffer(nil)
-	err := r.md.Convert([]byte(source), buf)
-	if err != nil {
-		return "", err
-	}
-
 	o := RenderOptions{}
 	for _, opt := range opts {
 		opt(&o)
+	}
+
+	source, err := o.Replaces.Replace(source)
+
+	buf := bytes.NewBuffer(nil)
+	err = r.md.Convert([]byte(source), buf)
+	if err != nil {
+		return "", err
 	}
 
 	res := buf.String()
