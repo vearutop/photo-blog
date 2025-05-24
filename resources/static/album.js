@@ -46,7 +46,7 @@ var currentImage = {
         margin-left: 0;
         margin-right: 0;
     }
-    .thumb, a.image {
+    .thumb, a.image, .chrono-text {
         width: ` + screen.width + `px;
         height: fit-content;
     }
@@ -267,7 +267,7 @@ function loadAlbum(params) {
                             }
                         }
 
-                        var div = $("<div data-ts='" + t.time + "' class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
+                        var div = $("<div data-ts='" + t.time + "' class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
 
                         $(params.gallery).append(div)
                     }
@@ -383,7 +383,7 @@ function loadAlbum(params) {
         if (chronoTexts) {
             for (var ti = 0; ti < chronoTexts.length; ti++) {
                 var t = chronoTexts[ti]
-                $(params.gallery).append("<div class='chrono-text pure-g'><div class='text pure-u-3-5 some-text'>" + t.text + "</div></div>")
+                $(params.gallery).append("<div class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
             }
         }
 
