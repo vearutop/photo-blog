@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vearutop/photo-blog/pkg/txt"
 	"golang.org/x/text/language"
 )
 
@@ -22,11 +23,12 @@ type Appearance struct {
 
 	FeaturedAlbumName string `split_words:"true" default:"featured" json:"featured_album_name" title:"Featured album name" description:"The name of an album to show on the main page."`
 
-	Languages    []string `json:"languages" title:"Languages" description:"Supported content languages."`
+	Languages    []string `json:"languages" title:"Languages" description:"Supported content languages." items.title:"Language code"`
 	ThumbBaseURL string   `json:"thumb_base_url" title:"Thumbnails Base URL" description:"Optional custom URL for thumbnails." example:"https://example.org/thumb"`
 	ImageBaseURL string   `json:"image_base_url" title:"Images Base URL" description:"Optional custom URL for images." example:"https://example.org/image"`
 
-	MainMenu []MenuItem `json:"main_menu,omitempty" title:"Main Menu"`
+	MainMenu     []MenuItem   `json:"main_menu,omitempty" title:"Main Menu"`
+	TextReplaces txt.Replaces `json:"text_replaces,omitempty" title:"Text Replaces"`
 
 	languageMatcher language.Matcher
 }
