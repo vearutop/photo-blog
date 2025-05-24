@@ -41,7 +41,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 			ctx := r.Context()
 			if err := ctx.Err(); err != nil {
-				deps.CtxdLogger().Error(ctx, "http ctx err",
+				deps.CtxdLogger().Warn(ctx, "http ctx err",
 					"error", err,
 					"elapsed", time.Since(s).String(),
 					"req", r.URL.String(),
@@ -159,6 +159,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
+		s.Post("/index-remote", control.IndexRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
+		s.Post("/cleanup-remote", control.CleanupRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
 		s.Post("/gather/{name}", control.GatherFiles(deps))
 
 		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
