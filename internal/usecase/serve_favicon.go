@@ -35,7 +35,7 @@ func ServeFavicon(deps serveFaviconDeps) usecase.Interactor {
 			return nil
 		}
 
-		r.URL.Path = "/static/favicon.png"
+		r.URL.Path = "/favicon.png"
 		ui.Static.ServeHTTP(rw, r)
 
 		return nil
