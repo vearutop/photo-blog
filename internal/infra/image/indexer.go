@@ -642,7 +642,7 @@ func (i *indexer) ensureExif(ctx context.Context, img *photo.Image, flags photo.
 		"rebuildExif", flags.RebuildExif, "rebuildGps", flags.RebuildGps)
 
 	m, err := readMeta(ctx, img)
-	if err != nil {
+	if err != nil && err.Error() != "read image meta: search exif: no exif data" {
 		return err
 	}
 
