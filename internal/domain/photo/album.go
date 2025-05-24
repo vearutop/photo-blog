@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
 // Names of special "albums".
@@ -32,20 +33,18 @@ type AlbumImageFinder interface {
 	FindOrphanImages(ctx context.Context) ([]Image, error)
 	SearchImages(ctx context.Context, query string) ([]Image, error)
 	FindBrokenImages(ctx context.Context) ([]Image, error)
+	FindRemoteImages(ctx context.Context) ([]Image, error)
 	FindImageAlbums(ctx context.Context, excludeAlbum uniq.Hash, imageHashes ...uniq.Hash) (map[uniq.Hash][]Album, error)
 }
 
-type ChronoText struct {
-	Time time.Time `json:"time" title:"Timestamp" description:"In RFC 3339 format, e.g. 2020-01-01T01:02:03Z"`
-	Text string    `json:"text" title:"Text" formType:"textarea" description:"Text, can contain HTML."`
-}
-
 type AlbumSettings struct {
-	Description     string       `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an album, can contain HTML."`
-	GpxTracksHashes []uniq.Hash  `json:"gpx_tracks_hashes,omitempty" title:"GPX track hashes"`
-	NewestFirst     bool         `json:"newest_first,omitempty" noTitle:"true" inlineTitle:"Newest first" description:"Show newest images at the top."`
-	DailyRulers     bool         `json:"daily_rulers,omitempty" noTitle:"true" inlineTitle:"Daily rulers" description:"Show date splits between the photos."`
-	Texts           []ChronoText `json:"texts,omitempty" title:"Chronological texts"`
+	Description     string              `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an album, can contain HTML."`
+	GpxTracksHashes []uniq.Hash         `json:"gpx_tracks_hashes,omitempty" items.title:"Hash" title:"GPX track hashes"`
+	NewestFirst     bool                `json:"newest_first,omitempty" noTitle:"true" inlineTitle:"Newest first" description:"Show newest images at the top."`
+	DailyRulers     bool                `json:"daily_rulers,omitempty" noTitle:"true" inlineTitle:"Daily rulers" description:"Show date splits between the photos."`
+	Texts           []txt.Chronological `json:"texts,omitempty" title:"Chronological texts"`
+	TextReplaces    txt.Replaces        `json:"text_replaces,omitempty" title:"Text replaces"`
+
 	// Deprecated: TODO remove and implement as separate entity.
 	Redirect string `json:"redirect,omitempty" title:"Relative or absolute URL to redirect to with HTTP 301 status."`
 	HideMap  bool   `json:"hide_map,omitempty" noTitle:"true" inlineTitle:"Hide map on album page."`
@@ -59,7 +58,7 @@ type AlbumSettings struct {
 	MapMaxLat float64 `json:"map_max_lat,omitempty" title:"Map max latitude" description:"Overrides map default boundary."`
 
 	CollabKey     string   `json:"collab_key,omitempty" title:"Collaboration key, when provided, user can add/delete album content."`
-	SubAlbumNames []string `json:"sub_album_names,omitempty" title:"Sub albums"`
+	SubAlbumNames []string `json:"sub_album_names,omitempty" items.title:"Album Name" title:"Sub albums"`
 }
 
 func (s *AlbumSettings) Scan(src any) error {
