@@ -32,6 +32,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
+	"github.com/vearutop/photo-blog/internal/infra/queue"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
@@ -217,6 +218,10 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	}
 
 	l.CtxdLogger().Important(ctx, "service locator initialized successfully")
+
+	if err := queue.SetupBroker(l); err != nil {
+		return nil, err
+	}
 
 	go func() {
 		for {
