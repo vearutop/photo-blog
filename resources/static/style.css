@@ -490,3 +490,9 @@ code {
     position: relative;
     top: 3px;
 }
+
+
+/* slideshow progress bar */
+.pswp__progress-bar.running {
+    display: none;
+}

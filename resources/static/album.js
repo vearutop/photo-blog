@@ -435,8 +435,22 @@ function loadAlbum(params) {
             gallery: params.gallery,
             children: 'a.image',
             pswpModule: PhotoSwipe,
-            bgOpacity: 1.0,
+            bgOpacity: 1.0
         });
+
+        // Add a slideshow to the PhotoSwipe gallery.
+        const _slideshowPlugin = new PhotoSwipeSlideshow(lightbox, {
+            defaultDelayMs: 5000, // 5 seconds
+            restartOnSlideChange: true,
+            progressBarPosition: "top",
+            autoHideProgressBar: false
+        });
+
+        // Plugin to display video.
+        const _videoPlugin = new PhotoSwipeVideoPlugin(lightbox, {});
+
+        // Hide the PhotoSwipe UI after some time of inactivity.
+        const _autoHideUI = new PhotoSwipeAutoHideUI(lightbox, {});
 
 
         lightbox.on('uiRegister', function () {
