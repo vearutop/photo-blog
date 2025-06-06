@@ -112,7 +112,7 @@
         {{if or .IsAdmin .CollabKey}}
         <a title="Upload files" class="ctrl-btn upload-icon" id="uppyModalOpener" href="#"></a>
         {{end}}
-        {{if gt .Count 0 }}
+        {{if .TotalSize }}
         <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
         {{end}}
         {{if .Visits}}

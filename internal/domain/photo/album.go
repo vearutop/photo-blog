@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/form"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
@@ -46,8 +47,9 @@ type AlbumSettings struct {
 	TextReplaces    txt.Replaces        `json:"text_replaces,omitempty" title:"Text replaces"`
 
 	// Deprecated: TODO remove and implement as separate entity.
-	Redirect string `json:"redirect,omitempty" title:"Relative or absolute URL to redirect to with HTTP 301 status."`
-	HideMap  bool   `json:"hide_map,omitempty" noTitle:"true" inlineTitle:"Hide map on album page."`
+	Redirect     string     `json:"redirect,omitempty" title:"Relative or absolute URL to redirect to with HTTP 301 status."`
+	HideMap      bool       `json:"hide_map,omitempty" noTitle:"true" inlineTitle:"Hide map on album page."`
+	HideDownload form.Bool3 `json:"hide_download,omitzero" title:"Hide download on album page."`
 
 	MapTiles       string `json:"tiles" title:"Map tiles" description:"URL to custom map tiles, overrides app default." example:"https://retina-tiles.p.rapidapi.com/local/osm{r}/v1/{z}/{x}/{y}.png?rapidapi-key=YOUR-RAPIDAPI-KEY"`
 	MapAttribution string `json:"attribution" title:"Map attribution" description:"Map tiles attribution, overrides app default."`

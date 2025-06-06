@@ -165,13 +165,15 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		// TotalSize controls visibility of batch download button.
 		privacy := deps.Settings().Privacy()
-		if d.IsAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
+		if d.IsAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload && !album.Settings.HideDownload.True()) {
 			var totalSize int64
 			for _, img := range cont.Images {
 				totalSize += img.Size
 			}
 
-			d.TotalSize = units.HumanSize(float64(totalSize))
+			if totalSize > 0 {
+				d.TotalSize = units.HumanSize(float64(totalSize))
+			}
 		}
 
 		if deps.Settings().Visitors().Tag {

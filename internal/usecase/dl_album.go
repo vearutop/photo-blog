@@ -41,17 +41,17 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 	var inProgress int64
 
 	u := usecase.NewInteractor(func(ctx context.Context, in dlAlbumInput, out *response.EmbeddedSetter) (err error) {
-		privacy := deps.Settings().Privacy()
-		if (privacy.HideOriginal || privacy.HideBatchDownload) && !auth.IsAdmin(ctx) {
-			return status.PermissionDenied
-		}
-
-		rw := out.ResponseWriter()
-
 		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
 		if err != nil {
 			return err
 		}
+
+		privacy := deps.Settings().Privacy()
+		if (privacy.HideOriginal || privacy.HideBatchDownload || album.Settings.HideDownload.True()) && !auth.IsAdmin(ctx) {
+			return status.PermissionDenied
+		}
+
+		rw := out.ResponseWriter()
 
 		var images []photo.Image
 		if in.Favorite {
