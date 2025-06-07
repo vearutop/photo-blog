@@ -7,7 +7,7 @@ import (
 	"github.com/swaggest/refl"
 )
 
-type pageData struct {
+type PageData struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	Tables      []Table `json:"tables"`

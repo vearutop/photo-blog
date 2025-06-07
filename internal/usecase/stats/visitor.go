@@ -11,11 +11,6 @@ import (
 )
 
 func ShowVisitor(deps showDailyStatsDeps) usecase.Interactor {
-	tmpl, err := static.Template("stats/table.html")
-	if err != nil {
-		panic(err)
-	}
-
 	type showVisitorInput struct {
 		Hash uniq.Hash `path:"hash"`
 	}
@@ -29,7 +24,7 @@ func ShowVisitor(deps showDailyStatsDeps) usecase.Interactor {
 			return err
 		}
 
-		d := pageData{}
+		d := PageData{}
 		d.Title = "Visitor"
 
 		d.Tables = append(d.Tables, Table{
@@ -61,7 +56,7 @@ func ShowVisitor(deps showDailyStatsDeps) usecase.Interactor {
 			Rows:  pageVisits,
 		})
 
-		return out.Render(tmpl, d)
+		return out.Render(static.TableTemplate, d)
 	})
 
 	return u

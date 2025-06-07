@@ -10,11 +10,6 @@ import (
 )
 
 func ShowRefers(deps showDailyStatsDeps) usecase.Interactor {
-	tmpl, err := static.Template("stats/table.html")
-	if err != nil {
-		panic(err)
-	}
-
 	type referRow struct {
 		Date    string `json:"date"`
 		Visitor string `json:"visitor"`
@@ -31,7 +26,7 @@ func ShowRefers(deps showDailyStatsDeps) usecase.Interactor {
 			return err
 		}
 
-		d := pageData{
+		d := PageData{
 			Title: "Latest Refers",
 		}
 
@@ -52,7 +47,7 @@ func ShowRefers(deps showDailyStatsDeps) usecase.Interactor {
 			Rows: rows,
 		})
 
-		return out.Render(tmpl, d)
+		return out.Render(static.TableTemplate, d)
 	})
 
 	return u

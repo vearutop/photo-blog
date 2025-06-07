@@ -9,11 +9,6 @@ import (
 )
 
 func TopPages(deps showDailyStatsDeps) usecase.Interactor {
-	tmpl, err := static.Template("stats/table.html")
-	if err != nil {
-		panic(err)
-	}
-
 	type dateRow struct {
 		Name   string `json:"name"`
 		Uniq   int    `json:"uniq"`
@@ -27,7 +22,7 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 			return err
 		}
 
-		d := pageData{}
+		d := PageData{}
 		d.Title = "Top Pages"
 
 		var rows []dateRow
@@ -46,7 +41,7 @@ func TopPages(deps showDailyStatsDeps) usecase.Interactor {
 			Rows: rows,
 		})
 
-		return out.Render(tmpl, d)
+		return out.Render(static.TableTemplate, d)
 	})
 
 	return u

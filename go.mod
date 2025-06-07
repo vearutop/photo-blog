@@ -24,6 +24,7 @@ require (
 	github.com/evanoberholster/imagemeta v0.3.1
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/minio/selfupdate v0.6.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/stefanfritsch/goldmark-fences v1.0.0
@@ -55,6 +56,7 @@ require (
 )
 
 require (
+	aead.dev/minisign v0.2.0 // indirect
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect

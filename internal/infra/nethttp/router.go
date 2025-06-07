@@ -202,6 +202,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/image-info/{hash}.json", usecase.GetImageInfo(deps))
 
 		s.Get("/login", control.Login())
+		s.Get("/settings/version.html", control.Version())
+		s.Get("/settings/self-update", control.SelfUpdate())
 
 		// Stats.
 		s.Get("/stats/daily.html", stats.ShowDailyTotal(deps))
