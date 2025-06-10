@@ -147,6 +147,10 @@ func (l *Locator) DBInstances() []dbcon.DBInstance {
 	return l.dbInstances
 }
 
+func (l *Locator) Prompter() dbcon.Prompter {
+	return nil
+}
+
 func (l *Locator) QueueBroker() *qlite.Broker {
 	return l.QueueBrokerInstance
 }

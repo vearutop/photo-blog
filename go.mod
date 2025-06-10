@@ -7,12 +7,12 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
 	github.com/alexsergivan/transliterator v1.0.1
-	github.com/bool64/brick v0.3.3
+	github.com/bool64/brick v0.3.4
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
 	github.com/bool64/dev v0.2.40
-	github.com/bool64/sqluct v0.2.4
+	github.com/bool64/sqluct v0.2.5
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.2.0
 	github.com/buckket/go-blurhash v1.1.0
@@ -30,7 +30,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/form/v5 v5.1.1
-	github.com/swaggest/jsonform-go v0.2.4
+	github.com/swaggest/jsonform-go v0.2.6
 	github.com/swaggest/jsonschema-go v0.3.78
 	github.com/swaggest/openapi-go v0.2.58
 	github.com/swaggest/refl v1.4.0
@@ -39,7 +39,7 @@ require (
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.8.0
-	github.com/vearutop/dbcon v0.2.11
+	github.com/vearutop/dbcon v0.3.0
 	github.com/vearutop/httpzip v0.1.1
 	github.com/vearutop/image-prompt v0.1.1
 	github.com/vearutop/statigz v1.5.0
@@ -73,7 +73,6 @@ require (
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/go-sql-driver/mysql v1.9.1 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -83,7 +82,6 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -94,17 +92,16 @@ require (
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.21.1 // indirect
-	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
+	github.com/prometheus/common v0.64.0 // indirect
+	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/prometheus/statsd_exporter v0.28.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
-	github.com/shurcooL/httpgzip v0.0.0-20230704072819-d1585fc322fa // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
@@ -117,8 +114,8 @@ require (
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	google.golang.org/api v0.224.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
-	google.golang.org/grpc v1.71.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
+	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

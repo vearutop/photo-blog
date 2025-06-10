@@ -23,5 +23,9 @@ rm photoswipe-auto-hide-ui.esm.min.js
 npx esm2umd PhotoSwipeVideoPlugin photoswipe-video-plugin.esm.min.js > photoswipe-video-plugin.umd.min.js
 rm photoswipe-video-plugin.esm.min.js
 
+rm -rf ./node_modules
+rm package.json
+rm package-lock.json
+
 gzip -9 *.css
 gzip -9 *.js

@@ -72,6 +72,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		})
 		deps.DebugRouter.AddLink("coverage-counters", "Coverage Counters")
 
+		dbcon.PrepareInstances(deps.DBInstances())
 		deps.DebugRouter.Mount("/db", dbcon.Handler("/debug/db/", deps, func(options *dbcon.Options) {
 			options.AddValueProcessor("hash", func(v any) any {
 				if i, ok := v.(int64); ok {
