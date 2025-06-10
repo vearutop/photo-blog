@@ -11,7 +11,7 @@ require (
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
-	github.com/bool64/dev v0.2.39
+	github.com/bool64/dev v0.2.40
 	github.com/bool64/sqluct v0.2.4
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.2.0
@@ -24,7 +24,6 @@ require (
 	github.com/evanoberholster/imagemeta v0.3.1
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/minio/selfupdate v0.6.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/stefanfritsch/goldmark-fences v1.0.0
@@ -52,11 +51,10 @@ require (
 	golang.org/x/image v0.28.0
 	golang.org/x/net v0.41.0
 	golang.org/x/text v0.26.0
-	modernc.org/sqlite v1.37.1
+	modernc.org/sqlite v1.38.0
 )
 
 require (
-	aead.dev/minisign v0.2.0 // indirect
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect

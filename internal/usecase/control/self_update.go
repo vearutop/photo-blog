@@ -8,11 +8,9 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"runtime"
 	"time"
 
-	"github.com/minio/selfupdate"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/pkg/web"
 )
@@ -23,6 +21,11 @@ func SelfUpdate() usecase.Interactor {
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in input, out *web.Page) error {
+		execPath, err := os.Executable()
+		if err != nil {
+			return fmt.Errorf("get executable path: %w", err)
+		}
+
 		repo := "vearutop/photo-blog"
 		url := "https://github.com/" + repo + "/releases/latest/download/" + runtime.GOOS + "_" + runtime.GOARCH + ".tar.gz"
 
@@ -61,10 +64,11 @@ func SelfUpdate() usecase.Interactor {
 				continue
 			}
 
-			err = selfupdate.Apply(tr, selfupdate.Options{})
-			if err != nil {
-				return err
+			if err := performUpdate(tr, execPath); err != nil {
+				return fmt.Errorf("perform update: %w", err)
 			}
+
+			break
 		}
 
 		out.ResponseWriter().Write([]byte(`
@@ -80,11 +84,11 @@ func SelfUpdate() usecase.Interactor {
 
 		go func() {
 			time.Sleep(5 * time.Second)
-			println("restarting")
-			// os.Exit(0)
-			if err := restart(); err != nil {
-				println(err)
-			}
+			println("exiting")
+			os.Exit(0)
+			//if err := restart(); err != nil {
+			//	println(err)
+			//}
 		}()
 
 		return nil
@@ -93,25 +97,28 @@ func SelfUpdate() usecase.Interactor {
 	return u
 }
 
-func restart() error {
-	// Get current executable path
-	execPath, err := os.Executable()
+func performUpdate(update io.Reader, execPath string) error {
+	// Create a temporary file for the new binary
+	out, err := os.CreateTemp("", "update-*")
 	if err != nil {
-		return fmt.Errorf("get executable path: %v", err)
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	defer out.Close()
+
+	// Copy downloaded binary to temp file
+	if _, err := io.Copy(out, update); err != nil {
+		return fmt.Errorf("write temp file: %w", err)
 	}
 
-	// Prepare to restart the process
-	cmd := exec.Command(execPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-
-	// Start the new process
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("start new process: %v", err)
+	// Make the new binary executable
+	if err := os.Chmod(out.Name(), 0o755); err != nil {
+		return fmt.Errorf("chmod temp file: %w", err)
 	}
 
-	// Exit the current process
-	os.Exit(0)
+	// Replace the current binary
+	if err := os.Rename(out.Name(), execPath); err != nil {
+		return fmt.Errorf("replace binary: %w", err)
+	}
+
 	return nil
 }
