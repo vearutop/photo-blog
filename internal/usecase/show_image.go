@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"strings"
 
@@ -34,6 +35,7 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 			}
 		}
 
+		r := in.Request()
 		rw := out.ResponseWriter()
 
 		image, err := deps.PhotoImageFinder().FindByHash(ctx, in.Hash)
@@ -42,8 +44,16 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 		}
 
 		if len(image.Settings.HTTPSources) > 0 {
+			remoteURL := image.Settings.HTTPSources[0]
+
+			if r.Header.Get("X-Mirror") != "" {
+				deps.CtxdLogger().Info(ctx, "serving image from remote address", "img", image, "url", image.Settings.HTTPSources[0])
+
+				return serveRemote(ctx, rw, r, remoteURL)
+			}
+
 			deps.CtxdLogger().Info(ctx, "redirecting image to remote address", "img", image, "url", image.Settings.HTTPSources[0])
-			http.Redirect(rw, in.Request(), image.Settings.HTTPSources[0], http.StatusMovedPermanently)
+			http.Redirect(rw, in.Request(), remoteURL, http.StatusMovedPermanently)
 			return nil
 		}
 
@@ -61,4 +71,27 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 	u.SetTags("Image")
 
 	return u
+}
+
+func serveRemote(ctx context.Context, w http.ResponseWriter, r *http.Request, remoteURL string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", remoteURL, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header = r.Header
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	for k, vv := range resp.Header {
+		w.Header()[k] = vv
+	}
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
+
+	return err
 }
