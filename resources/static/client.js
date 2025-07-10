@@ -472,6 +472,63 @@
     };
 
     /**
+     * Add Directory Recursive
+     * Recursively add a host-local directory of photos to albums.
+     * @param {ControlAddDirectoryRecursiveRequest} req - request parameters.
+     * @param {ControlAddDirOutputCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.controlAddDirectoryRecursive = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/add-recursive?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        var formData = new FormData();
+        if (typeof req.path !== 'undefined') {
+            formData.append('path', req.path);
+        }
+
+        x.send(formData);
+    };
+
+    /**
      * Get photo.Album
      * @param {ControlGetPhotoAlbumRequest} req - request parameters.
      * @param {PhotoAlbumCallback} onOK
@@ -875,10 +932,9 @@
      * Remove From Album
      * @param {ControlRemoveFromAlbumRequest} req - request parameters.
      * @param {RawCallback} onNoContent
-     * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlRemoveFromAlbum = function (req, onNoContent, onUnauthorized, onInternalServerError) {
+    Backend.prototype.controlRemoveFromAlbum = function (req, onNoContent, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -889,11 +945,6 @@
                 case 204:
                     if (typeof (onNoContent) === 'function') {
                         onNoContent(x);
-                    }
-                    break;
-                case 401:
-                    if (typeof (onUnauthorized) === 'function') {
-                        onUnauthorized(JSON.parse(x.responseText));
                     }
                     break;
                 case 500:
@@ -909,6 +960,9 @@
         var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
         '/' + encodeURIComponent(req.hash) +
         '?';
+        if (req.collabKey != null) {
+            url += 'collabKey=' + encodeURIComponent(req.collabKey) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("DELETE", url, true);
@@ -1004,6 +1058,46 @@
         url = url.slice(0, -1);
 
         x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Cleanup Remote
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onAccepted
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlCleanupRemote = function (req, onAccepted, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 202:
+                    if (typeof (onAccepted) === 'function') {
+                        onAccepted(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/cleanup-remote?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
@@ -2605,6 +2699,64 @@
     };
 
     /**
+     * Index Remote
+     * Index http-remote directories of photos.
+     * @param {ControlIndexRemoteRequest} req - request parameters.
+     * @param {RawCallback} onAccepted
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.controlIndexRemote = function (req, onAccepted, onBadRequest, onUnauthorized, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 202:
+                    if (typeof (onAccepted) === 'function') {
+                        onAccepted(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/index-remote?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
      * Index Album
      * @param {ControlIndexAlbumRequest} req - request parameters.
      * @param {RawCallback} onAccepted
@@ -2662,6 +2814,9 @@
         }
         if (typeof req.rebuildImageSize !== 'undefined') {
             formData.append('rebuild_image_size', req.rebuildImageSize);
+        }
+        if (typeof req.rebuildThumbnails !== 'undefined') {
+            formData.append('rebuild_thumbnails', req.rebuildThumbnails);
         }
 
         x.send(formData);
@@ -2852,7 +3007,8 @@
             }
         };
 
-        var url = this.baseURL + '/map-tile/' + encodeURIComponent(req.r) +
+        var url = this.baseURL + '/map-tile/' + encodeURIComponent(req.s) +
+        '/' + encodeURIComponent(req.r) +
         '/' + encodeURIComponent(req.z) +
         '/' + encodeURIComponent(req.x) +
         '/' + encodeURIComponent(req.y) +
@@ -2890,7 +3046,8 @@
             }
         };
 
-        var url = this.baseURL + '/map-tile/' + encodeURIComponent(req.r) +
+        var url = this.baseURL + '/map-tile/' + encodeURIComponent(req.s) +
+        '/' + encodeURIComponent(req.r) +
         '/' + encodeURIComponent(req.z) +
         '/' + encodeURIComponent(req.x) +
         '/' + encodeURIComponent(req.y) +
@@ -3613,6 +3770,51 @@
     };
 
     /**
+     * Set Indexing
+     * @param {ControlSettingsSetIndexingRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSettingsSetIndexing = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/indexing.json?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
      * Set Maps
      * @param {ControlSettingsSetMapsRequest} req - request parameters.
      * @param {RawCallback} onNoContent
@@ -3748,6 +3950,92 @@
     };
 
     /**
+     * Self Update
+     * @param {ControlSelfUpdateRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlSelfUpdate = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/self-update?';
+        if (req.version != null) {
+            url += 'version=' + encodeURIComponent(req.version) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Self Update
+     * @param {ControlSelfUpdate2Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RawCallback} onUnauthorized
+     */
+    Backend.prototype.controlSelfUpdate2 = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/self-update?';
+        if (req.version != null) {
+            url += 'version=' + encodeURIComponent(req.version) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Set Storage
      * @param {ControlSettingsSetStorageRequest} req - request parameters.
      * @param {RawCallback} onNoContent
@@ -3787,6 +4075,86 @@
             x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
             x.send(JSON.stringify(req.body));
             return;
+        }
+
+        x.send();
+    };
+
+    /**
+     * Version
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onUnauthorized
+     */
+    Backend.prototype.controlVersion = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/version.html?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Version
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RawCallback} onUnauthorized
+     */
+    Backend.prototype.controlVersion2 = function (req, onNoContent, onUnauthorized) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/settings/version.html?';
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
         }
 
         x.send();

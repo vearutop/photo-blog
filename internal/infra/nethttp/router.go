@@ -164,7 +164,6 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Post("/cleanup-remote", control.CleanupRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
 		s.Post("/gather/{name}", control.GatherFiles(deps))
 
-		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
 		s.Post("/album/{name}", control.AddToAlbum(deps))
 
 		s.Get("/add-album.html", control.AddAlbum(deps))
@@ -225,6 +224,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		if err := upload.MountTus(s, deps); err != nil {
 			panic(err)
 		}
+
+		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
 	})
 
 	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))

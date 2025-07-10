@@ -39,6 +39,18 @@ func AddDirectoryRecursive(deps addDirectoryRecursiveDeps, addDir usecase.IOInte
 		Count     int64  `json:"cnt"`
 	}
 
+	u := usecase.NewInteractor(func(ctx context.Context, in addRecursiveDirInput, out *addDirOutput) error {
+		return deps.QueueBroker().Publish(ctx, "add-dir-rec", directory{Path: in.Path})
+	})
+
+	u.SetDescription("Recursively add a host-local directory of photos to albums.")
+	u.SetTags("Album")
+	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
+
+	if deps == nil || deps.QueueBroker() == nil {
+		return u
+	}
+
 	b := deps.QueueBroker()
 	tr := transliterator.NewTransliterator(nil)
 	replacer := strings.NewReplacer("/", "-", " ", "-", ".", "-", "--", "-")
@@ -118,14 +130,6 @@ func AddDirectoryRecursive(deps addDirectoryRecursiveDeps, addDir usecase.IOInte
 	}); err != nil {
 		panic(err)
 	}
-
-	u := usecase.NewInteractor(func(ctx context.Context, in addRecursiveDirInput, out *addDirOutput) error {
-		return b.Publish(ctx, "add-dir-rec", directory{Path: in.Path})
-	})
-
-	u.SetDescription("Recursively add a host-local directory of photos to albums.")
-	u.SetTags("Album")
-	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
 
 	return u
 }
