@@ -438,8 +438,8 @@ github.com/vearutop/dynhist-go v1.2.3 h1:EIMWszSDm6b7zmqySgx8zW2qNctE3IXUJggGlDF
 github.com/vearutop/dynhist-go v1.2.3/go.mod h1:liiiYiwAi8ixC3DbkxooEhASTF6ysJSXy+piCrBtxEg=
 github.com/vearutop/gooselite v0.1.1 h1:C2CoI2Attj63yNsaEug9OVPRM5eeJlzqlZIbq4Za+Ok=
 github.com/vearutop/gooselite v0.1.1/go.mod h1:7DgIIzvRsv10pvQrCt4dV4pOR9OBGw+n//TViMeLLIo=
-github.com/vearutop/httpzip v0.1.1 h1:p4ydJDM+jcMWFPqk6MTy7PtK0R+U3CeCdXjdL7IrnVY=
-github.com/vearutop/httpzip v0.1.1/go.mod h1:GQYs1fmG9Y/ZDaRq878ZaYz480t7Tsuo5YVGD4Vubk8=
+github.com/vearutop/httpzip v0.1.0 h1:3Y2i7dpaDFCwOTBX/jBcUH/urDTIZiAKu3vKe8O+q08=
+github.com/vearutop/httpzip v0.1.0/go.mod h1:GQYs1fmG9Y/ZDaRq878ZaYz480t7Tsuo5YVGD4Vubk8=
 github.com/vearutop/image-prompt v0.1.1 h1:uukRjoaoUWQKjJzhHREFftBI5gfWknEAcIaawYK2eEU=
 github.com/vearutop/image-prompt v0.1.1/go.mod h1:dFpzepnjw1iuqapUgH4yvnAMLh33ikXAzGnjkT3RxF0=
 github.com/vearutop/lograte v1.2.2 h1:uB6VPc+ZYiljWi97aqATYVacv64iG1qI3vpr4owtZ3Y=

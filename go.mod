@@ -40,7 +40,7 @@ require (
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.8.0
 	github.com/vearutop/dbcon v0.3.0
-	github.com/vearutop/httpzip v0.1.1
+	github.com/vearutop/httpzip v0.1.0
 	github.com/vearutop/image-prompt v0.1.1
 	github.com/vearutop/statigz v1.5.0
 	github.com/yuin/goldmark v1.7.12
