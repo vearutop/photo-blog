@@ -450,7 +450,7 @@ function loadAlbum(params) {
         const _videoPlugin = new PhotoSwipeVideoPlugin(lightbox, {});
 
         // Hide the PhotoSwipe UI after some time of inactivity.
-        const _autoHideUI = new PhotoSwipeAutoHideUI(lightbox, {});
+        //const _autoHideUI = new PhotoSwipeAutoHideUI(lightbox, {});
 
 
         lightbox.on('uiRegister', function () {
