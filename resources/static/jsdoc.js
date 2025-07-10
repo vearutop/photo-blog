@@ -20,7 +20,15 @@
  */
 
 /**
- * @typedef PhotoChronoText
+ * @typedef TxtReplace
+ * @type {Object}
+ * @property {String} from - From.
+ * @property {Boolean} isRegex
+ * @property {String} to - To.
+ */
+
+/**
+ * @typedef TxtChronological
  * @type {Object}
  * @property {String} text - Text. Text, can contain HTML.
  * @property {String} time - Timestamp. In RFC 3339 format, e.g. 2020-01-01T01:02:03Z.
@@ -34,6 +42,7 @@
  * @property {Boolean} daily_rulers - Show date splits between the photos.
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
+ * @property {('undefined'|'yes'|'no')} hide_download
  * @property {Boolean} hide_map
  * @property {Number} map_max_lat - Map max latitude. Overrides map default boundary.
  * @property {Number} map_max_lon - Map max longitude. Overrides map default boundary.
@@ -41,7 +50,9 @@
  * @property {Number} map_min_lon - Map min longitude. Overrides map default boundary.
  * @property {Boolean} newest_first - Show newest images at the top.
  * @property {String} redirect - Relative or absolute URL to redirect to with HTTP 301 status.
- * @property {Array<PhotoChronoText>} texts - Chronological texts.
+ * @property {Array<String>} sub_album_names - Sub albums.
+ * @property {Array<TxtReplace>} text_replaces
+ * @property {Array<TxtChronological>} texts - Chronological texts.
  * @property {String} tiles - Map tiles. URL to custom map tiles, overrides app default.
  */
 
@@ -179,8 +190,6 @@
 /**
  * @typedef PhotoMetaData
  * @type {Object}
- * @property {?Array<PhotoLabel>} cf_detr_resnet
- * @property {?String} cf_llava_description
  * @property {?Array<PhotoLabel>} cf_resnet_50
  * @property {?Array<PhotoFace>} face_vectors
  * @property {?Array<FacesGoFaceFace>} faces
@@ -254,6 +263,23 @@
  */
 
 /**
+ * @typedef ControlAddDirectoryRecursiveRequest
+ * @type {Object}
+ * @property {String} path
+ */
+
+/**
+ * @typedef ControlAddDirOutput
+ * @type {Object}
+ * @property {?Array<String>} names
+ */
+
+/**
+ * @callback ControlAddDirOutputCallback
+ * @param {ControlAddDirOutput} value
+ */
+
+/**
  * @typedef ControlGetPhotoAlbumRequest
  * @type {Object}
  * @property {String} hash
@@ -278,6 +304,7 @@
  * @property {String} image_description - Set image description after adding from URL.. Description of an image, can contain HTML.
  * @property {String} image_hash - Image Hash. Hash of an image to add to album.
  * @property {String} image_lat_lon - Set image GPS location after adding from URL.. In latitude,longitude format.
+ * @property {String} image_time - Set image time after adding from URL.
  * @property {String} image_url - Fetch image from a publicly available URL.
  */
 
@@ -310,17 +337,6 @@
  */
 
 /**
- * @typedef ControlAddDirOutput
- * @type {Object}
- * @property {?Array<String>} names
- */
-
-/**
- * @callback ControlAddDirOutputCallback
- * @param {ControlAddDirOutput} value
- */
-
-/**
  * @typedef ControlAddRemoteRequest
  * @type {Object}
  * @property {Boolean} addMissing - Add missing images to album.
@@ -342,6 +358,7 @@
 /**
  * @typedef ControlRemoveFromAlbumRequest
  * @type {Object}
+ * @property {String} collabKey - Collaborator key to allow admin access.
  * @property {String} name - Name of album to remove image from.
  * @property {String} hash - Hash of an image to remove from album.
  */
@@ -519,6 +536,7 @@
  * @property {String} description - Description. Description of an image, can contain HTML.
  * @property {Array<String>} http_sources
  * @property {Number} rotate
+ * @property {String} updated_at
  */
 
 /**
@@ -613,12 +631,26 @@
  */
 
 /**
+ * @typedef ControlIndexRemoteInput
+ * @type {Object}
+ * @property {String} base_url
+ * @property {?Array<String>} lists - URL Paths of JSON list files.
+ */
+
+/**
+ * @typedef ControlIndexRemoteRequest
+ * @type {Object}
+ * @property {ControlIndexRemoteInput} body
+ */
+
+/**
  * @typedef ControlIndexAlbumRequest
  * @type {Object}
  * @property {String} name - Album name, use '-' for all images and albums.
  * @property {Boolean} rebuildExif
  * @property {Boolean} rebuildGps
  * @property {Boolean} rebuildImageSize
+ * @property {Boolean} rebuildThumbnails
  */
 
 /**
@@ -675,6 +707,7 @@
  * @property {String} z
  * @property {String} x
  * @property {String} y
+ * @property {String} s
  */
 
 /**
@@ -684,6 +717,7 @@
  * @property {String} z
  * @property {String} x
  * @property {String} y
+ * @property {String} s
  */
 
 /**
@@ -823,6 +857,7 @@
  * @property {String} site_head - HTML Head. Injected at the end of page &lt;html&gt;&lt;head&gt; element.
  * @property {String} site_header - Header. Injected at page start.
  * @property {String} site_title - Title. The title of this site.
+ * @property {Array<TxtReplace>} text_replaces
  * @property {String} thumb_base_url - Thumbnails Base URL. Optional custom URL for thumbnails.
  */
 
@@ -882,6 +917,7 @@
  * @type {Object}
  * @property {String} auth_key - Auth/API key when applicable.
  * @property {String} base_url - Base URL (for cloudflare, ollama).
+ * @property {Number} concurrency - Max request concurrency.
  * @property {String} model - Model.
  * @property {('gemini'|'cloudflare'|'ollama'|'openai')} type
  */
@@ -904,6 +940,26 @@
  * @typedef ControlSettingsSetImagePromptRequest
  * @type {Object}
  * @property {MultiConfig} body
+ */
+
+/**
+ * @typedef SettingsIndexing
+ * @type {Object}
+ * @property {Boolean} cf_classification - ResNet50. Image labels.
+ * @property {Boolean} cf_description - CF Description.
+ * @property {Boolean} faces - Faces. Enable faces indexing.
+ * @property {Boolean} geo_label
+ * @property {Boolean} llm_description
+ * @property {Boolean} phash
+ * @property {Boolean} sharpness_v0
+ * @property {Boolean} skip_2400_w_thumb
+ * @property {Boolean} temporary_large_thumbs - Do not persist 1200w, 2400w thumbs to save space.
+ */
+
+/**
+ * @typedef ControlSettingsSetIndexingRequest
+ * @type {Object}
+ * @property {SettingsIndexing} body
  */
 
 /**
@@ -948,6 +1004,18 @@
  * @typedef ControlSettingsSetPrivacyRequest
  * @type {Object}
  * @property {SettingsPrivacy} body
+ */
+
+/**
+ * @typedef ControlSelfUpdateRequest
+ * @type {Object}
+ * @property {String} version
+ */
+
+/**
+ * @typedef ControlSelfUpdate2Request
+ * @type {Object}
+ * @property {String} version
  */
 
 /**
@@ -1054,14 +1122,14 @@
 /**
  * @typedef ShowThumbRequest
  * @type {Object}
- * @property {('2400w'|'1200w'|'600w'|'300w'|'200h'|'400h')} size
+ * @property {('2400w'|'1200w'|'600w'|'400h'|'300w'|'200h')} size
  * @property {String} hash
  */
 
 /**
  * @typedef ShowThumb2Request
  * @type {Object}
- * @property {('2400w'|'1200w'|'600w'|'300w'|'200h'|'400h')} size
+ * @property {('2400w'|'1200w'|'600w'|'400h'|'300w'|'200h')} size
  * @property {String} hash
  */
 

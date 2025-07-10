@@ -152,15 +152,20 @@ function toggleFavorite(imageHash, a) {
     }
 }
 
-function removeImage(albumName, imageHash) {
+function removeImage(albumName, imageHash, collabKey) {
     if (!window.confirm("This photo is about to be removed from the album '" + albumName + "'")) {
         return
+    }
+
+    if (!collabKey) {
+	collabKey = '';
     }
 
     var b = new Backend('');
     b.controlRemoveFromAlbum({
         name: albumName,
         hash: imageHash,
+	collabKey: collabKey
     }, function (x) {
         $('#img' + imageHash).remove()
         // alert("Photo is removed from the album")

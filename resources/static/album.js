@@ -73,6 +73,7 @@ var currentImage = {
  * @property {Boolean} enableFavorite - allow favorite pictures
  * @property {String} imageBaseUrl - base address to link to full-res images
  * @property {String} thumbBaseUrl - thumbnail base URL
+ * @property {String} collabKey - optional collaborator key to remove images
  */
 
 
@@ -116,10 +117,7 @@ function loadAlbum(params) {
     var gpsMarkers = []
     var client = new Backend('');
 
-    var originalPath = params.baseUrl;
-    if (!originalPath) {
-        originalPath = window.location.toString();
-    }
+    var originalPath = window.location.toString();
 
     var thumbBase = params.thumbBaseUrl
     if (!thumbBase) {
@@ -235,7 +233,11 @@ function loadAlbum(params) {
                 if (result.album.name !== featured) {
                     img_description += '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\'' + img.hash + '\');return false"></a>'
                 }
-                img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\');return false"></a>'
+                if (params.collabKey) {
+                    img_description += '<a title="Remove from album" class="ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\',\''+params.collabKey + '\');return false"></a>'
+                } else {
+                    img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\');return false"></a>'
+                }
 
                 var exif = {}
                 if (typeof img.exif !== "undefined") {
