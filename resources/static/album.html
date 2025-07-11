@@ -30,7 +30,7 @@
     <meta property="og:title" content="{{.OGTitle}}"/>
     <meta property="og:site_name" content="{{.OGSiteName}}"/>
     <meta property="og:url" content="{{.OGPageURL}}"/>
-    <meta property="og:type" content="article"/>
+    <meta property="og:type" content="website"/>
     <meta property="og:image" content="{{.CoverImage}}"/>
 
     {{if not .Public}}
@@ -68,6 +68,11 @@
 </head>
 
 <body class="dark-mode">
+<link itemprop="thumbnailUrl" href="{{.CoverImage}}">
+<span itemprop="thumbnail" itemscope itemtype="http://schema.org/ImageObject">
+  <link itemprop="url" href="{{.CoverImage}}">
+</span>
+
 {{.Header}}
 
 <div id="layout" class="main">
