@@ -262,9 +262,11 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 			continue
 		}
 
+		h := i.Hash.String()
+
 		img := Image{
-			Name:        path.Base(i.Path),
-			Hash:        i.Hash.String(),
+			Name:        strings.TrimSuffix(path.Base(i.Path), "."+h+".jpg"),
+			Hash:        h,
 			Width:       i.Width,
 			Height:      i.Height,
 			BlurHash:    i.BlurHash,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -126,8 +127,22 @@ func (up *uploadProcessor) processUpload(deps TusHandlerDeps, event tusd.HookEve
 	}
 
 	md := event.Upload.MetaData
-
+	l := strings.ToLower(md["filename"])
 	filePath := AlbumFilePath(albumPath, md["filename"])
+
+	if strings.HasSuffix(l, ".jpeg") || strings.HasSuffix(l, ".jpg") {
+		img := photo.Image{}
+		if err := img.SetPath(ctx, event.Upload.Storage["Path"]); err != nil {
+			deps.CtxdLogger().Error(ctx, "failed to set image path", "error", err)
+
+			return
+		}
+
+		hashSuffix := fmt.Sprintf(".%s.jpg", img.Hash)
+		if !strings.HasSuffix(l, hashSuffix) {
+			filePath = AlbumFilePath(albumPath, md["filename"]+hashSuffix)
+		}
+	}
 
 	// Check for thumbnail.
 	if relPath := md["relativePath"]; relPath != "null" {
