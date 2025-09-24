@@ -72,6 +72,10 @@ type RenderOptions struct {
 }
 
 func (r *Renderer) Render(source string, opts ...func(o *RenderOptions)) (string, error) {
+	if source == "" {
+		return "", nil
+	}
+
 	o := RenderOptions{}
 	for _, opt := range opts {
 		opt(&o)
