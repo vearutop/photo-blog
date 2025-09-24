@@ -41,6 +41,7 @@ type StatsRepository struct {
 
 	mu             sync.Mutex
 	recentVisitors map[uniq.Hash]Visitor
+	recentNames    map[uniq.Hash]bool
 	isAdmin        map[uniq.Hash]bool
 }
 
@@ -49,6 +50,7 @@ func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
 		l:              l,
 		st:             st,
 		recentVisitors: make(map[uniq.Hash]Visitor),
+		recentNames:    make(map[uniq.Hash]bool),
 		isAdmin:        make(map[uniq.Hash]bool),
 	}
 
@@ -154,7 +156,7 @@ func (s *StatsRepository) populateAdmins() error {
 }
 
 func (s *StatsRepository) CollectMain(ctx context.Context, visitor uniq.Hash, referer string, date time.Time) {
-	s.CollectAlbum(ctx, visitor, 0, referer, date)
+	s.CollectAlbum(ctx, visitor, "", referer, date)
 }
 
 const (
@@ -175,6 +177,11 @@ type imageStats struct {
 type imageVisitor struct {
 	Visitor uniq.Hash `db:"visitor" description:"Visitor"`
 	Image   uniq.Hash `db:"image" description:"Image hash"`
+}
+
+type nameRow struct {
+	Hash uniq.Hash `db:"hash" description:"Hash"`
+	Name string    `db:"name" description:"Name"`
 }
 
 func (s *StatsRepository) DB() *sql.DB {
@@ -291,7 +298,11 @@ func dateTs(t time.Time) int64 {
 	return t.Truncate(24 * time.Hour).Unix()
 }
 
-func (s *StatsRepository) CollectAlbum(ctx context.Context, visitor, album uniq.Hash, referer string, date time.Time) {
+func (s *StatsRepository) CollectAlbum(ctx context.Context, visitor uniq.Hash, albumName string, referer string, date time.Time) {
+	s.collectName(ctx, albumName)
+
+	album := photo.AlbumHash(albumName)
+
 	ps := PageStats{
 		Hash:  album,
 		Views: 1,
@@ -467,7 +478,7 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 		} else {
 			if !strings.Contains(existing.IPAddr, candidate.IPAddr) && len(existing.IPAddr) < 240 {
 				skipUpdate = false
-				candidate.IPAddr = strings.TrimPrefix(",", existing.IPAddr+","+candidate.IPAddr)
+				candidate.IPAddr = strings.TrimPrefix(existing.IPAddr+":"+candidate.IPAddr, ":")
 			}
 		}
 
@@ -522,6 +533,36 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 	s.setRecentVisitor(ev)
 }
 
+const namesTable = "names"
+
+func (s *StatsRepository) collectName(ctx context.Context, name string) {
+	h := uniq.StringHash(name)
+
+	s.mu.Lock()
+	found := s.recentNames[h]
+	s.mu.Unlock()
+
+	if found {
+		return
+	}
+
+	nr := nameRow{
+		Name: name,
+		Hash: uniq.StringHash(name),
+	}
+
+	_, err := s.st.InsertStmt(namesTable, nr, sqluct.InsertIgnore).ExecContext(ctx)
+	if err != nil {
+		s.l.Error(ctx, "failed to collect name", "error", err)
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.recentNames[h] = true
+}
+
 func (s *StatsRepository) recentVisitor(hash uniq.Hash) (Visitor, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -559,7 +600,7 @@ func (s *StatsRepository) CollectRequest(ctx context.Context, input CollectStats
 
 	// /stats?album=2024-07-13-aloevera&sw=1280&sh=800&px=2&v=qtuf2cgx08i4
 	case input.Album != "":
-		s.CollectAlbum(ctx, input.Visitor, photo.AlbumHash(input.Album), input.Referer, ts)
+		s.CollectAlbum(ctx, input.Visitor, input.Album, input.Referer, ts)
 
 	// /stats?thumb=%7B%2234suxvlfx0lz8%22%3A36704%2C%221z4zoegvmke8n%22%3A36704%2C%223b45tgt52cnms%22%3A36704%2C%221d2ujpqi6nbb4%22%3A36704%2C%221shlwpftv8av4%22%3A36704%7D&sw=1792&sh=1120&px=2&v=1...w
 	case len(input.Thumb) > 0:
