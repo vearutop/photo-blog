@@ -12,6 +12,10 @@ import (
 type Hash int64
 
 func StringHash(s string) Hash {
+	if s == "" {
+		return 0
+	}
+
 	return Hash(xxhash.Sum64String(s))
 }
 
