@@ -11,8 +11,8 @@ require (
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
-	github.com/bool64/dev v0.2.40
-	github.com/bool64/sqluct v0.2.7
+	github.com/bool64/dev v0.2.41
+	github.com/bool64/sqluct v0.2.8
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.2.0
 	github.com/buckket/go-blurhash v1.1.0
@@ -22,12 +22,12 @@ require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
-	github.com/go-chi/chi/v5 v5.2.2
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/oschwald/geoip2-golang v1.11.0
+	github.com/oschwald/maxminddb-golang v1.13.1
 	github.com/stefanfritsch/goldmark-fences v1.0.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/swaggest/assertjson v1.9.0
 	github.com/swaggest/form/v5 v5.1.1
 	github.com/swaggest/jsonform-go v0.2.6
@@ -46,12 +46,12 @@ require (
 	github.com/yuin/goldmark v1.7.13
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.40.0
-	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
-	golang.org/x/image v0.29.0
-	golang.org/x/net v0.42.0
-	golang.org/x/text v0.27.0
-	modernc.org/sqlite v1.38.0
+	golang.org/x/crypto v0.42.0
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621
+	golang.org/x/image v0.31.0
+	golang.org/x/net v0.44.0
+	golang.org/x/text v0.29.0
+	modernc.org/sqlite v1.39.0
 )
 
 require (
@@ -88,7 +88,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/oschwald/maxminddb-golang v1.13.0 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -111,15 +110,15 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	google.golang.org/api v0.224.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.66.3 // indirect
+	modernc.org/libc v1.66.9 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
