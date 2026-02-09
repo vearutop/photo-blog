@@ -59,8 +59,11 @@ type AlbumSettings struct {
 	MapMinLat float64 `json:"map_min_lat,omitempty" title:"Map min latitude" description:"Overrides map default boundary."`
 	MapMaxLat float64 `json:"map_max_lat,omitempty" title:"Map max latitude" description:"Overrides map default boundary."`
 
-	CollabKey     string   `json:"collab_key,omitempty" title:"Collaboration key, when provided, user can add/delete album content."`
-	SubAlbumNames []string `json:"sub_album_names,omitempty" items.title:"Album Name" title:"Sub albums"`
+	CollabKey string `json:"collab_key,omitempty" title:"Collaboration key, when provided, user can add/delete album content."`
+
+	ShowPrivateSubAlbums bool     `json:"show_private_sub_albums,omitempty" title:"Show private sub albums"`
+	ShowHiddenSubAlbums  bool     `json:"show_hidden_sub_albums,omitempty" title:"Show hidden sub albums"`
+	SubAlbumNames        []string `json:"sub_album_names,omitempty" items.title:"Album Name" title:"Sub albums"`
 }
 
 func (s *AlbumSettings) Scan(src any) error {
