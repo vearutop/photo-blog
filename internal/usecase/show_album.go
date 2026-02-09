@@ -47,6 +47,36 @@ func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) useca
 	return u
 }
 
+type albumPageData struct {
+	pageCommon
+
+	Description template.HTML
+	OGTitle     string
+	OGPageURL   string
+	OGSiteName  string
+	Name        string
+	CoverImage  string
+	CollabKey   string
+	Public      bool
+	Hash        string
+
+	Images    []Image
+	Panoramas []Image
+
+	Count          int
+	TotalSize      string
+	Visits         string
+	EnableFavorite bool
+
+	MapTiles       string
+	MapAttribution string
+	Featured       string
+
+	AlbumData getAlbumOutput
+
+	ShowMap bool
+}
+
 // ShowAlbum creates use case interactor to show album.
 func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
 	tmpl, err := static.Template("album.html")
@@ -55,36 +85,6 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 	}
 
 	notFound := NotFound(deps)
-
-	type pageData struct {
-		pageCommon
-
-		Description template.HTML
-		OGTitle     string
-		OGPageURL   string
-		OGSiteName  string
-		Name        string
-		CoverImage  string
-		CollabKey   string
-		Public      bool
-		Hash        string
-
-		Images    []Image
-		Panoramas []Image
-
-		Count          int
-		TotalSize      string
-		Visits         string
-		EnableFavorite bool
-
-		MapTiles       string
-		MapAttribution string
-		Featured       string
-
-		AlbumData getAlbumOutput
-
-		ShowMap bool
-	}
 
 	cacheName := "album-data"
 	c := brick.MakeCacheOf[getAlbumOutput](deps, cacheName, time.Hour)
@@ -100,7 +100,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 			out.ResponseWriter().Header().Set("X-Cache-Miss", "1")
 
-			return getAlbumContents(ctx, deps, in.Name, false)
+			return getAlbumContents(ctx, deps, imagesFilter{albumName: in.Name}, false)
 		})
 		if err != nil {
 			if errors.Is(err, status.NotFound) {
@@ -120,12 +120,11 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		album := cont.Album
 
-		d := pageData{}
+		d := albumPageData{}
 		d.Title = album.Title
 
 		d.Description = template.HTML(album.Settings.Description)
 		d.Name = album.Name
-		d.IsAdmin = auth.IsAdmin(ctx)
 		d.CollabKey = in.CollabKey
 		d.Public = album.Public
 		d.Hash = album.Hash.String()
@@ -204,11 +203,11 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 				return err
 			}
 
-			if a.Hidden {
+			if a.Hidden && !album.Settings.ShowHiddenSubAlbums {
 				continue
 			}
 
-			if !a.Public || a.Name == "" {
+			if (!a.Public && !album.Settings.ShowPrivateSubAlbums) || a.Name == "" {
 				if !d.IsAdmin {
 					continue
 				}
@@ -216,7 +215,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 			cacheKey := []byte(a.Name + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx) + "::preview")
 			cont, err := c.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
-				return getAlbumContents(ctx, deps, a.Name, true)
+				return getAlbumContents(ctx, deps, imagesFilter{albumName: a.Name}, true)
 			})
 			if err != nil {
 				return err

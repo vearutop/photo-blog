@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -22,57 +22,63 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		panic(err)
 	}
 
-	notFound := NotFound(deps)
+	//notFound := NotFound(deps)
 
 	type searchInput struct {
 		request.EmbeddedSetter
-		Query string `query:"q"`
-	}
-
-	type pageData struct {
-		pageCommon
-
-		Description template.HTML
-		OGTitle     string
-		OGPageURL   string
-		OGSiteName  string
-		Name        string
-		CoverImage  string
-		IsAdmin     bool
-		Public      bool
-		Hash        string
-
-		Images    []Image
-		Panoramas []Image
-
-		Count     int
-		TotalSize string
-
-		MapTiles       string
-		MapAttribution string
-		Featured       string
-
-		AlbumData getAlbumOutput
-
-		ShowMap bool
+		Query  string  `query:"q"`
+		Lens   *string `query:"lens"`
+		Camera *string `query:"camera"`
+		Offset uint64  `query:"offset"`
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in searchInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "search_images", 1)
 		deps.CtxdLogger().Info(ctx, "searching images", "query", in.Query)
 
-		cont, err := getAlbumContents(ctx, deps, "search:"+in.Query, false)
-		if err != nil {
-			if errors.Is(err, status.NotFound) {
-				return notFound.Invoke(ctx, struct{}{}, out)
-			}
+		q := deps.ImageSelector().Select()
 
-			return fmt.Errorf("get album contents: %w", err)
+		if !auth.IsAdmin(ctx) {
+			q.OnlyPublic()
+		}
+
+		title := "Search: "
+
+		if in.Query != "" {
+			title += in.Query
+			q.Search(in.Query)
+		}
+
+		if in.Lens != nil {
+			title += " Lens: " + *in.Lens
+			q.ByLens(*in.Lens)
+		}
+
+		if in.Camera != nil {
+			title += " Camera: " + *in.Camera
+			q.ByCamera(*in.Camera)
+		}
+
+		q.Limit(500)
+		q.Offset(in.Offset)
+
+		images, err := q.Find(ctx)
+		if err != nil {
+			return fmt.Errorf("select images: %w", err)
+		}
+
+		cont := getAlbumOutput{}
+		cont.Album.Title = title
+		cont.Album.Name = "search"
+		cont.Album.Hash = photo.AlbumHash(title)
+
+		if err := cont.prepare(ctx, deps, images, false); err != nil {
+			return fmt.Errorf("prepare album contents: %w", err)
 		}
 
 		album := cont.Album
 
-		d := pageData{}
+		d := albumPageData{}
 		d.Title = album.Title
 
 		d.Description = template.HTML(album.Settings.Description)
@@ -100,7 +106,7 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 
 		d.MapAttribution = maps.Attribution
 
-		// TotalSize controls visibility of batch download button.
+		// TotalSize controls the visibility of the batch download button.
 		privacy := deps.Settings().Privacy()
 		if d.IsAdmin || (!privacy.HideOriginal && !privacy.HideBatchDownload) {
 			var totalSize int64

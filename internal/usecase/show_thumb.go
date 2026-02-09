@@ -33,7 +33,7 @@ func ShowThumb(deps showThumbDeps) usecase.Interactor {
 			return err
 		}
 
-		dctx := detachedContext{parent: ctx}
+		dctx := context.WithoutCancel(ctx)
 		cont, err := deps.PhotoThumbnailer().Thumbnail(dctx, image, in.Size)
 		if err != nil {
 			return ctxd.WrapError(ctx, err, "getting thumbnail")

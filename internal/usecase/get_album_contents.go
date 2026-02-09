@@ -37,6 +37,7 @@ type getAlbumImagesDeps interface {
 	VisitorStats() *visitor.StatsRepository
 	FavoriteRepository() *storage.FavoriteRepository
 	DepCache() *dep.Cache
+	ImageSelector() *storage.ImageSelector
 
 	service.TxtRendererProvider
 }
@@ -80,7 +81,7 @@ func GetAlbumContents(deps getAlbumImagesDeps) usecase.IOInteractorOf[getAlbumIn
 		deps.StatsTracker().Add(ctx, "get_album_images", 1)
 		deps.CtxdLogger().Info(ctx, "getting album images", "name", in.Name)
 
-		*out, err = getAlbumContents(ctx, deps, in.Name, false)
+		*out, err = getAlbumContents(ctx, deps, imagesFilter{albumName: in.Name}, false)
 
 		return err
 	})
@@ -97,17 +98,25 @@ func reverse[S ~[]E, E any](s S) {
 	}
 }
 
-func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
-	return buildAlbumContents(ctx, deps, name, preview)
+type imagesFilter struct {
+	albumName string
+	search    string
+	lens      string
+	camera    string
+	list      []uniq.Hash
 }
 
-func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name string, preview bool) (out getAlbumOutput, err error) {
-	albumHash := photo.AlbumHash(name)
+func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter imagesFilter, preview bool) (out getAlbumOutput, err error) {
+	return buildAlbumContents(ctx, deps, filter, preview)
+}
+
+func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter imagesFilter, preview bool) (out getAlbumOutput, err error) {
+	name := filter.albumName
+	albumHash := photo.AlbumHash(filter.albumName)
 
 	var (
 		album   photo.Album
 		images  []photo.Image
-		privacy settings.Privacy
 		isAdmin = auth.IsAdmin(ctx)
 		query   string
 	)
@@ -191,15 +200,29 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 		return out, err
 	}
 
+	out.Album = album
+
+	if err := out.prepare(ctx, deps, images, preview); err != nil {
+		return out, err
+	}
+
+	return out, nil
+}
+
+func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps, images []photo.Image, preview bool) error {
+	out.Images = make([]Image, 0, len(images))
+	album := out.Album
+	albumSettings := album.Settings
+	isAdmin := auth.IsAdmin(ctx)
+
+	var privacy settings.Privacy
+
 	// Privacy settings are only enabled for guests.
 	if !isAdmin {
 		privacy = deps.Settings().Privacy()
 	}
 
 	out.HideOriginal = privacy.HideOriginal
-
-	out.Images = make([]Image, 0, len(images))
-
 	imageHashes := make([]uniq.Hash, 0, len(images))
 
 	for _, i := range images {
@@ -222,7 +245,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 		if !privacy.HideGeoPosition {
 			gpss, err := deps.PhotoGpsFinder().FindByHashes(ctx, imageHashes...)
 			if err != nil && !errors.Is(err, status.NotFound) {
-				return out, err
+				return err
 			}
 
 			for _, gps := range gpss {
@@ -232,7 +255,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 
 		exifs, err := deps.PhotoExifFinder().FindByHashes(ctx, imageHashes...)
 		if err != nil && !errors.Is(err, status.NotFound) {
-			return out, err
+			return err
 		}
 
 		for _, exif := range exifs {
@@ -241,24 +264,24 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 
 		metas, err := deps.PhotoMetaFinder().FindByHashes(ctx, imageHashes...)
 		if err != nil && !errors.Is(err, status.NotFound) {
-			return out, err
+			return err
 		}
 
 		for _, meta := range metas {
 			metaData[meta.Hash] = meta
 		}
 
-		imgAlbum, err = deps.PhotoAlbumImageFinder().FindImageAlbums(ctx, albumHash, imageHashes...)
+		imgAlbum, err = deps.PhotoAlbumImageFinder().FindImageAlbums(ctx, album.Hash, imageHashes...)
 		if err != nil {
-			return out, err
+			return err
 		}
 	}
 
-	textReplaces := append(deps.Settings().Appearance().TextReplaces, album.Settings.TextReplaces...)
+	textReplaces := append(deps.Settings().Appearance().TextReplaces, albumSettings.TextReplaces...)
 
 	for _, i := range images {
 		// Skip unprocessed images.
-		if i.BlurHash == "" {
+		if !i.Ready() {
 			continue
 		}
 
@@ -272,12 +295,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 			BlurHash:    i.BlurHash,
 			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description, textReplaces.Apply),
 			Size:        i.Size,
-		}
-
-		if i.TakenAt != nil {
-			img.Time = *i.TakenAt
-		} else {
-			img.Time = i.CreatedAt
+			Time:        i.Time(),
 		}
 
 		if !preview {
@@ -320,13 +338,13 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 		out.Images = append(out.Images, img)
 	}
 
-	if album.Settings.NewestFirst {
+	if albumSettings.NewestFirst {
 		reverse(out.Images)
 	}
 
-	if album.Settings.DailyRulers {
+	if albumSettings.DailyRulers {
 		dateShift := -time.Second
-		if album.Settings.NewestFirst {
+		if albumSettings.NewestFirst {
 			dateShift = time.Second
 		}
 
@@ -335,7 +353,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 		for _, i := range out.Images {
 			d := i.Time.Format(time.DateOnly)
 			if d != prevDate {
-				album.Settings.Texts = append(album.Settings.Texts, txt.Chronological{
+				albumSettings.Texts = append(albumSettings.Texts, txt.Chronological{
 					Time: i.Time.Add(dateShift),
 					Text: "### " + d + "\n",
 				})
@@ -346,9 +364,9 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 	}
 
 	if !preview {
-		gpxs, err := deps.PhotoGpxFinder().FindByHashes(ctx, album.Settings.GpxTracksHashes...)
+		gpxs, err := deps.PhotoGpxFinder().FindByHashes(ctx, albumSettings.GpxTracksHashes...)
 		if err != nil && !errors.Is(err, status.NotFound) {
-			return out, err
+			return err
 		}
 
 		for _, gpx := range gpxs {
@@ -364,27 +382,31 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, name strin
 			})
 		}
 
-		for i, t := range album.Settings.Texts {
+		for i, t := range albumSettings.Texts {
 			t.Text, err = deps.TxtRenderer().RenderLang(ctx, t.Text, textReplaces.Apply)
 			if err != nil {
-				return out, err
+				return err
 			}
 
-			album.Settings.Texts[i] = t
+			albumSettings.Texts[i] = t
 		}
 
-		album.Settings.Description, err = deps.TxtRenderer().RenderLang(ctx, album.Settings.Description, textReplaces.Apply)
+		albumSettings.Description, err = deps.TxtRenderer().RenderLang(ctx, albumSettings.Description, textReplaces.Apply)
 		if err != nil {
-			return out, err
+			return err
 		}
 	}
+
+	var err error
 
 	album.Title, err = deps.TxtRenderer().RenderLang(ctx, album.Title, txt.StripTags, textReplaces.Apply)
 	if err != nil {
-		return out, err
+		return err
 	}
+
+	album.Settings = albumSettings
 
 	out.Album = album
 
-	return out, nil
+	return nil
 }

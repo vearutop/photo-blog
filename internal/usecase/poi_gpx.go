@@ -24,7 +24,7 @@ func DownloadImagesPoiGpx(deps getAlbumImagesDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in dlImagesPoiGpxInput, out *response.EmbeddedSetter) error {
 		rw := out.ResponseWriter()
 
-		cont, err := getAlbumContents(ctx, deps, in.Name, false)
+		cont, err := getAlbumContents(ctx, deps, imagesFilter{albumName: in.Name}, false)
 		if err != nil {
 			return fmt.Errorf("get album contents: %w", err)
 		}

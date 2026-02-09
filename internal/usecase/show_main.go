@@ -135,7 +135,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 			d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 			if d.Featured != "" {
-				cont, err := getAlbumContents(ctx, deps, d.Featured, false)
+				cont, err := getAlbumContents(ctx, deps, imagesFilter{albumName: d.Featured}, false)
 				if err != nil && !errors.Is(err, status.NotFound) {
 					return d, fmt.Errorf("featured: %w", err)
 				}
@@ -151,7 +151,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 
 			list, err := deps.PhotoAlbumFinder().FindAll(ctx)
 			if err != nil {
-				return d, err
+				return d, fmt.Errorf("find all albums: %w", err)
 			}
 
 			sort.Slice(list, func(i, j int) bool {
@@ -169,9 +169,9 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 					}
 				}
 
-				cont, err := getAlbumContents(ctx, deps, a.Name, true)
+				cont, err := getAlbumContents(ctx, deps, imagesFilter{albumName: a.Name}, true)
 				if err != nil {
-					return d, err
+					return d, fmt.Errorf("find album %s: %w", err)
 				}
 
 				if len(cont.Images) == 0 && !d.IsAdmin {

@@ -74,7 +74,7 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 }
 
 func serveRemote(ctx context.Context, w http.ResponseWriter, r *http.Request, remoteURL string) error {
-	req, err := http.NewRequestWithContext(ctx, "GET", remoteURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, remoteURL, nil)
 	if err != nil {
 		return err
 	}
