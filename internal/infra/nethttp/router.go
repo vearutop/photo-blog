@@ -234,11 +234,11 @@ func NewRouter(deps *service.Locator) *web.Service {
 	s.Group(func(r chi.Router) {
 		s := fork(s, r)
 
-		s.Use(maybeAuth)
+		s.Wrap(maybeAuth)
 
-		s.Use(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings(), deps.VisitorStats()))
+		s.Wrap(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings(), deps.VisitorStats(), deps.ASNBot))
 
-		s.Use(func(handler http.Handler) http.Handler {
+		s.Wrap(func(handler http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Accept-Ch", "Downlink, Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version")
 
@@ -247,7 +247,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		})
 
 		// Supported content language matching.
-		s.Use(func(handler http.Handler) http.Handler {
+		s.Wrap(func(handler http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				matcher, languages := deps.Settings().Appearance().LanguageMatcher()
 
