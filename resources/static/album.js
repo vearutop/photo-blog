@@ -319,6 +319,18 @@ function loadAlbum(params) {
                     img_description += '<div>' + img.description + '</div>';
                 }
 
+                if (img.exif) {
+                    img_description += '<div class="quick-exif">' +
+                        img.exif.camera_model +
+                        ' ' + img.exif.lens_model +
+                        ' @ ' + (img.exif.focal_length ? (img.exif.focal_length + 'mm') : '') +
+                        ' ' + (img.exif.exposure_time ? img.exif.exposure_time + 's' : '') +
+                        ' ' + (img.exif.f_number ? 'f/' + img.exif.f_number : '') +
+                        ' ' + (img.exif.iso_speed ? 'iso' + img.exif.iso_speed : '') +
+                        '</div>'
+                }
+
+
                 if (typeof img.meta !== "undefined") {
                     img_description += '<div class="control-panel">'
                     var cl = img.meta.image_classification
@@ -342,13 +354,17 @@ function loadAlbum(params) {
                         llmDescFound = true
 
                         img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em title="'+l.model+': ' + l.prompt+'">AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
+                        break
                     }
 
-                    for (var ci in cl) {
-                        var l = cl[ci]
+                    if (!llmDescFound) {
+                        for (var ci in cl) {
+                            var l = cl[ci]
 
-                        if (l.model === "cf-uform-gen2" && !llmDescFound) {
-                            img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
+                            if (l.model === "cf-uform-gen2" && !llmDescFound) {
+                                img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
+                                break
+                            }
                         }
                     }
 
@@ -488,6 +504,7 @@ function loadAlbum(params) {
         });
         // }
 
+
         // Download image button.
         lightbox.on('uiRegister', function () {
             lightbox.pswp.ui.registerElement({
@@ -515,14 +532,34 @@ function loadAlbum(params) {
             });
         });
 
+        if (visitorData.showExif) {
+            // Quick EXIF info.
+            lightbox.on('uiRegister', function() {
+                lightbox.pswp.ui.registerElement({
+                    name: 'custom-caption',
+                    order: 10,
+                    isButton: false,
+                    appendTo: 'root',
+                    html: '',
+                    onInit: (el, pswp) => {
+                        lightbox.pswp.on('change', () => {
+                            const currSlideElement = lightbox.pswp.currSlide.data.element;
+                            if (currSlideElement) {
+                                const hiddenCaption = currSlideElement.querySelector('.quick-exif');
+                                if (hiddenCaption) {
+                                    el.innerHTML = hiddenCaption.innerHTML;
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
         new PhotoSwipeDynamicCaption(lightbox, {
             mobileLayoutBreakpoint: 700,
             type: 'aside',
         });
-
-        currentImage = {
-            album: params.albumName
-        }
 
         lightbox.on('contentResize', ({content, width, height}) => {
             if (width > currentImage.w) {
@@ -534,6 +571,7 @@ function loadAlbum(params) {
             $('#exif-container').hide();
 
             if (currentImage.img) {
+                currentImage.album = params.albumName
                 currentImage.time = Date.now() - currentImage.time - unfocused;
                 collectStats(currentImage);
             }
@@ -548,8 +586,11 @@ function loadAlbum(params) {
             $('#exif-container').hide();
             if (currentImage.img) {
                 currentImage.time = Date.now() - currentImage.time - unfocused;
+                currentImage.album = params.albumName
+
                 collectStats(currentImage);
                 currentImage.img = ""
+                currentImage.album = ""
             }
         });
 
@@ -576,13 +617,24 @@ function loadAlbum(params) {
             }
         }
 
+        var historyStates = 0
         lightbox.on('change', function () {
+            if (fullscreenEnabled) {
+                return
+            }
+
             // console.log("change", lightbox.pswp, lightbox.pswp.currIndex, hashByIdx[lightbox.pswp.currIndex])
             history.pushState("", document.title, "/" + params.albumName + "/photo-" + hashByIdx[lightbox.pswp.currIndex] + ".html");
+            historyStates++;
         })
 
         lightbox.on('close', function () {
-            history.pushState("", document.title, originalPath);
+            if (historyStates > 0) {
+                for (var i = 0; i < historyStates; i++) {
+                    history.back();
+                }
+                historyStates = 0;
+            }
             exitFullscreen();
         })
 
