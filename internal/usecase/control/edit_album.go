@@ -38,6 +38,7 @@ func EditAlbum(deps editAlbumPageDeps) usecase.Interactor {
 		}
 
 		p := jsonform.Page{
+			Title: "✏️ " + a.Name,
 			AppendHTMLHead: `
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
