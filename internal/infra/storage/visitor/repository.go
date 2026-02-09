@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/vearutop/netrie"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,7 +17,6 @@ import (
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
-	"github.com/vearutop/photo-blog/pkg/webstats"
 )
 
 type StatsRepository struct {
@@ -43,15 +44,18 @@ type StatsRepository struct {
 	recentVisitors map[uniq.Hash]Visitor
 	recentNames    map[uniq.Hash]bool
 	isAdmin        map[uniq.Hash]bool
+
+	cityLoc netrie.SafeIPLookuper
 }
 
-func NewStats(st *sqluct.Storage, l ctxd.Logger) (*StatsRepository, error) {
+func NewStats(st *sqluct.Storage, l ctxd.Logger, cityLoc netrie.SafeIPLookuper) (*StatsRepository, error) {
 	s := &StatsRepository{
 		l:              l,
 		st:             st,
 		recentVisitors: make(map[uniq.Hash]Visitor),
 		recentNames:    make(map[uniq.Hash]bool),
 		isAdmin:        make(map[uniq.Hash]bool),
+		cityLoc:        cityLoc,
 	}
 
 	s.is = &imageStats{}
@@ -419,12 +423,13 @@ func atof(s string) float64 {
 	return f
 }
 
-func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts time.Time, r *http.Request) {
+func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ip string, ts time.Time, r *http.Request) {
 	hd := r.Header
 	ua := r.UserAgent()
 	v := Visitor{
 		LastSeen:  ts,
 		Lang:      hd.Get("Accept-Language"),
+		IP:        ip,
 		IPAddr:    hd.Get("X-Forwarded-For"),
 		UserAgent: ua,
 		Device: strings.TrimSpace(
@@ -439,6 +444,24 @@ func (s *StatsRepository) CollectVisitor(h uniq.Hash, isBot, isAdmin bool, ts ti
 		ScreenWidth:  atoi(r.URL.Query().Get("sw")),
 		ScreenHeight: atoi(r.URL.Query().Get("sh")),
 		PixelRatio:   atof(r.URL.Query().Get("px")),
+	}
+
+	if s.cityLoc != nil && ip != "" {
+		pip := net.ParseIP(ip)
+
+		cityLoc, err := s.cityLoc.SafeLookupIP(pip)
+		if err != nil {
+			s.l.Error(r.Context(), "failed to lookup city location", "error", err)
+		} else if cityLoc != "" {
+			c := strings.Split(cityLoc, ":")
+
+			v.Country = c[0]
+			v.City = c[1]
+
+			p := strings.Split(c[2], ",")
+			v.Latitude = atof(p[0])
+			v.Longitude = atof(p[1])
+		}
 	}
 
 	v.Hash = h
@@ -584,7 +607,7 @@ func (s *StatsRepository) setRecentVisitor(v Visitor) {
 }
 
 func (s *StatsRepository) CollectRequest(ctx context.Context, input CollectStats, ts time.Time) {
-	if webstats.IsBot(input.Request().UserAgent()) || s.IsAdmin(input.Visitor) {
+	if s.IsAdmin(input.Visitor) {
 		return
 	}
 
