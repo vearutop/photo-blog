@@ -7,12 +7,14 @@ import (
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/image-prompt/multi"
+	"github.com/vearutop/netrie"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/files"
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
+	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/qlite"
 )
@@ -34,6 +36,8 @@ type Locator struct {
 	QueueBrokerInstance *qlite.Broker
 
 	Config Config
+
+	ImageSelectorInstance *storage.ImageSelector
 
 	PhotoAlbumEnsurerProvider
 	PhotoAlbumUpdaterProvider
@@ -83,7 +87,14 @@ type Locator struct {
 
 	ImagePrompterInstance *multi.ImagePrompter
 
+	CityLoc netrie.SafeIPLookuper
+	ASNBot  netrie.SafeIPLookuper
+
 	dbInstances []dbcon.DBInstance
+}
+
+func (l *Locator) ImageSelector() *storage.ImageSelector {
+	return l.ImageSelectorInstance
 }
 
 // ServiceConfig gives access to service configuration.

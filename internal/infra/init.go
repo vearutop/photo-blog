@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vearutop/netrie"
+
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
@@ -143,6 +145,8 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
+	l.ImageSelectorInstance = storage.NewImageSelector(l.Storage)
+
 	ir := storage.NewImageRepository(l.Storage)
 	l.PhotoImageEnsurerProvider = ir
 	l.PhotoImageUpdaterProvider = ir
@@ -169,7 +173,23 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 
-	l.VisitorStatsInstance, err = visitor.NewStats(statsStorage, l.CtxdLogger())
+	l.CityLoc = netrie.Noop{}
+	if fn := l.Settings().Visitors().CityDB; fn != "" {
+		l.CityLoc, err = netrie.OpenFile(fn)
+		if err != nil {
+			return nil, fmt.Errorf("open city db: %w", err)
+		}
+	}
+
+	l.ASNBot = netrie.Noop{}
+	if fn := l.Settings().Visitors().ASNBotDB; fn != "" {
+		l.ASNBot, err = netrie.OpenFile(fn)
+		if err != nil {
+			return nil, fmt.Errorf("open ASN bot db: %w", err)
+		}
+	}
+
+	l.VisitorStatsInstance, err = visitor.NewStats(statsStorage, l.CtxdLogger(), l.CityLoc)
 	if err != nil {
 		return nil, err
 	}
