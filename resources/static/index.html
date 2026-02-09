@@ -96,7 +96,6 @@
     <div id="{{.Featured}}" class="grid"></div>
     <script>
         featured = {{.Featured}}
-        collectStats({main: 1});
         loadAlbum({
             albumName: "{{.Featured}}",
             gallery: "#{{.Featured}}",
@@ -124,9 +123,12 @@
     </script>
     {{end}}
 
+    {{if not .IsBot}}
     <script>
+        collectStats({main: 1});
         collectThumbVisibility();
     </script>
+    {{end}}
 </div>
 
 {{.Footer}}
