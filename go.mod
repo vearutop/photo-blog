@@ -11,7 +11,7 @@ require (
 	github.com/bool64/cache v0.4.8
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
-	github.com/bool64/dev v0.2.41
+	github.com/bool64/dev v0.2.43
 	github.com/bool64/sqluct v0.2.8
 	github.com/bool64/stats v0.2.2
 	github.com/bool64/zapctxd v1.2.0
@@ -42,6 +42,7 @@ require (
 	github.com/vearutop/dbcon v0.4.2
 	github.com/vearutop/httpzip v0.1.2
 	github.com/vearutop/image-prompt v0.1.1
+	github.com/vearutop/netrie v0.1.7
 	github.com/vearutop/statigz v1.5.0
 	github.com/yuin/goldmark v1.7.13
 	go.opencensus.io v0.24.0
@@ -111,7 +112,7 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	google.golang.org/api v0.224.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
