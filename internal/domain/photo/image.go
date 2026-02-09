@@ -27,6 +27,18 @@ type Image struct {
 	Settings  ImageSettings `db:"settings" json:"settings,omitzero" title:"Settings" description:"Additional parameters for an album."`
 }
 
+func (i Image) Ready() bool {
+	return i.BlurHash != ""
+}
+
+func (i Image) Time() time.Time {
+	if i.TakenAt != nil {
+		return *i.TakenAt
+	}
+
+	return i.CreatedAt
+}
+
 type ImageSettings struct {
 	Description string    `json:"description,omitempty" formType:"textarea" title:"Description" description:"Description of an image, can contain HTML."`
 	HTTPSources []string  `json:"http_sources,omitempty"`
