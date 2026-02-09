@@ -43,6 +43,15 @@ function setLowRes(v) {
 }
 
 /**
+ * @param v {Boolean}
+ */
+function setShowExif(v) {
+    window.visitorData.showExif = v
+    localStorage.setItem("visitorData", JSON.stringify(window.visitorData))
+}
+
+
+/**
  * Format bytes as human-readable text.
  *
  * @param bytes Number of bytes.
