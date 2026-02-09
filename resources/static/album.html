@@ -121,22 +121,29 @@
         {{end}}{{.Title}}
     </h1>
 
+    {{if not .IsBot}}
     <div style="display: inline-block;position: relative; top: -0.35em">
+        {{if .IsAdmin}}
         <a class="control-panel ctrl-btn edit-icon" href="/edit/album/{{.Hash}}.html"></a>
+        {{end}}
+
         {{if or .IsAdmin .CollabKey}}
         <a title="Upload files" class="ctrl-btn upload-icon" id="uppyModalOpener" href="#"></a>
         {{end}}
-        {{if .TotalSize }}
-        <a title="Download all" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
+
+        {{if and .TotalSize (not .IsBot) }}
+        <a title="Download all" rel="nofollow" class="ctrl-btn download-icon" href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
         {{end}}
+
         {{if .Visits}}
         <span class="ctrl-btn view-icon"></span><span title="Unique/Views/External refers">{{.Visits}}</span>
         {{end}}
     </div>
+    {{end}}
 
-    <div>
-        {{.Description}}
-    </div>
+    {{if .Description}}
+    <div>{{.Description}}</div>
+    {{end}}
 
     <div id="exif-container" class="exif"></div>
 
@@ -150,7 +157,6 @@
 
 <script>
     featured = {{.Featured}}
-    collectStats({album: '{{.Name}}'});
     loadAlbum({
         albumName: '{{.Name}}',
         mapTiles: '{{.MapTiles}}',
@@ -186,7 +192,10 @@
 {{end}}
 
 <script>
+    {{if not .IsBot}}
+    collectStats({album: '{{.Name}}'});
     collectThumbVisibility();
+    {{end}}
     {{if or .IsAdmin .CollabKey}}
     enableDragNDropImagesReordering();
 
