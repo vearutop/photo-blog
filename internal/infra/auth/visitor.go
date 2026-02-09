@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/cespare/xxhash/v2"
+	"github.com/vearutop/netrie"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
@@ -34,7 +36,7 @@ func VisitorFromContext(ctx context.Context) uniq.Hash {
 	return 0
 }
 
-func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.StatsRepository) func(handler http.Handler) http.Handler {
+func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.StatsRepository, asnBot netrie.SafeIPLookuper) func(handler http.Handler) http.Handler {
 	recentVisitors := cache.NewFailoverOf[uniq.Hash](func(cfg *cache.FailoverConfigOf[uniq.Hash]) {
 		cfg.BackendConfig.TimeToLive = 15 * time.Minute
 	})
@@ -55,15 +57,37 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 
 			isAdmin := IsAdmin(ctx)
 			isBot := webstats.IsBot(r.UserAgent())
+			botName := ""
+
+			ip := hd.Get("X-Forwarded-For")
+			if ip != "" {
+				// Trusted proxies are removed from the IP chain.
+				for _, p := range visitors.TrustedProxies {
+					if strings.HasSuffix(ip, ", "+p) {
+						ip = strings.TrimSuffix(ip, ", "+p)
+						break
+					}
+				}
+
+				if strings.Contains(ip, ", ") {
+					ip = ip[strings.LastIndex(ip, ", ")+2:]
+				}
+			}
+
+			if !isBot && ip != "" && asnBot != nil {
+				if botName, _ = asnBot.SafeLookupIP(net.ParseIP(ip)); botName != "" {
+					isBot = true
+				}
+			}
 
 			if isBot {
 				ctx = SetBot(ctx)
-				r.WithContext(ctx)
+				r = r.WithContext(ctx)
 			}
 
 			setNewVisitorCookie := func(ctx context.Context) (h uniq.Hash) {
 				if isBot {
-					h = uniq.Hash(xxhash.Sum64String(r.UserAgent())) // Fixed value of visitor for bots.
+					h = uniq.Hash(xxhash.Sum64String(botName + r.UserAgent())) // Fixed value of visitor for bots.
 				} else {
 					h, _ = recentVisitors.Get(ctx, []byte(r.UserAgent()+device+hd.Get("Accept-Language")+hd.Get("X-Forwarded-For")),
 						func(ctx context.Context) (uniq.Hash, error) {
@@ -111,13 +135,20 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 					r = r.WithContext(ContextWithVisitor(ctxd.AddFields(r.Context(), "visitor", h), h))
 				}
 
-				st.CollectVisitor(h, isBot, isAdmin, time.Now(), r)
+				st.CollectVisitor(h, isBot, isAdmin, ip, time.Now(), r)
 
 				if ref := hd.Get("Referer"); ref != "" {
 					skipRef := false
 					if ru, err := url.Parse(ref); err == nil {
 						if ru.Host == r.Host {
 							skipRef = true
+						}
+					}
+
+					for _, p := range visitors.IgnoreReferrers {
+						if strings.HasPrefix(ref, p) {
+							skipRef = true
+							break
 						}
 					}
 
@@ -135,6 +166,7 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 					"user_agent", r.UserAgent(),
 					"device", device,
 					"referer", hd.Get("Referer"),
+					"ip", ip,
 					"forwarded_for", hd.Get("X-Forwarded-For"),
 					"admin", isAdmin,
 					"bot", isBot,
