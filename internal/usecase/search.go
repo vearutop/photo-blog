@@ -22,8 +22,6 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		panic(err)
 	}
 
-	//notFound := NotFound(deps)
-
 	type searchInput struct {
 		request.EmbeddedSetter
 		Query  string  `query:"q"`

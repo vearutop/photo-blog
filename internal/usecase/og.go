@@ -2,16 +2,17 @@ package usecase
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/pkg/webstats"
 	"golang.org/x/net/html"
-	"net"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 func OG(deps *service.Locator) usecase.Interactor {
