@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vearutop/netrie"
-
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/brick/jaeger"
@@ -25,6 +23,7 @@ import (
 	"github.com/swaggest/swgui"
 	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/image-prompt/multi"
+	"github.com/vearutop/netrie"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
