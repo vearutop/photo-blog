@@ -50,6 +50,8 @@
  * @property {Number} map_min_lon - Map min longitude. Overrides map default boundary.
  * @property {Boolean} newest_first - Show newest images at the top.
  * @property {String} redirect - Relative or absolute URL to redirect to with HTTP 301 status.
+ * @property {Boolean} show_hidden_sub_albums - Show hidden sub albums.
+ * @property {Boolean} show_private_sub_albums - Show private sub albums.
  * @property {Array<String>} sub_album_names - Sub albums.
  * @property {Array<TxtReplace>} text_replaces
  * @property {Array<TxtChronological>} texts - Chronological texts.
@@ -211,7 +213,7 @@
  * @property {PhotoMetaData} meta
  * @property {String} name
  * @property {Number} size
- * @property {String} time
+ * @property {Number} utime
  * @property {Number} width
  */
 
@@ -829,12 +831,18 @@
  * @typedef SearchImagesRequest
  * @type {Object}
  * @property {String} q
+ * @property {?String} lens
+ * @property {?String} camera
+ * @property {Number} offset
  */
 
 /**
  * @typedef SearchImages2Request
  * @type {Object}
  * @property {String} q
+ * @property {?String} lens
+ * @property {?String} camera
+ * @property {Number} offset
  */
 
 /**
@@ -1034,7 +1042,11 @@
  * @typedef SettingsVisitors
  * @type {Object}
  * @property {Boolean} access_log
+ * @property {String} asn_bot_db - ASN bot DB. Local path to DB, download and decompress from https://github.com/vearutop/ipinfo/releases/download/index/asn-bot.bin.zst.
+ * @property {String} city_db - City location DB. Local path to DB, download and decompress from https://github.com/vearutop/ipinfo/releases/download/index/city-loc-lite.bin.zst.
+ * @property {Array<String>} ignore_referrers - Ignore referrers. List of referrer URL prefixes to ignore.
  * @property {Boolean} tag
+ * @property {Array<String>} trusted_proxies - Trusted proxies. List of IP addresses of trusted proxies.
  */
 
 /**

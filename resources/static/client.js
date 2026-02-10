@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: go1.24.0
+     * Version: Version: dev, GoVersion: go1.25.3
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -1067,6 +1067,8 @@
 
     /**
      * Cleanup Remote
+     * Cleanup iterates remote images moves existing local copies to 'check'
+     * directory.
      * @param {Object} req - request parameters.
      * @param {RawCallback} onAccepted
      * @param {RestErrResponseCallback} onUnauthorized
@@ -3575,6 +3577,15 @@
         if (req.q != null) {
             url += 'q=' + encodeURIComponent(req.q) + '&';
         }
+        if (req.lens != null) {
+            url += 'lens=' + encodeURIComponent(req.lens) + '&';
+        }
+        if (req.camera != null) {
+            url += 'camera=' + encodeURIComponent(req.camera) + '&';
+        }
+        if (req.offset != null) {
+            url += 'offset=' + encodeURIComponent(req.offset) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("GET", url, true);
@@ -3623,6 +3634,15 @@
         var url = this.baseURL + '/search/?';
         if (req.q != null) {
             url += 'q=' + encodeURIComponent(req.q) + '&';
+        }
+        if (req.lens != null) {
+            url += 'lens=' + encodeURIComponent(req.lens) + '&';
+        }
+        if (req.camera != null) {
+            url += 'camera=' + encodeURIComponent(req.camera) + '&';
+        }
+        if (req.offset != null) {
+            url += 'offset=' + encodeURIComponent(req.offset) + '&';
         }
         url = url.slice(0, -1);
 

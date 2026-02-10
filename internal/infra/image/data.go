@@ -35,6 +35,7 @@ func (d *Data) Fill(ctx context.Context) error {
 
 	if img.CreatedAt.IsZero() {
 		img.CreatedAt = time.Now()
+		img.UTime = img.CreatedAt.Unix()
 	}
 
 	if err := d.resolution(ctx); err != nil {

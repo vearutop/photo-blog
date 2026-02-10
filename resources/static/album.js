@@ -245,7 +245,7 @@ function loadAlbum(params) {
                 }
 
 
-                var ts = Date.parse(img.time)
+                var ts = img.utime
 
                 if (chronoTexts) {
                     var ct = [];
@@ -253,7 +253,7 @@ function loadAlbum(params) {
                     for (var ti = 0; ti < chronoTexts.length; ti++) {
                         var t = chronoTexts[ti]
 
-                        var tt = Date.parse(t.time)
+                        var tt = Date.parse(t.time)/1000
 
                         if (albumSettings.newest_first) {
                             if (tt < ts) {
@@ -269,7 +269,7 @@ function loadAlbum(params) {
                             }
                         }
 
-                        var div = $("<div data-ts='" + t.time + "' class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
+                        var div = $("<div data-ts='" + tt + "' class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
 
                         $(params.gallery).append(div)
                     }
@@ -379,7 +379,7 @@ function loadAlbum(params) {
                 a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
                     '<img alt="photo" src="'+thumbBase+'/200h/' + img.hash + '.jpg" srcset="'+thumbBase+'/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, '+thumbBase+'/300w/' + img.hash + '.jpg 300w, '+thumbBase+'/600w/' + img.hash + '.jpg 600w" /></div>')
-                a.attr("data-ts", img.time)
+                a.attr("data-ts", img.utime)
 
                 a.append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')
 

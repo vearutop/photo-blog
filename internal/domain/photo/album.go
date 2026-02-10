@@ -5,7 +5,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/form"
@@ -21,7 +20,7 @@ const (
 
 type AlbumImageAdder interface {
 	AddImages(ctx context.Context, albumHash uniq.Hash, imageHashes ...uniq.Hash) error
-	SetAlbumImageTimestamp(ctx context.Context, album uniq.Hash, img uniq.Hash, ts time.Time) error
+	SetAlbumImageTimestamp(ctx context.Context, album uniq.Hash, img uniq.Hash, ts int64) error
 }
 
 type AlbumImageDeleter interface {

@@ -181,6 +181,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 					img.Settings.Description = in.SrcImageDescription
 					if !in.SrcImageTime.IsZero() {
 						img.TakenAt = &in.SrcImageTime
+						img.UTime = in.SrcImageTime.Unix()
 					}
 
 					if _, err := deps.PhotoImageEnsurer().Ensure(ctx, img); err != nil {

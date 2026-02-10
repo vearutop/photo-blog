@@ -58,6 +58,7 @@ type albumPageData struct {
 	CoverImage  string
 	CollabKey   string
 	Public      bool
+	NewestFirst bool
 	Hash        string
 
 	Images    []Image

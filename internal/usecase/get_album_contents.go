@@ -58,7 +58,7 @@ type Image struct {
 	Description string          `json:"description,omitempty"`
 	Is360Pano   bool            `json:"is_360_pano,omitempty"`
 	Size        int64           `json:"size,omitempty"`
-	Time        time.Time       `json:"time"`
+	UTime       int64           `json:"utime"`
 	Meta        *photo.MetaData `json:"meta,omitempty"`
 }
 
@@ -188,11 +188,13 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 		if err != nil {
 			return out, err
 		}
+
 		if preview {
 			album.Settings = photo.AlbumSettings{}
 			images, err = deps.PhotoAlbumImageFinder().FindPreviewImages(ctx, albumHash, album.CoverImage, 4)
 		} else {
-			images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
+			images, err = deps.ImageSelector().Select().ByAlbumName(album.Name).Find(ctx)
+			// images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, albumHash)
 		}
 	}
 
@@ -295,7 +297,7 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 			BlurHash:    i.BlurHash,
 			Description: deps.TxtRenderer().MustRenderLang(ctx, i.Settings.Description, textReplaces.Apply),
 			Size:        i.Size,
-			Time:        i.Time(),
+			UTime:       i.UTime,
 		}
 
 		if !preview {
@@ -351,10 +353,10 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 		prevDate := ""
 
 		for _, i := range out.Images {
-			d := i.Time.Format(time.DateOnly)
+			d := time.Unix(i.UTime, 0).Format(time.DateOnly)
 			if d != prevDate {
 				albumSettings.Texts = append(albumSettings.Texts, txt.Chronological{
-					Time: i.Time.Add(dateShift),
+					Time: time.Unix(i.UTime, 0).Add(dateShift),
 					Text: "### " + d + "\n",
 				})
 

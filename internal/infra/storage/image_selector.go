@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/storage/hashed"
 )
 
 type ImageSelector struct {
@@ -138,10 +139,13 @@ func (is *ImageQuery) ByAlbumName(albumName string) *ImageQuery {
 	h := photo.AlbumHash(albumName)
 
 	ref := is.f.ref
+	ir := is.f.i.R
 	air := is.f.ai.R
 
 	is.joinAlbumImages()
-	is.q = is.q.Where(squirrel.Eq{ref.Ref(&air.AlbumHash): h})
+	is.q = is.q.Column(ref.Fmt("COALESCE(%s, %s) AS ", &air.UTime, &ir.UTime) + ref.Col(&ir.UTime)).
+		Where(squirrel.Eq{ref.Ref(&air.AlbumHash): h}).
+		OrderByClause(ref.Fmt("COALESCE(%s, %s), %s", &air.UTime, &ir.UTime, &ir.Path))
 
 	return is
 }
@@ -182,11 +186,8 @@ func (is *ImageQuery) ByCamera(camera string) *ImageQuery {
 func (is *ImageQuery) order() *ImageQuery {
 	ref := is.f.ref
 	ir := is.f.i.R
-	air := is.f.ai.R
 
-	if is.withSingleAlbum {
-		is.q = is.q.OrderByClause(ref.Fmt("COALESCE(%s, %s, %s), %s", &air.Timestamp, &ir.TakenAt, &ir.CreatedAt, &ir.Path))
-	} else {
+	if !is.withSingleAlbum {
 		is.q = is.q.OrderByClause(ref.Fmt("COALESCE(%s, %s), %s", &ir.TakenAt, &ir.CreatedAt, &ir.Path))
 	}
 
@@ -208,5 +209,5 @@ func (is *ImageQuery) Offset(off uint64) *ImageQuery {
 func (is *ImageQuery) Find(ctx context.Context) ([]photo.Image, error) {
 	is.order()
 
-	return is.f.i.List(ctx, is.q)
+	return hashed.AugmentResErr(is.f.i.List(ctx, is.q))
 }

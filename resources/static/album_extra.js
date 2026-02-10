@@ -38,7 +38,7 @@ function reindexAlbum(name) {
 
 
 function beforeUploadRequest(req, file, allFiles) {
-   console.log("before upload", req, file, allFiles)
+    console.log("before upload", req, file, allFiles)
 
     var name = file.data.name;
     var relativePath = file.data.relativePath;
@@ -58,7 +58,7 @@ function beforeUploadRequest(req, file, allFiles) {
 
     var thumbs = [];
 
-    for (var i = 0; i<allFiles.length; i++) {
+    for (var i = 0; i < allFiles.length; i++) {
         var f = allFiles[i].data;
 
         if (!f.relativePath) {
@@ -158,14 +158,14 @@ function removeImage(albumName, imageHash, collabKey) {
     }
 
     if (!collabKey) {
-	collabKey = '';
+        collabKey = '';
     }
 
     var b = new Backend('');
     b.controlRemoveFromAlbum({
         name: albumName,
         hash: imageHash,
-	collabKey: collabKey
+        collabKey: collabKey
     }, function (x) {
         $('#img' + imageHash).remove()
         // alert("Photo is removed from the album")
@@ -210,7 +210,9 @@ function exitFullscreen() {
     }
 }
 
-function enableDragNDropImagesReordering() {
+function enableDragNDropImagesReordering(albumName) {
+    var client = new Backend('');
+
     $("a.image").each(function () {
         var a = $(this)
 
@@ -227,10 +229,21 @@ function enableDragNDropImagesReordering() {
         a.on("drop", function (e) {
             e.preventDefault();
             var draggedHash = e.originalEvent.dataTransfer.getData("text/plain");
-            var afterTs = $(e.currentTarget).data('ts')
-            console.log("dragdrop", "dragged hash", draggedHash, "after", afterTs, e);
+            var beforeTs = $(e.currentTarget).data('ts')
+            console.log("dragdrop", "dragged hash", draggedHash, "before", beforeTs, e);
 
-            $(e.currentTarget).after($("#img" + draggedHash))
+            client.controlSetAlbumImageTime({
+                body: {
+                    album_name: albumName,
+                    image_hash: draggedHash,
+                    timestamp: beforeTs
+                }
+            }, function () {
+                $(e.currentTarget).before($("#img" + draggedHash).attr('data-ts', beforeTs))
+            }, function (x) {
+                alert("Failed to reorder image: " + x.error)
+            })
+
         });
 
     });
@@ -240,10 +253,23 @@ function enableDragNDropImagesReordering() {
 
         div.on('drop', function (e) {
             e.preventDefault();
-            var data = e.originalEvent.dataTransfer.getData("text/plain");
-            console.log("dragdrop-text", data, e);
+            var draggedHash = e.originalEvent.dataTransfer.getData("text/plain");
+            var beforeTs = $(e.currentTarget).data('ts')
 
-            $(e.currentTarget).after($("#img" + data))
+            console.log("dragdrop-text", "dragged hash", draggedHash, "before", beforeTs, e);
+
+            client.controlSetAlbumImageTime({
+                body: {
+                    album_name: albumName,
+                    image_hash: draggedHash,
+                    timestamp: beforeTs
+                }
+            }, function () {
+                $(e.currentTarget).before($("#img" + draggedHash).attr('data-ts', beforeTs))
+            }, function (x) {
+                alert("Failed to reorder image: " + x.error)
+            })
+
         });
 
         div.on('dragover', function (e) {

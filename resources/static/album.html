@@ -197,7 +197,7 @@
     collectThumbVisibility();
     {{end}}
     {{if or .IsAdmin .CollabKey}}
-    enableDragNDropImagesReordering();
+    enableDragNDropImagesReordering("{{.Name}}");
 
     {
         const { Dashboard, Tus } = Uppy

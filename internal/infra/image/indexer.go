@@ -193,6 +193,7 @@ func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 			i.deps.CtxdLogger().Error(ctx, "failed to find exif", "error", err)
 		} else {
 			img.TakenAt = exif.Digitized
+			img.UTime = exif.Digitized.Unix()
 			if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
 				return ctxd.WrapError(ctx, err, "update image")
 			}
