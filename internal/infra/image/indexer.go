@@ -28,6 +28,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image/sharpness"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/qlite"
+	"github.com/vearutop/ultrahdr"
 	"go.opencensus.io/trace"
 )
 
@@ -188,12 +189,18 @@ func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		}
 	}
 
+	if err := i.ensureIsHDR(ctx, &img, flags); err != nil {
+		return err
+	}
+
 	if img.TakenAt == nil {
 		if exif, err := i.deps.PhotoExifFinder().FindByHash(ctx, img.Hash); err != nil {
 			i.deps.CtxdLogger().Error(ctx, "failed to find exif", "error", err)
 		} else {
 			img.TakenAt = exif.Digitized
-			img.UTime = exif.Digitized.Unix()
+			if exif.Digitized != nil {
+				img.UTime = exif.Digitized.Unix()
+			}
 			if err := i.deps.PhotoImageUpdater().Update(ctx, img); err != nil {
 				return ctxd.WrapError(ctx, err, "update image")
 			}
@@ -622,6 +629,31 @@ func readMeta(ctx context.Context, img *photo.Image) (m Meta, err error) {
 	exifQuirks(&m.Exif)
 
 	return m, nil
+}
+
+func (i *indexer) ensureIsHDR(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) (err error) {
+	if img.IsHDR != nil {
+		return nil
+	}
+
+	f, err := os.Open(img.Path)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "open image file")
+	}
+
+	defer func() {
+		if clErr := f.Close(); clErr != nil && err == nil {
+			err = clErr
+		}
+	}()
+
+	isHDR, err := ultrahdr.IsUltraHDR(f)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "check image hdr")
+	}
+
+	img.IsHDR = &isHDR
+	return nil
 }
 
 func (i *indexer) ensureExif(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) error {

@@ -16,6 +16,7 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/ultrahdr"
 	"go.opencensus.io/trace"
 )
 
@@ -52,7 +53,7 @@ func makeThumbnail(
 	i photo.Image,
 	size photo.ThumbSize,
 ) (th photo.Thumb, err error) {
-	w, h, err := size.WidthHeight()
+	w, h, err := size.Resize(uint(i.Width), uint(i.Height))
 	if err != nil {
 		return th, err
 	}
@@ -80,19 +81,9 @@ func makeThumbnail(
 	th.Hash = i.Hash
 	th.CreatedAt = time.Now()
 
-	r := Resizer{
-		Quality: 85,
-		Interp:  resize.Lanczos2,
-	}
-
 	buf := bytes.NewBuffer(nil)
 
-	img, err := loadImage(ctx, i, w, h)
-	if err != nil {
-		return th, err
-	}
-
-	w, h, err = r.resizeJPEG(ctx, img, buf, w, h)
+	err = resizeJPEG(ctx, i, w, h, buf)
 	if err != nil {
 		return th, fmt.Errorf("resize: %w", err)
 	}
@@ -105,6 +96,56 @@ func makeThumbnail(
 	th.Size = len(th.Data)
 
 	return th, nil
+}
+
+func resizeJPEG(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) error {
+	if i.IsHDR != nil && *i.IsHDR {
+		return resizeUltraHDR(ctx, i, w, h, buf)
+	}
+
+	return resizeSDR(ctx, i, w, h, buf)
+}
+
+func resizeUltraHDR(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) (err error) {
+	ctx, finish := opencensus.AddSpan(ctx)
+	defer finish(&err)
+
+	j, err := os.ReadFile(i.Path)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	res, err := ultrahdr.ResizeUltraHDR(j, w, h, func(o *ultrahdr.ResizeOptions) {
+		o.Interpolation = ultrahdr.InterpolationLanczos2
+	})
+	if err != nil {
+		return fmt.Errorf("resize ultra hdr %dx%d %s: %w", w, h, i.Path, err)
+	}
+
+	if _, err := buf.Write(res.Container); err != nil {
+		return fmt.Errorf("write ultra hdr: %w", err)
+	}
+
+	return nil
+}
+
+func resizeSDR(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) error {
+	r := Resizer{
+		Quality: 85,
+		Interp:  resize.Lanczos2,
+	}
+
+	img, err := loadImage(ctx, i, w, h)
+	if err != nil {
+		return err
+	}
+
+	err = r.resizeJPEG(ctx, img, buf, w, h)
+	if err != nil {
+		return fmt.Errorf("resize: %w", err)
+	}
+
+	return nil
 }
 
 func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.ThumbSize) (th photo.Thumb, err error) {
@@ -281,7 +322,7 @@ func thumbJPEG(ctx context.Context, t photo.Thumb) (image.Image, error) {
 	return jpeg.Decode(t.ReadSeeker())
 }
 
-func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (w, h uint, err error) {
+func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (err error) {
 	ctx, finish := opencensus.AddSpan(ctx)
 	defer finish(&err)
 
@@ -290,8 +331,6 @@ func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer
 	o := jpeg.Options{}
 	o.Quality = r.Quality
 
-	w, h = uint(m.Bounds().Dx()), uint(m.Bounds().Dy())
-
 	// write new image to file
-	return w, h, jpeg.Encode(dst, m, &o)
+	return jpeg.Encode(dst, m, &o)
 }

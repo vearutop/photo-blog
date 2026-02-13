@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -64,12 +65,43 @@ func (t ThumbSize) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
+func (t ThumbSize) Resize(w, h uint) (uint, uint, error) {
+	if w == 0 || h == 0 {
+		return 0, 0, fmt.Errorf("invalid orig size: %d x %d", w, h)
+	}
+
+	tw, th, err := t.WidthHeight()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Fit in height.
+	if tw == 0 {
+		tw = uint(math.Round(float64(w)*float64(th)) / float64(h))
+
+		return tw, th, nil
+	}
+
+	// Fit in width.
+	if th == 0 {
+		th = uint(math.Round(float64(h)*float64(tw)) / float64(w))
+
+		return tw, th, nil
+	}
+
+	return tw, th, nil
+}
+
 func (t ThumbSize) WidthHeight() (uint, uint, error) {
 	s := string(t)
 	if strings.HasSuffix(s, "w") {
 		w, err := strconv.Atoi(strings.TrimSuffix(s, "w"))
 		if err != nil {
 			return 0, 0, err
+		}
+
+		if w <= 0 {
+			return 0, 0, fmt.Errorf("invalid width: %d", w)
 		}
 
 		return uint(w), 0, nil
@@ -79,6 +111,10 @@ func (t ThumbSize) WidthHeight() (uint, uint, error) {
 		h, err := strconv.Atoi(strings.TrimSuffix(s, "h"))
 		if err != nil {
 			return 0, 0, err
+		}
+
+		if h <= 0 {
+			return 0, 0, fmt.Errorf("invalid height: %d", h)
 		}
 
 		return 0, uint(h), nil

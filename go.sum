@@ -446,6 +446,8 @@ github.com/vearutop/netrie v0.1.7 h1:cY87oHyVFW0CakqjiBFVYpTsKIqHqSmlSSlGwEY84Fc
 github.com/vearutop/netrie v0.1.7/go.mod h1:J2/fxyIiZ/rv2+INCwS8heWXX+DpdvFR1z1+RvwWeT8=
 github.com/vearutop/statigz v1.5.0 h1:FuWwZiT82yBw4xbWdWIawiP2XFTyEPhIo8upRxiKLqk=
 github.com/vearutop/statigz v1.5.0/go.mod h1:oHmjFf3izfCO804Di1ZjB666P3fAlVzJEx2k6jNt/Gk=
+github.com/vearutop/ultrahdr v0.0.4 h1:1KBMgtllmxAZ6znQLJM51HaSpmE/Ga4bOE7d1dS2djI=
+github.com/vearutop/ultrahdr v0.0.4/go.mod h1:k+rCtU/ArA20A0TKiUQFboJCgiC1LSKYse6cRcrg46s=
 github.com/xyproto/randomstring v1.0.5 h1:YtlWPoRdgMu3NZtP45drfy1GKoojuR7hmRcnhZqKjWU=
 github.com/xyproto/randomstring v1.0.5/go.mod h1:rgmS5DeNXLivK7YprL0pY+lTuhNQW3iGxZ18UQApw/E=
 github.com/yudai/gojsondiff v1.0.0 h1:27cbfqXLVEJ1o8I6v3y9lg8Ydm53EKqHXAOMxEGlCOA=

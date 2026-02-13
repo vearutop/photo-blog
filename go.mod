@@ -44,6 +44,7 @@ require (
 	github.com/vearutop/image-prompt v0.1.1
 	github.com/vearutop/netrie v0.1.7
 	github.com/vearutop/statigz v1.5.0
+	github.com/vearutop/ultrahdr v0.0.4
 	github.com/yuin/goldmark v1.7.13
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0

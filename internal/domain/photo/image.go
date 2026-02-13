@@ -26,6 +26,7 @@ type Image struct {
 	TakenAt   *time.Time    `db:"taken_at" title:"Taken At" json:"taken_at,omitempty"`
 	Settings  ImageSettings `db:"settings" json:"settings,omitzero" title:"Settings" description:"Additional parameters for an album."`
 	UTime     int64         `db:"utime" json:"utime,omitempty" title:"UTC Unix Time for sorting."`
+	IsHDR     *bool         `db:"is_hdr" json:"is_hdr" title:"Is HDR image."`
 }
 
 func (i Image) Ready() bool {
