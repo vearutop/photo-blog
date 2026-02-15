@@ -75,7 +75,9 @@ type albumPageData struct {
 
 	AlbumData getAlbumOutput
 
-	ShowMap bool
+	ShowMap         bool
+	ShowEXIFPreview bool
+	ShowAISays      bool
 }
 
 // ShowAlbum creates use case interactor to show album.
@@ -146,6 +148,8 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		})
 
 		d.ShowMap = !album.Settings.HideMap
+		d.ShowEXIFPreview = album.Settings.ShowEXIFPreview
+		d.ShowAISays = !album.Settings.HideAISays
 
 		maps := deps.Settings().Maps()
 

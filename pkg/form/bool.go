@@ -3,7 +3,7 @@ package form
 type Bool3 string
 
 func (Bool3) Enum() []any {
-	return []any{"undefined", "yes", "no"}
+	return []any{"", "yes", "no"}
 }
 
 func (b Bool3) True() bool {

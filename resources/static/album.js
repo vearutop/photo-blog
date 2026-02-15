@@ -74,6 +74,8 @@ var currentImage = {
  * @property {String} imageBaseUrl - base address to link to full-res images
  * @property {String} thumbBaseUrl - thumbnail base URL
  * @property {String} collabKey - optional collaborator key to remove images
+ * @property {Boolean} showAISays - show AI says in image view
+ * @property {Boolean} showEXIFPreview - show EXIF preview in image view
  */
 
 
@@ -222,7 +224,7 @@ function loadAlbum(params) {
 
                 if (img.width > 0 && img.height > 0) {
                     if (!hideOriginal && !visitorData.lowRes) {
-                        srcSet += ", "+imageBase+"/" + img.hash + ".jpg " + img.width + "w"
+                        srcSet += ", " + imageBase + "/" + img.hash + ".jpg " + img.width + "w"
                     }
 
                     a.attr("data-pswp-width", img.width)
@@ -234,7 +236,7 @@ function loadAlbum(params) {
                     img_description += '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\'' + img.hash + '\');return false"></a>'
                 }
                 if (params.collabKey) {
-                    img_description += '<a title="Remove from album" class="ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\',\''+params.collabKey + '\');return false"></a>'
+                    img_description += '<a title="Remove from album" class="ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\',\'' + params.collabKey + '\');return false"></a>'
                 } else {
                     img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\');return false"></a>'
                 }
@@ -253,7 +255,7 @@ function loadAlbum(params) {
                     for (var ti = 0; ti < chronoTexts.length; ti++) {
                         var t = chronoTexts[ti]
 
-                        var tt = Date.parse(t.time)/1000
+                        var tt = Date.parse(t.time) / 1000
 
                         if (albumSettings.newest_first) {
                             if (tt < ts) {
@@ -342,28 +344,30 @@ function loadAlbum(params) {
                     img_description += '</div>'
 
                     var llmDescFound = false
-                    for (var ci in img.meta.image_descriptions) {
-                        var l = img.meta.image_descriptions[ci]
+                    if (params.showAISays) {
+                        for (var ci in img.meta.image_descriptions) {
+                            var l = img.meta.image_descriptions[ci]
 
-                        if (!l.text) {
-                            console.log("INVALID L", l)
+                            if (!l.text) {
+                                console.log("INVALID L", l)
 
-                            continue
+                                continue
+                            }
+
+                            llmDescFound = true
+
+                            img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em title="' + l.model + ': ' + l.prompt + '">AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
+                            break
                         }
 
-                        llmDescFound = true
+                        if (!llmDescFound) {
+                            for (var ci in cl) {
+                                var l = cl[ci]
 
-                        img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em title="'+l.model+': ' + l.prompt+'">AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
-                        break
-                    }
-
-                    if (!llmDescFound) {
-                        for (var ci in cl) {
-                            var l = cl[ci]
-
-                            if (l.model === "cf-uform-gen2" && !llmDescFound) {
-                                img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
-                                break
+                                if (l.model === "cf-uform-gen2" && !llmDescFound) {
+                                    img_description += '<div class="ai-says" style="margin-top: 20px"><span title="I don\'t always talk bullshit, but when I do, I\'m confident" class="icon-link robot-icon"></span><em>AI says:</em><br/>' + l.text.split("\n").join("<br />") + '</div>'
+                                    break
+                                }
                             }
                         }
                     }
@@ -378,7 +382,7 @@ function loadAlbum(params) {
                 a.attr("data-pswp-srcset", srcSet)
                 a.html('<div class="thumb' + landscape + '">' +
                     '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                    '<img alt="photo" src="'+thumbBase+'/200h/' + img.hash + '.jpg" srcset="'+thumbBase+'/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, '+thumbBase+'/300w/' + img.hash + '.jpg 300w, '+thumbBase+'/600w/' + img.hash + '.jpg 600w" /></div>')
+                    '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" /></div>')
                 a.attr("data-ts", img.utime)
 
                 a.append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')
@@ -391,7 +395,7 @@ function loadAlbum(params) {
                 var a = $("<a>")
                 a.attr("id", 'img' + img.hash)
                 a.attr("href", "/" + params.albumName + "/pano-" + img.hash + ".html")
-                a.html('<img alt="" src="'+thumbBase+'/300w/' + img.hash + '.jpg" srcset="'+thumbBase+'/600w/' + img.hash + '.jpg 2x" />')
+                a.html('<img alt="" src="' + thumbBase + '/300w/' + img.hash + '.jpg" srcset="' + thumbBase + '/600w/' + img.hash + '.jpg 2x" />')
 
                 $(params.galleryPano).show().append(a)
             }
@@ -532,9 +536,9 @@ function loadAlbum(params) {
             });
         });
 
-        if (visitorData.showExif) {
+        if (visitorData.showExif || params.showEXIFPreview) {
             // Quick EXIF info.
-            lightbox.on('uiRegister', function() {
+            lightbox.on('uiRegister', function () {
                 lightbox.pswp.ui.registerElement({
                     name: 'custom-caption',
                     order: 10,
@@ -682,7 +686,7 @@ function loadAlbum(params) {
                 images.push(L.marker([m.latitude, m.longitude],
                     {
                         icon: L.icon({
-                            iconUrl: thumbBase+'/' + thumbSize + '/' + m.hash + '.jpg',
+                            iconUrl: thumbBase + '/' + thumbSize + '/' + m.hash + '.jpg',
                             iconSize: [40],
                             className: 'image-marker'
                         })
@@ -692,7 +696,7 @@ function loadAlbum(params) {
                             .setContent(
                                 text +
                                 '<a href="#" onclick="openByHash(\'' + m.hash + '\');return false">' +
-                                '<img style="width: ' + w + 'px" src="'+thumbBase+'/200h/' + m.hash + '.jpg" srcset="'+thumbBase+'/400h/' + m.hash + '.jpg 2x" /></a>'
+                                '<img style="width: ' + w + 'px" src="' + thumbBase + '/200h/' + m.hash + '.jpg" srcset="' + thumbBase + '/400h/' + m.hash + '.jpg 2x" /></a>'
                             )
                     )
                     .addTo(map)
