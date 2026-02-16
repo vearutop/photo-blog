@@ -106,6 +106,8 @@ func Main() error {
 		}
 	}
 
+	thumbnailer := image.NewThumbnailer(log)
+
 	err = filepath.Walk(".", func(p string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -136,7 +138,7 @@ func Main() error {
 					d.Image.Path = p
 				}
 
-				if err := d.Fill(ctx); err != nil {
+				if err := d.Fill(ctx, thumbnailer); err != nil {
 					ctxd.LogError(ctx, err, log.Error)
 					return
 				}

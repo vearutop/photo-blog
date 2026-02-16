@@ -34,7 +34,10 @@ type Thumbnailer struct {
 	mu sync.Mutex
 }
 
-type thumbCtxKey struct{}
+type (
+	thumbCtxKey     struct{}
+	rebuildThumbKey struct{}
+)
 
 func LargerThumbToContext(ctx context.Context, th photo.Thumb) context.Context {
 	return context.WithValue(ctx, thumbCtxKey{}, &th)
@@ -48,13 +51,20 @@ func LargerThumbFromContext(ctx context.Context) *photo.Thumb {
 	return nil
 }
 
-func makeThumbnail(
+func ShouldRebuildThumb(ctx context.Context) bool {
+	_, ok := ctx.Value(rebuildThumbKey{}).(bool)
+	return ok
+}
+
+func (t *Thumbnailer) makeThumbnail(
 	ctx context.Context,
 	i photo.Image,
 	size photo.ThumbSize,
 ) (th photo.Thumb, err error) {
 	w, h, err := size.Resize(uint(i.Width), uint(i.Height))
 	if err != nil {
+		t.deps.CtxdLogger().Error(ctx, "thumb: failed to calculate new size", "error", err, "size", size)
+
 		return th, err
 	}
 
@@ -75,6 +85,8 @@ func makeThumbnail(
 			th.Width, th.Height = uint(i.Bounds().Dx()), uint(i.Bounds().Dy())
 		}
 
+		t.deps.CtxdLogger().Debug(ctx, "thumb: using larger thumb", "thumb", th, "img", i)
+
 		return th, nil
 	}
 
@@ -83,8 +95,10 @@ func makeThumbnail(
 
 	buf := bytes.NewBuffer(nil)
 
-	err = resizeJPEG(ctx, i, w, h, buf)
+	err = t.resizeJPEG(ctx, i, w, h, buf)
 	if err != nil {
+		t.deps.CtxdLogger().Error(ctx, "thumb: failed to resize", "error", err, "size", size)
+
 		return th, fmt.Errorf("resize: %w", err)
 	}
 
@@ -98,10 +112,14 @@ func makeThumbnail(
 	return th, nil
 }
 
-func resizeJPEG(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) error {
+func (t *Thumbnailer) resizeJPEG(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) error {
 	if i.IsHDR != nil && *i.IsHDR {
+		t.deps.CtxdLogger().Debug(ctx, "resizing ultra hdr", "img", i, "w", w, "h", h)
+
 		return resizeUltraHDR(ctx, i, w, h, buf)
 	}
+
+	t.deps.CtxdLogger().Debug(ctx, "resizing sdr", "img", i, "w", w, "h", h)
 
 	return resizeSDR(ctx, i, w, h, buf)
 }
@@ -179,7 +197,7 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 		return th, nil
 	}
 
-	th, err = makeThumbnail(ctx, i, size)
+	th, err = t.makeThumbnail(ctx, i, size)
 	if err != nil {
 		return th, err
 	}

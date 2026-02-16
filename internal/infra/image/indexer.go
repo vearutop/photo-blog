@@ -594,6 +594,12 @@ func (i *indexer) ensureBlurHash(ctx context.Context, img *photo.Image) {
 func (i *indexer) ensureThumbs(ctx context.Context, img photo.Image, flags photo.IndexingFlags) {
 	s := i.deps.Settings().Indexing()
 
+	if flags.RebuildThumbnails {
+		i.deps.CtxdLogger().Info(ctx, "rebuilding thumbnails", "img", img)
+
+		ctx = context.WithValue(ctx, rebuildThumbKey{}, true)
+	}
+
 	for _, size := range photo.ThumbSizes {
 		if size == "2400w" && s.Skip2400wThumb {
 			continue
@@ -632,6 +638,12 @@ func readMeta(ctx context.Context, img *photo.Image) (m Meta, err error) {
 }
 
 func (i *indexer) ensureIsHDR(ctx context.Context, img *photo.Image, flags photo.IndexingFlags) (err error) {
+	i.deps.CtxdLogger().Info(ctx, "checking image hdr", "img", img)
+
+	if flags.RebuildExif || flags.RebuildThumbnails {
+		img.IsHDR = nil
+	}
+
 	if img.IsHDR != nil {
 		return nil
 	}
@@ -652,7 +664,14 @@ func (i *indexer) ensureIsHDR(ctx context.Context, img *photo.Image, flags photo
 		return ctxd.WrapError(ctx, err, "check image hdr")
 	}
 
+	i.deps.CtxdLogger().Info(ctx, "image hdr", "img", img, "isHDR", isHDR)
+
 	img.IsHDR = &isHDR
+
+	if err := i.deps.PhotoImageUpdater().Update(ctx, *img); err != nil {
+		return ctxd.WrapError(ctx, err, "update image to ensure is uhdr")
+	}
+
 	return nil
 }
 

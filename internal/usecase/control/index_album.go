@@ -28,7 +28,8 @@ type indexAlbumDeps interface {
 }
 
 type indexAlbumInput struct {
-	Name string `path:"name" description:"Album name, use '-' for all images and albums."`
+	Name      string    `path:"name" description:"Album name, use '-' for all images and albums."`
+	ImageHash uniq.Hash `query:"image_hash" description:"Only one image to index."`
 	photo.IndexingFlags
 }
 
@@ -75,7 +76,14 @@ func IndexAlbum(deps indexAlbumDeps) usecase.IOInteractorOf[indexAlbumInput, str
 		deps.CtxdLogger().Info(ctx, "indexing album", "num_images", len(images))
 
 		for _, img := range images {
-			if err := deps.QueueBroker().Publish(ctx, topic.IndexImage, image.IndexJob{Image: img}, func(msg *qlite.Message) {
+			if in.ImageHash != 0 && in.ImageHash != img.Hash {
+				continue
+			}
+
+			if err := deps.QueueBroker().Publish(ctx, topic.IndexImage, image.IndexJob{
+				Image: img,
+				Flags: in.IndexingFlags,
+			}, func(msg *qlite.Message) {
 				msg.PublishOnSuccess(topic.AlbumChanged, in.Name)
 			}); err != nil {
 				deps.CtxdLogger().Error(ctx, "error publishing album index", "error", err)

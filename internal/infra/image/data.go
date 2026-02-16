@@ -24,7 +24,7 @@ type Data struct {
 	Thumbs []photo.Thumb `json:"thumbs,omitempty"`
 }
 
-func (d *Data) Fill(ctx context.Context) error {
+func (d *Data) Fill(ctx context.Context, t *Thumbnailer) error {
 	img := &d.Image
 
 	if img.Hash == 0 {
@@ -48,7 +48,7 @@ func (d *Data) Fill(ctx context.Context) error {
 
 	d.takenAt()
 
-	if err := d.thumbs(ctx); err != nil {
+	if err := d.thumbs(ctx, t); err != nil {
 		return fmt.Errorf("thumbs: %w", err)
 	}
 
@@ -109,7 +109,7 @@ func (d *Data) imgHash(ctx context.Context) error {
 	return errors.New("300w thumb not found")
 }
 
-func (d *Data) thumbs(ctx context.Context) error {
+func (d *Data) thumbs(ctx context.Context, t *Thumbnailer) error {
 	for _, size := range photo.ThumbSizes {
 		alreadyExists := false
 		for _, th := range d.Thumbs {
@@ -123,7 +123,7 @@ func (d *Data) thumbs(ctx context.Context) error {
 			continue
 		}
 
-		th, err := makeThumbnail(ctx, d.Image, size)
+		th, err := t.makeThumbnail(ctx, d.Image, size)
 		if err != nil {
 			return err
 		}
