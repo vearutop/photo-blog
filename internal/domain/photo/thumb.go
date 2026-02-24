@@ -19,7 +19,7 @@ type Thumbnailer interface {
 }
 
 type Thumb struct {
-	uniq.Head
+	uniq.Head              // TODO: Implement deterministic unique identifier for thumbnails as (format+image_hash).
 	Width        uint      `db:"width" json:"width"`
 	Height       uint      `db:"height" json:"height"`
 	Data         []byte    `db:"data" json:"data,omitempty"`

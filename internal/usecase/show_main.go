@@ -46,8 +46,10 @@ type pageCommon struct {
 	IsBot           bool
 	ShowLoginButton bool
 
-	ThumbBaseURL string
-	ImageBaseURL string
+	ThumbBaseURL  string
+	ImageBaseURL  string
+	ThumbBaseHref string
+	ImageBaseHref string
 
 	SubAlbums []getAlbumOutput
 }
@@ -70,9 +72,17 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Value
 
 	p.ThumbBaseURL = ap.ThumbBaseURL
 	p.ImageBaseURL = ap.ImageBaseURL
+	p.ThumbBaseHref = p.ThumbBaseURL
+	p.ImageBaseHref = p.ImageBaseURL
 
 	if p.Favicon == "" {
 		p.Favicon = "/static/favicon.png"
+	}
+	if p.ThumbBaseHref == "" {
+		p.ThumbBaseHref = "/thumb"
+	}
+	if p.ImageBaseHref == "" {
+		p.ImageBaseHref = "/image"
 	}
 
 	p.IsAdmin = auth.IsAdmin(ctx)

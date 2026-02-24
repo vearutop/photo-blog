@@ -514,3 +514,8 @@ code {
 .pswp__progress-bar.running {
     display: none;
 }
+
+#gallery figure {
+    margin: 0;
+    padding: 0;
+}

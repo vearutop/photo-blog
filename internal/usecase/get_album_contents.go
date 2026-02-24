@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"path"
 	"strings"
 	"time"
@@ -48,18 +49,20 @@ type getAlbumInput struct {
 }
 
 type Image struct {
-	Name        string          `json:"name"`
-	Hash        string          `json:"hash"`
-	Width       int64           `json:"width"`
-	Height      int64           `json:"height"`
-	BlurHash    string          `json:"blur_hash,omitempty"`
-	Gps         *photo.Gps      `json:"gps,omitempty"`
-	Exif        *photo.Exif     `json:"exif,omitempty"`
-	Description string          `json:"description,omitempty"`
-	Is360Pano   bool            `json:"is_360_pano,omitempty"`
-	Size        int64           `json:"size,omitempty"`
-	UTime       int64           `json:"utime"`
-	Meta        *photo.MetaData `json:"meta,omitempty"`
+	Name            string          `json:"name"`
+	Hash            string          `json:"hash"`
+	Width           int64           `json:"width"`
+	Height          int64           `json:"height"`
+	BlurHash        string          `json:"blur_hash,omitempty"`
+	Gps             *photo.Gps      `json:"gps,omitempty"`
+	Exif            *photo.Exif     `json:"exif,omitempty"`
+	Description     string          `json:"description,omitempty"`
+	DescriptionHTML template.HTML   `json:"-"`
+	AISays          string          `json:"-"`
+	Is360Pano       bool            `json:"is_360_pano,omitempty"`
+	Size            int64           `json:"size,omitempty"`
+	UTime           int64           `json:"utime"`
+	Meta            *photo.MetaData `json:"meta,omitempty"`
 }
 
 type track struct {
@@ -335,6 +338,19 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 					img.Description += links
 				}
 			}
+		}
+
+		if img.Description != "" {
+			img.DescriptionHTML = template.HTML(img.Description)
+		}
+
+		if img.Meta != nil {
+			if !albumSettings.HideAISays {
+				img.AISays = buildAISays(img.Meta)
+			}
+
+			img.Meta.ImageClassification = nil
+			img.Meta.Faces = nil
 		}
 
 		out.Images = append(out.Images, img)

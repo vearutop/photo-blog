@@ -17,7 +17,7 @@ import (
 
 // SearchImages creates use case interactor to show images for criteria.
 func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
-	tmpl, err := static.Template("album.html")
+	tmpl, err := static.Template("album.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -86,6 +86,7 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
+		d.Timeline = buildAlbumTimeline(cont.Images, cont.Album.Settings.Texts, cont.Album.Settings.NewestFirst)
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
@@ -94,6 +95,15 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		d.OGSiteName = deps.Settings().Appearance().SiteTitle
 
 		d.ShowMap = !album.Settings.HideMap
+		d.ShowAISays = !album.Settings.HideAISays
+		d.PreRender = true
+		d.HasPanos = false
+		for _, img := range cont.Images {
+			if img.Is360Pano {
+				d.HasPanos = true
+				break
+			}
+		}
 
 		maps := deps.Settings().Maps()
 

@@ -76,6 +76,7 @@ var currentImage = {
  * @property {String} collabKey - optional collaborator key to remove images
  * @property {Boolean} showAISays - show AI says in image view
  * @property {Boolean} showEXIFPreview - show EXIF preview in image view
+ * @property {Boolean} preRendered - server rendered HTML exists for images
  */
 
 
@@ -161,6 +162,14 @@ function loadAlbum(params) {
                 continue
             }
 
+            var existing = null
+            if (params.preRendered) {
+                existing = $("#img" + img.hash)
+                if (existing.length === 0) {
+                    existing = null
+                }
+            }
+
             if (typeof img.gps != 'undefined') {
                 gpsMarkers.push(img)
                 if (gpsBounds.maxLat == null) {
@@ -196,14 +205,19 @@ function loadAlbum(params) {
                     landscape = " portrait"
                 }
 
-                var a = $("<a>")
-                a.attr("id", 'img' + img.hash)
-                a.attr("data-hash", img.hash)
+                var a = existing
+                if (!a) {
+                    a = $("<a>")
+                    a.attr("id", 'img' + img.hash)
+                    a.attr("data-hash", img.hash)
+                }
 
-                if (i < 4) {
-                    a.attr("class", "image img" + i + landscape)
-                } else {
-                    a.attr("class", "image" + landscape)
+                if (!existing) {
+                    if (i < 4) {
+                        a.attr("class", "image img" + i + landscape)
+                    } else {
+                        a.attr("class", "image" + landscape)
+                    }
                 }
                 if (hideOriginal) {
                     a.attr("href", "#")
@@ -230,6 +244,8 @@ function loadAlbum(params) {
                     a.attr("data-pswp-width", img.width)
                     a.attr("data-pswp-height", img.height)
                 }
+                a.attr("data-pswp-srcset", srcSet)
+                a.attr("data-ts", img.utime)
 
                 var img_description = '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
                 if (result.album.name !== featured) {
@@ -240,6 +256,7 @@ function loadAlbum(params) {
                 } else {
                     img_description += '<a title="Remove from album" class="control-panel ctrl-btn trash-icon" href="#" onclick="removeImage(\'' + params.albumName + '\',\'' + img.hash + '\');return false"></a>'
                 }
+                var controls_description = img_description
 
                 var exif = {}
                 if (typeof img.exif !== "undefined") {
@@ -249,7 +266,7 @@ function loadAlbum(params) {
 
                 var ts = img.utime
 
-                if (chronoTexts) {
+                if (chronoTexts && !params.preRendered) {
                     var ct = [];
 
                     for (var ti = 0; ti < chronoTexts.length; ti++) {
@@ -273,7 +290,11 @@ function loadAlbum(params) {
 
                         var div = $("<div data-ts='" + tt + "' class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
 
-                        $(params.gallery).append(div)
+                        if (existing) {
+                            a.before(div)
+                        } else {
+                            $(params.gallery).append(div)
+                        }
                     }
                 }
 
@@ -379,30 +400,43 @@ function loadAlbum(params) {
 
                 var aspectRatio = img.width / img.height
 
-                a.attr("data-pswp-srcset", srcSet)
-                a.html('<div class="thumb' + landscape + '">' +
-                    '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                    '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" /></div>')
-                a.attr("data-ts", img.utime)
+                if (existing) {
+                    if (a.find("#bh-" + img.hash).length === 0) {
+                        a.find(".thumb").prepend('<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>')
+                    }
+                    var caption = $('.pswp-caption-content[data-hash="' + img.hash + '"]')
+                    if (caption.length === 0) {
+                        a.after('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + controls_description + '</div>')
+                    } else if (caption.find('.edit-icon').length === 0) {
+                        caption.prepend(controls_description)
+                    }
+                } else {
+                    a.html('<div class="thumb' + landscape + '">' +
+                        '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
+                        '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" /></div>')
 
-                a.append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')
-
-                $(params.gallery).append(a)
+                    $(params.gallery).append(a)
+                    $(params.gallery).append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')
+                }
                 if (typeof img.blur_hash !== "undefined") {
                     blurHash(img.blur_hash, document.getElementById('bh-' + img.hash))
                 }
             } else {
-                var a = $("<a>")
-                a.attr("id", 'img' + img.hash)
-                a.attr("href", "/" + params.albumName + "/pano-" + img.hash + ".html")
-                a.html('<img alt="" src="' + thumbBase + '/300w/' + img.hash + '.jpg" srcset="' + thumbBase + '/600w/' + img.hash + '.jpg 2x" />')
+                if (existing) {
+                    $(params.galleryPano).show()
+                } else {
+                    var a = $("<a>")
+                    a.attr("id", 'img' + img.hash)
+                    a.attr("href", "/" + params.albumName + "/pano-" + img.hash + ".html")
+                    a.html('<img alt="" src="' + thumbBase + '/300w/' + img.hash + '.jpg" srcset="' + thumbBase + '/600w/' + img.hash + '.jpg 2x" />')
 
-                $(params.galleryPano).show().append(a)
+                    $(params.galleryPano).show().append(a)
+                }
             }
         }
 
 
-        if (chronoTexts) {
+        if (chronoTexts && !params.preRendered) {
             for (var ti = 0; ti < chronoTexts.length; ti++) {
                 var t = chronoTexts[ti]
                 $(params.gallery).append("<div class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
@@ -563,6 +597,17 @@ function loadAlbum(params) {
         new PhotoSwipeDynamicCaption(lightbox, {
             mobileLayoutBreakpoint: 700,
             type: 'aside',
+            captionContent: (slide) => {
+                if (!slide || !slide.data || !slide.data.element) {
+                    return '';
+                }
+                const hash = slide.data.element.getAttribute('data-hash');
+                if (!hash) {
+                    return '';
+                }
+                const captionEl = document.querySelector('.pswp-caption-content[data-hash="' + hash + '"]');
+                return captionEl ? captionEl.innerHTML : '';
+            }
         });
 
         lightbox.on('contentResize', ({content, width, height}) => {

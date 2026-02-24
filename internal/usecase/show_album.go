@@ -74,15 +74,18 @@ type albumPageData struct {
 	Featured       string
 
 	AlbumData getAlbumOutput
+	Timeline  []albumTimelineItem
 
 	ShowMap         bool
 	ShowEXIFPreview bool
 	ShowAISays      bool
+	PreRender       bool
+	HasPanos        bool
 }
 
 // ShowAlbum creates use case interactor to show album.
 func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
-	tmpl, err := static.Template("album.html")
+	tmpl, err := static.Template("album.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -134,7 +137,16 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
 		d.AlbumData.Album.Settings.CollabKey = ""
+		d.Timeline = buildAlbumTimeline(cont.Images, cont.Album.Settings.Texts, cont.Album.Settings.NewestFirst)
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
+
+		// Clear image descriptions from JSON.
+		for i, img := range cont.Images {
+			img.Description = ""
+			img.DescriptionHTML = ""
+
+			cont.Images[i] = img
+		}
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 		if len(cont.Images) > 1 {
@@ -150,6 +162,14 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.ShowMap = !album.Settings.HideMap
 		d.ShowEXIFPreview = album.Settings.ShowEXIFPreview
 		d.ShowAISays = !album.Settings.HideAISays
+		d.PreRender = true
+		d.HasPanos = false
+		for _, img := range cont.Images {
+			if img.Is360Pano {
+				d.HasPanos = true
+				break
+			}
+		}
 
 		maps := deps.Settings().Maps()
 
