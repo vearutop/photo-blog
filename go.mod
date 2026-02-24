@@ -44,15 +44,15 @@ require (
 	github.com/vearutop/image-prompt v0.1.1
 	github.com/vearutop/netrie v0.1.7
 	github.com/vearutop/statigz v1.5.0
-	github.com/vearutop/ultrahdr v0.0.4
+	github.com/vearutop/ultrahdr v0.0.8
 	github.com/yuin/goldmark v1.7.13
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.42.0
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
-	golang.org/x/image v0.31.0
+	golang.org/x/image v0.36.0
 	golang.org/x/net v0.44.0
-	golang.org/x/text v0.29.0
+	golang.org/x/text v0.34.0
 	modernc.org/sqlite v1.39.0
 )
 
@@ -112,7 +112,7 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	google.golang.org/api v0.224.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect

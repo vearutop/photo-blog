@@ -128,23 +128,34 @@ func resizeUltraHDR(ctx context.Context, i photo.Image, w, h uint, buf io.Writer
 	ctx, finish := opencensus.AddSpan(ctx)
 	defer finish(&err)
 
-	j, err := os.ReadFile(i.Path)
+	f, err := os.Open(i.Path)
 	if err != nil {
-		return fmt.Errorf("read file: %w", err)
+		return fmt.Errorf("open file: %w", err)
 	}
+	defer f.Close()
 
-	res, err := ultrahdr.ResizeUltraHDR(j, w, h, func(o *ultrahdr.ResizeOptions) {
-		o.Interpolation = ultrahdr.InterpolationLanczos2
+	var resizeErr error
+
+	err = ultrahdr.ResizeHDR(f, ultrahdr.ResizeSpec{
+		Width:         w,
+		Height:        h,
+		Interpolation: ultrahdr.InterpolationLanczos2,
+		ReceiveResult: func(res *ultrahdr.Result, err error) {
+			if err != nil {
+				resizeErr = fmt.Errorf("resize ultra hdr: %w", err)
+				return
+			}
+
+			if _, err := buf.Write(res.Container); err != nil {
+				resizeErr = fmt.Errorf("write ultra hdr: %w", err)
+			}
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("resize ultra hdr %dx%d %s: %w", w, h, i.Path, err)
 	}
 
-	if _, err := buf.Write(res.Container); err != nil {
-		return fmt.Errorf("write ultra hdr: %w", err)
-	}
-
-	return nil
+	return resizeErr
 }
 
 func resizeSDR(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) error {
