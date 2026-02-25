@@ -302,6 +302,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 		s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
 
+		s.Get("/{name}/grid.jpg", usecase.ShowThumbGrid(deps))
+
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
 		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
@@ -318,7 +320,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 	})
 
 	s.Get("/sitemap.xml", usecase.ServeSitemap(deps))
-	
+
 	s.Get("/favicon.ico", usecase.ServeFavicon(deps))
 	s.Method(http.MethodGet, "/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
