@@ -3,10 +3,14 @@ package dep
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/topic"
+	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
@@ -14,12 +18,14 @@ type Deps interface {
 	CacheInvalidationIndex() *cache.InvalidationIndex
 	CtxdLogger() ctxd.Logger
 	QueueBroker() *qlite.Broker
+	PhotoAlbumUpdater() uniq.Updater[photo.Album]
 }
 
 func NewCache(deps Deps) *Cache {
 	c := &Cache{
-		logger: deps.CtxdLogger(),
-		index:  deps.CacheInvalidationIndex(),
+		logger:       deps.CtxdLogger(),
+		index:        deps.CacheInvalidationIndex(),
+		albumUpdater: deps.PhotoAlbumUpdater(),
 	}
 
 	if err := qlite.AddConsumer[string](deps.QueueBroker(), topic.AlbumChanged, func(ctx context.Context, v string) error {
@@ -34,8 +40,9 @@ func NewCache(deps Deps) *Cache {
 }
 
 type Cache struct {
-	index  *cache.InvalidationIndex
-	logger ctxd.Logger
+	index        *cache.InvalidationIndex
+	logger       ctxd.Logger
+	albumUpdater uniq.Updater[photo.Album]
 }
 
 type labelsCtxKey struct{}
@@ -80,9 +87,19 @@ func (n *Cache) AlbumChanged(ctx context.Context, name string) error {
 	_, err := n.index.InvalidateByLabels(ctx, "album/"+name)
 	if err != nil {
 		err = fmt.Errorf("album %s changed: %w", name, err)
+		return err
 	}
 
-	return err
+	a := photo.Album{UpdatedAt: time.Now()}
+	a.Hash = photo.AlbumHash(name)
+
+	err = n.albumUpdater.Update(ctx, a, sqluct.Columns("updated_at"))
+	if err != nil {
+		err = fmt.Errorf("album %s changed: %w", name, err)
+		return err
+	}
+
+	return nil
 }
 
 func (n *Cache) ServiceSettingsDependency(cacheName string, cacheKey []byte) {

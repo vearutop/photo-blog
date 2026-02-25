@@ -113,6 +113,24 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.QueueBrokerInstance = qlite.NewBroker(queueStorage)
 	l.QueueBroker().Logger = l.CtxdLogger()
 
+	ir := storage.NewImageRepository(l.Storage)
+	l.PhotoImageEnsurerProvider = ir
+	l.PhotoImageUpdaterProvider = ir
+	l.PhotoImageFinderProvider = ir
+
+	metaRepo := storage.NewMetaRepository(l.Storage)
+	l.PhotoMetaFinderProvider = metaRepo
+	l.PhotoMetaEnsurerProvider = metaRepo
+
+	ar := storage.NewAlbumRepository(l.Storage, ir, metaRepo)
+	l.PhotoAlbumEnsurerProvider = ar
+	l.PhotoAlbumUpdaterProvider = ar
+	l.PhotoAlbumFinderProvider = ar
+	l.PhotoAlbumDeleterProvider = ar
+	l.PhotoAlbumImageAdderProvider = ar
+	l.PhotoAlbumImageFinderProvider = ar
+	l.PhotoAlbumImageDeleterProvider = ar
+
 	l.DepCacheInstance = dep.NewCache(l)
 
 	mapTilesStorage, err := setupStorage(l, "map-tiles", sqlitec.Migrations)
@@ -145,24 +163,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	}
 
 	l.ImageSelectorInstance = storage.NewImageSelector(l.Storage)
-
-	ir := storage.NewImageRepository(l.Storage)
-	l.PhotoImageEnsurerProvider = ir
-	l.PhotoImageUpdaterProvider = ir
-	l.PhotoImageFinderProvider = ir
-
-	metaRepo := storage.NewMetaRepository(l.Storage)
-	l.PhotoMetaFinderProvider = metaRepo
-	l.PhotoMetaEnsurerProvider = metaRepo
-
-	ar := storage.NewAlbumRepository(l.Storage, ir, metaRepo)
-	l.PhotoAlbumEnsurerProvider = ar
-	l.PhotoAlbumUpdaterProvider = ar
-	l.PhotoAlbumFinderProvider = ar
-	l.PhotoAlbumDeleterProvider = ar
-	l.PhotoAlbumImageAdderProvider = ar
-	l.PhotoAlbumImageFinderProvider = ar
-	l.PhotoAlbumImageDeleterProvider = ar
 
 	fr := storage.NewFavoriteRepository(l.Storage)
 	l.FavoriteRepositoryProvider = fr
