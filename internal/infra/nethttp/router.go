@@ -317,6 +317,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/favorite", usecase.GetFavorite(deps))
 	})
 
+	s.Get("/sitemap.xml", usecase.ServeSitemap(deps))
+	
 	s.Get("/favicon.ico", usecase.ServeFavicon(deps))
 	s.Method(http.MethodGet, "/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
