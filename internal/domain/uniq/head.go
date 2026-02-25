@@ -29,7 +29,7 @@ type Adder[V any] interface {
 }
 
 type Updater[V any] interface {
-	Update(ctx context.Context, value V) error
+	Update(ctx context.Context, value V, options ...func(o *sqluct.Options)) error
 }
 
 type Deleter[V any] interface {

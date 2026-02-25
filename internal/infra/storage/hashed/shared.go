@@ -257,7 +257,7 @@ func (ir *Repo[V, T]) Add(ctx context.Context, value V) error {
 	return AugmentReturnErr(ir.InsertRow(ctx, value))
 }
 
-func (ir *Repo[V, T]) Update(ctx context.Context, value V) error {
+func (ir *Repo[V, T]) Update(ctx context.Context, value V, options ...func(o *sqluct.Options)) error {
 	var x V
 	ctx = dbwrap.WithCaller(ctx, fmt.Sprintf("Update:%T", x))
 
@@ -274,7 +274,7 @@ func (ir *Repo[V, T]) Update(ctx context.Context, value V) error {
 		}
 	}
 
-	return AugmentReturnErr(ir.UpdateStmt(value).Where(ir.hashEq(h)).ExecContext(ctx))
+	return AugmentReturnErr(ir.UpdateStmt(value, options...).Where(ir.hashEq(h)).ExecContext(ctx))
 }
 
 func (ir *Repo[V, T]) Delete(ctx context.Context, h uniq.Hash) error {
