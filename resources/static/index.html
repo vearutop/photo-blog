@@ -3,6 +3,11 @@
 <head>
     <title>{{.Title}}</title>
     <meta charset="UTF-8">
+
+    {{if .CanonicalBaseURL}}
+    <link rel="canonical" href="{{.CanonicalBaseURL}}/" />
+    {{end}}
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{.Favicon}}" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">

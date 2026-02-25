@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/form"
@@ -90,6 +91,7 @@ func (s AlbumSettings) Value() (driver.Value, error) {
 
 type Album struct {
 	uniq.Head
+	UpdatedAt  time.Time     `db:"updated_at,omitempty" formType:"hidden" json:"updated_at" title:"Updated At" description:"Timestamp of last update."`
 	Title      string        `db:"title" json:"title" formType:"textarea" title:"Title" description:"Title of an album."`
 	Name       string        `db:"name" json:"name" title:"Name" required:"true" readOnly:"true" description:"A slug value that is used in album URL."`
 	Public     bool          `db:"public" json:"public" inlineTitle:"Album is public." noTitle:"true" title:"Public" description:"Makes album visible in the main page."`

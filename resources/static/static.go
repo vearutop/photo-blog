@@ -19,7 +19,7 @@ func MustParseTemplate(fileName string) *template.Template {
 		panic(err)
 	}
 
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
+	tmpl, err := template.New(fileName).Parse(string(tpl))
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +33,7 @@ func Template(fileName string) (*template.Template, error) {
 		return nil, err
 	}
 
-	tmpl, err := template.New("htmlResponse").Parse(string(tpl))
+	tmpl, err := template.New(fileName).Parse(string(tpl))
 	if err != nil {
 		return nil, err
 	}

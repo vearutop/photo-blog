@@ -10,7 +10,9 @@
     <meta property="og:type" content="website"/>
     <meta property="og:image" content="{{.CoverImage}}"/>
 
-    <meta name="robots" content="noindex">
+    <meta property="description" content="360 panoramic image viewer" />
+
+
     <style>
         html, body {
             margin: 0;
@@ -23,6 +25,8 @@
 </head>
 
 <body>
+
+<img src="{{.Image}}" alt="360 Panoramic Image" style="display: none;">
 
 <script src="/static/three.min.js"></script>
 <script src="/static/panolens.min.js"></script>

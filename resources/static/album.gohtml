@@ -3,6 +3,11 @@
 <head>
     <title>{{.Title}}</title>
     <meta charset="UTF-8">
+
+    {{if .CanonicalBaseURL}}
+        <link rel="canonical" href="{{.CanonicalBaseURL}}/{{.Name}}/" />
+    {{end}}
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{.Favicon}}" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
@@ -151,30 +156,24 @@
     <div id="gallery" class="grid">
         {{if .PreRender}}
             {{range $i, $item := .Timeline}}
-                {{if $item.Image}}
-                    {{$img := $item.Image}}
-                    {{$landscape := ge $img.Width $img.Height}}
+                {{if $item.Image}}{{$img := $item.Image}}{{$landscape := ge $img.Width $img.Height}}
                     <figure>
                         <a id="img{{$img.Hash}}" data-hash="{{$img.Hash}}" data-ts="{{$img.UTime}}"
                            class="image{{if lt $i 4}} img{{$i}}{{end}}{{if $landscape}} landscape{{else}} portrait{{end}}"
                            href="{{if $.AlbumData.HideOriginal}}#{{else}}{{$.ImageBaseHref}}/{{$img.Hash}}.jpg{{end}}"
                            target="_blank" data-pswp-width="{{$img.Width}}" data-pswp-height="{{$img.Height}}">
                         <span class="thumb{{if $landscape}} landscape{{else}} portrait{{end}}">
-                            <img alt="{{$img.Name}}" src="{{$.ThumbBaseHref}}/200h/{{$img.Hash}}.jpg"
-                                 srcset="{{$.ThumbBaseHref}}/400h/{{$img.Hash}}.jpg 2x" aria-describedby="caption{{$img.Hash}}"/>
+                            <img alt="{{$img.Name}}" src="{{$.ThumbBaseHref}}/300w/{{$img.Hash}}.jpg"
+                                 srcset="{{$.ThumbBaseHref}}/300w/{{$img.Hash}}.jpg 300w, {{$.ThumbBaseHref}}/600w/{{$img.Hash}}.jpg 600w" aria-describedby="caption{{$img.Hash}}"/>
                         </span>
                         </a><div class="pswp-caption-content" data-hash="{{$img.Hash}}" id="caption{{$img.Hash}}" style="display: none">
                             {{if $img.DescriptionHTML}}
                             <div class="caption-desc">{{$img.DescriptionHTML}}</div>
-                            {{end}}
-
-                            {{if $img.AISays}}
+                            {{end}}{{if $img.AISays}}
                             <div class="ai-says" style="margin-top: 20px"><span title="I don't always talk bullshit, but when I do, I'm confident" class="icon-link robot-icon"></span><em>AI says:</em><br />
                                 {{$img.AISays}}
                             </div>
-                            {{end}}
-
-                            {{if $img.Meta.GeoLabel}}
+                            {{end}}{{if and $img.Meta  $img.Meta.GeoLabel}}
                             <div style="margin-top: 20px"><span class="icon-link location-icon"></span>{{$img.Meta.GeoLabel}}</div>
                             {{end}}
                         </div>
@@ -205,6 +204,7 @@
     {{end}}
 
 
+    {{if not .IsBot}}
     <script>
         featured = {{.Featured}};
         loadAlbum({
@@ -226,6 +226,7 @@
         });
 
     </script>
+    {{end}}
 
     {{range $k, $a := .SubAlbums}}
         <h3 id="{{$a.Album.Name}}">{{if not $a.Album.Public}}
@@ -233,6 +234,7 @@
                      title="URL required to access this album, please share responsibly."></div>
             {{end}} <a href="/{{$a.Album.Name}}/">{{$a.Album.Title}}</a></h3>
         <div id="a{{$a.Album.Hash}}" class="grid preview"></div>
+        {{if not $.IsBot}}
         <script>
             loadAlbum({
                 albumName: "{{$a.Album.Name}}",
@@ -243,13 +245,13 @@
                 albumData: {{$a}},
             });
         </script>
+        {{end}}
     {{end}}
 
+    {{if not .IsBot}}
     <script>
-        {{if not .IsBot}}
         collectStats({album: '{{.Name}}'});
         collectThumbVisibility();
-        {{end}}
         {{if or .IsAdmin .CollabKey}}
         enableDragNDropImagesReordering("{{.Name}}");
 
@@ -270,10 +272,14 @@
         }
         {{end}}
     </script>
+    {{end}}
+
 </div>
 
 {{.Footer}}
 
+{{if not .IsBot}}
 <script src="/static/menu.js"></script>
+{{end}}
 </body>
 </html>
