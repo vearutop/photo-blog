@@ -41,7 +41,10 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 		deps.StatsTracker().Add(ctx, "show_thumb_grid", 1)
 		deps.CtxdLogger().Info(ctx, "showing thumb grid", "req", in.Request().Header, "name", in.Name, "cols", in.Cols, "rows", in.Rows)
 
-		body, err := deps.MapTilesCache().Get(ctx, []byte("grid/"+in.Name+"/"+strconv.Itoa(in.Cols)+"/"+strconv.Itoa(in.Rows)),
+		c := deps.MapTilesCache()
+
+		body, err := c.Get(cache.WithTTL(ctx, time.Hour, false),
+			[]byte("grid/"+in.Name+"/"+strconv.Itoa(in.Cols)+"/"+strconv.Itoa(in.Rows)),
 			func(ctx context.Context) ([]byte, error) {
 				images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.Name))
 				if err != nil {

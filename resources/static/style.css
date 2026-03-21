@@ -20,6 +20,7 @@ body.dark-mode {
 .thumb, a.image {
     width: 300px;
     height: 200px;
+    vertical-align: middle;
 }
 
 .thumb.landscape img {

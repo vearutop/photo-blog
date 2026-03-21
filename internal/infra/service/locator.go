@@ -87,8 +87,8 @@ type Locator struct {
 
 	ImagePrompterInstance *multi.ImagePrompter
 
-	CityLoc netrie.SafeIPLookuper
-	ASNBot  netrie.SafeIPLookuper
+	CityLoc netrie.IPLookuper
+	ASNBot  netrie.IPLookuper
 
 	dbInstances []dbcon.DBInstance
 }

@@ -36,7 +36,7 @@ func VisitorFromContext(ctx context.Context) uniq.Hash {
 	return 0
 }
 
-func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.StatsRepository, asnBot netrie.SafeIPLookuper) func(handler http.Handler) http.Handler {
+func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.StatsRepository, asnBot netrie.IPLookuper) func(handler http.Handler) http.Handler {
 	recentVisitors := cache.NewFailoverOf[uniq.Hash](func(cfg *cache.FailoverConfigOf[uniq.Hash]) {
 		cfg.BackendConfig.TimeToLive = 15 * time.Minute
 	})

@@ -45,10 +45,10 @@ type StatsRepository struct {
 	recentNames    map[uniq.Hash]bool
 	isAdmin        map[uniq.Hash]bool
 
-	cityLoc netrie.SafeIPLookuper
+	cityLoc netrie.IPLookuper
 }
 
-func NewStats(st *sqluct.Storage, l ctxd.Logger, cityLoc netrie.SafeIPLookuper) (*StatsRepository, error) {
+func NewStats(st *sqluct.Storage, l ctxd.Logger, cityLoc netrie.IPLookuper) (*StatsRepository, error) {
 	s := &StatsRepository{
 		l:              l,
 		st:             st,
@@ -640,7 +640,7 @@ func (s *StatsRepository) DailyTotal(ctx context.Context, minDate, maxDate time.
 	q := s.st.SelectStmt(dailyPageStatsTable, nil).
 		Columns(s.ref.Cols(s.dps)...).
 		Columns(s.ref.Fmt("GROUP_CONCAT(%s) AS visitors", &s.pv.Visitor)).
-		LeftJoin(s.ref.Fmt("%s ON %s = %s AND %s = %s", s.pv,
+		InnerJoin(s.ref.Fmt("%s ON %s = %s AND %s = %s", s.pv,
 			&s.dps.Hash, &s.pv.Page,
 			&s.dps.Date, &s.pv.Date)).
 		Where(squirrel.GtOrEq{s.ref.Ref(&s.dps.Date): dateTs(minDate)}).
