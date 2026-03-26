@@ -38,7 +38,7 @@ require (
 	github.com/swaggest/swgui v1.8.5
 	github.com/swaggest/usecase v1.3.1
 	github.com/tkrajina/gpxgo v1.4.0
-	github.com/tus/tusd/v2 v2.9.2
+	github.com/tus/tusd/v2 v2.8.0
 	github.com/vearutop/dbcon v0.4.9
 	github.com/vearutop/httpzip v0.1.2
 	github.com/vearutop/image-prompt v0.1.1
