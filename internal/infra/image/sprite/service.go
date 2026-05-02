@@ -31,13 +31,16 @@ const (
 	defaultBoxWidth  = 300
 	defaultBoxHeight = 200
 	defaultChunkSize = 20
+	markerChunkSize  = 100
 	defaultVersion   = "v1"
+	markerBoxSize    = 40
 )
 
 type Image struct {
 	Hash   uniq.Hash
 	Width  int64
 	Height int64
+	HasGPS bool
 }
 
 type Manifest struct {
@@ -45,6 +48,7 @@ type Manifest struct {
 	Revision  string                `json:"revision"`
 	Version   string                `json:"version"`
 	Images    map[string]ImageThumb `json:"images"`
+	Markers   map[string]ImageThumb `json:"markers,omitempty"`
 }
 
 type ImageThumb struct {
@@ -128,7 +132,7 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, images []Image) 
 
 	manifest, err := s.manifestBackend.Read(ctx, key)
 	if err == nil {
-		if !validManifest(manifest) {
+		if !validManifest(manifest, images) {
 			s.ensureBuild(album, images)
 
 			return Manifest{}, false, nil
@@ -202,6 +206,19 @@ func (s *Service) View(manifest Manifest) map[string]*ViewItem {
 	return items
 }
 
+func (s *Service) MarkerData(manifest Manifest) map[string]ImageThumb {
+	if len(manifest.Markers) == 0 {
+		return nil
+	}
+
+	res := make(map[string]ImageThumb, len(manifest.Markers))
+	for k, v := range manifest.Markers {
+		res[k] = v
+	}
+
+	return res
+}
+
 func (s *Service) Open(ctx context.Context, key string) (blob.Entry, error) {
 	return s.blobStore.Read(ctx, []byte(key))
 }
@@ -226,6 +243,7 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 		Revision:  s.revision(album),
 		Version:   s.version,
 		Images:    make(map[string]ImageThumb, len(images)),
+		Markers:   make(map[string]ImageThumb),
 	}
 
 	buckets := make(map[bucketKey][]Image)
@@ -249,13 +267,13 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 			}
 
 			chunk := bucketImages[start:end]
-			chunk1x := s.chunkKey(1, key, chunk)
-			chunk2x := s.chunkKey(2, key, chunk)
+			chunk1x := s.chunkKey(1, key, chunk, composeFit)
+			chunk2x := s.chunkKey(2, key, chunk, composeFit)
 
-			if err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, byHash); err != nil {
+			if err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, byHash, composeFit); err != nil {
 				return Manifest{}, fmt.Errorf("build sprite chunk 1x: %w", err)
 			}
-			if err := s.ensureChunk(ctx, chunk2x, key, 2, chunk, byHash); err != nil {
+			if err := s.ensureChunk(ctx, chunk2x, key, 2, chunk, byHash, composeFit); err != nil {
 				return Manifest{}, fmt.Errorf("build sprite chunk 2x: %w", err)
 			}
 
@@ -274,17 +292,28 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 		}
 	}
 
+	markerImages := make([]Image, 0)
+	for _, img := range images {
+		if img.HasGPS {
+			markerImages = append(markerImages, img)
+		}
+	}
+
+	if err := s.buildMarkerSprites(ctx, markerImages, byHash, &manifest); err != nil {
+		return Manifest{}, err
+	}
+
 	return manifest, nil
 }
 
-func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, byHash map[uniq.Hash]photo.Image) error {
+func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, byHash map[uniq.Hash]photo.Image, mode composeMode) error {
 	if _, err := s.blobStore.Read(ctx, []byte(key)); err == nil {
 		return nil
 	} else if err != cache.ErrNotFound {
 		return fmt.Errorf("read sprite blob: %w", err)
 	}
 
-	rasterScale := spriteRasterScale(bucket, scale)
+	rasterScale := spriteRasterScale(bucket, scale, mode)
 	cellW := int(math.Round(float64(bucket.Width) * rasterScale))
 	cellH := int(math.Round(float64(bucket.Height) * rasterScale))
 	bg := image.NewRGBA(image.Rect(0, 0, cellW, cellH*len(chunk)))
@@ -295,7 +324,7 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 			return fmt.Errorf("missing source image %s", item.Hash)
 		}
 
-		size := spriteThumbSize(bucket, scale)
+		size := spriteThumbSize(bucket, scale, mode)
 		th, err := s.thumbnailer.Thumbnail(ctx, src, size)
 		if err != nil {
 			return fmt.Errorf("get thumbnail %s %s: %w", item.Hash, size, err)
@@ -306,9 +335,8 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 			return fmt.Errorf("decode thumbnail %s %s: %w", item.Hash, size, err)
 		}
 
-		bounds := j.Bounds()
 		y := idx * cellH
-		xdraw.CatmullRom.Scale(bg, image.Rect(0, y, cellW, y+cellH), j, bounds, xdraw.Src, nil)
+		drawThumb(bg, image.Rect(0, y, cellW, y+cellH), j, mode)
 	}
 
 	var buf bytes.Buffer
@@ -329,6 +357,43 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 	return nil
 }
 
+func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, byHash map[uniq.Hash]photo.Image, manifest *Manifest) error {
+	if len(images) == 0 {
+		return nil
+	}
+
+	bucket := bucketKey{Width: markerBoxSize, Height: markerBoxSize}
+	for start := 0; start < len(images); start += markerChunkSize {
+		end := start + markerChunkSize
+		if end > len(images) {
+			end = len(images)
+		}
+
+		chunk := images[start:end]
+		chunk1x := s.chunkKey(1, bucket, chunk, composeCover)
+		chunk2x := chunk1x
+
+		if err := s.ensureChunk(ctx, chunk1x, bucket, 1, chunk, byHash, composeCover); err != nil {
+			return fmt.Errorf("build marker sprite chunk 1x: %w", err)
+		}
+
+		bgHeight := len(chunk) * bucket.Height
+		for idx, img := range chunk {
+			manifest.Markers[img.Hash.String()] = ImageThumb{
+				Chunk1x:          chunk1x,
+				Chunk2x:          chunk2x,
+				Width:            bucket.Width,
+				Height:           bucket.Height,
+				OffsetY:          idx * bucket.Height,
+				BackgroundWidth:  bucket.Width,
+				BackgroundHeight: bgHeight,
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) manifestKey(album photo.Album) []byte {
 	return []byte("album-sprite-manifest:" + album.Hash.String() + ":" + s.revision(album) + ":" + s.version)
 }
@@ -337,10 +402,12 @@ func (s *Service) revision(album photo.Album) string {
 	return fmt.Sprintf("%x", album.UpdatedAt.UTC().UnixNano())
 }
 
-func (s *Service) chunkKey(scale int, bucket bucketKey, chunk []Image) string {
+func (s *Service) chunkKey(scale int, bucket bucketKey, chunk []Image, mode composeMode) string {
 	h := sha1.New()
 	_, _ = io.WriteString(h, s.version)
 	_, _ = io.WriteString(h, fmt.Sprintf(":%d:%d:%d", scale, bucket.Width, bucket.Height))
+	_, _ = io.WriteString(h, ":"+string(spriteThumbSize(bucket, scale, mode)))
+	_, _ = io.WriteString(h, fmt.Sprintf(":rs%.2f:m%d", spriteRasterScale(bucket, scale, mode), mode))
 
 	for _, img := range chunk {
 		_, _ = io.WriteString(h, ":"+img.Hash.String())
@@ -389,7 +456,11 @@ func imageHashes(images []Image) []uniq.Hash {
 	return hashes
 }
 
-func spriteThumbSize(bucket bucketKey, scale int) photo.ThumbSize {
+func spriteThumbSize(bucket bucketKey, scale int, mode composeMode) photo.ThumbSize {
+	if mode == composeCover && bucket.Width == markerBoxSize && bucket.Height == markerBoxSize {
+		return "200h"
+	}
+
 	if bucket.Width < defaultBoxWidth {
 		if scale == 2 {
 			return "600w"
@@ -405,8 +476,12 @@ func spriteThumbSize(bucket bucketKey, scale int) photo.ThumbSize {
 	return "300w"
 }
 
-func spriteRasterScale(bucket bucketKey, scale int) float64 {
-	size := spriteThumbSize(bucket, scale)
+func spriteRasterScale(bucket bucketKey, scale int, mode composeMode) float64 {
+	if mode == composeCover && bucket.Width == markerBoxSize && bucket.Height == markerBoxSize {
+		return 2
+	}
+
+	size := spriteThumbSize(bucket, scale, mode)
 	w, h, err := size.WidthHeight()
 	if err != nil {
 		return float64(scale)
@@ -421,6 +496,50 @@ func spriteRasterScale(bucket bucketKey, scale int) float64 {
 	}
 
 	return float64(scale)
+}
+
+func drawThumb(dst *image.RGBA, dr image.Rectangle, src image.Image, mode composeMode) {
+	sr := src.Bounds()
+
+	if mode == composeCover {
+		sr = cropRectForAspect(sr, float64(dr.Dx())/float64(dr.Dy()))
+	}
+
+	xdraw.CatmullRom.Scale(dst, dr, src, sr, xdraw.Src, nil)
+}
+
+func cropRectForAspect(bounds image.Rectangle, targetAspect float64) image.Rectangle {
+	if targetAspect <= 0 {
+		return bounds
+	}
+
+	w := float64(bounds.Dx())
+	h := float64(bounds.Dy())
+	srcAspect := w / h
+
+	if math.Abs(srcAspect-targetAspect) < 0.0001 {
+		return bounds
+	}
+
+	if srcAspect > targetAspect {
+		newW := int(math.Round(h * targetAspect))
+		if newW <= 0 || newW > bounds.Dx() {
+			return bounds
+		}
+
+		left := bounds.Min.X + (bounds.Dx()-newW)/2
+
+		return image.Rect(left, bounds.Min.Y, left+newW, bounds.Max.Y)
+	}
+
+	newH := int(math.Round(w / targetAspect))
+	if newH <= 0 || newH > bounds.Dy() {
+		return bounds
+	}
+
+	top := bounds.Min.Y + (bounds.Dy()-newH)/2
+
+	return image.Rect(bounds.Min.X, top, bounds.Max.X, top+newH)
 }
 
 func decodeThumb(th photo.Thumb) (image.Image, error) {
@@ -442,7 +561,7 @@ func KeyFromPath(path string) string {
 	return strings.TrimSuffix(path, ".jpg")
 }
 
-func validManifest(m Manifest) bool {
+func validManifest(m Manifest, images []Image) bool {
 	if m.Version == "" || len(m.Images) == 0 {
 		return false
 	}
@@ -453,5 +572,27 @@ func validManifest(m Manifest) bool {
 		}
 	}
 
+	needMarkers := false
+	for _, img := range images {
+		if img.HasGPS {
+			needMarkers = true
+			marker, ok := m.Markers[img.Hash.String()]
+			if !ok || marker.Chunk1x == "" || marker.Chunk2x == "" || marker.Width <= 0 || marker.Height <= 0 || marker.BackgroundWidth <= 0 || marker.BackgroundHeight <= 0 {
+				return false
+			}
+		}
+	}
+
+	if needMarkers && len(m.Markers) == 0 {
+		return false
+	}
+
 	return true
 }
+
+type composeMode int
+
+const (
+	composeFit composeMode = iota
+	composeCover
+)

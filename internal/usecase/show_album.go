@@ -77,12 +77,13 @@ type albumPageData struct {
 	AlbumData getAlbumOutput
 	Timeline  []albumTimelineItem
 
-	ShowMap         bool
-	ShowEXIFPreview bool
-	ShowAISays      bool
-	PreRender       bool
-	HasPanos        bool
-	ThumbSprites    map[string]*sprite.ViewItem
+	ShowMap          bool
+	ShowEXIFPreview  bool
+	ShowAISays       bool
+	PreRender        bool
+	HasPanos         bool
+	ThumbSprites     map[string]*sprite.ViewItem
+	MapMarkerSprites map[string]sprite.ImageThumb
 }
 
 // ShowAlbum creates use case interactor to show album.
@@ -184,6 +185,7 @@ func ShowAlbum(deps interface {
 					Hash:   h,
 					Width:  img.Width,
 					Height: img.Height,
+					HasGPS: img.Gps != nil,
 				})
 			}
 		}
@@ -193,6 +195,7 @@ func ShowAlbum(deps interface {
 				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
 			} else if ok {
 				d.ThumbSprites = deps.AlbumSprites().View(manifest)
+				d.MapMarkerSprites = deps.AlbumSprites().MarkerData(manifest)
 			}
 		}
 

@@ -11,6 +11,11 @@ body.dark-mode {
     border-radius: 20%;
 }
 
+.map-marker-icon {
+    background: transparent;
+    border: none;
+}
+
 .thumb {
     display: inline-block;
     text-align: center;

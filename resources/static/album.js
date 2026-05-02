@@ -77,6 +77,7 @@ var currentImage = {
  * @property {Boolean} showAISays - show AI says in image view
  * @property {Boolean} showEXIFPreview - show EXIF preview in image view
  * @property {Boolean} preRendered - server rendered HTML exists for images
+ * @property {Object.<string, Object>} markerSprites - optional marker sprite data by image hash
  */
 
 
@@ -116,6 +117,10 @@ function loadAlbum(params) {
 
     if (!params.baseUrl) {
         params.baseUrl = "/" + params.albumName
+    }
+
+    if (!params.markerSprites) {
+        params.markerSprites = {}
     }
 
     /**
@@ -190,6 +195,37 @@ function loadAlbum(params) {
                     height: ""
                 })
             }
+        })
+    }
+
+    function markerSpriteStyle(markerSprite) {
+        var oneX = "/thumb-sprite/" + markerSprite.chunk_1x + ".jpg"
+        var twoX = "/thumb-sprite/" + markerSprite.chunk_2x + ".jpg"
+
+        return 'width:' + markerSprite.width + 'px;height:' + markerSprite.height + 'px;' +
+            'background-image:url(\'' + oneX + '\');' +
+            'background-image:-webkit-image-set(url(\'' + oneX + '\') 1x, url(\'' + twoX + '\') 2x);' +
+            'background-image:image-set(url(\'' + oneX + '\') 1x, url(\'' + twoX + '\') 2x);' +
+            'background-position:0 -' + markerSprite.offset_y + 'px;' +
+            'background-repeat:no-repeat;' +
+            'background-size:' + markerSprite.background_width + 'px ' + markerSprite.background_height + 'px;' +
+            'display:block;border-radius:20%;'
+    }
+
+    function markerIconFor(hash, fallbackUrl, fallbackSize) {
+        var markerSprite = params.markerSprites[hash]
+        if (!markerSprite) {
+            return L.icon({
+                iconUrl: fallbackUrl,
+                iconSize: [fallbackSize],
+                className: 'image-marker'
+            })
+        }
+
+        return L.divIcon({
+            className: 'map-marker-icon',
+            iconSize: [markerSprite.width, markerSprite.height],
+            html: '<span class="image-marker" style="' + markerSpriteStyle(markerSprite) + '"></span>'
         })
     }
 
@@ -815,11 +851,7 @@ function loadAlbum(params) {
 
                 images.push(L.marker([m.latitude, m.longitude],
                     {
-                        icon: L.icon({
-                            iconUrl: thumbBase + '/' + thumbSize + '/' + m.hash + '.jpg',
-                            iconSize: [40],
-                            className: 'image-marker'
-                        })
+                        icon: markerIconFor(m.hash, thumbBase + '/' + thumbSize + '/' + m.hash + '.jpg', 40)
                     })
                     .bindPopup(
                         L.popup()
