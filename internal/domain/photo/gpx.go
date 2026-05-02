@@ -46,8 +46,12 @@ type Gpx struct {
 	Settings sqluct.JSON[GpxSettings] `db:"settings"`
 }
 
+func (g *Gpx) Load() (*gpx.GPX, error) {
+	return gpx.ParseFile(g.Path)
+}
+
 func (g *Gpx) Index() error {
-	gpxFile, err := gpx.ParseFile(g.Path)
+	gpxFile, err := g.Load()
 	if err != nil {
 		return err
 	}
