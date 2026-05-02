@@ -22,6 +22,8 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/txt"
+
+	"github.com/vearutop/gpxt/geotag"
 )
 
 type getAlbumImagesDeps interface {
@@ -284,6 +286,31 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 
 	textReplaces := append(deps.Settings().Appearance().TextReplaces, albumSettings.TextReplaces...)
 
+	var geoIdx *geotag.Index
+
+	// Prepare GeoTag index.
+	if len(album.Settings.GpxTracksHashes) > 0 {
+		geoIdx = geotag.NewIndex(geotag.Options{
+			Interpolate: true,
+		})
+
+		gpxFiles, err := deps.PhotoGpxFinder().FindByHashes(ctx, album.Settings.GpxTracksHashes...)
+		if err != nil {
+			return fmt.Errorf("find gpx tracks: %w", err)
+		}
+
+		for _, gpx := range gpxFiles {
+			g, err := gpx.Load()
+			if err != nil {
+				return fmt.Errorf("load gpx: %w", err)
+			}
+
+			geoIdx.AddGPX(g)
+		}
+
+		geoIdx.Build()
+	}
+
 	for _, i := range images {
 		// Skip unprocessed images.
 		if !i.Ready() {
@@ -307,6 +334,18 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 			if !privacy.HideGeoPosition {
 				if gps, ok := gpsData[i.Hash]; ok {
 					img.Gps = &gps
+				} else if geoIdx != nil && i.TakenAt != nil {
+					if p, ok := geoIdx.Lookup(*i.TakenAt); ok {
+						var gps photo.Gps
+
+						gps.Hash = i.Hash
+						gps.Latitude = float64(p.Lat)
+						gps.Longitude = float64(p.Lon)
+						gps.GpsTime = *i.TakenAt
+						gps.Altitude = float64(p.Alt)
+
+						img.Gps = &gps
+					}
 				}
 			}
 
