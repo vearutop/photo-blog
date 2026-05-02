@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/bool64/brick/opencensus"
+	"github.com/bool64/brick/telemetry"
 	"github.com/bool64/ctxd"
 )
 
@@ -76,7 +76,7 @@ func (r *Recognizer) Recognize(ctx context.Context, jpg io.ReadCloser) (_ []GoFa
 		<-r.sem
 	}()
 
-	ctx, finish := opencensus.AddSpan(ctx)
+	ctx, finish := telemetry.AddSpan(ctx)
 	defer finish(&err)
 
 	req := UploadImageRequest{}

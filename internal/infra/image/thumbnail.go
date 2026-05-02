@@ -12,12 +12,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bool64/brick/opencensus"
+	"github.com/bool64/brick/telemetry"
 	"github.com/bool64/ctxd"
 	"github.com/nfnt/resize"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/ultrahdr"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type ThumbnailerDeps interface {
@@ -125,7 +125,7 @@ func (t *Thumbnailer) resizeJPEG(ctx context.Context, i photo.Image, w, h uint, 
 }
 
 func resizeUltraHDR(ctx context.Context, i photo.Image, w, h uint, buf io.Writer) (err error) {
-	ctx, finish := opencensus.AddSpan(ctx)
+	ctx, finish := telemetry.AddSpan(ctx)
 	defer finish(&err)
 
 	f, err := os.Open(i.Path)
@@ -185,9 +185,9 @@ func (t *Thumbnailer) Thumbnail(ctx context.Context, i photo.Image, size photo.T
 	ctx = ctxd.AddFields(ctx, "img", i.Path, "hash", i.Hash, "size", size)
 	t.deps.CtxdLogger().Debug(ctx, "starting thumb")
 
-	ctx, finish := opencensus.AddSpan(ctx,
-		trace.StringAttribute("path", i.Path),
-		trace.StringAttribute("size", string(size)),
+	ctx, finish := telemetry.AddSpan(ctx,
+		attribute.String("path", i.Path),
+		attribute.String("size", string(size)),
 	)
 	defer finish(&err)
 
@@ -314,7 +314,7 @@ type Resizer struct {
 }
 
 func loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
-	ctx, finish := opencensus.AddSpan(ctx)
+	ctx, finish := telemetry.AddSpan(ctx)
 	defer finish(&err)
 
 	f, err := os.Open(fn)
@@ -329,7 +329,7 @@ func loadJPEG(ctx context.Context, fn string) (img image.Image, err error) {
 }
 
 func loadJPEGFromURL(ctx context.Context, u string) (img image.Image, err error) {
-	ctx, finish := opencensus.AddSpan(ctx)
+	ctx, finish := telemetry.AddSpan(ctx)
 	defer finish(&err)
 
 	resp, err := http.Get(u)
@@ -352,7 +352,7 @@ func thumbJPEG(ctx context.Context, t photo.Thumb) (image.Image, error) {
 }
 
 func (r *Resizer) resizeJPEG(ctx context.Context, img image.Image, dst io.Writer, width, height uint) (err error) {
-	ctx, finish := opencensus.AddSpan(ctx)
+	ctx, finish := telemetry.AddSpan(ctx)
 	defer finish(&err)
 
 	m := resize.Resize(width, height, img, r.Interp)

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bool64/brick/opencensus"
+	"github.com/bool64/brick/telemetry"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
 	blurhash "github.com/buckket/go-blurhash"
@@ -29,7 +29,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/qlite"
 	"github.com/vearutop/ultrahdr"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type indexerDeps interface {
@@ -142,7 +142,7 @@ func ensureImageDimensions(ctx context.Context, img *photo.Image, flags photo.In
 }
 
 func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
-	ctx, done := opencensus.AddSpan(ctx, trace.StringAttribute("path", img.Path))
+	ctx, done := telemetry.AddSpan(ctx, attribute.String("path", img.Path))
 	defer done(&err)
 
 	ctx = ctxd.AddFields(ctx, "img", img)

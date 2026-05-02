@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bool64/brick/opencensus"
+	"github.com/bool64/brick/telemetry"
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -229,7 +229,7 @@ func (ic *ImageDescriber) ensureFetch(req *request) {
 }
 
 func (ic *ImageDescriber) fetch(req *request) (err error) {
-	_, done := opencensus.AddSpan(context.Background())
+	_, done := telemetry.AddSpan(context.Background())
 	defer done(&err)
 
 	cfg := ic.cfg()

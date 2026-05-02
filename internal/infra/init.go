@@ -13,7 +13,6 @@ import (
 
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
-	"github.com/bool64/brick/jaeger"
 	"github.com/bool64/cache"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
@@ -66,10 +65,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = jaeger.Setup(cfg.Jaeger, l.BaseLocator); err != nil {
 		return nil, err
 	}
 
