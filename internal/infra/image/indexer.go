@@ -39,6 +39,7 @@ type indexerDeps interface {
 
 	PhotoThumbnailer() photo.Thumbnailer
 
+	PhotoImageFinder() uniq.Finder[photo.Image]
 	PhotoImageUpdater() uniq.Updater[photo.Image]
 
 	PhotoExifEnsurer() uniq.Ensurer[photo.Exif]
@@ -144,6 +145,12 @@ func ensureImageDimensions(ctx context.Context, img *photo.Image, flags photo.In
 func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.IndexingFlags) (err error) {
 	ctx, done := telemetry.AddSpan(ctx, attribute.String("path", img.Path))
 	defer done(&err)
+
+	if current, findErr := i.deps.PhotoImageFinder().FindByHash(ctx, img.Hash); findErr == nil {
+		img = current
+	} else if !errors.Is(findErr, status.NotFound) {
+		i.deps.CtxdLogger().Warn(ctx, "failed to reload image before indexing", "error", findErr, "hash", img.Hash)
+	}
 
 	ctx = ctxd.AddFields(ctx, "img", img)
 
