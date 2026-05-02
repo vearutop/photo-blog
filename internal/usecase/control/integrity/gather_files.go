@@ -1,4 +1,4 @@
-package control
+package integrity
 
 import (
 	"context"
@@ -252,8 +252,9 @@ func GatherFiles(deps gatherFilesDeps) usecase.Interactor {
 		return nil
 	})
 
-	u.SetTags("Album")
+	u.SetTags("Integrity")
 	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
+	u.SetDescription("Moves album files from external directories into their canonical location.")
 
 	return u
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/webdav"
 	"github.com/vearutop/photo-blog/internal/usecase"
 	"github.com/vearutop/photo-blog/internal/usecase/control"
+	"github.com/vearutop/photo-blog/internal/usecase/control/integrity"
 	"github.com/vearutop/photo-blog/internal/usecase/control/settings"
 	"github.com/vearutop/photo-blog/internal/usecase/help"
 	"github.com/vearutop/photo-blog/internal/usecase/stats"
@@ -161,8 +162,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/albums.json", usecase.GetAlbums(deps))
 		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 		s.Post("/index-remote", control.IndexRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
-		s.Post("/cleanup-remote", control.CleanupRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
-		s.Post("/gather/{name}", control.GatherFiles(deps))
+		s.Post("/cleanup-remote", integrity.CleanupRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
+		s.Post("/gather/{name}", integrity.GatherFiles(deps))
 
 		s.Post("/album/{name}", control.AddToAlbum(deps))
 

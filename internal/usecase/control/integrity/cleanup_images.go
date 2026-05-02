@@ -1,4 +1,4 @@
-package control
+package integrity
 
 import (
 	"context"
@@ -16,7 +16,11 @@ func CleanupRemote(deps interface {
 	PhotoAlbumImageFinder() photo.AlbumImageFinder
 },
 ) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, input struct{}, output *struct{}) error {
+	type cleanupRequest struct {
+		DryRun bool `query:"dry_run" description:"Do not move files, just print what would be done."`
+	}
+
+	u := usecase.NewInteractor(func(ctx context.Context, input cleanupRequest, output *struct{}) error {
 		images, err := deps.PhotoAlbumImageFinder().FindRemoteImages(ctx)
 		if err != nil {
 			return err
@@ -79,7 +83,6 @@ func CleanupRemote(deps interface {
 				moved++
 				deps.CtxdLogger().Info(ctx, "remote image moved to check", "img", i)
 			}
-
 		}
 
 		deps.CtxdLogger().Info(ctx, "cleanup remote images",
@@ -93,6 +96,7 @@ func CleanupRemote(deps interface {
 		return nil
 	})
 
+	u.SetTags("Integrity")
 	u.SetDescription("Cleanup iterates remote images moves existing local copies to 'check' directory.")
 
 	return u
