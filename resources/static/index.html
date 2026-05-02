@@ -94,6 +94,13 @@
         </div>
     </div>
 
+    {{if not .IsBot}}
+    <script src="/static/menu.js"></script>
+    <script>
+        collectStats({main: 1});
+    </script>
+    {{end}}
+
     <h1 class="main-title">{{.Title}}</h1>
 
     <div id="exif-container" class="exif"></div>
@@ -130,7 +137,6 @@
 
     {{if not .IsBot}}
     <script>
-        collectStats({main: 1});
         collectThumbVisibility();
     </script>
     {{end}}
@@ -138,6 +144,5 @@
 
 {{.Footer}}
 
-<script src="/static/menu.js"></script>
 </body>
 </html>

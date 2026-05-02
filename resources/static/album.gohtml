@@ -120,6 +120,13 @@
         </div>
     </div>
 
+    {{if not .IsBot}}
+    <script src="/static/menu.js"></script>
+    <script>
+        collectStats({album: '{{.Name}}'});
+    </script>
+    {{end}}
+
     <h1 class="main-title" id="album-title" style="display: inline-block; margin-right: 50px;">
         {{if not .Public}}
             <div class="ctrl-btn lock-icon" title="URL required to access this page, please share responsibly."></div>
@@ -250,8 +257,8 @@
 
     {{if not .IsBot}}
     <script>
-        collectStats({album: '{{.Name}}'});
         collectThumbVisibility();
+
         {{if or .IsAdmin .CollabKey}}
         enableDragNDropImagesReordering("{{.Name}}");
 
@@ -278,8 +285,5 @@
 
 {{.Footer}}
 
-{{if not .IsBot}}
-<script src="/static/menu.js"></script>
-{{end}}
 </body>
 </html>
