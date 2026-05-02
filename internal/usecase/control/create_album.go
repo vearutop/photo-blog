@@ -2,6 +2,7 @@ package control
 
 import (
 	"context"
+	"time"
 
 	"github.com/bool64/ctxd"
 	"github.com/bool64/stats"
@@ -26,6 +27,7 @@ func CreateAlbum(deps createAlbumDeps) usecase.Interactor {
 		deps.CtxdLogger().Important(ctx, "creating album", "name", in.Name)
 
 		in.Hash = uniq.StringHash(in.Name)
+		in.UpdatedAt = time.Now()
 
 		*out, err = deps.PhotoAlbumEnsurer().Ensure(ctx, in)
 
