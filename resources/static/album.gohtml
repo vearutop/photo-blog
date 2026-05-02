@@ -169,10 +169,17 @@
                            class="image{{if lt $i 4}} img{{$i}}{{end}}{{if $landscape}} landscape{{else}} portrait{{end}}"
                            href="{{if $.AlbumData.HideOriginal}}#{{else}}{{$.ImageBaseHref}}/{{$img.Hash}}.jpg{{end}}"
                            target="_blank" data-pswp-width="{{$img.Width}}" data-pswp-height="{{$img.Height}}">
+                        {{if $sp := index $.ThumbSprites $img.Hash}}
+                        <span class="thumb{{if $landscape}} landscape{{else}} portrait{{end}}" aria-describedby="caption{{$img.Hash}}">
+                            <canvas id="bh-{{$img.Hash}}" width="32" height="32"></canvas>
+                            <span class="thumb-sprite" data-width="{{$sp.BoxWidth}}" data-height="{{$sp.BoxHeight}}" data-offset-y="{{$sp.OffsetY}}" data-background-width="{{$sp.BackgroundWidth}}" data-background-height="{{$sp.BackgroundHeight}}" style="{{$sp.Style}}"></span>
+                        </span>
+                        {{else}}
                         <span class="thumb{{if $landscape}} landscape{{else}} portrait{{end}}">
                             <img alt="{{$img.Name}}" src="{{$.ThumbBaseHref}}/300w/{{$img.Hash}}.jpg"
                                  srcset="{{$.ThumbBaseHref}}/300w/{{$img.Hash}}.jpg 300w, {{$.ThumbBaseHref}}/600w/{{$img.Hash}}.jpg 600w" aria-describedby="caption{{$img.Hash}}"/>
                         </span>
+                        {{end}}
                         </a><div class="pswp-caption-content" data-hash="{{$img.Hash}}" id="caption{{$img.Hash}}" style="display: none">
                             {{if $img.DescriptionHTML}}
                             <div class="caption-desc">{{$img.DescriptionHTML}}</div>

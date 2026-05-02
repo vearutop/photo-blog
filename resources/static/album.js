@@ -134,6 +134,65 @@ function loadAlbum(params) {
         imageBase = "/image"
     }
 
+    function classicThumbHTML(img, landscape, aspectRatio) {
+        return '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
+            '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" />'
+    }
+
+    function updateResponsiveSpriteThumbs() {
+        var mobileFullWidthThumbs = window.matchMedia && window.matchMedia("(max-width: 576px)").matches
+
+        $(params.gallery).find(".thumb-sprite").each(function () {
+            var sprite = $(this)
+            var thumb = sprite.closest(".thumb")
+            var canvas = thumb.find("canvas")
+
+            var baseWidth = parseFloat(sprite.attr("data-width")) || 0
+            var baseHeight = parseFloat(sprite.attr("data-height")) || 0
+            var offsetY = parseFloat(sprite.attr("data-offset-y")) || 0
+            var bgWidth = parseFloat(sprite.attr("data-background-width")) || 0
+            var bgHeight = parseFloat(sprite.attr("data-background-height")) || 0
+
+            if (!baseWidth || !baseHeight || !bgWidth || !bgHeight) {
+                return
+            }
+
+            if (mobileFullWidthThumbs) {
+                var scaledWidth = thumb.width()
+                if (!scaledWidth) {
+                    return
+                }
+
+                var scale = scaledWidth / baseWidth
+                var scaledHeight = Math.round(baseHeight * scale)
+
+                sprite.css({
+                    width: scaledWidth + "px",
+                    height: scaledHeight + "px",
+                    backgroundSize: Math.round(bgWidth * scale) + "px " + Math.round(bgHeight * scale) + "px",
+                    backgroundPositionY: "-" + Math.round(offsetY * scale) + "px"
+                })
+
+                canvas.css({
+                    width: scaledWidth + "px",
+                    height: scaledHeight + "px"
+                })
+            } else {
+                sprite.css({
+                    width: baseWidth + "px",
+                    height: baseHeight + "px",
+                    backgroundSize: bgWidth + "px " + bgHeight + "px",
+                    backgroundPositionY: "-" + offsetY + "px"
+                })
+
+                canvas.css({
+                    width: "",
+                    height: ""
+                })
+            }
+        })
+    }
+
 
     /**
      *
@@ -403,7 +462,10 @@ function loadAlbum(params) {
                 var aspectRatio = img.width / img.height
 
                 if (existing) {
-                    if (a.find("#bh-" + img.hash).length === 0) {
+                    var thumbEl = a.find(".thumb")
+                    var spriteEl = a.find(".thumb-sprite")
+                    var hasSpriteBackground = spriteEl.length > 0
+                    if (!hasSpriteBackground && a.find("#bh-" + img.hash).length === 0) {
                         a.find(".thumb").prepend('<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>')
                     }
                     var caption = $('.pswp-caption-content[data-hash="' + img.hash + '"]')
@@ -414,13 +476,12 @@ function loadAlbum(params) {
                     }
                 } else {
                     a.html('<div class="thumb' + landscape + '">' +
-                        '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-                        '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" /></div>')
+                        classicThumbHTML(img, landscape, aspectRatio) + '</div>')
 
                     $(params.gallery).append(a)
                     $(params.gallery).append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')
                 }
-                if (typeof img.blur_hash !== "undefined") {
+                if (typeof img.blur_hash !== "undefined" && document.getElementById('bh-' + img.hash)) {
                     blurHash(img.blur_hash, document.getElementById('bh-' + img.hash))
                 }
             } else {
@@ -436,6 +497,8 @@ function loadAlbum(params) {
                 }
             }
         }
+
+        updateResponsiveSpriteThumbs()
 
 
         if (chronoTexts && !params.preRendered) {
@@ -922,4 +985,6 @@ function loadAlbum(params) {
             alert("Failed: " + error.error)
         })
     }
+
+    window.addEventListener('resize', updateResponsiveSpriteThumbs)
 }

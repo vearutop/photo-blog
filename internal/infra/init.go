@@ -14,6 +14,7 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/brick/database"
 	"github.com/bool64/cache"
+	"github.com/bool64/cache/filecache"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
 	"github.com/swaggest/jsonform-go"
@@ -32,6 +33,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/image"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	"github.com/vearutop/photo-blog/internal/infra/queue"
 	"github.com/vearutop/photo-blog/internal/infra/schema"
 	"github.com/vearutop/photo-blog/internal/infra/service"
@@ -193,6 +195,30 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 	l.PhotoThumbnailerProvider = storage.NewThumbRepository(thumbStorage, image.NewThumbnailer(l), l.CtxdLogger())
+
+	spriteManifestStorage, err := setupStorage(l, "album-sprite-manifests", sqlitec.Migrations)
+	if err != nil {
+		return nil, err
+	}
+
+	spriteBlobStorage, err := filecache.NewStorage("album-sprite-blobs")
+	if err != nil {
+		return nil, fmt.Errorf("album sprite blobs: %w", err)
+	}
+
+	l.AlbumSpritesInstance = sprite.NewService(
+		l.CtxdLogger(),
+		l.StatsTracker(),
+		l.PhotoImageFinder(),
+		l.PhotoThumbnailer(),
+		sqlitec.NewDBMapOf[sprite.Manifest](spriteManifestStorage),
+		spriteBlobStorage,
+	)
+	l.OnShutdown("album-sprite-blobs", func() {
+		if err := l.AlbumSprites().Close(); err != nil {
+			l.CtxdLogger().Error(context.Background(), "failed to close album sprite storage", "error", err)
+		}
+	})
 
 	exifRepo := storage.NewExifRepository(l.Storage)
 	l.PhotoExifFinderProvider = exifRepo

@@ -26,6 +26,8 @@ github.com/bool64/brick v0.3.5-0.20260421224619-14d56e09708e h1:w1uG8k0D2mmks0Uk
 github.com/bool64/brick v0.3.5-0.20260421224619-14d56e09708e/go.mod h1:o69EwrHgzjZdqGj5fSh6WAph2/MdZpNVGAUVslQcnjU=
 github.com/bool64/cache v0.4.9 h1:uLwrRLKCAHFDsP2BS8nHcy0hMi8bwIUsDXBxDUHPnb0=
 github.com/bool64/cache v0.4.9/go.mod h1:10SzDo9UAaurdUz0tJo48X4G6iSmevbm87M3tD0OerU=
+github.com/bool64/cache v0.4.10 h1:lkuttzbMbKUvyMaLFnf7w+I8PxIIwBb1zVuMmjL+RnY=
+github.com/bool64/cache v0.4.10/go.mod h1:10SzDo9UAaurdUz0tJo48X4G6iSmevbm87M3tD0OerU=
 github.com/bool64/ctxd v1.2.1 h1:hARFteq0zdn4bwfmxLhak3fXFuvtJVKDH2X29VV/2ls=
 github.com/bool64/ctxd v1.2.1/go.mod h1:ZG6QkeGVLTiUl2mxPpyHmFhDzFZCyocr9hluBV3LYuc=
 github.com/bool64/dbwrap v0.1.4 h1:8jT6yArRzJy06Ox/EuzfYpBrBAF+pW0uDXygeLMX1iU=

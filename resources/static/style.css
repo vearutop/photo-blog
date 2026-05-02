@@ -45,6 +45,14 @@ body.dark-mode {
     z-index: 2;
 }
 
+.thumb-sprite {
+    display: block;
+    position: relative;
+    z-index: 2;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .exif {
     position: fixed;
     right: 20px;

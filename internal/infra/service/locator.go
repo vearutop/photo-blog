@@ -13,6 +13,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/geo/ors"
 	"github.com/vearutop/photo-blog/internal/infra/image/cloudflare"
 	"github.com/vearutop/photo-blog/internal/infra/image/faces"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
@@ -83,6 +84,7 @@ type Locator struct {
 	CloudflareImageDescriberInstance  *cloudflare.ImageDescriber
 
 	FacesRecognizerInstance *faces.Recognizer
+	AlbumSpritesInstance    *sprite.Service
 	ORS                     *ors.Client
 
 	ImagePrompterInstance *multi.ImagePrompter
@@ -168,4 +170,8 @@ func (l *Locator) QueueBroker() *qlite.Broker {
 
 func (l *Locator) MapTilesCache() *cache.FailoverOf[[]byte] {
 	return l.MapTilesCacheInstance
+}
+
+func (l *Locator) AlbumSprites() *sprite.Service {
+	return l.AlbumSpritesInstance
 }

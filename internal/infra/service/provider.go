@@ -5,6 +5,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/site"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
@@ -51,6 +52,10 @@ type PhotoImageFinderProvider interface {
 
 type PhotoThumbnailerProvider interface {
 	PhotoThumbnailer() photo.Thumbnailer
+}
+
+type AlbumSpritesProvider interface {
+	AlbumSprites() *sprite.Service
 }
 
 type PhotoExifEnsurerProvider interface {

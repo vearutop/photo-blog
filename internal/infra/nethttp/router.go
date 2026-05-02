@@ -308,6 +308,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
 		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
+		s.Get("/thumb-sprite/{key}.jpg", usecase.ShowAlbumSprite(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))
 
 		s.Post("/message", usecase.AddMessage(deps))

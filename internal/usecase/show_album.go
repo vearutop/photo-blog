@@ -16,6 +16,7 @@ import (
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -81,10 +82,14 @@ type albumPageData struct {
 	ShowAISays      bool
 	PreRender       bool
 	HasPanos        bool
+	ThumbSprites    map[string]*sprite.ViewItem
 }
 
 // ShowAlbum creates use case interactor to show album.
-func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
+func ShowAlbum(deps interface {
+	getAlbumImagesDeps
+	showAlbumSpriteDeps
+}) usecase.IOInteractorOf[showAlbumInput, web.Page] {
 	tmpl, err := static.Template("album.gohtml")
 	if err != nil {
 		panic(err)
@@ -165,10 +170,29 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.ShowAISays = !album.Settings.HideAISays
 		d.PreRender = true
 		d.HasPanos = false
+
+		spriteImages := make([]sprite.Image, 0, len(cont.Images))
 		for _, img := range cont.Images {
 			if img.Is360Pano {
 				d.HasPanos = true
-				break
+				continue
+			}
+
+			var h uniq.Hash
+			if err := h.UnmarshalText([]byte(img.Hash)); err == nil {
+				spriteImages = append(spriteImages, sprite.Image{
+					Hash:   h,
+					Width:  img.Width,
+					Height: img.Height,
+				})
+			}
+		}
+
+		if deps.Settings().Appearance().AlbumSpritesEnabled() {
+			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, album, spriteImages); err != nil {
+				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
+			} else if ok {
+				d.ThumbSprites = deps.AlbumSprites().View(manifest)
 			}
 		}
 
