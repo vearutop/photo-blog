@@ -227,7 +227,7 @@ func (r *AlbumRepository) FindBrokenImages(ctx context.Context) ([]photo.Image, 
 
 func (r *AlbumRepository) FindRemoteImages(ctx context.Context) ([]photo.Image, error) {
 	q := r.i.SelectStmt().
-		Where(r.i.Fmt("%s LIKE '%%https%%'", &r.i.R.Settings))
+		Where(r.i.Fmt("%s LIKE '%%https://%%'", &r.i.R.Settings))
 
 	return r.i.List(ctx, q)
 }
