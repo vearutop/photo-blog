@@ -226,8 +226,8 @@ github.com/swaggest/assertjson v1.10.0 h1:OYIx29UbgqjwAekKbeIO8T0XbAMyViJ8qqrVj2
 github.com/swaggest/assertjson v1.10.0/go.mod h1:31+ufMpzrCO/daIRZ4s1UZAA1R2q9EEUfJaoczgAty8=
 github.com/swaggest/form/v5 v5.1.1 h1:ct6/rOQBGrqWUQ0FUv3vW5sHvTUb31AwTUWj947N6cY=
 github.com/swaggest/form/v5 v5.1.1/go.mod h1:X1hraaoONee20PMnGNLQpO32f9zbQ0Czfm7iZThuEKg=
-github.com/swaggest/jsonform-go v0.2.7 h1:yoMfIE70cttOy6c2qbUnKXGaftlj/c2OW+bBcA3bToo=
-github.com/swaggest/jsonform-go v0.2.7/go.mod h1:69HxR2T607FexRswqanDjQbwp31niujl4ofNxuhe4to=
+github.com/swaggest/jsonform-go v0.2.8 h1:n4o1Uh6jVvV925mrXGPqRZYkwnJuSmzgW3cTYi/GnvE=
+github.com/swaggest/jsonform-go v0.2.8/go.mod h1:trFW8FCuxOYoMoIJGQsp/3yvgIPWSZsIUgpf6YY84t8=
 github.com/swaggest/jsonschema-go v0.3.79 h1:0TOShCbAJ9Xjt1e2W83l+QtMQSG2pbun2EkiYTyafCs=
 github.com/swaggest/jsonschema-go v0.3.79/go.mod h1:GqVmJ+XNLeUHhFIhHNKc+C68euxfrl3a3aoZH4vTRl0=
 github.com/swaggest/openapi-go v0.2.61 h1:psc+LE7pWhEjmJpmkti9tUmBPkkobdUNflBf5Ps6JSc=
