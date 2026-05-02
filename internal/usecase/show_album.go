@@ -136,16 +136,17 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
+		d.AlbumData.Images = append([]Image(nil), cont.Images...)
 		d.AlbumData.Album.Settings.CollabKey = ""
 		d.Timeline = buildAlbumTimeline(cont.Images, cont.Album.Settings.Texts, cont.Album.Settings.NewestFirst)
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 		// Clear image descriptions from JSON.
-		for i, img := range cont.Images {
+		for i, img := range d.AlbumData.Images {
 			img.Description = ""
 			img.DescriptionHTML = ""
 
-			cont.Images[i] = img
+			d.AlbumData.Images[i] = img
 		}
 
 		d.fill(ctx, deps.TxtRenderer(), deps.Settings())
