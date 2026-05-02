@@ -114,13 +114,15 @@ function loadAlbum(params) {
         params.galleryPano = "#gallery-pano"
     }
 
+    if (!params.baseUrl) {
+        params.baseUrl = "/" + params.albumName
+    }
+
     /**
      * @type {Array<PhotoImage>}
      */
     var gpsMarkers = []
     var client = new Backend('');
-
-    var originalPath = window.location.toString();
 
     var thumbBase = params.thumbBaseUrl
     if (!thumbBase) {
@@ -666,24 +668,44 @@ function loadAlbum(params) {
             }
         }
 
-        var historyStates = 0
+        function syncCurrentImageAddress() {
+            if (!lightbox.pswp) {
+                return
+            }
+
+            var hash = hashByIdx[lightbox.pswp.currIndex]
+            if (!hash) {
+                return
+            }
+
+            var nextPath = "/" + params.albumName + "/photo-" + hash + ".html"
+            if (window.location.pathname === nextPath) {
+                return
+            }
+
+            history.replaceState("", document.title, nextPath);
+        }
+
+        function restoreAlbumAddress() {
+            if (window.location.pathname === params.baseUrl) {
+                return
+            }
+
+            history.replaceState("", document.title, params.baseUrl);
+        }
+
         lightbox.on('change', function () {
             if (fullscreenEnabled) {
                 return
             }
 
-            // console.log("change", lightbox.pswp, lightbox.pswp.currIndex, hashByIdx[lightbox.pswp.currIndex])
-            history.pushState("", document.title, "/" + params.albumName + "/photo-" + hashByIdx[lightbox.pswp.currIndex] + ".html");
-            historyStates++;
+            syncCurrentImageAddress()
         })
 
+        window.syncGalleryAddressAfterFullscreen = syncCurrentImageAddress
+
         lightbox.on('close', function () {
-            if (historyStates > 0) {
-                for (var i = 0; i < historyStates; i++) {
-                    history.back();
-                }
-                historyStates = 0;
-            }
+            restoreAlbumAddress()
             exitFullscreen();
         })
 

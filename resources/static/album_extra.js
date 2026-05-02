@@ -183,6 +183,9 @@ function toggleFullscreen() {
         }
         fullscreenEnabled = false;
         $('html body').css("overflow", "auto").removeClass("fullscreen")
+        if (typeof window.syncGalleryAddressAfterFullscreen === 'function') {
+            window.syncGalleryAddressAfterFullscreen()
+        }
     } else {
         fullscreenEnabled = true
         $('html body').css("overflow", "hidden").addClass("fullscreen")
@@ -195,6 +198,9 @@ function toggleFullscreen() {
                 if (!document.fullscreenElement) {
                     $('html body').css("overflow", "auto").removeClass("fullscreen")
                     fullscreenEnabled = false
+                    if (typeof window.syncGalleryAddressAfterFullscreen === 'function') {
+                        window.syncGalleryAddressAfterFullscreen()
+                    }
                 }
             });
         }
