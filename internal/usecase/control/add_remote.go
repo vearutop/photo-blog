@@ -89,9 +89,7 @@ func AddRemote(deps addRemoteDeps) usecase.Interactor {
 				}
 			}()
 
-			ctx := detachedContext{
-				parent: ctx,
-			}
+			ctx = context.WithoutCancel(ctx)
 
 			baseURL, _ := path.Split(in.URL)
 

@@ -136,9 +136,7 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 			}
 
 			_, idx, err := deps.FilesProcessor().AddFile(ctx, in.DstAlbumName, dstFilePath, func(hash uniq.Hash) {
-				ctx := detachedContext{
-					parent: ctx,
-				}
+				ctx := context.WithoutCancel(ctx)
 
 				if in.SrcGPS != "" {
 					parts := strings.Split(in.SrcGPS, ",")
