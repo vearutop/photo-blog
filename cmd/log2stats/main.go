@@ -19,18 +19,19 @@ import (
 	"github.com/bool64/stats"
 	"github.com/bool64/zapctxd"
 	"github.com/swaggest/rest/request"
-	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/netrie"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_stats"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/webstats"
+	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 
 func main() {
-	l := zapctxd.New(zapctxd.Config{})
+	l := zapctxd.New(zapctxd.Config{Level: zap.WarnLevel})
 	cfg := database.Config{}
 	cfg.DriverName = "sqlite"
 	cfg.MaxOpen = 1
@@ -62,12 +63,16 @@ func main() {
 		albums[a.Name] = 0
 	}
 
-	vs, err := visitor.NewStats(st, l)
+	cityLoc, err := netrie.OpenFile("photo-blog-data/city-loc-lite.bin")
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cityLoc.Close()
 
-	_ = vs
+	vs, err := visitor.NewStats(st, l, cityLoc)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Buffer(make([]byte, 1e6), 1e6)
@@ -127,13 +132,16 @@ func main() {
 		if err != nil {
 			log.Fatal(err.Error())
 		}
+
+		ip := strings.TrimSuffix(row.ForwardedFor, ", 45.89.66.149")
+
 		req.Header.Set("User-Agent", row.UserAgent)
 		req.Header.Set("Accept-Language", row.Lang)
-		req.Header.Set("X-Forwarded-For", row.ForwardedFor)
+		req.Header.Set("X-Forwarded-For", ip)
 		req.Header.Set("Referer", row.Referer)
 		req.Header.Set("Sec-Ch-Ua-Model", row.Device)
 
-		vs.CollectVisitor(row.Visitor, false, admins[row.Visitor], row.Time, req)
+		vs.CollectVisitor(row.Visitor, false, admins[row.Visitor], ip, row.Time, req)
 
 		if admins[row.Visitor] {
 			adminCnt++
@@ -188,7 +196,7 @@ func main() {
 			if len(p) == 3 {
 				if _, ok := albums[p[1]]; ok { // Album exists.
 					albums[p[1]]++
-					vs.CollectAlbum(ctx, row.Visitor, photo.AlbumHash(p[1]), row.Referer, row.Time)
+					vs.CollectAlbum(ctx, row.Visitor, p[1], row.Referer, row.Time)
 				}
 			}
 		}
