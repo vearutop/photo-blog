@@ -8,7 +8,7 @@ require (
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
 	github.com/alexsergivan/transliterator v1.0.1
 	github.com/bool64/brick v0.3.5-0.20260421224619-14d56e09708e
-	github.com/bool64/cache v0.4.10
+	github.com/bool64/cache v0.4.11
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
 	github.com/bool64/dev v0.2.45
