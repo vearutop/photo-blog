@@ -728,24 +728,3 @@ func exifQuirks(exif *photo.Exif) {
 		exif.ProjectionType = "equirectangular"
 	}
 }
-
-// detachedContext exposes parent values, but suppresses parent cancellation.
-type detachedContext struct {
-	parent context.Context //nolint:containedctx // This wrapping is here on purpose.
-}
-
-func (d detachedContext) Deadline() (deadline time.Time, ok bool) {
-	return time.Time{}, false
-}
-
-func (d detachedContext) Done() <-chan struct{} {
-	return nil
-}
-
-func (d detachedContext) Err() error {
-	return nil
-}
-
-func (d detachedContext) Value(key interface{}) interface{} {
-	return d.parent.Value(key)
-}
