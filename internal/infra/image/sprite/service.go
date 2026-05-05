@@ -82,7 +82,6 @@ type bucketKey struct {
 type Service struct {
 	logger          ctxd.Logger
 	stats           stats.Tracker
-	imageFinder     imageFinder
 	thumbnailer     photo.Thumbnailer
 	manifestBackend *sqlitec.DBMapOf[Manifest]
 	manifestCache   *cache.FailoverOf[Manifest]
@@ -98,7 +97,6 @@ type Service struct {
 func NewService(
 	logger ctxd.Logger,
 	stats stats.Tracker,
-	imageFinder imageFinder,
 	thumbnailer photo.Thumbnailer,
 	manifestBackend *sqlitec.DBMapOf[Manifest],
 	blobStore *filecache.Storage[string],
@@ -106,7 +104,6 @@ func NewService(
 	s := &Service{
 		logger:          logger,
 		stats:           stats,
-		imageFinder:     imageFinder,
 		thumbnailer:     thumbnailer,
 		manifestBackend: manifestBackend,
 		blobStore:       blobStore,
@@ -133,7 +130,7 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, images []Image) 
 	manifest, err := s.manifestBackend.Read(ctx, key)
 	if err == nil {
 		if !validManifest(manifest, images) {
-			s.ensureBuild(album, images)
+			s.ensureBuild(ctx, key, album, images)
 
 			return Manifest{}, false, nil
 		}
@@ -142,7 +139,7 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, images []Image) 
 	}
 	var expired cache.ErrWithExpiredItemOf[Manifest]
 	if errors.As(err, &expired) {
-		s.ensureBuild(album, images)
+		s.ensureBuild(ctx, key, album, images)
 
 		return Manifest{}, false, nil
 	}
@@ -151,36 +148,21 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, images []Image) 
 		return Manifest{}, false, fmt.Errorf("read sprite manifest: %w", err)
 	}
 
-	s.ensureBuild(album, images)
+	s.ensureBuild(ctx, key, album, images)
 
 	return Manifest{}, false, nil
 }
 
-func (s *Service) ensureBuild(album photo.Album, images []Image) {
-	key := string(s.manifestKey(album))
-	if _, loaded := s.building.LoadOrStore(key, struct{}{}); loaded {
-		return
-	}
-
+func (s *Service) ensureBuild(ctx context.Context, key []byte, album photo.Album, images []Image) {
 	s.stats.Add(context.Background(), "album_sprite_build", 1, "result", "started")
 
 	go func() {
-		ctx := context.Background()
-		defer s.building.Delete(key)
-		started := time.Now()
-
-		_, err := s.manifestCache.Get(ctx, []byte(key), func(ctx context.Context) (Manifest, error) {
+		_, err := s.manifestCache.Get(ctx, key, func(ctx context.Context) (Manifest, error) {
 			return s.build(ctx, album, images)
 		})
-		s.stats.Add(ctx, "album_sprite_build_ms", float64(time.Since(started).Milliseconds()))
 		if err != nil {
-			s.stats.Add(ctx, "album_sprite_build", 1, "result", "error")
-			s.logger.Error(ctx, "failed to build album sprite manifest", "album", album.Name, "error", err)
-
-			return
+			s.logger.Error(ctx, "build album sprite", err)
 		}
-
-		s.stats.Add(ctx, "album_sprite_build", 1, "result", "success")
 	}()
 }
 
@@ -228,16 +210,6 @@ func (s *Service) Close() error {
 }
 
 func (s *Service) build(ctx context.Context, album photo.Album, images []Image) (Manifest, error) {
-	fullImages, err := s.imageFinder.FindByHashes(ctx, imageHashes(images)...)
-	if err != nil {
-		return Manifest{}, fmt.Errorf("find sprite source images: %w", err)
-	}
-
-	byHash := make(map[uniq.Hash]photo.Image, len(fullImages))
-	for _, img := range fullImages {
-		byHash[img.Hash] = img
-	}
-
 	manifest := Manifest{
 		AlbumHash: album.Hash.String(),
 		Revision:  s.revision(album),
@@ -248,6 +220,7 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 
 	buckets := make(map[bucketKey][]Image)
 	bucketOrder := make([]bucketKey, 0)
+
 	for _, img := range images {
 		bw, bh := s.renderedBox(img)
 		key := bucketKey{Width: bw, Height: bh}
@@ -270,10 +243,10 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 			chunk1x := s.chunkKey(1, key, chunk, composeFit)
 			chunk2x := s.chunkKey(2, key, chunk, composeFit)
 
-			if err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, byHash, composeFit); err != nil {
+			if err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, composeFit); err != nil {
 				return Manifest{}, fmt.Errorf("build sprite chunk 1x: %w", err)
 			}
-			if err := s.ensureChunk(ctx, chunk2x, key, 2, chunk, byHash, composeFit); err != nil {
+			if err := s.ensureChunk(ctx, chunk2x, key, 2, chunk, composeFit); err != nil {
 				return Manifest{}, fmt.Errorf("build sprite chunk 2x: %w", err)
 			}
 
@@ -299,14 +272,14 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 		}
 	}
 
-	if err := s.buildMarkerSprites(ctx, markerImages, byHash, &manifest); err != nil {
+	if err := s.buildMarkerSprites(ctx, markerImages, &manifest); err != nil {
 		return Manifest{}, err
 	}
 
 	return manifest, nil
 }
 
-func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, byHash map[uniq.Hash]photo.Image, mode composeMode) error {
+func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, mode composeMode) error {
 	if _, err := s.blobStore.Read(ctx, key); err == nil {
 		return nil
 	} else if err != cache.ErrNotFound {
@@ -319,10 +292,8 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 	bg := image.NewRGBA(image.Rect(0, 0, cellW, cellH*len(chunk)))
 
 	for idx, item := range chunk {
-		src, ok := byHash[item.Hash]
-		if !ok {
-			return fmt.Errorf("missing source image %s", item.Hash)
-		}
+		src := photo.Image{}
+		src.Hash = item.Hash
 
 		size := spriteThumbSize(bucket, scale, mode)
 		th, err := s.thumbnailer.Thumbnail(ctx, src, size)
@@ -357,7 +328,7 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 	return nil
 }
 
-func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, byHash map[uniq.Hash]photo.Image, manifest *Manifest) error {
+func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manifest *Manifest) error {
 	if len(images) == 0 {
 		return nil
 	}
@@ -373,7 +344,7 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, byHash
 		chunk1x := s.chunkKey(1, bucket, chunk, composeCover)
 		chunk2x := chunk1x
 
-		if err := s.ensureChunk(ctx, chunk1x, bucket, 1, chunk, byHash, composeCover); err != nil {
+		if err := s.ensureChunk(ctx, chunk1x, bucket, 1, chunk, composeCover); err != nil {
 			return fmt.Errorf("build marker sprite chunk 1x: %w", err)
 		}
 
@@ -445,15 +416,6 @@ func fitBox(origW, origH, maxW, maxH uint) (uint, uint) {
 	}
 
 	return w, h
-}
-
-func imageHashes(images []Image) []uniq.Hash {
-	hashes := make([]uniq.Hash, 0, len(images))
-	for _, img := range images {
-		hashes = append(hashes, img.Hash)
-	}
-
-	return hashes
 }
 
 func spriteThumbSize(bucket bucketKey, scale int, mode composeMode) photo.ThumbSize {

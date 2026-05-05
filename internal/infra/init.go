@@ -214,7 +214,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.AlbumSpritesInstance = sprite.NewService(
 		l.CtxdLogger(),
 		l.StatsTracker(),
-		l.PhotoImageFinder(),
 		l.PhotoThumbnailer(),
 		sqlitec.NewDBMapOf[sprite.Manifest](spriteManifestStorage, func(cfg *cache.ConfigOf[sprite.Manifest]) {
 			cfg.TimeToLive = cache.UnlimitedTTL
