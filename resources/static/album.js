@@ -119,6 +119,10 @@ function loadAlbum(params) {
         params.baseUrl = "/" + params.albumName
     }
 
+    if (params.baseUrl === "/" && window.location.pathname !== "/") {
+        params.baseUrl = window.location.pathname + window.location.search
+    }
+
     if (!params.markerSprites) {
         params.markerSprites = {}
     }
