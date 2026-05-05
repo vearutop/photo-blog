@@ -21,9 +21,17 @@ import (
 
 type showThumbGridInput struct {
 	request.EmbeddedSetter
-	Name string `path:"name"`
-	Cols int    `query:"cols" default:"6"`
-	Rows int    `query:"rows" default:"2"`
+	Name   string `path:"name"`
+	Cols   int    `query:"cols" default:"6"`
+	Rows   int    `query:"rows" default:"2"`
+	CellW  int    `query:"cell_w" default:"300"`
+	CellH  int    `query:"cell_h" default:"200"`
+	Offset int    `query:"offset" default:"-1"`
+}
+
+func (in showThumbGridInput) string() string {
+	return in.Name + "/" + strconv.Itoa(in.Cols) + "/" + strconv.Itoa(in.Rows) + "/" + strconv.Itoa(in.Offset) + "/" +
+		strconv.Itoa(in.CellW) + "/" + strconv.Itoa(in.CellH)
 }
 
 type showThumbGridDeps interface {
@@ -44,7 +52,7 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 		c := deps.MapTilesCache()
 
 		body, err := c.Get(cache.WithTTL(ctx, time.Hour, false),
-			[]byte("grid/"+in.Name+"/"+strconv.Itoa(in.Cols)+"/"+strconv.Itoa(in.Rows)),
+			[]byte("grid/"+in.string()),
 			func(ctx context.Context) ([]byte, error) {
 				images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.Name))
 				if err != nil {
@@ -53,11 +61,19 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 
 				n := in.Cols * in.Rows
 
-				sample := sampleN(images, n)
+				var sample []photo.Image
+				if in.Offset >= 0 {
+					for i := in.Offset; i < in.Offset+n; i++ {
+						sample = append(sample, images[i%len(images)])
+					}
+				} else {
+					sample = sampleN(images, n)
+				}
+
 				var readers []io.Reader
 
 				for _, img := range sample {
-					th, err := deps.PhotoThumbnailer().Thumbnail(ctx, img, "600w")
+					th, err := deps.PhotoThumbnailer().Thumbnail(ctx, img, "1200w")
 					if err != nil {
 						return nil, ctxd.WrapError(ctx, err, "getting thumbnail")
 					}
@@ -70,7 +86,7 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 					readers = append(readers, r)
 				}
 
-				res, err := ultrahdr.Grid(readers, in.Cols, 300, 200, &ultrahdr.GridOptions{
+				res, err := ultrahdr.Grid(readers, in.Cols, in.CellW, in.CellH, &ultrahdr.GridOptions{
 					Quality:       80,
 					Interpolation: ultrahdr.InterpolationLanczos2,
 				})
