@@ -12,7 +12,6 @@ import (
 	"image/jpeg"
 	"io"
 	"math"
-	"sync"
 	"time"
 
 	"github.com/bool64/cache"
@@ -86,7 +85,6 @@ type Service struct {
 	boxHeight int
 	chunkSize int
 	version   string
-	building  sync.Map
 }
 
 func NewService(
@@ -149,16 +147,23 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, images []Image) 
 }
 
 func (s *Service) ensureBuild(ctx context.Context, key []byte, album photo.Album, images []Image) {
-	s.stats.Add(context.Background(), "album_sprite_build", 1, "result", "started")
+	s.stats.Add(ctx, "album_sprite_build", 1)
 
 	go func() {
 		ctx = context.WithoutCancel(ctx)
 
 		_, err := s.manifestCache.Get(ctx, key, func(ctx context.Context) (Manifest, error) {
-			return s.build(ctx, album, images)
+			st := time.Now()
+			m, err := s.build(ctx, album, images)
+
+			s.logger.Info(ctx, "build album sprite", "album", album.Name,
+				"duration", time.Since(st).String())
+
+			return m, err
 		})
 		if err != nil {
-			s.logger.Error(ctx, "build album sprite", "error", err.Error())
+			s.logger.Error(ctx, "build album sprite", "album", album.Name,
+				"error", err.Error())
 		}
 	}()
 }
