@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"html/template"
 	"image"
 	"image/jpeg"
 	"io"
@@ -60,12 +59,13 @@ type ImageThumb struct {
 }
 
 type ViewItem struct {
-	Style            template.CSS
-	BoxWidth         int
-	BoxHeight        int
-	OffsetY          int
-	BackgroundWidth  int
-	BackgroundHeight int
+	Chunk1x          string `json:"chunk_1x"`
+	Chunk2x          string `json:"chunk_2x"`
+	Width            int    `json:"width"`
+	Height           int    `json:"height"`
+	OffsetY          int    `json:"offset_y"`
+	BackgroundWidth  int    `json:"background_width"`
+	BackgroundHeight int    `json:"background_height"`
 }
 
 type bucketKey struct {
@@ -172,18 +172,14 @@ func (s *Service) View(manifest Manifest) map[string]*ViewItem {
 	items := make(map[string]*ViewItem, len(manifest.Images))
 
 	for hash, img := range manifest.Images {
-		oneX := "/thumb-sprite/" + img.Chunk1x + ".jpg"
-		twoX := "/thumb-sprite/" + img.Chunk2x + ".jpg"
 		items[hash] = &ViewItem{
-			BoxWidth:         img.Width,
-			BoxHeight:        img.Height,
+			Chunk1x:          img.Chunk1x,
+			Chunk2x:          img.Chunk2x,
+			Width:            img.Width,
+			Height:           img.Height,
 			OffsetY:          img.OffsetY,
 			BackgroundWidth:  img.BackgroundWidth,
 			BackgroundHeight: img.BackgroundHeight,
-			Style: template.CSS(fmt.Sprintf(
-				"width:%dpx;height:%dpx;background-image:url('%s');background-image:-webkit-image-set(url('%s') 1x, url('%s') 2x);background-image:image-set(url('%s') 1x, url('%s') 2x);background-position:0 -%dpx;background-repeat:no-repeat;background-size:%dpx %dpx;",
-				img.Width, img.Height, oneX, oneX, twoX, oneX, twoX, img.OffsetY, img.BackgroundWidth, img.BackgroundHeight,
-			)),
 		}
 	}
 

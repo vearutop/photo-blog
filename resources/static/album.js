@@ -160,9 +160,37 @@ function loadAlbum(params) {
             '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" />'
     }
 
+    function spriteThumbStyle(sprite, width, height, offsetY, backgroundWidth, backgroundHeight) {
+        var oneX = "/thumb-sprite/" + sprite.chunk_1x + ".jpg"
+        var backgroundImage = "url('" + oneX + "')"
+
+        if (window.CSS && CSS.supports && CSS.supports("background-image", "image-set(url('" + oneX + "') 1x, url('/x.jpg') 2x)")) {
+            backgroundImage = "image-set(url('" + oneX + "') 1x, url('/thumb-sprite/" + sprite.chunk_2x + ".jpg') 2x)"
+        }
+
+        return {
+            width: width + "px",
+            height: height + "px",
+            backgroundImage: backgroundImage,
+            backgroundPosition: "0 -" + offsetY + "px",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: backgroundWidth + "px " + backgroundHeight + "px"
+        }
+    }
+
+    function applySpriteStyle(spriteEl, width, height, offsetY, backgroundWidth, backgroundHeight) {
+        var sprite = {
+            chunk_1x: spriteEl.attr("data-chunk-1x"),
+            chunk_2x: spriteEl.attr("data-chunk-2x")
+        }
+        var style = spriteThumbStyle(sprite, width, height, offsetY, backgroundWidth, backgroundHeight)
+
+        spriteEl.css(style)
+    }
+
     function spriteThumbHTML(img, landscape, sprite) {
         return '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-            '<span class="thumb-sprite" data-width="' + sprite.BoxWidth + '" data-height="' + sprite.BoxHeight + '" data-offset-y="' + sprite.OffsetY + '" data-background-width="' + sprite.BackgroundWidth + '" data-background-height="' + sprite.BackgroundHeight + '" style="' + sprite.Style + '"></span>'
+            '<span class="thumb-sprite" data-chunk-1x="' + sprite.chunk_1x + '" data-chunk-2x="' + sprite.chunk_2x + '" data-width="' + sprite.width + '" data-height="' + sprite.height + '" data-offset-y="' + sprite.offset_y + '" data-background-width="' + sprite.background_width + '" data-background-height="' + sprite.background_height + '"></span>'
     }
 
     function updateResponsiveSpriteThumbs() {
@@ -192,24 +220,21 @@ function loadAlbum(params) {
                 var scale = scaledWidth / baseWidth
                 var scaledHeight = Math.round(baseHeight * scale)
 
-                sprite.css({
-                    width: scaledWidth + "px",
-                    height: scaledHeight + "px",
-                    backgroundSize: Math.round(bgWidth * scale) + "px " + Math.round(bgHeight * scale) + "px",
-                    backgroundPositionY: "-" + Math.round(offsetY * scale) + "px"
-                })
+                applySpriteStyle(
+                    sprite,
+                    scaledWidth,
+                    scaledHeight,
+                    Math.round(offsetY * scale),
+                    Math.round(bgWidth * scale),
+                    Math.round(bgHeight * scale)
+                )
 
                 canvas.css({
                     width: scaledWidth + "px",
                     height: scaledHeight + "px"
                 })
             } else {
-                sprite.css({
-                    width: baseWidth + "px",
-                    height: baseHeight + "px",
-                    backgroundSize: bgWidth + "px " + bgHeight + "px",
-                    backgroundPositionY: "-" + offsetY + "px"
-                })
+                applySpriteStyle(sprite, baseWidth, baseHeight, offsetY, bgWidth, bgHeight)
 
                 canvas.css({
                     width: "",
