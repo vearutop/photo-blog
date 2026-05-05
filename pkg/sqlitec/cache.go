@@ -53,7 +53,7 @@ type dbMapOf[V any] struct {
 }
 
 // NewDBMapOf creates an instance of in-memory cache with optional configuration.
-func NewDBMapOf[V any](st *sqluct.Storage, options ...func(cfg *cache.Config)) *DBMapOf[V] {
+func NewDBMapOf[V any](st *sqluct.Storage, options ...func(cfg *cache.ConfigOf[V])) *DBMapOf[V] {
 	c := &dbMapOf[V]{
 		st: st,
 	}
@@ -61,14 +61,14 @@ func NewDBMapOf[V any](st *sqluct.Storage, options ...func(cfg *cache.Config)) *
 		dbMapOf: c,
 	}
 
-	cfg := cache.Config{}
+	cfg := cache.ConfigOf[V]{}
 	for _, option := range options {
 		option(&cfg)
 	}
 
 	evict := c.evictMostExpired
 
-	c.t = cache.NewTraitOf[V](cfg, func(t *cache.Trait) {
+	c.t = cache.NewTraitOf[V](cfg.Policy, func(t *cache.Trait) {
 		t.DeleteExpired = c.deleteExpired
 		t.Len = c.Len
 		t.Evict = evict

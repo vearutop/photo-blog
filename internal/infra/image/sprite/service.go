@@ -86,7 +86,7 @@ type Service struct {
 	thumbnailer     photo.Thumbnailer
 	manifestBackend *sqlitec.DBMapOf[Manifest]
 	manifestCache   *cache.FailoverOf[Manifest]
-	blobStore       *filecache.Storage
+	blobStore       *filecache.Storage[string]
 
 	boxWidth  int
 	boxHeight int
@@ -101,7 +101,7 @@ func NewService(
 	imageFinder imageFinder,
 	thumbnailer photo.Thumbnailer,
 	manifestBackend *sqlitec.DBMapOf[Manifest],
-	blobStore *filecache.Storage,
+	blobStore *filecache.Storage[string],
 ) *Service {
 	s := &Service{
 		logger:          logger,
@@ -220,7 +220,7 @@ func (s *Service) MarkerData(manifest Manifest) map[string]ImageThumb {
 }
 
 func (s *Service) Open(ctx context.Context, key string) (blob.Entry, error) {
-	return s.blobStore.Read(ctx, []byte(key))
+	return s.blobStore.Read(ctx, key)
 }
 
 func (s *Service) Close() error {
@@ -307,7 +307,7 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 }
 
 func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, byHash map[uniq.Hash]photo.Image, mode composeMode) error {
-	if _, err := s.blobStore.Read(ctx, []byte(key)); err == nil {
+	if _, err := s.blobStore.Read(ctx, key); err == nil {
 		return nil
 	} else if err != cache.ErrNotFound {
 		return fmt.Errorf("read sprite blob: %w", err)
@@ -350,7 +350,7 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 		ModTime: time.Now(),
 	})
 
-	if err := s.blobStore.Write(ctx, []byte(key), entry); err != nil {
+	if err := s.blobStore.Write(ctx, key, entry); err != nil {
 		return fmt.Errorf("store sprite blob: %w", err)
 	}
 
