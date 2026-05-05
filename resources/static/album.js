@@ -602,8 +602,38 @@ function loadAlbum(params) {
         var lightbox = new PhotoSwipeLightbox({
             gallery: params.gallery,
             children: 'a.image',
+            thumbSelector: '.thumb-sprite',
             pswpModule: PhotoSwipe,
             bgOpacity: 1.0
+        });
+
+        lightbox.addFilter('domItemData', (itemData, element, linkEl) => {
+            var sourceEl = linkEl || element
+            if (!sourceEl) {
+                return itemData
+            }
+
+            var hash = sourceEl.getAttribute('data-hash')
+            if (!hash) {
+                return itemData
+            }
+
+            itemData.msrc = thumbBase + '/300w/' + hash + '.jpg'
+            itemData.thumbCropped = true
+
+            return itemData
+        });
+
+        lightbox.addFilter('thumbEl', (thumbnail, itemData) => {
+            if (thumbnail) {
+                return thumbnail
+            }
+
+            if (itemData && itemData.element) {
+                return itemData.element.querySelector('.thumb-sprite') || itemData.element.querySelector('.thumb img')
+            }
+
+            return thumbnail
         });
 
         // Add a slideshow to the PhotoSwipe gallery.
