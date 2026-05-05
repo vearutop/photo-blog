@@ -5,6 +5,14 @@ var currentImage = {
     img: "" // Image hash.
 };
 
+window.openByHashRegistry = window.openByHashRegistry || {}
+window.openByHashInGallery = window.openByHashInGallery || function (galleryKey, hash) {
+    var opener = window.openByHashRegistry[galleryKey]
+    if (opener) {
+        opener(hash)
+    }
+};
+
 (function () {
     document.addEventListener('keyup', function (e) {
         if (e.ctrlKey && e.key === "x") { // Ctrl+X: delete image.
@@ -111,9 +119,13 @@ function loadAlbum(params) {
         params.gallery = "#gallery"
     }
 
+    var galleryKey = params.gallery
+
     if (!params.galleryPano) {
         params.galleryPano = "#gallery-pano"
     }
+
+    var galleryKeyJS = galleryKey.replace(/\\/g, "\\\\").replace(/'/g, "\\'")
 
     if (!params.baseUrl) {
         params.baseUrl = "/" + params.albumName
@@ -791,10 +803,11 @@ function loadAlbum(params) {
 
         lightbox.init();
 
-        window.openByHash = function (hash) {
+        var openByHash = function (hash) {
             // console.log("openByHash", hash, idxByHash[hash])
             lightbox.loadAndOpen(idxByHash[hash], {gallery: document.querySelector(params.gallery)});
         }
+        window.openByHashRegistry[galleryKey] = openByHash
 
         var imgHash = window.location.pathname.match(/photo-(.+)\.html/)
 
@@ -808,7 +821,7 @@ function loadAlbum(params) {
 
         if (imgHash !== "") {
             if (idxByHash[imgHash] !== undefined) {
-                window.openByHash(imgHash)
+                openByHash(imgHash)
             }
         }
 
@@ -902,7 +915,7 @@ function loadAlbum(params) {
                         L.popup()
                             .setContent(
                                 text +
-                                '<a href="#" onclick="openByHash(\'' + m.hash + '\');return false">' +
+                                '<a href="#" onclick="openByHashInGallery(\'' + galleryKeyJS + '\', \'' + m.hash + '\');return false">' +
                                 '<img style="width: ' + w + 'px" src="' + thumbBase + '/200h/' + m.hash + '.jpg" srcset="' + thumbBase + '/400h/' + m.hash + '.jpg 2x" /></a>'
                             )
                     )
