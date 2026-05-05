@@ -144,6 +144,11 @@ function loadAlbum(params) {
             '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" />'
     }
 
+    function spriteThumbHTML(img, landscape, sprite) {
+        return '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
+            '<span class="thumb-sprite" data-width="' + sprite.BoxWidth + '" data-height="' + sprite.BoxHeight + '" data-offset-y="' + sprite.OffsetY + '" data-background-width="' + sprite.BackgroundWidth + '" data-background-height="' + sprite.BackgroundHeight + '" style="' + sprite.Style + '"></span>'
+    }
+
     function updateResponsiveSpriteThumbs() {
         var mobileFullWidthThumbs = window.matchMedia && window.matchMedia("(max-width: 576px)").matches
 
@@ -241,6 +246,7 @@ function loadAlbum(params) {
         var idxByHash = {}
         var idx = 0
         var hideOriginal = result.hide_original
+        var thumbSprites = result.thumb_sprites || {}
 
         if (typeof result.images === 'undefined') {
             result.images = [];
@@ -511,8 +517,13 @@ function loadAlbum(params) {
                         caption.prepend(controls_description)
                     }
                 } else {
-                    a.html('<div class="thumb' + landscape + '">' +
-                        classicThumbHTML(img, landscape, aspectRatio) + '</div>')
+                    var spriteThumb = thumbSprites[img.hash]
+                    var thumbHTML = classicThumbHTML(img, landscape, aspectRatio)
+                    if (spriteThumb) {
+                        thumbHTML = spriteThumbHTML(img, landscape, spriteThumb)
+                    }
+
+                    a.html('<div class="thumb' + landscape + '">' + thumbHTML + '</div>')
 
                     $(params.gallery).append(a)
                     $(params.gallery).append('<div class="pswp-caption-content" data-hash="' + img.hash + '" style="display: none">' + img_description + '</div>')

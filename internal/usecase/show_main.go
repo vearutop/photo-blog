@@ -183,7 +183,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 
 				cont, err := getAlbumContents(ctx, deps, imagesFilter{albumName: a.Name}, true)
 				if err != nil {
-					return d, fmt.Errorf("find album %s: %w", err)
+					return d, fmt.Errorf("find album %s: %w", a.Name, err)
 				}
 
 				if len(cont.Images) == 0 && !d.IsAdmin {

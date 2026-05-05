@@ -296,6 +296,8 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 	for idx, item := range chunk {
 		src := photo.Image{}
 		src.Hash = item.Hash
+		src.Width = item.Width
+		src.Height = item.Height
 
 		size := spriteThumbSize(bucket, scale, mode)
 		th, err := s.thumbnailer.Thumbnail(ctx, src, size)

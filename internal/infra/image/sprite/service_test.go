@@ -20,7 +20,7 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 	ctx := context.Background()
 
 	dir := t.TempDir()
-	blobs, err := filecache.NewStorage(dir)
+	blobs, err := filecache.NewStorage[string](dir)
 	if err != nil {
 		t.Fatalf("new blob storage: %v", err)
 	}
@@ -37,7 +37,6 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 	s := &Service{
 		logger:      ctxd.NoOpLogger{},
 		stats:       stats.NoOp{},
-		imageFinder: stubImageFinder{images: images},
 		thumbnailer: stubThumbnailer{},
 		blobStore:   blobs,
 		boxWidth:    300,
@@ -85,31 +84,12 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 		t.Fatalf("unexpected new chunk placement: %#v", c2)
 	}
 
-	if _, err := s.blobStore.Read(ctx, []byte(c2.Chunk1x)); err != nil {
+	if _, err := s.blobStore.Read(ctx, c2.Chunk1x); err != nil {
 		t.Fatalf("new chunk 1x blob missing: %v", err)
 	}
-	if _, err := s.blobStore.Read(ctx, []byte(c2.Chunk2x)); err != nil {
+	if _, err := s.blobStore.Read(ctx, c2.Chunk2x); err != nil {
 		t.Fatalf("new chunk 2x blob missing: %v", err)
 	}
-}
-
-type stubImageFinder struct {
-	images []photo.Image
-}
-
-func (s stubImageFinder) FindByHashes(_ context.Context, hashes ...uniq.Hash) ([]photo.Image, error) {
-	result := make([]photo.Image, 0, len(hashes))
-
-	for _, h := range hashes {
-		for _, img := range s.images {
-			if img.Hash == h {
-				result = append(result, img)
-				break
-			}
-		}
-	}
-
-	return result, nil
 }
 
 type stubThumbnailer struct{}

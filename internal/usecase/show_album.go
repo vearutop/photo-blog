@@ -86,6 +86,28 @@ type albumPageData struct {
 	MapMarkerSprites map[string]sprite.ImageThumb
 }
 
+func albumSpriteImages(images []Image) []sprite.Image {
+	spriteImages := make([]sprite.Image, 0, len(images))
+
+	for _, img := range images {
+		if img.Is360Pano {
+			continue
+		}
+
+		var h uniq.Hash
+		if err := h.UnmarshalText([]byte(img.Hash)); err == nil {
+			spriteImages = append(spriteImages, sprite.Image{
+				Hash:   h,
+				Width:  img.Width,
+				Height: img.Height,
+				HasGPS: img.Gps != nil,
+			})
+		}
+	}
+
+	return spriteImages
+}
+
 // ShowAlbum creates use case interactor to show album.
 func ShowAlbum(deps interface {
 	getAlbumImagesDeps
@@ -172,25 +194,14 @@ func ShowAlbum(deps interface {
 		d.PreRender = true
 		d.HasPanos = false
 
-		spriteImages := make([]sprite.Image, 0, len(cont.Images))
 		for _, img := range cont.Images {
 			if img.Is360Pano {
 				d.HasPanos = true
-				continue
-			}
-
-			var h uniq.Hash
-			if err := h.UnmarshalText([]byte(img.Hash)); err == nil {
-				spriteImages = append(spriteImages, sprite.Image{
-					Hash:   h,
-					Width:  img.Width,
-					Height: img.Height,
-					HasGPS: img.Gps != nil,
-				})
 			}
 		}
 
 		if deps.Settings().Appearance().AlbumSpritesEnabled() {
+			spriteImages := albumSpriteImages(cont.Images)
 			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, album, spriteImages); err != nil {
 				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
 			} else if ok {
@@ -276,6 +287,15 @@ func ShowAlbum(deps interface {
 
 			if len(cont.Images) == 0 && !d.IsAdmin {
 				continue
+			}
+
+			if deps.Settings().Appearance().AlbumSpritesEnabled() {
+				spriteImages := albumSpriteImages(cont.Images)
+				if manifest, ok, err := deps.AlbumSprites().Ready(ctx, cont.Album, spriteImages); err != nil {
+					deps.CtxdLogger().Error(ctx, "failed to get sub album sprite manifest", "album", cont.Album.Name, "error", err)
+				} else if ok {
+					cont.ThumbSprites = deps.AlbumSprites().View(manifest)
+				}
 			}
 
 			d.SubAlbums = append(d.SubAlbums, cont)

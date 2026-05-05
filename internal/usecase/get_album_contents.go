@@ -17,6 +17,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
@@ -73,11 +74,12 @@ type track struct {
 }
 
 type getAlbumOutput struct {
-	Album        photo.Album `json:"album"`
-	Description  string      `json:"description,omitempty"`
-	Images       []Image     `json:"images,omitempty"`
-	Tracks       []track     `json:"tracks,omitempty"`
-	HideOriginal bool        `json:"hide_original"`
+	Album        photo.Album                 `json:"album"`
+	Description  string                      `json:"description,omitempty"`
+	Images       []Image                     `json:"images,omitempty"`
+	Tracks       []track                     `json:"tracks,omitempty"`
+	ThumbSprites map[string]*sprite.ViewItem `json:"thumb_sprites,omitempty"`
+	HideOriginal bool                        `json:"hide_original"`
 }
 
 // GetAlbumContents creates use case interactor to get album data.
