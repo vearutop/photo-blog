@@ -12,7 +12,6 @@ import (
 	"image/jpeg"
 	"io"
 	"math"
-	"strings"
 	"sync"
 	"time"
 
@@ -68,10 +67,6 @@ type ViewItem struct {
 	OffsetY          int
 	BackgroundWidth  int
 	BackgroundHeight int
-}
-
-type imageFinder interface {
-	FindByHashes(ctx context.Context, hashes ...uniq.Hash) ([]photo.Image, error)
 }
 
 type bucketKey struct {
@@ -157,11 +152,13 @@ func (s *Service) ensureBuild(ctx context.Context, key []byte, album photo.Album
 	s.stats.Add(context.Background(), "album_sprite_build", 1, "result", "started")
 
 	go func() {
+		ctx = context.WithoutCancel(ctx)
+
 		_, err := s.manifestCache.Get(ctx, key, func(ctx context.Context) (Manifest, error) {
 			return s.build(ctx, album, images)
 		})
 		if err != nil {
-			s.logger.Error(ctx, "build album sprite", err)
+			s.logger.Error(ctx, "build album sprite", "error", err.Error())
 		}
 	}()
 }
@@ -517,10 +514,6 @@ func decodeThumb(th photo.Thumb) (image.Image, error) {
 	}
 
 	return img, nil
-}
-
-func KeyFromPath(path string) string {
-	return strings.TrimSuffix(path, ".jpg")
 }
 
 func validManifest(m Manifest, images []Image) bool {
