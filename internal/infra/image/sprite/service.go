@@ -118,12 +118,12 @@ func NewService(
 	return s
 }
 
-func (s *Service) Ready(ctx context.Context, album photo.Album, isAdmin bool, images []Image) (Manifest, bool, error) {
+func (s *Service) Ready(ctx context.Context, album photo.Album, _ bool, images []Image) (Manifest, bool, error) {
 	if len(images) == 0 {
 		return Manifest{}, false, nil
 	}
 
-	key := s.manifestKey(album, isAdmin)
+	key := s.manifestKey(images)
 
 	manifest, err := s.manifestBackend.Read(ctx, key)
 	if err == nil {
@@ -285,7 +285,7 @@ func (s *Service) Close() error {
 func (s *Service) build(ctx context.Context, album photo.Album, images []Image) (Manifest, error) {
 	manifest := Manifest{
 		AlbumHash: album.Hash.String(),
-		Revision:  s.revision(album),
+		Revision:  s.revision(images),
 		Version:   s.version,
 		Images:    make(map[string]ImageThumb, len(images)),
 		Markers:   make(map[string]ImageThumb),
@@ -456,12 +456,18 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 	return nil
 }
 
-func (s *Service) manifestKey(album photo.Album, isAdmin bool) []byte {
-	return []byte("album-sprite-manifest:" + album.Hash.String() + ":" + strconv.FormatBool(isAdmin) + ":" + s.revision(album) + ":" + s.version)
+func (s *Service) manifestKey(images []Image) []byte {
+	return []byte("album-sprite-manifest:" + s.revision(images) + ":" + s.version)
 }
 
-func (s *Service) revision(album photo.Album) string {
-	return fmt.Sprintf("%x", album.UpdatedAt.UTC().UnixNano())
+func (s *Service) revision(images []Image) string {
+	h := sha1.New()
+	for _, img := range images {
+		_, _ = io.WriteString(h, ":"+img.Hash.String())
+		_, _ = io.WriteString(h, fmt.Sprintf(":%d:%d:%t", img.Width, img.Height, img.HasGPS))
+	}
+
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (s *Service) chunkKey(scale int, bucket bucketKey, chunk []Image, mode composeMode) string {

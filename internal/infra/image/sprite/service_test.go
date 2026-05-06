@@ -147,6 +147,33 @@ func TestServiceBuild_GroupsSameChunkDifferentShapes(t *testing.T) {
 	}
 }
 
+func TestServiceManifestKey_ReusesBySpriteInput(t *testing.T) {
+	s := &Service{version: "test"}
+
+	images := []Image{
+		{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: false},
+		{Hash: mustHash("b"), Width: 800, Height: 600, HasGPS: true},
+	}
+
+	key1 := string(s.manifestKey(images))
+	key2 := string(s.manifestKey([]Image{
+		{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: false},
+		{Hash: mustHash("b"), Width: 800, Height: 600, HasGPS: true},
+	}))
+	key3 := string(s.manifestKey([]Image{
+		{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: false},
+		{Hash: mustHash("b"), Width: 800, Height: 600, HasGPS: false},
+	}))
+
+	if key1 != key2 {
+		t.Fatalf("same sprite input should reuse manifest key: %s != %s", key1, key2)
+	}
+
+	if key1 == key3 {
+		t.Fatalf("gps-affecting sprite input should change manifest key: %s", key1)
+	}
+}
+
 type stubThumbnailer struct{}
 
 func (stubThumbnailer) Thumbnail(_ context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
