@@ -342,7 +342,7 @@ func ShowAlbum(deps interface {
 			}
 
 			spriteImages := mergeAlbumSpriteImages(imageSets...)
-			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, album, auth.IsAdmin(ctx), spriteImages); err != nil {
+			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, spriteImages); err != nil {
 				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
 			} else if ok {
 				items := deps.AlbumSprites().View(manifest)

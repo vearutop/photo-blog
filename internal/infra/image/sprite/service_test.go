@@ -45,7 +45,7 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 		version:     "test",
 	}
 
-	manifest1, err := s.build(ctx, photo.Album{}, []Image{
+	manifest1, err := s.build(ctx, []Image{
 		{Hash: images[0].Hash, Width: images[0].Width, Height: images[0].Height},
 		{Hash: images[1].Hash, Width: images[1].Width, Height: images[1].Height},
 	})
@@ -53,7 +53,7 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 		t.Fatalf("build manifest 1: %v", err)
 	}
 
-	manifest2, err := s.build(ctx, photo.Album{}, []Image{
+	manifest2, err := s.build(ctx, []Image{
 		{Hash: images[0].Hash, Width: images[0].Width, Height: images[0].Height},
 		{Hash: images[1].Hash, Width: images[1].Width, Height: images[1].Height},
 		{Hash: images[2].Hash, Width: images[2].Width, Height: images[2].Height},
@@ -121,7 +121,7 @@ func TestServiceBuild_GroupsSameChunkDifferentShapes(t *testing.T) {
 		version:     "test",
 	}
 
-	manifest, err := s.build(ctx, photo.Album{}, images)
+	manifest, err := s.build(ctx, images)
 	if err != nil {
 		t.Fatalf("build manifest: %v", err)
 	}

@@ -43,7 +43,6 @@ type Image struct {
 }
 
 type Manifest struct {
-	AlbumHash string                `json:"album_hash"`
 	Revision  string                `json:"revision"`
 	Version   string                `json:"version"`
 	Images    map[string]ImageThumb `json:"images"`
@@ -118,7 +117,7 @@ func NewService(
 	return s
 }
 
-func (s *Service) Ready(ctx context.Context, album photo.Album, _ bool, images []Image) (Manifest, bool, error) {
+func (s *Service) Ready(ctx context.Context, images []Image) (Manifest, bool, error) {
 	if len(images) == 0 {
 		return Manifest{}, false, nil
 	}
@@ -128,7 +127,7 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, _ bool, images [
 	manifest, err := s.manifestBackend.Read(ctx, key)
 	if err == nil {
 		if !validManifest(manifest, images) {
-			s.ensureBuild(ctx, key, album, images)
+			s.ensureBuild(ctx, key, images)
 
 			return Manifest{}, false, nil
 		}
@@ -137,7 +136,7 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, _ bool, images [
 	}
 	var expired cache.ErrWithExpiredItemOf[Manifest]
 	if errors.As(err, &expired) {
-		s.ensureBuild(ctx, key, album, images)
+		s.ensureBuild(ctx, key, images)
 
 		return Manifest{}, false, nil
 	}
@@ -146,12 +145,12 @@ func (s *Service) Ready(ctx context.Context, album photo.Album, _ bool, images [
 		return Manifest{}, false, fmt.Errorf("read sprite manifest: %w", err)
 	}
 
-	s.ensureBuild(ctx, key, album, images)
+	s.ensureBuild(ctx, key, images)
 
 	return Manifest{}, false, nil
 }
 
-func (s *Service) ensureBuild(ctx context.Context, key []byte, album photo.Album, images []Image) {
+func (s *Service) ensureBuild(ctx context.Context, key []byte, images []Image) {
 	s.stats.Add(ctx, "album_sprite_build", 1)
 
 	go func() {
@@ -159,15 +158,15 @@ func (s *Service) ensureBuild(ctx context.Context, key []byte, album photo.Album
 
 		_, err := s.manifestCache.Get(ctx, key, func(ctx context.Context) (Manifest, error) {
 			st := time.Now()
-			m, err := s.build(ctx, album, images)
+			m, err := s.build(ctx, images)
 
-			s.logger.Info(ctx, "build album sprite", "album", album.Name,
+			s.logger.Info(ctx, "build sprite manifest",
 				"duration", time.Since(st).String())
 
 			return m, err
 		})
 		if err != nil {
-			s.logger.Error(ctx, "build album sprite", "album", album.Name,
+			s.logger.Error(ctx, "build sprite manifest",
 				"error", err.Error())
 		}
 	}()
@@ -282,9 +281,8 @@ func (s *Service) Close() error {
 	return s.blobStore.Close()
 }
 
-func (s *Service) build(ctx context.Context, album photo.Album, images []Image) (Manifest, error) {
+func (s *Service) build(ctx context.Context, images []Image) (Manifest, error) {
 	manifest := Manifest{
-		AlbumHash: album.Hash.String(),
 		Revision:  s.revision(images),
 		Version:   s.version,
 		Images:    make(map[string]ImageThumb, len(images)),
