@@ -9,13 +9,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
 	"github.com/bool64/stats"
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/rest/response"
 	"github.com/swaggest/usecase"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/infra/dep"
+	"github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/ultrahdr"
 )
 
@@ -39,21 +41,31 @@ type showThumbGridDeps interface {
 	PhotoThumbnailer() photo.Thumbnailer
 	StatsTracker() stats.Tracker
 	CtxdLogger() ctxd.Logger
-	MapTilesCache() *cache.FailoverOf[[]byte]
+	DepCache() *dep.Cache
+	PersistentCacheStorage() *sqluct.Storage
 }
 
 func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
+	const cacheName = "thumb-grid"
+
+	c := service.MakePersistentCacheOf[[]byte](deps, cacheName, time.Hour)
+
 	u := usecase.NewInteractor(func(ctx context.Context, in showThumbGridInput, out *response.EmbeddedSetter) error {
 		rw := out.ResponseWriter()
 
 		deps.StatsTracker().Add(ctx, "show_thumb_grid", 1)
 		deps.CtxdLogger().Info(ctx, "showing thumb grid", "req", in.Request().Header, "name", in.Name, "cols", in.Cols, "rows", in.Rows)
 
-		c := deps.MapTilesCache()
-
-		body, err := c.Get(cache.WithTTL(ctx, time.Hour, false),
-			[]byte("grid/"+in.string()),
+		cacheKey := []byte("grid/" + in.string())
+		body, err := c.Get(ctx,
+			cacheKey,
 			func(ctx context.Context) ([]byte, error) {
+				if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+					return nil, err
+				}
+
+				deps.DepCache().AlbumDependency(cacheName, cacheKey, in.Name)
+
 				images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.Name))
 				if err != nil {
 					return nil, err
