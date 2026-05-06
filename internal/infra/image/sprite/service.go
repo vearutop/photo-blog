@@ -33,6 +33,8 @@ const (
 	markerChunkSize  = 100
 	defaultVersion   = "v1"
 	markerBoxSize    = 40
+
+	RetirementCacheName = "sprite-retire"
 )
 
 type Image struct {
@@ -43,10 +45,11 @@ type Image struct {
 }
 
 type Manifest struct {
-	Revision  string                `json:"revision"`
-	Version   string                `json:"version"`
-	Images    map[string]ImageThumb `json:"images"`
-	Markers   map[string]ImageThumb `json:"markers,omitempty"`
+	Revision string                `json:"revision"`
+	Version  string                `json:"version"`
+	Albums   []uniq.Hash           `json:"albums,omitempty"`
+	Images   map[string]ImageThumb `json:"images"`
+	Markers  map[string]ImageThumb `json:"markers,omitempty"`
 }
 
 type ImageThumb struct {
@@ -277,16 +280,85 @@ func (s *Service) Open(ctx context.Context, key string) (blob.Entry, error) {
 	return s.blobStore.Read(ctx, key)
 }
 
+func (s *Service) TrackAlbum(ctx context.Context, images []Image, albumHash uniq.Hash) ([]byte, error) {
+	key := s.manifestKey(images)
+
+	manifest, err := s.manifestBackend.Read(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("read sprite manifest: %w", err)
+	}
+
+	for _, h := range manifest.Albums {
+		if h == albumHash {
+			return retirementKey(key, albumHash), nil
+		}
+	}
+
+	manifest.Albums = append(manifest.Albums, albumHash)
+	if err := s.manifestBackend.Write(ctx, key, manifest); err != nil {
+		return nil, fmt.Errorf("write sprite manifest: %w", err)
+	}
+
+	return retirementKey(key, albumHash), nil
+}
+
+func (s *Service) Delete(ctx context.Context, key []byte) error {
+	manifestKey, albumHash, err := parseRetirementKey(key)
+	if err != nil {
+		return err
+	}
+
+	manifest, err := s.manifestBackend.Read(ctx, manifestKey)
+	if err != nil {
+		return err
+	}
+
+	filtered := manifest.Albums[:0]
+	removed := false
+	for _, h := range manifest.Albums {
+		if h == albumHash {
+			removed = true
+			continue
+		}
+
+		filtered = append(filtered, h)
+	}
+
+	if !removed {
+		return nil
+	}
+
+	manifest.Albums = filtered
+	if len(manifest.Albums) > 0 {
+		s.logger.Info(ctx, "retire sprite manifest owner",
+			"manifest_key", string(manifestKey),
+			"album_hash", albumHash.String(),
+			"remaining_owners", len(manifest.Albums))
+
+		if err := s.manifestBackend.Write(ctx, manifestKey, manifest); err != nil {
+			return fmt.Errorf("write sprite manifest: %w", err)
+		}
+
+		return nil
+	}
+
+	s.logger.Info(ctx, "delete retired sprite manifest",
+		"manifest_key", string(manifestKey),
+		"album_hash", albumHash.String())
+
+	return s.deleteManifest(ctx, manifestKey, manifest)
+}
+
 func (s *Service) Close() error {
 	return s.blobStore.Close()
 }
 
 func (s *Service) build(ctx context.Context, images []Image) (Manifest, error) {
 	manifest := Manifest{
-		Revision:  s.revision(images),
-		Version:   s.version,
-		Images:    make(map[string]ImageThumb, len(images)),
-		Markers:   make(map[string]ImageThumb),
+		Revision: s.revision(images),
+		Version:  s.version,
+		Images:   make(map[string]ImageThumb, len(images)),
+		Markers:  make(map[string]ImageThumb),
 	}
 
 	buckets := make(map[bucketKey][]Image)
@@ -458,6 +530,32 @@ func (s *Service) manifestKey(images []Image) []byte {
 	return []byte("album-sprite-manifest:" + s.revision(images) + ":" + s.version)
 }
 
+func retirementKey(manifestKey []byte, albumHash uniq.Hash) []byte {
+	key := make([]byte, 0, len(manifestKey)+1+len(albumHash.String()))
+	key = append(key, manifestKey...)
+	key = append(key, '|')
+	key = append(key, albumHash.String()...)
+
+	return key
+}
+
+func parseRetirementKey(key []byte) ([]byte, uniq.Hash, error) {
+	manifestKey, albumKey, ok := bytes.Cut(key, []byte{'|'})
+	if !ok {
+		return nil, 0, fmt.Errorf("invalid sprite retirement key: %q", string(key))
+	}
+
+	var albumHash uniq.Hash
+	if err := albumHash.UnmarshalText(albumKey); err != nil {
+		return nil, 0, fmt.Errorf("decode album hash: %w", err)
+	}
+
+	parsedKey := make([]byte, len(manifestKey))
+	copy(parsedKey, manifestKey)
+
+	return parsedKey, albumHash, nil
+}
+
 func (s *Service) revision(images []Image) string {
 	h := sha1.New()
 	buf := make([]byte, 0, 64)
@@ -479,6 +577,49 @@ func (s *Service) revision(images []Image) string {
 	}
 
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (s *Service) deleteManifest(ctx context.Context, key []byte, manifest Manifest) error {
+	chunks := manifestChunks(manifest)
+	s.logger.Info(ctx, "delete sprite manifest assets",
+		"manifest_key", string(key),
+		"chunks", len(chunks))
+
+	for chunk := range chunks {
+		if err := s.blobStore.Delete(ctx, chunk); err != nil && !errors.Is(err, cache.ErrNotFound) {
+			return fmt.Errorf("delete sprite blob %s: %w", chunk, err)
+		}
+	}
+
+	if err := s.manifestBackend.Delete(ctx, key); err != nil && !errors.Is(err, cache.ErrNotFound) {
+		return fmt.Errorf("delete sprite manifest: %w", err)
+	}
+
+	return nil
+}
+
+func manifestChunks(manifest Manifest) map[string]struct{} {
+	chunks := make(map[string]struct{})
+
+	for _, item := range manifest.Images {
+		if item.Chunk1x != "" {
+			chunks[item.Chunk1x] = struct{}{}
+		}
+		if item.Chunk2x != "" {
+			chunks[item.Chunk2x] = struct{}{}
+		}
+	}
+
+	for _, item := range manifest.Markers {
+		if item.Chunk1x != "" {
+			chunks[item.Chunk1x] = struct{}{}
+		}
+		if item.Chunk2x != "" {
+			chunks[item.Chunk2x] = struct{}{}
+		}
+	}
+
+	return chunks
 }
 
 func (s *Service) chunkKey(scale int, bucket bucketKey, chunk []Image, mode composeMode) string {

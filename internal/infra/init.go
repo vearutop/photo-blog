@@ -228,6 +228,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		}),
 		spriteBlobStorage,
 	)
+	l.DepCache().PersistentInvalidationIndex().AddCache(sprite.RetirementCacheName, l.AlbumSprites())
 	l.OnShutdown("album-sprite-blobs", func() {
 		if err := l.AlbumSprites().Close(); err != nil {
 			l.CtxdLogger().Error(context.Background(), "failed to close album sprite storage", "error", err)

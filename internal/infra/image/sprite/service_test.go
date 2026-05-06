@@ -7,13 +7,20 @@ import (
 	"image/color"
 	"image/jpeg"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/bool64/brick/database"
+	"github.com/bool64/cache/blob"
 	"github.com/bool64/cache/filecache"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
 	"github.com/bool64/stats"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
+	"github.com/vearutop/photo-blog/pkg/sqlitec"
+	_ "modernc.org/sqlite"
 )
 
 func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
@@ -174,6 +181,102 @@ func TestServiceManifestKey_ReusesBySpriteInput(t *testing.T) {
 	}
 }
 
+func TestServiceTrackAlbumAndRetire(t *testing.T) {
+	ctx := context.Background()
+	st := testManifestStorage(t)
+
+	blobs, err := filecache.NewStorage[string](t.TempDir())
+	if err != nil {
+		t.Fatalf("new blob storage: %v", err)
+	}
+	defer func() {
+		_ = blobs.Close()
+	}()
+
+	s := &Service{
+		logger:          ctxd.NoOpLogger{},
+		stats:           stats.NoOp{},
+		manifestBackend: sqlitec.NewDBMapOf[Manifest](st),
+		blobStore:       blobs,
+		version:         "test",
+	}
+
+	images := []Image{{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: true}}
+	ownerA := mustHash("oa")
+	ownerB := mustHash("ob")
+	manifestKey := s.manifestKey(images)
+
+	manifest := Manifest{
+		Revision: s.revision(images),
+		Version:  s.version,
+		Images: map[string]ImageThumb{
+			images[0].Hash.String(): {
+				Chunk1x:          "chunk-1x",
+				Chunk2x:          "chunk-2x",
+				Width:            300,
+				Height:           150,
+				BackgroundWidth:  300,
+				BackgroundHeight: 150,
+			},
+		},
+	}
+
+	if err := s.manifestBackend.Write(ctx, manifestKey, manifest); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	writeBlob(t, ctx, blobs, "chunk-1x")
+	writeBlob(t, ctx, blobs, "chunk-2x")
+
+	keyA, err := s.TrackAlbum(ctx, images, ownerA)
+	if err != nil {
+		t.Fatalf("track owner A: %v", err)
+	}
+
+	keyB, err := s.TrackAlbum(ctx, images, ownerB)
+	if err != nil {
+		t.Fatalf("track owner B: %v", err)
+	}
+
+	updated, err := s.manifestBackend.Read(ctx, manifestKey)
+	if err != nil {
+		t.Fatalf("read tracked manifest: %v", err)
+	}
+
+	if len(updated.Albums) != 2 || updated.Albums[0] != ownerA || updated.Albums[1] != ownerB {
+		t.Fatalf("unexpected manifest owners: %#v", updated.Albums)
+	}
+
+	if err := s.Delete(ctx, keyA); err != nil {
+		t.Fatalf("retire owner A: %v", err)
+	}
+
+	updated, err = s.manifestBackend.Read(ctx, manifestKey)
+	if err != nil {
+		t.Fatalf("read partially retired manifest: %v", err)
+	}
+
+	if len(updated.Albums) != 1 || updated.Albums[0] != ownerB {
+		t.Fatalf("unexpected owners after first retirement: %#v", updated.Albums)
+	}
+
+	if err := s.Delete(ctx, keyB); err != nil {
+		t.Fatalf("retire owner B: %v", err)
+	}
+
+	if _, err := s.manifestBackend.Read(ctx, manifestKey); err == nil {
+		t.Fatalf("manifest should be deleted after last owner")
+	}
+
+	if _, err := blobs.Read(ctx, "chunk-1x"); err == nil {
+		t.Fatalf("chunk-1x should be deleted after last owner")
+	}
+
+	if _, err := blobs.Read(ctx, "chunk-2x"); err == nil {
+		t.Fatalf("chunk-2x should be deleted after last owner")
+	}
+}
+
 type stubThumbnailer struct{}
 
 func (stubThumbnailer) Thumbnail(_ context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
@@ -212,6 +315,45 @@ func mustHash(seed string) uniq.Hash {
 	}
 
 	return h
+}
+
+func testManifestStorage(t *testing.T) *sqluct.Storage {
+	t.Helper()
+
+	cfg := database.Config{
+		DriverName:      "sqlite",
+		DSN:             filepath.Join(t.TempDir(), "sprite.sqlite") + "?_time_format=sqlite",
+		ApplyMigrations: true,
+		MaxOpen:         1,
+		MaxIdle:         1,
+	}
+
+	st, err := database.SetupStorageDSN(cfg, ctxd.NoOpLogger{}, stats.NoOp{}, sqlitec.Migrations)
+	if err != nil {
+		t.Fatalf("setup storage: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := st.DB().DB.Close(); err != nil {
+			t.Fatalf("close storage: %v", err)
+		}
+	})
+
+	return st
+}
+
+func writeBlob(t *testing.T, ctx context.Context, blobs *filecache.Storage[string], key string) {
+	t.Helper()
+
+	entry := blob.FromReader(bytes.NewReader([]byte("x")), blob.Meta{
+		Name:    key + ".jpg",
+		Size:    1,
+		ModTime: time.Now(),
+	})
+
+	if err := blobs.Write(ctx, key, entry); err != nil {
+		t.Fatalf("write blob %s: %v", key, err)
+	}
 }
 
 func TestMain(m *testing.M) {

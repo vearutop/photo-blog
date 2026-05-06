@@ -94,7 +94,7 @@ Used by:
 - album preview cache for sub-albums
 - main page cache for featured album and preview tiles
 - thumb-grid cache
-- potentially sprite manifests if sprite retirement is integrated with invalidation
+- sprite retirement triggers for album sprite manifests
 
 Invalidated by:
 
@@ -205,7 +205,54 @@ Currently this affects:
 - main page
 - album page
 
-## 6. Album Create / Delete / Modify
+## 6. Album Sprite Retirement
+
+Album sprite manifests are not invalidated like normal page caches.
+
+Instead, the app uses invalidation as a trigger to retire album ownership of a shared manifest.
+
+There is a synthetic invalidation target:
+
+- `cache_name = "sprite-retire"`
+- `cache_key = <manifest-key>|<owner-album-hash>`
+
+This key does not represent a rendered page.
+It represents:
+
+- album `A` currently claims ownership of sprite manifest `M`
+
+When an album page is rendered and a sprite manifest is used:
+
+1. the manifest stores the owner album hash in `manifest.Albums`
+2. the synthetic `sprite-retire` key is refreshed with `ResetKey`
+3. direct labels are attached for:
+   - `album/<owner album>`
+   - every visible contributing sub-album preview
+
+Effect:
+
+- if the owner album changes, its ownership claim is retired
+- if a contributing sub-album changes, the owner album’s claim is also retired
+
+When invalidation fires for that synthetic key:
+
+1. the sprite service loads the manifest
+2. removes the owner album from `manifest.Albums`
+3. if other owners remain, the manifest is stored back
+4. if no owners remain, the manifest and referenced sprite chunks are deleted
+
+This is intentionally simpler than full liveness recomputation:
+
+- invalidation removes stale ownership claims
+- future requests re-add owners that still need the manifest
+
+Important:
+
+- `manifest.Albums` stores owner albums only
+- contributing sub-albums are used only as invalidation labels
+- the synthetic key must carry direct `album/<name>` labels for every contributor that should retire the owner claim
+
+## 7. Album Create / Delete / Modify
 
 Typical triggers:
 
@@ -232,7 +279,7 @@ Effect of `AlbumChanged(ctx, name)`:
 
 The `updated_at` touch is separate from invalidation; it supports other cache strategies that rely on album timestamps.
 
-## 7. Image Update
+## 8. Image Update
 
 Image updates do not label album pages by image hash.
 
@@ -339,6 +386,33 @@ sequenceDiagram
     Dep->>Dep: AlbumChanged("B")
     Dep-->>PrevB: invalidated
     Dep-->>PageA: invalidated only if album/B label exists
+```
+
+### Sprite Retirement
+
+```mermaid
+sequenceDiagram
+    participant Page as ShowAlbum(A)
+    participant Sprite as sprite.Service
+    participant Dep as dep.Cache
+    participant Idx as invalidation.Index
+
+    Page->>Sprite: Ready(images)
+    Sprite-->>Page: manifest M
+    Page->>Sprite: TrackAlbum(M, A)
+    Page->>Dep: ResetKey(sprite-retire, M|A)
+    Page->>Dep: AlbumDependency(sprite-retire, M|A, A, B, C)
+
+    Note over Dep: later, album B changes
+
+    Dep->>Idx: InvalidateByLabels(album/B)
+    Idx->>Sprite: Delete(M|A)
+    Sprite->>Sprite: remove A from manifest.Albums
+    alt owners remain
+        Sprite->>Sprite: store manifest back
+    else no owners remain
+        Sprite->>Sprite: delete manifest and chunk blobs
+    end
 ```
 
 ## Practical Rule

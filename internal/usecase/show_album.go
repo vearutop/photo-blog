@@ -345,6 +345,23 @@ func ShowAlbum(deps interface {
 			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, spriteImages); err != nil {
 				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
 			} else if ok {
+				retirementKey, err := deps.AlbumSprites().TrackAlbum(ctx, spriteImages, album.Hash)
+				if err != nil {
+					deps.CtxdLogger().Error(ctx, "failed to track album sprite manifest", "album", album.Name, "error", err)
+				} else {
+					if err := deps.DepCache().ResetKey(ctx, sprite.RetirementCacheName, retirementKey); err != nil {
+						deps.CtxdLogger().Error(ctx, "failed to reset album sprite retirement deps", "album", album.Name, "error", err)
+					} else {
+						labels := make([]string, 0, 1+len(d.SubAlbums))
+						labels = append(labels, album.Name)
+						for _, subAlbum := range d.SubAlbums {
+							labels = append(labels, subAlbum.Album.Name)
+						}
+
+						deps.DepCache().AlbumDependency(sprite.RetirementCacheName, retirementKey, labels...)
+					}
+				}
+
 				items := deps.AlbumSprites().View(manifest)
 				d.ThumbSprites = filterThumbSprites(items, cont.Images)
 				d.AlbumData.ThumbSprites = d.ThumbSprites
