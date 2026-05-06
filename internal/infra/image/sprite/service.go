@@ -12,6 +12,7 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bool64/cache"
@@ -60,13 +61,17 @@ type ImageThumb struct {
 }
 
 type ViewItem struct {
-	Chunk1x          string `json:"chunk_1x"`
-	Chunk2x          string `json:"chunk_2x"`
+	Sheet            string `json:"sheet"`
 	Width            int    `json:"width"`
 	Height           int    `json:"height"`
 	OffsetY          int    `json:"offset_y"`
 	BackgroundWidth  int    `json:"background_width"`
 	BackgroundHeight int    `json:"background_height"`
+}
+
+type Sheet struct {
+	Chunk1x string `json:"chunk_1x"`
+	Chunk2x string `json:"chunk_2x"`
 }
 
 type bucketKey struct {
@@ -172,9 +177,9 @@ func (s *Service) View(manifest Manifest) map[string]*ViewItem {
 	items := make(map[string]*ViewItem, len(manifest.Images))
 
 	for hash, img := range manifest.Images {
+		sheet := img.Chunk1x + "|" + img.Chunk2x
 		items[hash] = &ViewItem{
-			Chunk1x:          img.Chunk1x,
-			Chunk2x:          img.Chunk2x,
+			Sheet:            sheet,
 			Width:            img.Width,
 			Height:           img.Height,
 			OffsetY:          img.OffsetY,
@@ -186,6 +191,56 @@ func (s *Service) View(manifest Manifest) map[string]*ViewItem {
 	return items
 }
 
+func (s *Service) CompactSheets(items map[string]*ViewItem, markerItems map[string]*ViewItem) map[string]Sheet {
+	if len(items) == 0 && len(markerItems) == 0 {
+		return nil
+	}
+
+	res := make(map[string]Sheet)
+	keys := make(map[string]string)
+	nextID := 0
+
+	assign := func(sheetRef string) string {
+		sheetID, ok := keys[sheetRef]
+		if ok {
+			return sheetID
+		}
+
+		chunk1x, chunk2x, ok := strings.Cut(sheetRef, "|")
+		if !ok {
+			return ""
+		}
+
+		sheetID = "s" + strconv.Itoa(nextID)
+		nextID++
+		keys[sheetRef] = sheetID
+		res[sheetID] = Sheet{
+			Chunk1x: chunk1x,
+			Chunk2x: chunk2x,
+		}
+
+		return sheetID
+	}
+
+	for _, item := range items {
+		if sheetID := assign(item.Sheet); sheetID != "" {
+			item.Sheet = sheetID
+		}
+	}
+
+	for _, item := range markerItems {
+		if sheetID := assign(item.Sheet); sheetID != "" {
+			item.Sheet = sheetID
+		}
+	}
+
+	if len(res) == 0 {
+		return nil
+	}
+
+	return res
+}
+
 func (s *Service) MarkerData(manifest Manifest) map[string]ImageThumb {
 	if len(manifest.Markers) == 0 {
 		return nil
@@ -194,6 +249,26 @@ func (s *Service) MarkerData(manifest Manifest) map[string]ImageThumb {
 	res := make(map[string]ImageThumb, len(manifest.Markers))
 	for k, v := range manifest.Markers {
 		res[k] = v
+	}
+
+	return res
+}
+
+func (s *Service) MarkerView(manifest Manifest) map[string]*ViewItem {
+	if len(manifest.Markers) == 0 {
+		return nil
+	}
+
+	res := make(map[string]*ViewItem, len(manifest.Markers))
+	for hash, img := range manifest.Markers {
+		res[hash] = &ViewItem{
+			Sheet:            img.Chunk1x + "|" + img.Chunk2x,
+			Width:            img.Width,
+			Height:           img.Height,
+			OffsetY:          img.OffsetY,
+			BackgroundWidth:  img.BackgroundWidth,
+			BackgroundHeight: img.BackgroundHeight,
+		}
 	}
 
 	return res

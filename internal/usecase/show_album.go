@@ -77,13 +77,14 @@ type albumPageData struct {
 	AlbumData getAlbumOutput
 	Timeline  []albumTimelineItem
 
-	ShowMap          bool
-	ShowEXIFPreview  bool
-	ShowAISays       bool
-	PreRender        bool
-	HasPanos         bool
-	ThumbSprites     map[string]*sprite.ViewItem
-	MapMarkerSprites map[string]sprite.ImageThumb
+	ShowMap         bool
+	ShowEXIFPreview bool
+	ShowAISays      bool
+	PreRender       bool
+	HasPanos        bool
+	ThumbSprites    map[string]*sprite.ViewItem
+	MarkerSprites   map[string]*sprite.ViewItem
+	SpriteSheets    map[string]sprite.Sheet
 }
 
 func albumSpriteImages(images []Image) []sprite.Image {
@@ -339,10 +340,14 @@ func ShowAlbum(deps interface {
 				items := deps.AlbumSprites().View(manifest)
 				d.ThumbSprites = filterThumbSprites(items, cont.Images)
 				d.AlbumData.ThumbSprites = d.ThumbSprites
-				d.MapMarkerSprites = deps.AlbumSprites().MarkerData(manifest)
+				d.MarkerSprites = deps.AlbumSprites().MarkerView(manifest)
+				d.SpriteSheets = deps.AlbumSprites().CompactSheets(items, d.MarkerSprites)
+				d.AlbumData.MarkerSprites = d.MarkerSprites
+				d.AlbumData.SpriteSheets = d.SpriteSheets
 
 				for i := range d.SubAlbums {
 					d.SubAlbums[i].ThumbSprites = filterThumbSprites(items, d.SubAlbums[i].Images)
+					d.SubAlbums[i].SpriteSheets = d.AlbumData.SpriteSheets
 				}
 			}
 		}

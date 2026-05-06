@@ -74,12 +74,14 @@ type track struct {
 }
 
 type getAlbumOutput struct {
-	Album        photo.Album                 `json:"album"`
-	Description  string                      `json:"description,omitempty"`
-	Images       []Image                     `json:"images,omitempty"`
-	Tracks       []track                     `json:"tracks,omitempty"`
-	ThumbSprites map[string]*sprite.ViewItem `json:"thumb_sprites,omitempty"`
-	HideOriginal bool                        `json:"hide_original"`
+	Album         photo.Album                 `json:"album"`
+	Description   string                      `json:"description,omitempty"`
+	Images        []Image                     `json:"images,omitempty"`
+	Tracks        []track                     `json:"tracks,omitempty"`
+	ThumbSprites  map[string]*sprite.ViewItem `json:"thumb_sprites,omitempty"`
+	MarkerSprites map[string]*sprite.ViewItem `json:"marker_sprites,omitempty"`
+	SpriteSheets  map[string]sprite.Sheet     `json:"sprite_sheets,omitempty"`
+	HideOriginal  bool                        `json:"hide_original"`
 }
 
 // GetAlbumContents creates use case interactor to get album data.

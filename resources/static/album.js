@@ -85,7 +85,6 @@ window.openByHashInGallery = window.openByHashInGallery || function (galleryKey,
  * @property {Boolean} showAISays - show AI says in image view
  * @property {Boolean} showEXIFPreview - show EXIF preview in image view
  * @property {Boolean} preRendered - server rendered HTML exists for images
- * @property {Object.<string, Object>} markerSprites - optional marker sprite data by image hash
  */
 
 
@@ -135,10 +134,6 @@ function loadAlbum(params) {
         params.baseUrl = window.location.pathname + window.location.search
     }
 
-    if (!params.markerSprites) {
-        params.markerSprites = {}
-    }
-
     /**
      * @type {Array<PhotoImage>}
      */
@@ -160,12 +155,12 @@ function loadAlbum(params) {
             '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" />'
     }
 
-    function spriteThumbStyle(sprite, width, height, offsetY, backgroundWidth, backgroundHeight) {
-        var oneX = "/thumb-sprite/" + sprite.chunk_1x + ".jpg"
+    function spriteThumbStyle(spriteSheet, width, height, offsetY, backgroundWidth, backgroundHeight) {
+        var oneX = "/thumb-sprite/" + spriteSheet.chunk_1x + ".jpg"
         var backgroundImage = "url('" + oneX + "')"
 
         if (window.CSS && CSS.supports && CSS.supports("background-image", "image-set(url('" + oneX + "') 1x, url('/x.jpg') 2x)")) {
-            backgroundImage = "image-set(url('" + oneX + "') 1x, url('/thumb-sprite/" + sprite.chunk_2x + ".jpg') 2x)"
+            backgroundImage = "image-set(url('" + oneX + "') 1x, url('/thumb-sprite/" + spriteSheet.chunk_2x + ".jpg') 2x)"
         }
 
         var scale = 1
@@ -183,8 +178,8 @@ function loadAlbum(params) {
         }
     }
 
-    function applySpriteStyle(spriteEl, sprite, width, height, offsetY, backgroundWidth, backgroundHeight) {
-        var style = spriteThumbStyle(sprite, width, height, offsetY, backgroundWidth, backgroundHeight)
+    function applySpriteStyle(spriteEl, spriteSheet, width, height, offsetY, backgroundWidth, backgroundHeight) {
+        var style = spriteThumbStyle(spriteSheet, width, height, offsetY, backgroundWidth, backgroundHeight)
 
         spriteEl.css(style)
     }
@@ -203,7 +198,8 @@ function loadAlbum(params) {
             var canvas = thumb.find("canvas")
             var hash = sprite.closest("a.image").attr("data-hash")
             var spriteMeta = params.thumbSprites && hash ? params.thumbSprites[hash] : null
-            if (!spriteMeta) {
+            var spriteSheet = spriteMeta && params.spriteSheets ? params.spriteSheets[spriteMeta.sheet] : null
+            if (!spriteMeta || !spriteSheet) {
                 return
             }
 
@@ -226,14 +222,14 @@ function loadAlbum(params) {
                 var scale = scaledWidth / baseWidth
                 var scaledHeight = Math.round(baseHeight * scale)
 
-                applySpriteStyle(sprite, spriteMeta, scaledWidth, scaledHeight, offsetY, bgWidth, bgHeight)
+                applySpriteStyle(sprite, spriteSheet, scaledWidth, scaledHeight, offsetY, bgWidth, bgHeight)
 
                 canvas.css({
                     width: scaledWidth + "px",
                     height: scaledHeight + "px"
                 })
             } else {
-                applySpriteStyle(sprite, spriteMeta, baseWidth, baseHeight, offsetY, bgWidth, bgHeight)
+                applySpriteStyle(sprite, spriteSheet, baseWidth, baseHeight, offsetY, bgWidth, bgHeight)
 
                 canvas.css({
                     width: "",
@@ -244,8 +240,13 @@ function loadAlbum(params) {
     }
 
     function markerSpriteStyle(markerSprite) {
-        var oneX = "/thumb-sprite/" + markerSprite.chunk_1x + ".jpg"
-        var twoX = "/thumb-sprite/" + markerSprite.chunk_2x + ".jpg"
+        var markerSheet = params.spriteSheets[markerSprite.sheet]
+        if (!markerSheet) {
+            return ''
+        }
+
+        var oneX = "/thumb-sprite/" + markerSheet.chunk_1x + ".jpg"
+        var twoX = "/thumb-sprite/" + markerSheet.chunk_2x + ".jpg"
 
         return 'width:' + markerSprite.width + 'px;height:' + markerSprite.height + 'px;' +
             'background-image:url(\'' + oneX + '\');' +
@@ -287,7 +288,11 @@ function loadAlbum(params) {
         var idx = 0
         var hideOriginal = result.hide_original
         var thumbSprites = result.thumb_sprites || {}
+        var markerSprites = result.marker_sprites || {}
+        var spriteSheets = result.sprite_sheets || {}
         params.thumbSprites = thumbSprites
+        params.markerSprites = markerSprites
+        params.spriteSheets = spriteSheets
 
         if (typeof result.images === 'undefined') {
             result.images = [];
