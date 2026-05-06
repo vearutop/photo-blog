@@ -183,11 +183,7 @@ function loadAlbum(params) {
         }
     }
 
-    function applySpriteStyle(spriteEl, width, height, offsetY, backgroundWidth, backgroundHeight) {
-        var sprite = {
-            chunk_1x: spriteEl.attr("data-chunk-1x"),
-            chunk_2x: spriteEl.attr("data-chunk-2x")
-        }
+    function applySpriteStyle(spriteEl, sprite, width, height, offsetY, backgroundWidth, backgroundHeight) {
         var style = spriteThumbStyle(sprite, width, height, offsetY, backgroundWidth, backgroundHeight)
 
         spriteEl.css(style)
@@ -195,7 +191,7 @@ function loadAlbum(params) {
 
     function spriteThumbHTML(img, landscape, sprite) {
         return '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
-            '<span class="thumb-sprite" data-chunk-1x="' + sprite.chunk_1x + '" data-chunk-2x="' + sprite.chunk_2x + '" data-width="' + sprite.width + '" data-height="' + sprite.height + '" data-offset-y="' + sprite.offset_y + '" data-background-width="' + sprite.background_width + '" data-background-height="' + sprite.background_height + '"></span>'
+            '<span class="thumb-sprite"></span>'
     }
 
     function updateResponsiveSpriteThumbs() {
@@ -205,12 +201,17 @@ function loadAlbum(params) {
             var sprite = $(this)
             var thumb = sprite.closest(".thumb")
             var canvas = thumb.find("canvas")
+            var hash = sprite.closest("a.image").attr("data-hash")
+            var spriteMeta = params.thumbSprites && hash ? params.thumbSprites[hash] : null
+            if (!spriteMeta) {
+                return
+            }
 
-            var baseWidth = parseFloat(sprite.attr("data-width")) || 0
-            var baseHeight = parseFloat(sprite.attr("data-height")) || 0
-            var offsetY = parseFloat(sprite.attr("data-offset-y")) || 0
-            var bgWidth = parseFloat(sprite.attr("data-background-width")) || 0
-            var bgHeight = parseFloat(sprite.attr("data-background-height")) || 0
+            var baseWidth = spriteMeta.width || 0
+            var baseHeight = spriteMeta.height || 0
+            var offsetY = spriteMeta.offset_y || 0
+            var bgWidth = spriteMeta.background_width || 0
+            var bgHeight = spriteMeta.background_height || 0
 
             if (!baseWidth || !baseHeight || !bgWidth || !bgHeight) {
                 return
@@ -225,14 +226,14 @@ function loadAlbum(params) {
                 var scale = scaledWidth / baseWidth
                 var scaledHeight = Math.round(baseHeight * scale)
 
-                applySpriteStyle(sprite, scaledWidth, scaledHeight, offsetY, bgWidth, bgHeight)
+                applySpriteStyle(sprite, spriteMeta, scaledWidth, scaledHeight, offsetY, bgWidth, bgHeight)
 
                 canvas.css({
                     width: scaledWidth + "px",
                     height: scaledHeight + "px"
                 })
             } else {
-                applySpriteStyle(sprite, baseWidth, baseHeight, offsetY, bgWidth, bgHeight)
+                applySpriteStyle(sprite, spriteMeta, baseWidth, baseHeight, offsetY, bgWidth, bgHeight)
 
                 canvas.css({
                     width: "",
@@ -286,6 +287,7 @@ function loadAlbum(params) {
         var idx = 0
         var hideOriginal = result.hide_original
         var thumbSprites = result.thumb_sprites || {}
+        params.thumbSprites = thumbSprites
 
         if (typeof result.images === 'undefined') {
             result.images = [];

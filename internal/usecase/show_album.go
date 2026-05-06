@@ -338,6 +338,7 @@ func ShowAlbum(deps interface {
 			} else if ok {
 				items := deps.AlbumSprites().View(manifest)
 				d.ThumbSprites = filterThumbSprites(items, cont.Images)
+				d.AlbumData.ThumbSprites = d.ThumbSprites
 				d.MapMarkerSprites = deps.AlbumSprites().MarkerData(manifest)
 
 				for i := range d.SubAlbums {
