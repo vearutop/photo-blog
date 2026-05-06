@@ -27,12 +27,13 @@ import (
 )
 
 const (
-	defaultBoxWidth  = 300
-	defaultBoxHeight = 200
-	defaultChunkSize = 20
-	markerChunkSize  = 100
-	defaultVersion   = "v1"
-	markerBoxSize    = 40
+	defaultBoxWidth        = 300
+	defaultBoxHeight       = 200
+	defaultChunkSize       = 20
+	markerChunkSize        = 100
+	defaultVersion         = "v1"
+	markerBoxSize          = 40
+	defaultRetirementDelay = 5 * time.Minute
 
 	RetirementCacheName = "sprite-retire"
 )
@@ -88,10 +89,11 @@ type Service struct {
 	manifestCache   *cache.FailoverOf[Manifest]
 	blobStore       *filecache.Storage[string]
 
-	boxWidth  int
-	boxHeight int
-	chunkSize int
-	version   string
+	boxWidth        int
+	boxHeight       int
+	chunkSize       int
+	version         string
+	retirementDelay time.Duration
 }
 
 func NewService(
@@ -111,6 +113,7 @@ func NewService(
 		boxHeight:       defaultBoxHeight,
 		chunkSize:       defaultChunkSize,
 		version:         defaultVersion,
+		retirementDelay: defaultRetirementDelay,
 	}
 
 	s.manifestCache = cache.NewFailoverOf[Manifest](func(cfg *cache.FailoverConfigOf[Manifest]) {
@@ -344,9 +347,16 @@ func (s *Service) Delete(ctx context.Context, key []byte) error {
 
 	s.logger.Info(ctx, "delete retired sprite manifest",
 		"manifest_key", string(manifestKey),
-		"album_hash", albumHash.String())
+		"album_hash", albumHash.String(),
+		"delay", s.retirementDelay.String())
 
-	return s.deleteManifest(ctx, manifestKey, manifest)
+	if err := s.manifestBackend.Write(ctx, manifestKey, manifest); err != nil {
+		return fmt.Errorf("write sprite manifest: %w", err)
+	}
+
+	s.scheduleRetirement(ctx, manifestKey)
+
+	return nil
 }
 
 func (s *Service) Close() error {
@@ -596,6 +606,45 @@ func (s *Service) deleteManifest(ctx context.Context, key []byte, manifest Manif
 	}
 
 	return nil
+}
+
+func (s *Service) scheduleRetirement(ctx context.Context, key []byte) {
+	if s.retirementDelay <= 0 {
+		ctx = context.WithoutCancel(ctx)
+		if err := s.deleteIfOwnerless(ctx, key); err != nil && !errors.Is(err, cache.ErrNotFound) {
+			s.logger.Error(ctx, "delete ownerless sprite manifest", "manifest_key", string(key), "error", err.Error())
+		}
+
+		return
+	}
+
+	manifestKey := append([]byte(nil), key...)
+
+	go func() {
+		ctx := context.WithoutCancel(ctx)
+		time.Sleep(s.retirementDelay)
+
+		if err := s.deleteIfOwnerless(ctx, manifestKey); err != nil && !errors.Is(err, cache.ErrNotFound) {
+			s.logger.Error(ctx, "delete ownerless sprite manifest", "manifest_key", string(manifestKey), "error", err.Error())
+		}
+	}()
+}
+
+func (s *Service) deleteIfOwnerless(ctx context.Context, key []byte) error {
+	manifest, err := s.manifestBackend.Read(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	if len(manifest.Albums) > 0 {
+		s.logger.Info(ctx, "keep sprite manifest after delayed retirement check",
+			"manifest_key", string(key),
+			"owners", len(manifest.Albums))
+
+		return nil
+	}
+
+	return s.deleteManifest(ctx, key, manifest)
 }
 
 func manifestChunks(manifest Manifest) map[string]struct{} {

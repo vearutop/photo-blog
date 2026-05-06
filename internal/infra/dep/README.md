@@ -239,12 +239,14 @@ When invalidation fires for that synthetic key:
 1. the sprite service loads the manifest
 2. removes the owner album from `manifest.Albums`
 3. if other owners remain, the manifest is stored back
-4. if no owners remain, the manifest and referenced sprite chunks are deleted
+4. if no owners remain, the manifest stays ownerless for a short grace period
+5. a delayed re-check deletes the manifest and referenced sprite chunks only if it is still ownerless
 
 This is intentionally simpler than full liveness recomputation:
 
 - invalidation removes stale ownership claims
 - future requests re-add owners that still need the manifest
+- metadata-only album edits can be followed by a quick page reload without forcing immediate sprite rebuild
 
 Important:
 
@@ -411,7 +413,9 @@ sequenceDiagram
     alt owners remain
         Sprite->>Sprite: store manifest back
     else no owners remain
-        Sprite->>Sprite: delete manifest and chunk blobs
+        Sprite->>Sprite: keep ownerless manifest briefly
+        Sprite->>Sprite: delayed re-check
+        Sprite->>Sprite: delete manifest and chunk blobs if still ownerless
     end
 ```
 

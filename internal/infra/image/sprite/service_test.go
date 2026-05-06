@@ -199,6 +199,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 		manifestBackend: sqlitec.NewDBMapOf[Manifest](st),
 		blobStore:       blobs,
 		version:         "test",
+		retirementDelay: 20 * time.Millisecond,
 	}
 
 	images := []Image{{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: true}}
@@ -264,17 +265,40 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 		t.Fatalf("retire owner B: %v", err)
 	}
 
-	if _, err := s.manifestBackend.Read(ctx, manifestKey); err == nil {
-		t.Fatalf("manifest should be deleted after last owner")
+	updated, err = s.manifestBackend.Read(ctx, manifestKey)
+	if err != nil {
+		t.Fatalf("read ownerless manifest: %v", err)
 	}
 
-	if _, err := blobs.Read(ctx, "chunk-1x"); err == nil {
-		t.Fatalf("chunk-1x should be deleted after last owner")
+	if len(updated.Albums) != 0 {
+		t.Fatalf("manifest should become ownerless before delayed retirement: %#v", updated.Albums)
 	}
 
-	if _, err := blobs.Read(ctx, "chunk-2x"); err == nil {
-		t.Fatalf("chunk-2x should be deleted after last owner")
+	if _, err := blobs.Read(ctx, "chunk-1x"); err != nil {
+		t.Fatalf("chunk-1x should still exist before delayed retirement: %v", err)
 	}
+
+	if _, err := blobs.Read(ctx, "chunk-2x"); err != nil {
+		t.Fatalf("chunk-2x should still exist before delayed retirement: %v", err)
+	}
+
+	deadline := time.Now().Add(500 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		if _, err := s.manifestBackend.Read(ctx, manifestKey); err != nil {
+			if _, err := blobs.Read(ctx, "chunk-1x"); err == nil {
+				t.Fatalf("chunk-1x should be deleted after delayed retirement")
+			}
+			if _, err := blobs.Read(ctx, "chunk-2x"); err == nil {
+				t.Fatalf("chunk-2x should be deleted after delayed retirement")
+			}
+
+			return
+		}
+
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	t.Fatalf("manifest should be deleted after delayed retirement")
 }
 
 type stubThumbnailer struct{}
