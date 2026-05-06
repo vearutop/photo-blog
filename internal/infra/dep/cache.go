@@ -5,27 +5,26 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/topic"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/qlite"
+	"github.com/vearutop/photo-blog/pkg/sqlitec/invalidation"
 )
 
 type Deps interface {
-	CacheInvalidationIndex() *cache.InvalidationIndex
 	CtxdLogger() ctxd.Logger
 	QueueBroker() *qlite.Broker
 	PhotoAlbumUpdater() uniq.Updater[photo.Album]
 }
 
-func NewCache(deps Deps) *Cache {
+func NewCache(deps Deps, depStorage *sqluct.Storage) *Cache {
 	c := &Cache{
 		logger:       deps.CtxdLogger(),
-		index:        deps.CacheInvalidationIndex(),
 		albumUpdater: deps.PhotoAlbumUpdater(),
+		index:        invalidation.NewIndex(depStorage),
 	}
 
 	if err := qlite.AddConsumer[string](deps.QueueBroker(), topic.AlbumChanged, func(ctx context.Context, v string) error {
@@ -40,9 +39,9 @@ func NewCache(deps Deps) *Cache {
 }
 
 type Cache struct {
-	index        *cache.InvalidationIndex
 	logger       ctxd.Logger
 	albumUpdater uniq.Updater[photo.Album]
+	index        *invalidation.Index
 }
 
 type labelsCtxKey struct{}
@@ -117,4 +116,12 @@ func (n *Cache) ServiceSettingsChanged(ctx context.Context) error {
 
 func (n *Cache) DepCache() *Cache {
 	return n
+}
+
+func (n *Cache) PersistentInvalidationIndex() *invalidation.Index {
+	return n.index
+}
+
+func (n *Cache) ResetKey(ctx context.Context, cacheName string, cacheKey []byte) error {
+	return n.index.ResetKey(ctx, cacheName, cacheKey)
 }

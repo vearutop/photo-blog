@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bool64/brick"
 	"github.com/docker/go-units"
 	"github.com/swaggest/rest/request"
 	"github.com/swaggest/usecase"
@@ -17,6 +16,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
+	infraService "github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
@@ -164,7 +164,7 @@ func ShowAlbum(deps interface {
 	notFound := NotFound(deps)
 
 	cacheName := "album-data"
-	c := brick.MakeCacheOf[getAlbumOutput](deps, cacheName, time.Hour)
+	c := infraService.MakePersistentCacheOf[getAlbumOutput](deps, cacheName, time.Hour)
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)
@@ -172,6 +172,10 @@ func ShowAlbum(deps interface {
 
 		cacheKey := []byte(in.Name + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx))
 		cont, err := c.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
+			if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+				return getAlbumOutput{}, fmt.Errorf("reset cache deps: %w", err)
+			}
+
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumDependency(cacheName, cacheKey, in.Name)
 
@@ -312,6 +316,10 @@ func ShowAlbum(deps interface {
 
 			cacheKey := []byte(a.Name + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx) + "::preview")
 			cont, err := c.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
+				if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+					return getAlbumOutput{}, fmt.Errorf("reset cache deps: %w", err)
+				}
+
 				return getAlbumContents(ctx, deps, imagesFilter{albumName: a.Name}, true)
 			})
 			if err != nil {

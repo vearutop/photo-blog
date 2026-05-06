@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
 	"github.com/bool64/stats"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -42,6 +43,7 @@ type getAlbumImagesDeps interface {
 	FavoriteRepository() *storage.FavoriteRepository
 	DepCache() *dep.Cache
 	ImageSelector() *storage.ImageSelector
+	PersistentCacheStorage() *sqluct.Storage
 
 	service.TxtRendererProvider
 }

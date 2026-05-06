@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bool64/brick"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
+	infraService "github.com/vearutop/photo-blog/internal/infra/service"
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
@@ -129,7 +129,7 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 	}
 
 	cacheName := "main-page"
-	c := brick.MakeCacheOf[pageData](deps, cacheName, time.Hour)
+	c := infraService.MakePersistentCacheOf[pageData](deps, cacheName, time.Hour)
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_main", 1)
@@ -138,6 +138,9 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		cacheKey := []byte("main" + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx))
 		d, err := c.Get(ctx, cacheKey, func(ctx context.Context) (pageData, error) {
 			d := pageData{}
+			if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+				return d, fmt.Errorf("reset cache deps: %w", err)
+			}
 
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumListDependency(cacheName, cacheKey)

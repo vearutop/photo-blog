@@ -4,6 +4,7 @@ import (
 	"github.com/bool64/brick"
 	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/sqluct"
 	"github.com/swaggest/jsonform-go"
 	"github.com/vearutop/dbcon/dbcon"
 	"github.com/vearutop/image-prompt/multi"
@@ -18,16 +19,18 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/qlite"
+	"github.com/vearutop/photo-blog/pkg/sqlitec/invalidation"
 )
 
 // Locator defines application resources.
 type Locator struct {
 	*brick.BaseLocator
 
-	SchemaRepo            *jsonform.Repository
-	AccessLogger          ctxd.Logger
-	VisitorStatsInstance  *visitor.StatsRepository
-	MapTilesCacheInstance *cache.FailoverOf[[]byte]
+	SchemaRepo                     *jsonform.Repository
+	AccessLogger                   ctxd.Logger
+	VisitorStatsInstance           *visitor.StatsRepository
+	MapTilesCacheInstance          *cache.FailoverOf[[]byte]
+	PersistentCacheStorageInstance *sqluct.Storage
 
 	DepCacheInstance       *dep.Cache
 	FilesProcessorInstance *files.Processor
@@ -116,6 +119,14 @@ func (l *Locator) DepCache() *dep.Cache {
 	return l.DepCacheInstance
 }
 
+func (l *Locator) PersistentInvalidationIndex() *invalidation.Index {
+	if l.DepCacheInstance == nil {
+		return nil
+	}
+
+	return l.DepCacheInstance.PersistentInvalidationIndex()
+}
+
 func (l *Locator) FilesProcessor() *files.Processor {
 	return l.FilesProcessorInstance
 }
@@ -170,6 +181,10 @@ func (l *Locator) QueueBroker() *qlite.Broker {
 
 func (l *Locator) MapTilesCache() *cache.FailoverOf[[]byte] {
 	return l.MapTilesCacheInstance
+}
+
+func (l *Locator) PersistentCacheStorage() *sqluct.Storage {
+	return l.PersistentCacheStorageInstance
 }
 
 func (l *Locator) AlbumSprites() *sprite.Service {

@@ -8,7 +8,7 @@ require (
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
 	github.com/alexsergivan/transliterator v1.0.1
 	github.com/bool64/brick v0.3.5-0.20260505090148-7dfc5267e099
-	github.com/bool64/cache v0.5.0
+	github.com/bool64/cache v0.5.1
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
 	github.com/bool64/dev v0.2.45
@@ -40,6 +40,7 @@ require (
 	github.com/tkrajina/gpxgo v1.4.0
 	github.com/tus/tusd/v2 v2.8.0
 	github.com/vearutop/dbcon v0.4.9
+	github.com/vearutop/gooselite v0.1.1
 	github.com/vearutop/gpxt v0.1.13
 	github.com/vearutop/httpzip v0.1.2
 	github.com/vearutop/image-prompt v0.1.1
@@ -110,7 +111,6 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/vearutop/dynhist-go v1.2.4 // indirect
-	github.com/vearutop/gooselite v0.1.1 // indirect
 	github.com/vearutop/lograte v1.2.2 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

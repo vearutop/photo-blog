@@ -15,6 +15,7 @@ import (
 	"github.com/bool64/brick/database"
 	"github.com/bool64/cache"
 	"github.com/bool64/cache/filecache"
+	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
 	"github.com/swaggest/jsonform-go"
@@ -22,6 +23,8 @@ import (
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/swgui"
 	"github.com/vearutop/dbcon/dbcon"
+	"github.com/vearutop/gooselite"
+	"github.com/vearutop/gooselite/iofs"
 	"github.com/vearutop/image-prompt/multi"
 	"github.com/vearutop/netrie"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
@@ -45,6 +48,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
 	"github.com/vearutop/photo-blog/pkg/qlite"
 	"github.com/vearutop/photo-blog/pkg/sqlitec"
+	"github.com/vearutop/photo-blog/pkg/sqlitec/invalidation"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite" // SQLite3 driver.
@@ -128,7 +132,16 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	l.PhotoAlbumImageFinderProvider = ar
 	l.PhotoAlbumImageDeleterProvider = ar
 
-	l.DepCacheInstance = dep.NewCache(l)
+	persistentCacheStorage, err := setupStorage(l, "persistent-cache", sqlitec.Migrations)
+	if err != nil {
+		return nil, err
+	}
+	if err = applyStorageMigrations(l.CtxdLogger(), persistentCacheStorage, invalidation.Migrations); err != nil {
+		return nil, err
+	}
+	l.PersistentCacheStorageInstance = persistentCacheStorage
+
+	l.DepCacheInstance = dep.NewCache(l, persistentCacheStorage)
 
 	mapTilesStorage, err := setupStorage(l, "map-tiles", sqlitec.Migrations)
 	if err != nil {
@@ -196,11 +209,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	}
 	l.PhotoThumbnailerProvider = storage.NewThumbRepository(thumbStorage, image.NewThumbnailer(l), l.CtxdLogger())
 
-	spriteManifestStorage, err := setupStorage(l, "album-sprite-manifests", sqlitec.Migrations)
-	if err != nil {
-		return nil, err
-	}
-
 	spriteBlobStorage, err := filecache.NewStorage[string]("album-sprite-blobs", func(cfg *filecache.Config[string]) {
 		split := filecache.PrefixSplit(1)
 		cfg.SplitPath = func(version string) []string {
@@ -215,7 +223,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		l.CtxdLogger(),
 		l.StatsTracker(),
 		l.PhotoThumbnailer(),
-		sqlitec.NewDBMapOf[sprite.Manifest](spriteManifestStorage, func(cfg *cache.ConfigOf[sprite.Manifest]) {
+		sqlitec.NewDBMapOf[sprite.Manifest](persistentCacheStorage, func(cfg *cache.ConfigOf[sprite.Manifest]) {
 			cfg.TimeToLive = cache.UnlimitedTTL
 		}),
 		spriteBlobStorage,
@@ -340,6 +348,44 @@ func setupStorage(l *service.Locator, name string, migrations fs.FS) (*sqluct.St
 	})
 
 	return st, nil
+}
+
+func applyStorageMigrations(logger ctxd.Logger, st *sqluct.Storage, migrations fs.FS) error {
+	if migrations == nil {
+		return nil
+	}
+
+	gooselite.SetLogger(databaseLogger{c: context.Background(), l: logger})
+
+	if err := gooselite.SetDialect("sqlite3"); err != nil {
+		return fmt.Errorf("set migrations dialect: %w", err)
+	}
+
+	if err := iofs.Up(st.DB().DB, migrations, "."); err != nil {
+		return fmt.Errorf("run up migrations: %w", err)
+	}
+
+	return nil
+}
+
+type databaseLogger struct {
+	c context.Context
+	l ctxd.Logger
+}
+
+func (l databaseLogger) Fatal(v ...any) { l.l.Error(l.c, fmt.Sprint(v...)); os.Exit(1) }
+func (l databaseLogger) Fatalf(f string, v ...any) {
+	l.l.Error(l.c, fmt.Sprintf(f, v...))
+	os.Exit(1)
+}
+
+func (l databaseLogger) Print(v ...any) {
+	l.l.Info(l.c, strings.TrimRight(fmt.Sprint(v...), "\n"))
+}
+
+func (l databaseLogger) Println(v ...any) { l.l.Info(l.c, fmt.Sprint(v...)) }
+func (l databaseLogger) Printf(f string, v ...any) {
+	l.l.Info(l.c, strings.TrimRight(fmt.Sprintf(f, v...), "\n"))
 }
 
 func setupUploadStorage(p string) error {
