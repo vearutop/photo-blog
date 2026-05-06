@@ -11,6 +11,7 @@ import (
 	"image/jpeg"
 	"io"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/bool64/cache"
@@ -69,8 +70,7 @@ type ViewItem struct {
 }
 
 type bucketKey struct {
-	Width  int
-	Height int
+	Width int
 }
 
 type Service struct {
@@ -220,8 +220,7 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 	bucketOrder := make([]bucketKey, 0)
 
 	for _, img := range images {
-		bw, bh := s.renderedBox(img)
-		key := bucketKey{Width: bw, Height: bh}
+		key := s.chunkBucket(img, composeFit)
 		if _, ok := buckets[key]; !ok {
 			bucketOrder = append(bucketOrder, key)
 		}
@@ -248,17 +247,26 @@ func (s *Service) build(ctx context.Context, album photo.Album, images []Image) 
 				return Manifest{}, fmt.Errorf("build sprite chunk 2x: %w", err)
 			}
 
-			bgHeight := len(chunk) * key.Height
-			for idx, img := range chunk {
+			bgHeight := 0
+			offsetY := 0
+			for _, img := range chunk {
+				bgHeight += s.chunkItemHeight(img, key, composeFit)
+			}
+
+			for _, img := range chunk {
+				w, h := s.renderedBox(img)
+				sourceHeight := s.chunkItemHeight(img, key, composeFit)
 				manifest.Images[img.Hash.String()] = ImageThumb{
 					Chunk1x:          chunk1x,
 					Chunk2x:          chunk2x,
-					Width:            key.Width,
-					Height:           key.Height,
-					OffsetY:          idx * key.Height,
+					Width:            w,
+					Height:           h,
+					OffsetY:          offsetY,
 					BackgroundWidth:  key.Width,
 					BackgroundHeight: bgHeight,
 				}
+
+				offsetY += sourceHeight
 			}
 		}
 	}
@@ -286,10 +294,16 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 
 	rasterScale := spriteRasterScale(bucket, scale, mode)
 	cellW := int(math.Round(float64(bucket.Width) * rasterScale))
-	cellH := int(math.Round(float64(bucket.Height) * rasterScale))
-	bg := image.NewRGBA(image.Rect(0, 0, cellW, cellH*len(chunk)))
+	bgHeight := 0
+	for _, item := range chunk {
+		renderedHeight := s.chunkItemHeight(item, bucket, mode)
+		bgHeight += int(math.Round(float64(renderedHeight) * rasterScale))
+	}
 
-	for idx, item := range chunk {
+	bg := image.NewRGBA(image.Rect(0, 0, cellW, bgHeight))
+
+	y := 0
+	for _, item := range chunk {
 		src := photo.Image{}
 		src.Hash = item.Hash
 		src.Width = item.Width
@@ -306,8 +320,10 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 			return fmt.Errorf("decode thumbnail %s %s: %w", item.Hash, size, err)
 		}
 
-		y := idx * cellH
+		renderedHeight := s.chunkItemHeight(item, bucket, mode)
+		cellH := int(math.Round(float64(renderedHeight) * rasterScale))
 		drawThumb(bg, image.Rect(0, y, cellW, y+cellH), j, mode)
+		y += cellH
 	}
 
 	var buf bytes.Buffer
@@ -333,7 +349,7 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 		return nil
 	}
 
-	bucket := bucketKey{Width: markerBoxSize, Height: markerBoxSize}
+	bucket := s.chunkBucket(Image{}, composeCover)
 	for start := 0; start < len(images); start += markerChunkSize {
 		end := start + markerChunkSize
 		if end > len(images) {
@@ -348,14 +364,14 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 			return fmt.Errorf("build marker sprite chunk 1x: %w", err)
 		}
 
-		bgHeight := len(chunk) * bucket.Height
+		bgHeight := len(chunk) * markerBoxSize
 		for idx, img := range chunk {
 			manifest.Markers[img.Hash.String()] = ImageThumb{
 				Chunk1x:          chunk1x,
 				Chunk2x:          chunk2x,
 				Width:            bucket.Width,
-				Height:           bucket.Height,
-				OffsetY:          idx * bucket.Height,
+				Height:           markerBoxSize,
+				OffsetY:          idx * markerBoxSize,
 				BackgroundWidth:  bucket.Width,
 				BackgroundHeight: bgHeight,
 			}
@@ -376,13 +392,14 @@ func (s *Service) revision(album photo.Album) string {
 func (s *Service) chunkKey(scale int, bucket bucketKey, chunk []Image, mode composeMode) string {
 	h := sha1.New()
 	_, _ = io.WriteString(h, s.version)
-	_, _ = io.WriteString(h, fmt.Sprintf(":%d:%d:%d", scale, bucket.Width, bucket.Height))
+	_, _ = io.WriteString(h, fmt.Sprintf(":%d:%d", scale, bucket.Width))
 	_, _ = io.WriteString(h, ":"+string(spriteThumbSize(bucket, scale, mode)))
 	_, _ = io.WriteString(h, fmt.Sprintf(":rs%.2f:m%d", spriteRasterScale(bucket, scale, mode), mode))
 
 	for _, img := range chunk {
+		renderedHeight := s.chunkItemHeight(img, bucket, mode)
 		_, _ = io.WriteString(h, ":"+img.Hash.String())
-		_, _ = io.WriteString(h, fmt.Sprintf(":%dx%d", img.Width, img.Height))
+		_, _ = io.WriteString(h, fmt.Sprintf(":%dx%d:%d", img.Width, img.Height, renderedHeight))
 	}
 
 	return "album-sprite:" + hex.EncodeToString(h.Sum(nil))
@@ -392,6 +409,33 @@ func (s *Service) renderedBox(img Image) (int, int) {
 	bw, bh := fitBox(uint(img.Width), uint(img.Height), uint(s.boxWidth), uint(s.boxHeight))
 
 	return int(bw), int(bh)
+}
+
+func (s *Service) chunkBucket(_ Image, mode composeMode) bucketKey {
+	if mode == composeCover {
+		return bucketKey{Width: markerBoxSize}
+	}
+
+	return bucketKey{Width: defaultBoxWidth}
+}
+
+func (s *Service) chunkItemHeight(img Image, bucket bucketKey, mode composeMode) int {
+	if mode == composeCover {
+		return markerBoxSize
+	}
+
+	if img.Width <= 0 || img.Height <= 0 {
+		_, h := s.renderedBox(img)
+
+		return h
+	}
+
+	h := int(math.Round(float64(img.Height) * float64(bucket.Width) / float64(img.Width)))
+	if h < 1 {
+		h = 1
+	}
+
+	return h
 }
 
 func fitBox(origW, origH, maxW, maxH uint) (uint, uint) {
@@ -419,42 +463,16 @@ func fitBox(origW, origH, maxW, maxH uint) (uint, uint) {
 }
 
 func spriteThumbSize(bucket bucketKey, scale int, mode composeMode) photo.ThumbSize {
-	if mode == composeCover && bucket.Width == markerBoxSize && bucket.Height == markerBoxSize {
+	if mode == composeCover && bucket.Width == markerBoxSize {
 		return "200h"
 	}
 
-	if bucket.Width < defaultBoxWidth {
-		if scale == 2 {
-			return "600w"
-		}
-
-		return "300w"
-	}
-
-	if scale == 2 {
-		return "600w"
-	}
-
-	return "300w"
+	return photo.ThumbSize(strconv.Itoa(bucket.Width*scale) + "w")
 }
 
 func spriteRasterScale(bucket bucketKey, scale int, mode composeMode) float64 {
-	if mode == composeCover && bucket.Width == markerBoxSize && bucket.Height == markerBoxSize {
+	if mode == composeCover && bucket.Width == markerBoxSize {
 		return 2
-	}
-
-	size := spriteThumbSize(bucket, scale, mode)
-	w, h, err := size.WidthHeight()
-	if err != nil {
-		return float64(scale)
-	}
-
-	if w > 0 && bucket.Width > 0 {
-		return float64(w) / float64(bucket.Width)
-	}
-
-	if h > 0 && bucket.Height > 0 {
-		return float64(h) / float64(bucket.Height)
 	}
 
 	return float64(scale)
@@ -532,6 +550,11 @@ func validManifest(m Manifest, images []Image) bool {
 
 	needMarkers := false
 	for _, img := range images {
+		item, ok := m.Images[img.Hash.String()]
+		if !ok || item.Chunk1x == "" || item.Chunk2x == "" || item.Width <= 0 || item.Height <= 0 || item.BackgroundWidth <= 0 || item.BackgroundHeight <= 0 {
+			return false
+		}
+
 		if img.HasGPS {
 			needMarkers = true
 			marker, ok := m.Markers[img.Hash.String()]

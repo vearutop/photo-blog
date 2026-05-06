@@ -168,13 +168,18 @@ function loadAlbum(params) {
             backgroundImage = "image-set(url('" + oneX + "') 1x, url('/thumb-sprite/" + sprite.chunk_2x + ".jpg') 2x)"
         }
 
+        var scale = 1
+        if (backgroundWidth > 0 && width > 0) {
+            scale = width / backgroundWidth
+        }
+
         return {
             width: width + "px",
             height: height + "px",
             backgroundImage: backgroundImage,
-            backgroundPosition: "0 -" + offsetY + "px",
+            backgroundPosition: "0 -" + Math.round(offsetY * scale) + "px",
             backgroundRepeat: "no-repeat",
-            backgroundSize: backgroundWidth + "px " + backgroundHeight + "px"
+            backgroundSize: Math.round(backgroundWidth * scale) + "px " + Math.round(backgroundHeight * scale) + "px"
         }
     }
 
@@ -220,14 +225,7 @@ function loadAlbum(params) {
                 var scale = scaledWidth / baseWidth
                 var scaledHeight = Math.round(baseHeight * scale)
 
-                applySpriteStyle(
-                    sprite,
-                    scaledWidth,
-                    scaledHeight,
-                    Math.round(offsetY * scale),
-                    Math.round(bgWidth * scale),
-                    Math.round(bgHeight * scale)
-                )
+                applySpriteStyle(sprite, scaledWidth, scaledHeight, offsetY, bgWidth, bgHeight)
 
                 canvas.css({
                     width: scaledWidth + "px",

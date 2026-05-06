@@ -108,6 +108,48 @@ func albumSpriteImages(images []Image) []sprite.Image {
 	return spriteImages
 }
 
+func mergeAlbumSpriteImages(images ...[]Image) []sprite.Image {
+	seen := make(map[string]int)
+	merged := make([]sprite.Image, 0)
+
+	for _, set := range images {
+		for _, item := range albumSpriteImages(set) {
+			key := item.Hash.String()
+			if idx, ok := seen[key]; ok {
+				if item.HasGPS {
+					merged[idx].HasGPS = true
+				}
+
+				continue
+			}
+
+			seen[key] = len(merged)
+			merged = append(merged, item)
+		}
+	}
+
+	return merged
+}
+
+func filterThumbSprites(items map[string]*sprite.ViewItem, images []Image) map[string]*sprite.ViewItem {
+	if len(items) == 0 || len(images) == 0 {
+		return nil
+	}
+
+	res := make(map[string]*sprite.ViewItem, len(images))
+	for _, img := range images {
+		if item, ok := items[img.Hash]; ok {
+			res[img.Hash] = item
+		}
+	}
+
+	if len(res) == 0 {
+		return nil
+	}
+
+	return res
+}
+
 // ShowAlbum creates use case interactor to show album.
 func ShowAlbum(deps interface {
 	getAlbumImagesDeps
@@ -200,16 +242,6 @@ func ShowAlbum(deps interface {
 			}
 		}
 
-		if deps.Settings().Appearance().AlbumSpritesEnabled() {
-			spriteImages := albumSpriteImages(cont.Images)
-			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, album, spriteImages); err != nil {
-				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
-			} else if ok {
-				d.ThumbSprites = deps.AlbumSprites().View(manifest)
-				d.MapMarkerSprites = deps.AlbumSprites().MarkerData(manifest)
-			}
-		}
-
 		maps := deps.Settings().Maps()
 
 		d.MapTiles = maps.Tiles
@@ -289,17 +321,29 @@ func ShowAlbum(deps interface {
 				continue
 			}
 
-			if deps.Settings().Appearance().AlbumSpritesEnabled() {
-				spriteImages := albumSpriteImages(cont.Images)
-				if manifest, ok, err := deps.AlbumSprites().Ready(ctx, cont.Album, spriteImages); err != nil {
-					deps.CtxdLogger().Error(ctx, "failed to get sub album sprite manifest", "album", cont.Album.Name, "error", err)
-				} else if ok {
-					cont.ThumbSprites = deps.AlbumSprites().View(manifest)
-				}
-			}
-
 			d.SubAlbums = append(d.SubAlbums, cont)
 			deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
+		}
+
+		if deps.Settings().Appearance().AlbumSpritesEnabled() {
+			imageSets := make([][]Image, 0, 1+len(d.SubAlbums))
+			imageSets = append(imageSets, cont.Images)
+			for _, subAlbum := range d.SubAlbums {
+				imageSets = append(imageSets, subAlbum.Images)
+			}
+
+			spriteImages := mergeAlbumSpriteImages(imageSets...)
+			if manifest, ok, err := deps.AlbumSprites().Ready(ctx, album, spriteImages); err != nil {
+				deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
+			} else if ok {
+				items := deps.AlbumSprites().View(manifest)
+				d.ThumbSprites = filterThumbSprites(items, cont.Images)
+				d.MapMarkerSprites = deps.AlbumSprites().MarkerData(manifest)
+
+				for i := range d.SubAlbums {
+					d.SubAlbums[i].ThumbSprites = filterThumbSprites(items, d.SubAlbums[i].Images)
+				}
+			}
 		}
 
 		return out.Render(tmpl, d)

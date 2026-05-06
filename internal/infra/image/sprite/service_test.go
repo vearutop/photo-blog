@@ -92,6 +92,61 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 	}
 }
 
+func TestServiceBuild_GroupsSameChunkDifferentShapes(t *testing.T) {
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	blobs, err := filecache.NewStorage[string](dir)
+	if err != nil {
+		t.Fatalf("new blob storage: %v", err)
+	}
+	defer func() {
+		_ = blobs.Close()
+	}()
+
+	images := []Image{
+		{Hash: mustHash("a"), Width: 6000, Height: 4000}, // display 300x200, source 300x200
+		{Hash: mustHash("b"), Width: 3000, Height: 4000}, // display 150x200, source 300x400
+		{Hash: mustHash("c"), Width: 4000, Height: 4000}, // display 200x200, source 300x300
+	}
+
+	s := &Service{
+		logger:      ctxd.NoOpLogger{},
+		stats:       stats.NoOp{},
+		thumbnailer: stubThumbnailer{},
+		blobStore:   blobs,
+		boxWidth:    300,
+		boxHeight:   200,
+		chunkSize:   10,
+		version:     "test",
+	}
+
+	manifest, err := s.build(ctx, photo.Album{}, images)
+	if err != nil {
+		t.Fatalf("build manifest: %v", err)
+	}
+
+	a := manifest.Images[images[0].Hash.String()]
+	b := manifest.Images[images[1].Hash.String()]
+	c := manifest.Images[images[2].Hash.String()]
+
+	if a.Chunk1x != b.Chunk1x || a.Chunk1x != c.Chunk1x || a.Chunk2x != b.Chunk2x || a.Chunk2x != c.Chunk2x {
+		t.Fatalf("images with same physical sprite width should share sprite: %#v %#v %#v", a, b, c)
+	}
+
+	if a.Width != 300 || a.Height != 200 || a.OffsetY != 0 {
+		t.Fatalf("unexpected first image placement: %#v", a)
+	}
+
+	if b.Width != 150 || b.Height != 200 || b.OffsetY != 200 || b.BackgroundHeight != 900 {
+		t.Fatalf("unexpected second image placement: %#v", b)
+	}
+
+	if c.Width != 200 || c.Height != 200 || c.OffsetY != 600 || c.BackgroundWidth != 300 || c.BackgroundHeight != 900 {
+		t.Fatalf("unexpected third image placement: %#v", c)
+	}
+}
+
 type stubThumbnailer struct{}
 
 func (stubThumbnailer) Thumbnail(_ context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
@@ -117,15 +172,19 @@ func (stubThumbnailer) Thumbnail(_ context.Context, img photo.Image, size photo.
 }
 
 func newPhotoImage(seed string, width, height int64) photo.Image {
+	img := photo.Image{Width: width, Height: height}
+	img.Hash = mustHash(seed)
+
+	return img
+}
+
+func mustHash(seed string) uniq.Hash {
 	var h uniq.Hash
 	if err := h.UnmarshalText([]byte(seed)); err != nil {
 		panic(err)
 	}
 
-	img := photo.Image{Width: width, Height: height}
-	img.Hash = h
-
-	return img
+	return h
 }
 
 func TestMain(m *testing.M) {
