@@ -33,6 +33,8 @@ func Update[V any](deps updateEntityDeps, ensurer func() uniq.Ensurer[V]) usecas
 		if err == nil {
 			if a, ok := any(in).(photo.Album); ok {
 				err = deps.DepCache().AlbumChanged(ctx, a.Name)
+			} else if img, ok := any(in).(photo.Image); ok {
+				err = deps.DepCache().ImageChanged(ctx, img.Hash)
 			}
 		}
 

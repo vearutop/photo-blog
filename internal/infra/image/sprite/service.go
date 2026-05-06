@@ -118,12 +118,12 @@ func NewService(
 	return s
 }
 
-func (s *Service) Ready(ctx context.Context, album photo.Album, images []Image) (Manifest, bool, error) {
+func (s *Service) Ready(ctx context.Context, album photo.Album, isAdmin bool, images []Image) (Manifest, bool, error) {
 	if len(images) == 0 {
 		return Manifest{}, false, nil
 	}
 
-	key := s.manifestKey(album)
+	key := s.manifestKey(album, isAdmin)
 
 	manifest, err := s.manifestBackend.Read(ctx, key)
 	if err == nil {
@@ -456,8 +456,8 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 	return nil
 }
 
-func (s *Service) manifestKey(album photo.Album) []byte {
-	return []byte("album-sprite-manifest:" + album.Hash.String() + ":" + s.revision(album) + ":" + s.version)
+func (s *Service) manifestKey(album photo.Album, isAdmin bool) []byte {
+	return []byte("album-sprite-manifest:" + album.Hash.String() + ":" + strconv.FormatBool(isAdmin) + ":" + s.revision(album) + ":" + s.version)
 }
 
 func (s *Service) revision(album photo.Album) string {

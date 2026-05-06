@@ -2,6 +2,7 @@ package dep
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,13 +19,15 @@ type Deps interface {
 	CtxdLogger() ctxd.Logger
 	QueueBroker() *qlite.Broker
 	PhotoAlbumUpdater() uniq.Updater[photo.Album]
+	PhotoAlbumImageFinder() photo.AlbumImageFinder
 }
 
 func NewCache(deps Deps, depStorage *sqluct.Storage) *Cache {
 	c := &Cache{
-		logger:       deps.CtxdLogger(),
-		albumUpdater: deps.PhotoAlbumUpdater(),
-		index:        invalidation.NewIndex(depStorage),
+		logger:           deps.CtxdLogger(),
+		albumUpdater:     deps.PhotoAlbumUpdater(),
+		albumImageFinder: deps.PhotoAlbumImageFinder(),
+		index:            invalidation.NewIndex(depStorage),
 	}
 
 	if err := qlite.AddConsumer[string](deps.QueueBroker(), topic.AlbumChanged, func(ctx context.Context, v string) error {
@@ -39,9 +42,10 @@ func NewCache(deps Deps, depStorage *sqluct.Storage) *Cache {
 }
 
 type Cache struct {
-	logger       ctxd.Logger
-	albumUpdater uniq.Updater[photo.Album]
-	index        *invalidation.Index
+	logger           ctxd.Logger
+	albumUpdater     uniq.Updater[photo.Album]
+	albumImageFinder photo.AlbumImageFinder
+	index            *invalidation.Index
 }
 
 type labelsCtxKey struct{}
@@ -99,6 +103,24 @@ func (n *Cache) AlbumChanged(ctx context.Context, name string) error {
 	}
 
 	return nil
+}
+
+func (n *Cache) ImageChanged(ctx context.Context, hash uniq.Hash) error {
+	albumsByImage, err := n.albumImageFinder.FindImageAlbums(ctx, 0, hash)
+	if err != nil {
+		return fmt.Errorf("find image albums: %w", err)
+	}
+
+	var errs []error
+	for _, album := range albumsByImage[hash] {
+		if album.Name == "" {
+			continue
+		}
+
+		errs = append(errs, n.AlbumChanged(ctx, album.Name))
+	}
+
+	return errors.Join(errs...)
 }
 
 func (n *Cache) ServiceSettingsDependency(cacheName string, cacheKey []byte) {
