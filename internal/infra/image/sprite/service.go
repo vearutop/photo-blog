@@ -462,9 +462,22 @@ func (s *Service) manifestKey(images []Image) []byte {
 
 func (s *Service) revision(images []Image) string {
 	h := sha1.New()
+	buf := make([]byte, 0, 64)
+
 	for _, img := range images {
-		_, _ = io.WriteString(h, ":"+img.Hash.String())
-		_, _ = io.WriteString(h, fmt.Sprintf(":%d:%d:%t", img.Width, img.Height, img.HasGPS))
+		buf = append(buf[:0], ':')
+		buf = append(buf, img.Hash.String()...)
+		buf = append(buf, ':')
+		buf = strconv.AppendInt(buf, img.Width, 10)
+		buf = append(buf, ':')
+		buf = strconv.AppendInt(buf, img.Height, 10)
+		buf = append(buf, ':')
+		if img.HasGPS {
+			buf = append(buf, '1')
+		} else {
+			buf = append(buf, '0')
+		}
+		_, _ = h.Write(buf)
 	}
 
 	return hex.EncodeToString(h.Sum(nil))
