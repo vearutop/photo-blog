@@ -151,6 +151,14 @@ func filterThumbSprites(items map[string]*sprite.ViewItem, images []Image) map[s
 	return res
 }
 
+func restoreImageDescriptionHTML(images []Image) {
+	for i := range images {
+		if images[i].Description != "" {
+			images[i].DescriptionHTML = template.HTML(images[i].Description)
+		}
+	}
+}
+
 // ShowAlbum creates use case interactor to show album.
 func ShowAlbum(deps interface {
 	getAlbumImagesDeps
@@ -200,6 +208,7 @@ func ShowAlbum(deps interface {
 		}
 
 		album := cont.Album
+		restoreImageDescriptionHTML(cont.Images)
 
 		d := albumPageData{}
 		d.Title = album.Title
@@ -325,6 +334,7 @@ func ShowAlbum(deps interface {
 			if err != nil {
 				return err
 			}
+			restoreImageDescriptionHTML(cont.Images)
 
 			if len(cont.Images) == 0 && !d.IsAdmin {
 				continue
