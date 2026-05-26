@@ -11,19 +11,23 @@ import (
 	"github.com/bool64/sqluct"
 )
 
+type LogFunc func(ctx context.Context, msg string, tuples ...any)
+
 // Index is a SQLite-backed sibling of cache.InvalidationIndex.
 type Index struct {
 	st *sqluct.Storage
 
 	mu       sync.RWMutex
 	deleters map[string][]cache.Deleter
+	logFunc  LogFunc
 }
 
 // NewIndex creates a persistent invalidation index.
-func NewIndex(st *sqluct.Storage, deleters ...cache.Deleter) *Index {
+func NewIndex(st *sqluct.Storage, logFunc LogFunc, deleters ...cache.Deleter) *Index {
 	idx := &Index{
 		st:       st,
 		deleters: make(map[string][]cache.Deleter),
+		logFunc:  logFunc,
 	}
 
 	if len(deleters) > 0 {
@@ -47,6 +51,10 @@ func (i *Index) AddLabels(cacheName string, key []byte, labels ...string) {
 		return
 	}
 
+	if i.logFunc != nil {
+		i.logFunc(context.Background(), "cache invalidation: add labels", "cacheName", cacheName, "key", string(key), "labels", labels)
+	}
+
 	for _, label := range labels {
 		_, err := i.st.DB().DB.Exec(
 			`INSERT OR IGNORE INTO cache_label(cache_name, cache_key, label) VALUES (?, ?, ?)`,
@@ -60,6 +68,10 @@ func (i *Index) AddLabels(cacheName string, key []byte, labels ...string) {
 
 // ResetKey removes all invalidation labels attached to a cache key.
 func (i *Index) ResetKey(ctx context.Context, cacheName string, key []byte) error {
+	if i.logFunc != nil {
+		i.logFunc(context.Background(), "cache invalidation: reset key", "cacheName", cacheName, "key", string(key))
+	}
+
 	_, err := i.st.DB().DB.ExecContext(ctx,
 		`DELETE FROM cache_label WHERE cache_name = ? AND cache_key = ?`,
 		cacheName, string(key))
@@ -74,6 +86,10 @@ func (i *Index) ResetKey(ctx context.Context, cacheName string, key []byte) erro
 func (i *Index) InvalidateByLabels(ctx context.Context, labels ...string) (int, error) {
 	if len(labels) == 0 {
 		return 0, nil
+	}
+
+	if i.logFunc != nil {
+		i.logFunc(context.Background(), "cache invalidation: invalidate by labels", "labels", labels)
 	}
 
 	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(labels)), ",")
@@ -111,6 +127,10 @@ func (i *Index) InvalidateByLabels(ctx context.Context, labels ...string) (int, 
 
 	cnt := 0
 	for _, e := range entries {
+		if i.logFunc != nil {
+			i.logFunc(context.Background(), "cache invalidation: delete", "cacheName", e.cacheName, "cacheKey", e.cacheKey)
+		}
+
 		for _, d := range i.cacheDeleters(e.cacheName) {
 			err := d.Delete(ctx, []byte(e.cacheKey))
 			if err != nil && !errors.Is(err, cache.ErrNotFound) {

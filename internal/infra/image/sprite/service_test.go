@@ -162,12 +162,12 @@ func TestServiceManifestKey_ReusesBySpriteInput(t *testing.T) {
 		{Hash: mustHash("b"), Width: 800, Height: 600, HasGPS: true},
 	}
 
-	key1 := string(s.manifestKey(images))
-	key2 := string(s.manifestKey([]Image{
+	key1 := string(s.ManifestKey(images))
+	key2 := string(s.ManifestKey([]Image{
 		{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: false},
 		{Hash: mustHash("b"), Width: 800, Height: 600, HasGPS: true},
 	}))
-	key3 := string(s.manifestKey([]Image{
+	key3 := string(s.ManifestKey([]Image{
 		{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: false},
 		{Hash: mustHash("b"), Width: 800, Height: 600, HasGPS: false},
 	}))
@@ -205,7 +205,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 	images := []Image{{Hash: mustHash("a"), Width: 1000, Height: 500, HasGPS: true}}
 	ownerA := mustHash("oa")
 	ownerB := mustHash("ob")
-	manifestKey := s.manifestKey(images)
+	manifestKey := s.ManifestKey(images)
 
 	manifest := Manifest{
 		Revision: s.revision(images),

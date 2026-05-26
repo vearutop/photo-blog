@@ -44,6 +44,7 @@ type getAlbumImagesDeps interface {
 	DepCache() *dep.Cache
 	ImageSelector() *storage.ImageSelector
 	PersistentCacheStorage() *sqluct.Storage
+	AlbumSprites() *sprite.Service
 
 	service.TxtRendererProvider
 }

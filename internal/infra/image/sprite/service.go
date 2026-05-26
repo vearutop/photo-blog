@@ -123,59 +123,26 @@ func NewService(
 	return s
 }
 
-func (s *Service) Ready(ctx context.Context, images []Image) (Manifest, bool, error) {
-	if len(images) == 0 {
-		return Manifest{}, false, nil
-	}
-
-	key := s.manifestKey(images)
-
-	manifest, err := s.manifestBackend.Read(ctx, key)
-	if err == nil {
-		if !validManifest(manifest, images) {
-			s.ensureBuild(ctx, key, images)
-
-			return Manifest{}, false, nil
-		}
-
-		return manifest, true, nil
-	}
-	var expired cache.ErrWithExpiredItemOf[Manifest]
-	if errors.As(err, &expired) {
-		s.ensureBuild(ctx, key, images)
-
-		return Manifest{}, false, nil
-	}
-
-	if err != nil && err != cache.ErrNotFound {
-		return Manifest{}, false, fmt.Errorf("read sprite manifest: %w", err)
-	}
-
-	s.ensureBuild(ctx, key, images)
-
-	return Manifest{}, false, nil
+func (s *Service) ManifestReady(ctx context.Context, key string) (Manifest, error) {
+	return s.manifestBackend.Read(ctx, []byte(key))
 }
 
-func (s *Service) ensureBuild(ctx context.Context, key []byte, images []Image) {
+func (s *Service) EnsureBuild(ctx context.Context, key string, images []Image) {
 	s.stats.Add(ctx, "album_sprite_build", 1)
 
-	go func() {
-		ctx = context.WithoutCancel(ctx)
+	_, err := s.manifestCache.Get(ctx, []byte(key), func(ctx context.Context) (Manifest, error) {
+		st := time.Now()
+		m, err := s.build(ctx, images)
 
-		_, err := s.manifestCache.Get(ctx, key, func(ctx context.Context) (Manifest, error) {
-			st := time.Now()
-			m, err := s.build(ctx, images)
+		s.logger.Info(ctx, "build sprite manifest",
+			"duration", time.Since(st).String())
 
-			s.logger.Info(ctx, "build sprite manifest",
-				"duration", time.Since(st).String())
-
-			return m, err
-		})
-		if err != nil {
-			s.logger.Error(ctx, "build sprite manifest",
-				"error", err.Error())
-		}
-	}()
+		return m, err
+	})
+	if err != nil {
+		s.logger.Error(ctx, "build sprite manifest",
+			"error", err.Error())
+	}
 }
 
 func (s *Service) View(manifest Manifest) map[string]*ViewItem {
@@ -284,9 +251,9 @@ func (s *Service) Open(ctx context.Context, key string) (blob.Entry, error) {
 }
 
 func (s *Service) TrackAlbum(ctx context.Context, images []Image, albumHash uniq.Hash) ([]byte, error) {
-	key := s.manifestKey(images)
+	key := s.ManifestKey(images)
 
-	manifest, err := s.manifestBackend.Read(ctx, key)
+	manifest, err := s.manifestBackend.Read(ctx, []byte(key))
 	if err != nil {
 		return nil, fmt.Errorf("read sprite manifest: %w", err)
 	}
@@ -298,7 +265,7 @@ func (s *Service) TrackAlbum(ctx context.Context, images []Image, albumHash uniq
 	}
 
 	manifest.Albums = append(manifest.Albums, albumHash)
-	if err := s.manifestBackend.Write(ctx, key, manifest); err != nil {
+	if err := s.manifestBackend.Write(ctx, []byte(key), manifest); err != nil {
 		return nil, fmt.Errorf("write sprite manifest: %w", err)
 	}
 
@@ -536,11 +503,11 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 	return nil
 }
 
-func (s *Service) manifestKey(images []Image) []byte {
-	return []byte("album-sprite-manifest:" + s.revision(images) + ":" + s.version)
+func (s *Service) ManifestKey(images []Image) string {
+	return "album-sprite-manifest:" + s.revision(images) + ":" + s.version
 }
 
-func retirementKey(manifestKey []byte, albumHash uniq.Hash) []byte {
+func retirementKey(manifestKey string, albumHash uniq.Hash) []byte {
 	key := make([]byte, 0, len(manifestKey)+1+len(albumHash.String()))
 	key = append(key, manifestKey...)
 	key = append(key, '|')

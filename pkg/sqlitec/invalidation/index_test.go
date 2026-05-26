@@ -25,7 +25,7 @@ func (s *stubDeleter) Delete(_ context.Context, key []byte) error {
 
 func TestIndexInvalidateByLabels(t *testing.T) {
 	st := testStorage(t)
-	idx := NewIndex(st)
+	idx := NewIndex(st, nil)
 
 	main := &stubDeleter{}
 	other := &stubDeleter{}
@@ -65,7 +65,7 @@ func TestIndexInvalidateByLabels(t *testing.T) {
 
 func TestIndexResetKey(t *testing.T) {
 	st := testStorage(t)
-	idx := NewIndex(st)
+	idx := NewIndex(st, nil)
 
 	d := &stubDeleter{}
 	idx.AddCache("album-data", d)

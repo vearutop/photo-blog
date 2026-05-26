@@ -27,7 +27,7 @@ func NewCache(deps Deps, depStorage *sqluct.Storage) *Cache {
 		logger:           deps.CtxdLogger(),
 		albumUpdater:     deps.PhotoAlbumUpdater(),
 		albumImageFinder: deps.PhotoAlbumImageFinder(),
-		index:            invalidation.NewIndex(depStorage),
+		index:            invalidation.NewIndex(depStorage, deps.CtxdLogger().Debug),
 	}
 
 	if err := qlite.AddConsumer[string](deps.QueueBroker(), topic.AlbumChanged, func(ctx context.Context, v string) error {
@@ -75,6 +75,19 @@ func (n *Cache) AlbumDependency(cacheName string, cacheKey []byte, albumNames ..
 	n.index.AddLabels(cacheName, cacheKey, albumNames...)
 }
 
+func (n *Cache) SpriteManifestDependency(cacheName string, cacheKey []byte, manifestKey string) {
+	n.index.AddLabels(cacheName, cacheKey, "sprite-manifest/"+manifestKey)
+}
+
+func (n *Cache) SpriteManifestChanged(ctx context.Context, manifestKey string) error {
+	_, err := n.index.InvalidateByLabels(ctx, "sprite-manifest/"+manifestKey)
+	if err != nil {
+		err = fmt.Errorf("sprite manifest changed: %w", err)
+	}
+
+	return err
+}
+
 func (n *Cache) AlbumListChanged(ctx context.Context) error {
 	_, err := n.index.InvalidateByLabels(ctx, "album-list")
 	if err != nil {
@@ -85,7 +98,7 @@ func (n *Cache) AlbumListChanged(ctx context.Context) error {
 }
 
 func (n *Cache) AlbumChanged(ctx context.Context, name string) error {
-	n.logger.Debug(ctx, "album changed", "name", name)
+	n.logger.Info(ctx, "album changed", "name", name)
 
 	_, err := n.index.InvalidateByLabels(ctx, "album/"+name)
 	if err != nil {
