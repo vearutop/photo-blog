@@ -35,7 +35,6 @@ func (d *Data) Fill(ctx context.Context, t *Thumbnailer) error {
 
 	if img.CreatedAt.IsZero() {
 		img.CreatedAt = time.Now()
-		img.UTime = img.CreatedAt.Unix()
 	}
 
 	if err := d.resolution(ctx); err != nil {
@@ -47,6 +46,7 @@ func (d *Data) Fill(ctx context.Context, t *Thumbnailer) error {
 	}
 
 	d.takenAt()
+	img.RefreshUTime()
 
 	if err := d.thumbs(ctx, t); err != nil {
 		return fmt.Errorf("thumbs: %w", err)

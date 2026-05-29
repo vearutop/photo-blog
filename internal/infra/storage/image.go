@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/bool64/sqluct"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -13,11 +15,19 @@ const (
 )
 
 func NewImageRepository(storage *sqluct.Storage) *ImageRepository {
-	return &ImageRepository{
+	repo := &ImageRepository{
 		Repo: hashed.Repo[photo.Image, *photo.Image]{
 			StorageOf: sqluct.Table[photo.Image](storage, ImageTable),
 		},
 	}
+
+	repo.Repo.Prepare = func(_ context.Context, v *photo.Image) error {
+		v.RefreshUTime()
+
+		return nil
+	}
+
+	return repo
 }
 
 // ImageRepository saves images to database.

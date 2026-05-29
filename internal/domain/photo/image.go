@@ -25,12 +25,25 @@ type Image struct {
 	PHash     uniq.Hash     `db:"phash" title:"PerceptionHash" json:"phash,omitempty" readonly:"true"` // uniq.Hash is used JSON accuracy.
 	TakenAt   *time.Time    `db:"taken_at" title:"Taken At" json:"taken_at,omitempty"`
 	Settings  ImageSettings `db:"settings" json:"settings,omitzero" title:"Settings" description:"Additional parameters for an album."`
-	UTime     int64         `db:"utime" json:"utime,omitempty" title:"UTC Unix Time for sorting."`
+	UTime     int64         `db:"utime" json:"utime,omitempty" title:"UTC Unix Time for sorting." readOnly:"true"`
 	IsHDR     *bool         `db:"is_hdr" json:"is_hdr" title:"Is HDR image."`
 }
 
 func (i Image) Ready() bool {
 	return i.BlurHash != ""
+}
+
+func (i *Image) RefreshUTime() {
+	if i == nil {
+		return
+	}
+
+	if i.TakenAt != nil {
+		i.UTime = i.TakenAt.Unix()
+		return
+	}
+
+	i.UTime = i.CreatedAt.Unix()
 }
 
 type ImageSettings struct {
