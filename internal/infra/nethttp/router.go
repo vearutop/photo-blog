@@ -163,6 +163,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Post("/index/{name}", control.IndexAlbum(deps), nethttp.SuccessStatus(http.StatusAccepted))
 		s.Post("/index-remote", control.IndexRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
 		s.Post("/cleanup-remote", integrity.CleanupRemote(deps), nethttp.SuccessStatus(http.StatusAccepted))
+		s.Post("/cleanup-album-sprites", integrity.CleanupAlbumSprites(deps))
+		s.Post("/invalidate-persistent-cache/{cache_name}", integrity.InvalidatePersistentCache(deps))
 		s.Post("/gather/{name}", integrity.GatherFiles(deps))
 
 		s.Post("/album/{name}", control.AddToAlbum(deps))

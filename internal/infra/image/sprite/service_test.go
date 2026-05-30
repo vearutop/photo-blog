@@ -52,7 +52,7 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 		version:     "test",
 	}
 
-	manifest1, err := s.build(ctx, []Image{
+	manifest1, _, err := s.build(ctx, []Image{
 		{Hash: images[0].Hash, Width: images[0].Width, Height: images[0].Height},
 		{Hash: images[1].Hash, Width: images[1].Width, Height: images[1].Height},
 	})
@@ -60,7 +60,7 @@ func TestServiceBuild_ReusesUnchangedChunk(t *testing.T) {
 		t.Fatalf("build manifest 1: %v", err)
 	}
 
-	manifest2, err := s.build(ctx, []Image{
+	manifest2, _, err := s.build(ctx, []Image{
 		{Hash: images[0].Hash, Width: images[0].Width, Height: images[0].Height},
 		{Hash: images[1].Hash, Width: images[1].Width, Height: images[1].Height},
 		{Hash: images[2].Hash, Width: images[2].Width, Height: images[2].Height},
@@ -128,7 +128,7 @@ func TestServiceBuild_GroupsSameChunkDifferentShapes(t *testing.T) {
 		version:     "test",
 	}
 
-	manifest, err := s.build(ctx, images)
+	manifest, _, err := s.build(ctx, images)
 	if err != nil {
 		t.Fatalf("build manifest: %v", err)
 	}
@@ -222,7 +222,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 		},
 	}
 
-	if err := s.manifestBackend.Write(ctx, manifestKey, manifest); err != nil {
+	if err := s.manifestBackend.Write(ctx, []byte(manifestKey), manifest); err != nil {
 		t.Fatalf("write manifest: %v", err)
 	}
 
@@ -239,7 +239,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 		t.Fatalf("track owner B: %v", err)
 	}
 
-	updated, err := s.manifestBackend.Read(ctx, manifestKey)
+	updated, err := s.manifestBackend.Read(ctx, []byte(manifestKey))
 	if err != nil {
 		t.Fatalf("read tracked manifest: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 		t.Fatalf("retire owner A: %v", err)
 	}
 
-	updated, err = s.manifestBackend.Read(ctx, manifestKey)
+	updated, err = s.manifestBackend.Read(ctx, []byte(manifestKey))
 	if err != nil {
 		t.Fatalf("read partially retired manifest: %v", err)
 	}
@@ -265,7 +265,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 		t.Fatalf("retire owner B: %v", err)
 	}
 
-	updated, err = s.manifestBackend.Read(ctx, manifestKey)
+	updated, err = s.manifestBackend.Read(ctx, []byte(manifestKey))
 	if err != nil {
 		t.Fatalf("read ownerless manifest: %v", err)
 	}
@@ -284,7 +284,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 
 	deadline := time.Now().Add(500 * time.Millisecond)
 	for time.Now().Before(deadline) {
-		if _, err := s.manifestBackend.Read(ctx, manifestKey); err != nil {
+		if _, err := s.manifestBackend.Read(ctx, []byte(manifestKey)); err != nil {
 			if _, err := blobs.Read(ctx, "chunk-1x"); err == nil {
 				t.Fatalf("chunk-1x should be deleted after delayed retirement")
 			}

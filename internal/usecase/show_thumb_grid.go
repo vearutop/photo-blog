@@ -57,14 +57,14 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 		deps.CtxdLogger().Info(ctx, "showing thumb grid", "req", in.Request().Header, "name", in.Name, "cols", in.Cols, "rows", in.Rows)
 
 		cacheKey := []byte("grid/" + in.string())
+		cacheMiss := false
 		body, err := c.Get(ctx,
 			cacheKey,
 			func(ctx context.Context) ([]byte, error) {
+				cacheMiss = true
 				if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
 					return nil, err
 				}
-
-				deps.DepCache().AlbumDependency(cacheName, cacheKey, in.Name)
 
 				images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.Name))
 				if err != nil {
@@ -112,6 +112,10 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 
 		if err != nil {
 			return err
+		}
+
+		if cacheMiss {
+			deps.DepCache().AlbumDependency(cacheName, cacheKey, in.Name)
 		}
 
 		http.ServeContent(rw, in.Request(), "grid.jpg", time.Now(), bytes.NewReader(body))

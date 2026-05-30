@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/bool64/cache"
+	"github.com/bool64/ctxd"
 	"github.com/docker/go-units"
+	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
 	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
@@ -41,17 +43,26 @@ func NewAlbumPageBuilder(deps getAlbumImagesDeps) *AlbumPageBuilder {
 func (pb *AlbumPageBuilder) getCachedAlbum(ctx context.Context, name string, preview bool) (getAlbumOutput, error) {
 	cacheKey := []byte(name + "/" + strconv.FormatBool(auth.IsAdmin(ctx)) + "/" + txt.Language(ctx) + "/" + strconv.FormatBool(preview))
 	cacheName := pb.albumDataCacheName
+	cacheMiss := false
 
-	return pb.albumDataCache.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
+	d, err := pb.albumDataCache.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
+		cacheMiss = true
 		if err := pb.deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
 			return getAlbumOutput{}, fmt.Errorf("reset cache deps: %w", err)
 		}
 
-		pb.deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
-		pb.deps.DepCache().AlbumDependency(cacheName, cacheKey, name)
-
 		return getAlbumContents(ctx, pb.deps, imagesFilter{albumName: name}, preview)
 	})
+	if err != nil {
+		return getAlbumOutput{}, err
+	}
+
+	if cacheMiss {
+		pb.deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
+		pb.deps.DepCache().AlbumDependency(cacheName, cacheKey, name)
+	}
+
+	return d, nil
 }
 
 func (pb *AlbumPageBuilder) addSprites(ctx context.Context, d *albumPageData) {
@@ -67,22 +78,20 @@ func (pb *AlbumPageBuilder) addSprites(ctx context.Context, d *albumPageData) {
 	spriteImages := pb.mergeAlbumSpriteImages(imageSets...)
 
 	manifestKey := deps.AlbumSprites().ManifestKey(spriteImages)
+	d.SpriteManifestKey = manifestKey
 
 	manifest, err := deps.AlbumSprites().ManifestReady(ctx, manifestKey)
 	if err != nil {
 		d.spritePendingManifestKey = manifestKey
+		d.spritePendingImages = spriteImages
+		deps.CtxdLogger().Info(ctx, "album sprite: album page sprite manifest pending",
+			"album", album.Name,
+			"manifest_key", manifestKey,
+			"image_count", len(spriteImages),
+			"has_sprite_sheets", false)
 		if !errors.Is(err, cache.ErrNotFound) {
 			deps.CtxdLogger().Error(ctx, "failed to get album sprite manifest", "album", album.Name, "error", err)
 		}
-
-		go func() {
-			ctx = context.WithoutCancel(ctx)
-			deps.AlbumSprites().EnsureBuild(ctx, manifestKey, spriteImages)
-
-			if err := deps.DepCache().SpriteManifestChanged(ctx, manifestKey); err != nil {
-				deps.CtxdLogger().Error(ctx, "failed to set album sprite manifest changed", "album", album.Name, "error", err)
-			}
-		}()
 
 		return
 	}
@@ -116,6 +125,13 @@ func (pb *AlbumPageBuilder) addSprites(ctx context.Context, d *albumPageData) {
 		d.SubAlbums[i].ThumbSprites = pb.filterThumbSprites(items, d.SubAlbums[i].Images)
 		d.SubAlbums[i].SpriteSheets = d.AlbumData.SpriteSheets
 	}
+
+	deps.CtxdLogger().Info(ctx, "album sprite: album page sprite manifest ready",
+		"album", album.Name,
+		"manifest_key", manifestKey,
+		"image_count", len(spriteImages),
+		"sprite_sheet_count", len(d.SpriteSheets),
+		"pending_manifest_key", d.spritePendingManifestKey != "")
 }
 
 func (pb *AlbumPageBuilder) filterThumbSprites(items map[string]*sprite.ViewItem, images []Image) map[string]*sprite.ViewItem {
@@ -186,8 +202,10 @@ func (pb *AlbumPageBuilder) cachedBuild(ctx context.Context, cont getAlbumOutput
 	cacheKey := []byte("page:" + cont.Album.Name + "/" + strconv.FormatBool(auth.IsAdmin(ctx)) + "/" +
 		strconv.FormatBool(auth.IsBot(ctx)) + "/" + txt.Language(ctx))
 	cacheName := pb.albumPageCacheName
+	cacheMiss := false
 
-	return pb.albumPageCache.Get(ctx, cacheKey, func(ctx context.Context) (albumPageData, error) {
+	d, err := pb.albumPageCache.Get(ctx, cacheKey, func(ctx context.Context) (albumPageData, error) {
+		cacheMiss = true
 		if err := pb.deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
 			return albumPageData{}, fmt.Errorf("reset cache deps: %w", err)
 		}
@@ -197,6 +215,13 @@ func (pb *AlbumPageBuilder) cachedBuild(ctx context.Context, cont getAlbumOutput
 			return albumPageData{}, err
 		}
 
+		return d, nil
+	})
+	if err != nil {
+		return albumPageData{}, err
+	}
+
+	if cacheMiss {
 		pb.deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 		pb.deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
 
@@ -207,9 +232,23 @@ func (pb *AlbumPageBuilder) cachedBuild(ctx context.Context, cont getAlbumOutput
 		for _, subAlbum := range d.SubAlbums {
 			pb.deps.DepCache().AlbumDependency(cacheName, cacheKey, subAlbum.Album.Name)
 		}
+	}
 
-		return d, nil
-	})
+	pb.deps.CtxdLogger().Info(ctx, "album sprite: album page cache result",
+		"album", cont.Album.Name,
+		"cache_name", cacheName,
+		"cache_key", string(cacheKey),
+		"cache_hit", !cacheMiss,
+		"manifest_key", d.SpriteManifestKey,
+		"manifest_pending", d.spritePendingManifestKey != "",
+		"has_sprite_sheets", len(d.SpriteSheets) > 0,
+		"sprite_sheet_count", len(d.SpriteSheets))
+
+	if cacheMiss && d.spritePendingManifestKey != "" && len(d.spritePendingImages) > 0 {
+		pb.startPendingSpriteBuild(ctx, cont.Album, d.spritePendingManifestKey, d.spritePendingImages)
+	}
+
+	return d, nil
 
 }
 
@@ -327,7 +366,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	}
 
 	if deps.Settings().Appearance().AlbumSpritesEnabled() {
-		deps.CtxdLogger().Info(ctx, "adding album sprites")
+		deps.CtxdLogger().Info(ctx, "album sprite: adding album sprites")
 		pb.addSprites(ctx, &d)
 	}
 
@@ -360,16 +399,36 @@ type albumPageData struct {
 	AlbumData getAlbumOutput
 	Timeline  []albumTimelineItem
 
-	ShowMap         bool
-	ShowEXIFPreview bool
-	ShowAISays      bool
-	PreRender       bool
-	HasPanos        bool
-	ThumbSprites    map[string]*sprite.ViewItem
-	MarkerSprites   map[string]*sprite.ViewItem
-	SpriteSheets    map[string]sprite.Sheet
+	ShowMap           bool
+	ShowEXIFPreview   bool
+	ShowAISays        bool
+	PreRender         bool
+	HasPanos          bool
+	ThumbSprites      map[string]*sprite.ViewItem
+	MarkerSprites     map[string]*sprite.ViewItem
+	SpriteSheets      map[string]sprite.Sheet
+	SpriteManifestKey string
 
 	spritePendingManifestKey string
+	spritePendingImages      []sprite.Image
+}
+
+func (pb *AlbumPageBuilder) startPendingSpriteBuild(ctx context.Context, album photo.Album, manifestKey string, spriteImages []sprite.Image) {
+	go func() {
+		ctx = context.WithoutCancel(ctx)
+		ctx = ctxd.AddFields(ctx,
+			"album", album.Name,
+			"album_hash", album.Hash.String())
+		pb.deps.CtxdLogger().Info(ctx, "album sprite: start async album sprite build",
+			"album", album.Name,
+			"manifest_key", manifestKey,
+			"image_count", len(spriteImages))
+		pb.deps.AlbumSprites().EnsureBuild(ctx, manifestKey, spriteImages)
+
+		if err := pb.deps.DepCache().SpriteManifestChanged(ctx, manifestKey); err != nil {
+			pb.deps.CtxdLogger().Error(ctx, "failed to set album sprite manifest changed", "album", album.Name, "error", err)
+		}
+	}()
 }
 
 type albumTimelineItem struct {

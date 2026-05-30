@@ -77,6 +77,16 @@ type Sheet struct {
 	Chunk2x string `json:"chunk_2x"`
 }
 
+type StoredBlobInfo struct {
+	Key  string
+	Size int64
+}
+
+type buildTrace struct {
+	ChunkKeysWritten []string
+	FailedStage      string
+}
+
 type bucketKey struct {
 	Width int
 }
@@ -129,20 +139,41 @@ func (s *Service) ManifestReady(ctx context.Context, key string) (Manifest, erro
 
 func (s *Service) EnsureBuild(ctx context.Context, key string, images []Image) {
 	s.stats.Add(ctx, "album_sprite_build", 1)
+	s.logger.Info(ctx, "album sprite: start sprite manifest build",
+		"manifest_key", key,
+		"image_count", len(images))
 
-	_, err := s.manifestCache.Get(ctx, []byte(key), func(ctx context.Context) (Manifest, error) {
+	var trace buildTrace
+	manifest, err := s.manifestCache.Get(ctx, []byte(key), func(ctx context.Context) (Manifest, error) {
 		st := time.Now()
-		m, err := s.build(ctx, images)
+		m, buildTrace, err := s.build(ctx, images)
+		trace = buildTrace
 
-		s.logger.Info(ctx, "build sprite manifest",
-			"duration", time.Since(st).String())
+		s.logger.Info(ctx, "album sprite: build sprite manifest",
+			"manifest_key", key,
+			"duration", time.Since(st).String(),
+			"chunk_keys_written", buildTrace.ChunkKeysWritten,
+			"failed_stage", buildTrace.FailedStage)
 
 		return m, err
 	})
 	if err != nil {
-		s.logger.Error(ctx, "build sprite manifest",
+		s.logger.Error(ctx, "album sprite: build sprite manifest",
+			"manifest_key", key,
+			"image_count", len(images),
+			"chunk_keys_written", trace.ChunkKeysWritten,
+			"failed_stage", trace.FailedStage,
+			"manifest_persisted", false,
 			"error", err.Error())
+		return
 	}
+
+	s.logger.Info(ctx, "album sprite: sprite manifest build complete",
+		"manifest_key", key,
+		"image_count", len(images),
+		"manifest_persisted", true,
+		"chunk_count", len(manifestChunks(manifest)),
+		"chunk_keys_written", trace.ChunkKeysWritten)
 }
 
 func (s *Service) View(manifest Manifest) map[string]*ViewItem {
@@ -250,6 +281,45 @@ func (s *Service) Open(ctx context.Context, key string) (blob.Entry, error) {
 	return s.blobStore.Read(ctx, key)
 }
 
+func (s *Service) DeleteManifestRecord(ctx context.Context, key string) error {
+	if err := s.manifestBackend.Delete(ctx, []byte(key)); err != nil && !errors.Is(err, cache.ErrNotFound) {
+		return fmt.Errorf("delete sprite manifest: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) DeleteBlob(ctx context.Context, key string) error {
+	if err := s.blobStore.Delete(ctx, key); err != nil && !errors.Is(err, cache.ErrNotFound) {
+		return fmt.Errorf("delete sprite blob %s: %w", key, err)
+	}
+
+	return nil
+}
+
+func (s *Service) StoredBlobs() ([]StoredBlobInfo, error) {
+	blobs := make([]StoredBlobInfo, 0)
+	_, err := s.blobStore.Walk(func(e cache.EntryBy[string, blob.Entry]) error {
+		blobs = append(blobs, StoredBlobInfo{
+			Key:  e.Key(),
+			Size: e.Value().Meta().Size,
+		})
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk sprite blobs: %w", err)
+	}
+
+	return blobs, nil
+}
+
+func (s *Service) RepairBlobStore(dryRun bool) filecache.RepairResult {
+	return s.blobStore.Repair(func(cfg *filecache.RepairConfig[string]) {
+		cfg.DryRun = dryRun
+	})
+}
+
 func (s *Service) TrackAlbum(ctx context.Context, images []Image, albumHash uniq.Hash) ([]byte, error) {
 	key := s.ManifestKey(images)
 
@@ -260,14 +330,26 @@ func (s *Service) TrackAlbum(ctx context.Context, images []Image, albumHash uniq
 
 	for _, h := range manifest.Albums {
 		if h == albumHash {
+			s.logger.Info(ctx, "album sprite: sprite manifest owner already tracked",
+				"manifest_key", key,
+				"album_hash", albumHash.String(),
+				"owners_before", len(manifest.Albums),
+				"owners_after", len(manifest.Albums))
 			return retirementKey(key, albumHash), nil
 		}
 	}
 
+	ownersBefore := len(manifest.Albums)
 	manifest.Albums = append(manifest.Albums, albumHash)
 	if err := s.manifestBackend.Write(ctx, []byte(key), manifest); err != nil {
 		return nil, fmt.Errorf("write sprite manifest: %w", err)
 	}
+
+	s.logger.Info(ctx, "album sprite: track sprite manifest owner",
+		"manifest_key", key,
+		"album_hash", albumHash.String(),
+		"owners_before", ownersBefore,
+		"owners_after", len(manifest.Albums))
 
 	return retirementKey(key, albumHash), nil
 }
@@ -284,6 +366,7 @@ func (s *Service) Delete(ctx context.Context, key []byte) error {
 	}
 
 	filtered := manifest.Albums[:0]
+	ownersBefore := len(manifest.Albums)
 	removed := false
 	for _, h := range manifest.Albums {
 		if h == albumHash {
@@ -300,10 +383,11 @@ func (s *Service) Delete(ctx context.Context, key []byte) error {
 
 	manifest.Albums = filtered
 	if len(manifest.Albums) > 0 {
-		s.logger.Info(ctx, "retire sprite manifest owner",
+		s.logger.Info(ctx, "album sprite: retire sprite manifest owner",
 			"manifest_key", string(manifestKey),
 			"album_hash", albumHash.String(),
-			"remaining_owners", len(manifest.Albums))
+			"owners_before", ownersBefore,
+			"owners_after", len(manifest.Albums))
 
 		if err := s.manifestBackend.Write(ctx, manifestKey, manifest); err != nil {
 			return fmt.Errorf("write sprite manifest: %w", err)
@@ -312,9 +396,11 @@ func (s *Service) Delete(ctx context.Context, key []byte) error {
 		return nil
 	}
 
-	s.logger.Info(ctx, "delete retired sprite manifest",
+	s.logger.Info(ctx, "album sprite: delete retired sprite manifest",
 		"manifest_key", string(manifestKey),
 		"album_hash", albumHash.String(),
+		"owners_before", ownersBefore,
+		"owners_after", 0,
 		"delay", s.retirementDelay.String())
 
 	if err := s.manifestBackend.Write(ctx, manifestKey, manifest); err != nil {
@@ -330,7 +416,8 @@ func (s *Service) Close() error {
 	return s.blobStore.Close()
 }
 
-func (s *Service) build(ctx context.Context, images []Image) (Manifest, error) {
+func (s *Service) build(ctx context.Context, images []Image) (Manifest, buildTrace, error) {
+	trace := buildTrace{}
 	manifest := Manifest{
 		Revision: s.revision(images),
 		Version:  s.version,
@@ -362,11 +449,21 @@ func (s *Service) build(ctx context.Context, images []Image) (Manifest, error) {
 			chunk1x := s.chunkKey(1, key, chunk, composeFit)
 			chunk2x := s.chunkKey(2, key, chunk, composeFit)
 
-			if err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, composeFit); err != nil {
-				return Manifest{}, fmt.Errorf("build sprite chunk 1x: %w", err)
+			created, err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, composeFit)
+			if created {
+				trace.ChunkKeysWritten = append(trace.ChunkKeysWritten, chunk1x)
 			}
-			if err := s.ensureChunk(ctx, chunk2x, key, 2, chunk, composeFit); err != nil {
-				return Manifest{}, fmt.Errorf("build sprite chunk 2x: %w", err)
+			if err != nil {
+				trace.FailedStage = "ensure_chunk_1x"
+				return Manifest{}, trace, fmt.Errorf("build sprite chunk 1x: %w", err)
+			}
+			created, err = s.ensureChunk(ctx, chunk2x, key, 2, chunk, composeFit)
+			if created {
+				trace.ChunkKeysWritten = append(trace.ChunkKeysWritten, chunk2x)
+			}
+			if err != nil {
+				trace.FailedStage = "ensure_chunk_2x"
+				return Manifest{}, trace, fmt.Errorf("build sprite chunk 2x: %w", err)
 			}
 
 			bgHeight := 0
@@ -401,17 +498,18 @@ func (s *Service) build(ctx context.Context, images []Image) (Manifest, error) {
 	}
 
 	if err := s.buildMarkerSprites(ctx, markerImages, &manifest); err != nil {
-		return Manifest{}, err
+		trace.FailedStage = "build_marker_sprites"
+		return Manifest{}, trace, err
 	}
 
-	return manifest, nil
+	return manifest, trace, nil
 }
 
-func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, mode composeMode) error {
+func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey, scale int, chunk []Image, mode composeMode) (bool, error) {
 	if _, err := s.blobStore.Read(ctx, key); err == nil {
-		return nil
+		return false, nil
 	} else if err != cache.ErrNotFound {
-		return fmt.Errorf("read sprite blob: %w", err)
+		return false, fmt.Errorf("read sprite blob: %w", err)
 	}
 
 	rasterScale := spriteRasterScale(bucket, scale, mode)
@@ -434,12 +532,12 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 		size := spriteThumbSize(bucket, scale, mode)
 		th, err := s.thumbnailer.Thumbnail(ctx, src, size)
 		if err != nil {
-			return fmt.Errorf("get thumbnail %s %s: %w", item.Hash, size, err)
+			return false, fmt.Errorf("get thumbnail %s %s: %w", item.Hash, size, err)
 		}
 
 		j, err := decodeThumb(th)
 		if err != nil {
-			return fmt.Errorf("decode thumbnail %s %s: %w", item.Hash, size, err)
+			return false, fmt.Errorf("decode thumbnail %s %s: %w", item.Hash, size, err)
 		}
 
 		renderedHeight := s.chunkItemHeight(item, bucket, mode)
@@ -450,7 +548,7 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, bg, &jpeg.Options{Quality: 90}); err != nil {
-		return fmt.Errorf("encode sprite jpeg: %w", err)
+		return false, fmt.Errorf("encode sprite jpeg: %w", err)
 	}
 
 	entry := blob.FromReader(bytes.NewReader(buf.Bytes()), blob.Meta{
@@ -460,10 +558,10 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 	})
 
 	if err := s.blobStore.Write(ctx, key, entry); err != nil {
-		return fmt.Errorf("store sprite blob: %w", err)
+		return false, fmt.Errorf("store sprite blob: %w", err)
 	}
 
-	return nil
+	return true, nil
 }
 
 func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manifest *Manifest) error {
@@ -482,7 +580,11 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 		chunk1x := s.chunkKey(1, bucket, chunk, composeCover)
 		chunk2x := chunk1x
 
-		if err := s.ensureChunk(ctx, chunk1x, bucket, 1, chunk, composeCover); err != nil {
+		created, err := s.ensureChunk(ctx, chunk1x, bucket, 1, chunk, composeCover)
+		if created {
+			s.logger.Info(ctx, "album sprite: marker sprite chunk written", "chunk_key", chunk1x, "image_count", len(chunk))
+		}
+		if err != nil {
 			return fmt.Errorf("build marker sprite chunk 1x: %w", err)
 		}
 
@@ -558,8 +660,9 @@ func (s *Service) revision(images []Image) string {
 
 func (s *Service) deleteManifest(ctx context.Context, key []byte, manifest Manifest) error {
 	chunks := manifestChunks(manifest)
-	s.logger.Info(ctx, "delete sprite manifest assets",
+	s.logger.Info(ctx, "album sprite: delete sprite manifest assets",
 		"manifest_key", string(key),
+		"album_owners", manifest.Albums,
 		"chunks", len(chunks))
 
 	for chunk := range chunks {
@@ -579,7 +682,7 @@ func (s *Service) scheduleRetirement(ctx context.Context, key []byte) {
 	if s.retirementDelay <= 0 {
 		ctx = context.WithoutCancel(ctx)
 		if err := s.deleteIfOwnerless(ctx, key); err != nil && !errors.Is(err, cache.ErrNotFound) {
-			s.logger.Error(ctx, "delete ownerless sprite manifest", "manifest_key", string(key), "error", err.Error())
+			s.logger.Error(ctx, "album sprite: delete ownerless sprite manifest", "manifest_key", string(key), "error", err.Error())
 		}
 
 		return
@@ -592,7 +695,7 @@ func (s *Service) scheduleRetirement(ctx context.Context, key []byte) {
 		time.Sleep(s.retirementDelay)
 
 		if err := s.deleteIfOwnerless(ctx, manifestKey); err != nil && !errors.Is(err, cache.ErrNotFound) {
-			s.logger.Error(ctx, "delete ownerless sprite manifest", "manifest_key", string(manifestKey), "error", err.Error())
+			s.logger.Error(ctx, "album sprite: delete ownerless sprite manifest", "manifest_key", string(manifestKey), "error", err.Error())
 		}
 	}()
 }
@@ -604,7 +707,7 @@ func (s *Service) deleteIfOwnerless(ctx context.Context, key []byte) error {
 	}
 
 	if len(manifest.Albums) > 0 {
-		s.logger.Info(ctx, "keep sprite manifest after delayed retirement check",
+		s.logger.Info(ctx, "album sprite: keep sprite manifest after delayed retirement check",
 			"manifest_key", string(key),
 			"owners", len(manifest.Albums))
 

@@ -18,6 +18,7 @@ import (
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/zapctxd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/swaggest/jsonform-go"
 	"github.com/swaggest/refl"
 	"github.com/swaggest/rest/response/gzip"
@@ -69,10 +70,35 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	cfg.Debug.Middlewares = append(cfg.Debug.Middlewares, auth.BasicAuth("Admin Access", l.Settings))
 
+	if err = os.Chdir(cfg.StoragePath); err != nil {
+		return nil, fmt.Errorf("change dir to storage path: %w", err)
+	}
+
+	appLog, err := os.Create(fmt.Sprintf("app.%s.log.zst", time.Now().Format("2006-01-02-15-04-05")))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create log file: %w", err)
+	}
+
+	logWriter, err := zstd.NewWriter(appLog)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zstd log writer: %w", err)
+	}
+
+	cfg.BaseConfig.Log.Output = logWriter
+
 	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	l.OnShutdown("app-log", func() {
+		if err := logWriter.Close(); err != nil {
+			println("close zstd log:", err.Error())
+		}
+		if err := appLog.Close(); err != nil {
+			println("close app log file", err.Error())
+		}
+	})
 
 	l.SwaggerUIOptions = append(l.SwaggerUIOptions, func(cfg *swgui.Config) {
 		cfg.HideCurl = true
@@ -96,10 +122,6 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	if err = setupUploadStorage(cfg.StoragePath); err != nil {
 		return nil, err
-	}
-
-	if err = os.Chdir(cfg.StoragePath); err != nil {
-		return nil, fmt.Errorf("change dir to storage path: %w", err)
 	}
 
 	if l.Storage, err = setupStorage(l, "db", sqlite.Migrations); err != nil {

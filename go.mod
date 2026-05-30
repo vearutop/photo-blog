@@ -8,7 +8,7 @@ require (
 	github.com/agatan/bktree v0.0.0-20170513134333-739c0743f255
 	github.com/alexsergivan/transliterator v1.0.1
 	github.com/bool64/brick v0.3.5-0.20260505090148-7dfc5267e099
-	github.com/bool64/cache v0.5.1
+	github.com/bool64/cache v0.5.2-0.20260529231156-958ffe404e32
 	github.com/bool64/ctxd v1.2.1
 	github.com/bool64/dbwrap v0.1.4
 	github.com/bool64/dev v0.2.45
@@ -23,6 +23,7 @@ require (
 	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20221012074422-4f3f7e934102
 	github.com/evanoberholster/imagemeta v0.3.1
 	github.com/go-chi/chi/v5 v5.2.5
+	github.com/klauspost/compress v1.18.5
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oschwald/maxminddb-golang v1.13.1
@@ -89,7 +90,6 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

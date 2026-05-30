@@ -136,14 +136,13 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		deps.CtxdLogger().Info(ctx, "showing main")
 
 		cacheKey := []byte("main" + strconv.FormatBool(auth.IsAdmin(ctx)) + txt.Language(ctx))
+		cacheMiss := false
 		d, err := c.Get(ctx, cacheKey, func(ctx context.Context) (pageData, error) {
+			cacheMiss = true
 			d := pageData{}
 			if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
 				return d, fmt.Errorf("reset cache deps: %w", err)
 			}
-
-			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
-			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 
 			d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 
@@ -160,8 +159,6 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 				}
 
 				d.FeaturedAlbumData = cont
-
-				deps.DepCache().AlbumDependency(cacheName, cacheKey, d.Featured)
 			}
 
 			list, err := deps.PhotoAlbumFinder().FindAll(ctx)
@@ -194,13 +191,25 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 				}
 
 				d.SubAlbums = append(d.SubAlbums, cont)
-				deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
 			}
 
 			return d, nil
 		})
 		if err != nil {
 			return err
+		}
+
+		if cacheMiss {
+			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
+			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
+
+			if d.Featured != "" {
+				deps.DepCache().AlbumDependency(cacheName, cacheKey, d.Featured)
+			}
+
+			for _, cont := range d.SubAlbums {
+				deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
+			}
 		}
 
 		return out.Render(tmpl, d)
