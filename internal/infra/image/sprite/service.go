@@ -660,12 +660,21 @@ func (s *Service) revision(images []Image) string {
 
 func (s *Service) deleteManifest(ctx context.Context, key []byte, manifest Manifest) error {
 	chunks := manifestChunks(manifest)
+	referencedByOthers, err := s.manifestChunkRefsExcluding(ctx, string(key))
+	if err != nil {
+		return err
+	}
+
 	s.logger.Info(ctx, "album sprite: delete sprite manifest assets",
 		"manifest_key", string(key),
 		"album_owners", manifest.Albums,
 		"chunks", len(chunks))
 
 	for chunk := range chunks {
+		if _, keep := referencedByOthers[chunk]; keep {
+			continue
+		}
+
 		if err := s.blobStore.Delete(ctx, chunk); err != nil && !errors.Is(err, cache.ErrNotFound) {
 			return fmt.Errorf("delete sprite blob %s: %w", chunk, err)
 		}
@@ -676,6 +685,27 @@ func (s *Service) deleteManifest(ctx context.Context, key []byte, manifest Manif
 	}
 
 	return nil
+}
+
+func (s *Service) manifestChunkRefsExcluding(ctx context.Context, skipKey string) (map[string]struct{}, error) {
+	referenced := make(map[string]struct{})
+
+	_, err := s.manifestBackend.Walk(func(entry cache.EntryOf[Manifest]) error {
+		if string(entry.Key()) == skipKey {
+			return nil
+		}
+
+		for chunk := range manifestChunks(entry.Value()) {
+			referenced[chunk] = struct{}{}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk sprite manifests: %w", err)
+	}
+
+	return referenced, nil
 }
 
 func (s *Service) scheduleRetirement(ctx context.Context, key []byte) {

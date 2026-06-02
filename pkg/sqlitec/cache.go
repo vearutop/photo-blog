@@ -14,6 +14,7 @@ import (
 var (
 	_ cache.ReadWriterOf[any] = &dbMapOf[any]{}
 	_ cache.Deleter           = &dbMapOf[any]{}
+	_ cache.WalkerOf[any]     = &DBMapOf[any]{}
 )
 
 const (
@@ -23,6 +24,7 @@ const (
 type UnixTime int64
 
 type record struct {
+	CacheName string   `db:"cache_name" json:"cache_name,omitempty"`
 	Key       string   `db:"key" json:"key,omitempty"`
 	CreatedAt UnixTime `db:"created_at" json:"created_at,omitzero" title:"Created at"`
 	UpdatedAt UnixTime `db:"updated_at" json:"updated_at,omitzero" title:"Updated at"`
@@ -47,15 +49,17 @@ type DBMapOf[V any] struct {
 type dbMapOf[V any] struct {
 	*cache.InvalidationIndex
 
-	st *sqluct.Storage
+	cacheName string
+	st        *sqluct.Storage
 
 	t *cache.TraitOf[V]
 }
 
 // NewDBMapOf creates an instance of in-memory cache with optional configuration.
-func NewDBMapOf[V any](st *sqluct.Storage, options ...func(cfg *cache.ConfigOf[V])) *DBMapOf[V] {
+func NewDBMapOf[V any](st *sqluct.Storage, cacheName string, options ...func(cfg *cache.ConfigOf[V])) *DBMapOf[V] {
 	c := &dbMapOf[V]{
-		st: st,
+		cacheName: cacheName,
+		st:        st,
 	}
 	C := &DBMapOf[V]{
 		dbMapOf: c,
@@ -122,7 +126,7 @@ func (c *dbMapOf[V]) readBytes(ctx context.Context, key string, cacheEntry *cach
 
 	found = true
 
-	qb := c.st.SelectStmt(recordTable, r).Where("key = ?", key)
+	qb := c.st.SelectStmt(recordTable, r).Where("cache_name = ?", c.cacheName).Where("key = ?", key)
 	err = c.st.Select(ctx, qb, &r)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -144,7 +148,7 @@ func (c *dbMapOf[V]) readJSON(ctx context.Context, key string, cacheEntry *cache
 
 	found = true
 
-	qb := c.st.SelectStmt(recordTable, r).Where("key = ?", key)
+	qb := c.st.SelectStmt(recordTable, r).Where("cache_name = ?", c.cacheName).Where("key = ?", key)
 	err = c.st.Select(ctx, qb, &r)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -172,6 +176,7 @@ func (c *dbMapOf[V]) Write(ctx context.Context, k []byte, v V) error {
 	var r any
 
 	rec := record{}
+	rec.CacheName = c.cacheName
 	rec.Key = string(key)
 	rec.CreatedAt = UnixTime(time.Now().Unix())
 	rec.ExpireAt = UnixTime(time.Duration(expireAt) / time.Second)
@@ -191,7 +196,7 @@ func (c *dbMapOf[V]) Write(ctx context.Context, k []byte, v V) error {
 	}
 
 	_, err := c.st.InsertStmt(recordTable, r).
-		Suffix("ON CONFLICT(key) DO UPDATE SET expire_at = EXCLUDED.expire_at, val = EXCLUDED.val, updated_at = unixepoch()").
+		Suffix("ON CONFLICT(cache_name, key) DO UPDATE SET expire_at = EXCLUDED.expire_at, val = EXCLUDED.val, updated_at = unixepoch()").
 		ExecContext(ctx)
 	if err != nil {
 		return err
@@ -214,7 +219,7 @@ func (c *dbMapOf[V]) expireAt(ctx context.Context) (time.Duration, int64) {
 //
 // It fails with ErrNotFound if key does not exist.
 func (c *dbMapOf[V]) Delete(ctx context.Context, key []byte) error {
-	res, err := c.st.DeleteStmt(recordTable).Where("key = ?", string(key)).ExecContext(ctx)
+	res, err := c.st.DeleteStmt(recordTable).Where("cache_name = ?", c.cacheName).Where("key = ?", string(key)).ExecContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -233,11 +238,44 @@ func (c *dbMapOf[V]) Delete(ctx context.Context, key []byte) error {
 	return nil
 }
 
+func (c *DBMapOf[V]) Walk(cb func(entry cache.EntryOf[V]) error) (int, error) {
+	rows, err := c.st.DB().DB.QueryContext(context.Background(), `SELECT key, val, expire_at FROM record WHERE cache_name = ?`, c.cacheName)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var n int
+
+	for rows.Next() {
+		var rec RecordOf[V]
+		if err := rows.Scan(&rec.Key, &rec.Val, &rec.ExpireAt); err != nil {
+			return n, err
+		}
+
+		if err := cb(cache.TraitEntryOf[V]{
+			K: []byte(rec.Key),
+			V: rec.Val.Val,
+			E: int64(time.Duration(rec.ExpireAt) * time.Second),
+		}); err != nil {
+			return n, err
+		}
+
+		n++
+	}
+
+	if err := rows.Err(); err != nil {
+		return n, err
+	}
+
+	return n, nil
+}
+
 // ExpireAll marks all entries as expired, they can still serve stale cache.
 func (c *dbMapOf[V]) ExpireAll(ctx context.Context) {
 	start := time.Now()
 
-	res, err := c.st.UpdateStmt(recordTable, nil).Set("expire_at", start.Unix()).ExecContext(ctx)
+	res, err := c.st.UpdateStmt(recordTable, nil).Set("expire_at", start.Unix()).Where("cache_name = ?", c.cacheName).ExecContext(ctx)
 	if err != nil {
 		println(err.Error()) // TODO: proper logging.
 		return
@@ -256,7 +294,7 @@ func (c *dbMapOf[V]) ExpireAll(ctx context.Context) {
 func (c *dbMapOf[V]) DeleteAll(ctx context.Context) {
 	start := time.Now()
 
-	res, err := c.st.DeleteStmt(recordTable).ExecContext(ctx)
+	res, err := c.st.DeleteStmt(recordTable).Where("cache_name = ?", c.cacheName).ExecContext(ctx)
 	if err != nil {
 		println(err.Error())
 		return
@@ -272,7 +310,7 @@ func (c *dbMapOf[V]) DeleteAll(ctx context.Context) {
 }
 
 func (c *dbMapOf[V]) deleteExpired(before time.Time) {
-	_, err := c.st.DeleteStmt(recordTable).Where("expire_at < ?", before.Unix()).Exec()
+	_, err := c.st.DeleteStmt(recordTable).Where("cache_name = ?", c.cacheName).Where("expire_at < ?", before.Unix()).Exec()
 	if err != nil {
 		println(err.Error())
 		return
@@ -286,7 +324,7 @@ func (c *dbMapOf[V]) Len() int {
 	}
 	var cnt Cnt
 
-	q := c.st.SelectStmt(recordTable, nil).Columns("COUNT(1) AS cnt")
+	q := c.st.SelectStmt(recordTable, nil).Columns("COUNT(1) AS cnt").Where("cache_name = ?", c.cacheName)
 
 	err := c.st.Select(context.Background(), q, &cnt)
 	if err != nil {
@@ -306,9 +344,10 @@ func (c *dbMapOf[V]) evictMostExpired(evictFraction float64) int {
 
 	q := c.st.SelectStmt(recordTable, nil).
 		Columns("key").
+		Where("cache_name = ?", c.cacheName).
 		OrderByClause("expire_at ASC").Limit(uint64(evictFraction * float64(l)))
 
-	res, err := c.st.DeleteStmt(recordTable).Where("key IN (?)", q).Exec()
+	res, err := c.st.DeleteStmt(recordTable).Where("cache_name = ?", c.cacheName).Where("key IN (?)", q).Exec()
 	if err != nil {
 		println(err.Error())
 		return 0

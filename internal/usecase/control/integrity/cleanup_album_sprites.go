@@ -290,7 +290,7 @@ func cleanupAlbumSprites(ctx context.Context, deps cleanupAlbumSpritesDeps, dryR
 }
 
 func cachedAlbumPageManifestKeys(ctx context.Context, st *sqluct.Storage, sprites *sprite.Service) ([]cachedAlbumPageRef, map[string]struct{}, int, int, error) {
-	rows, err := st.DB().DB.QueryContext(ctx, `SELECT key, val FROM record WHERE key LIKE 'album-page:page:%'`)
+	rows, err := st.DB().DB.QueryContext(ctx, `SELECT key, val FROM record WHERE cache_name = 'album-page' AND key LIKE 'page:%'`)
 	if err != nil {
 		return nil, nil, 0, 0, fmt.Errorf("query album page cache records: %w", err)
 	}
@@ -350,7 +350,7 @@ func cachedAlbumPageManifestKeys(ctx context.Context, st *sqluct.Storage, sprite
 }
 
 func storedSpriteManifests(ctx context.Context, st *sqluct.Storage) (map[string]storedManifestRecord, error) {
-	rows, err := st.DB().DB.QueryContext(ctx, `SELECT key, val FROM record WHERE key LIKE 'album-sprite-manifest:%'`)
+	rows, err := st.DB().DB.QueryContext(ctx, `SELECT key, val FROM record WHERE cache_name = 'album-sprite-manifest'`)
 	if err != nil {
 		return nil, fmt.Errorf("query sprite manifests: %w", err)
 	}
@@ -489,7 +489,7 @@ func slicesContains(items []string, item string) bool {
 }
 
 func deleteAlbumPageCache(ctx context.Context, st *sqluct.Storage, key string) error {
-	res, err := st.DB().DB.ExecContext(ctx, `DELETE FROM record WHERE key = ?`, key)
+	res, err := st.DB().DB.ExecContext(ctx, `DELETE FROM record WHERE cache_name = 'album-page' AND key = ?`, key)
 	if err != nil {
 		return fmt.Errorf("delete album page cache %s: %w", key, err)
 	}
@@ -498,13 +498,7 @@ func deleteAlbumPageCache(ctx context.Context, st *sqluct.Storage, key string) e
 		return fmt.Errorf("album page cache rows affected %s: %w", key, err)
 	}
 
-	cacheKey := key
-	const prefix = "album-page:"
-	if len(cacheKey) > len(prefix) && cacheKey[:len(prefix)] == prefix {
-		cacheKey = cacheKey[len(prefix):]
-	}
-
-	if _, err := st.DB().DB.ExecContext(ctx, `DELETE FROM cache_label WHERE cache_name = 'album-page' AND cache_key = ?`, cacheKey); err != nil {
+	if _, err := st.DB().DB.ExecContext(ctx, `DELETE FROM cache_label WHERE cache_name = 'album-page' AND cache_key = ?`, key); err != nil {
 		return fmt.Errorf("delete album page cache labels %s: %w", key, err)
 	}
 

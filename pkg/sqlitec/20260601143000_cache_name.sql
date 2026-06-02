@@ -1,5 +1,9 @@
 -- +goose Up
 -- +goose StatementBegin
+DROP TABLE IF EXISTS record;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 CREATE TABLE record
 (
     `cache_name` VARCHAR(255) NOT NULL,

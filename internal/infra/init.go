@@ -172,7 +172,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	l.MapTilesCacheInstance = brick.MakeCacheOf[[]byte](l, "map-tiles", 7*24*time.Hour,
 		func(cfg *cache.FailoverConfigOf[[]byte]) {
-			cfg.Backend = sqlitec.NewDBMapOf[[]byte](mapTilesStorage, func(cfg *cache.ConfigOf[[]byte]) {
+			cfg.Backend = sqlitec.NewDBMapOf[[]byte](mapTilesStorage, "map-tiles", func(cfg *cache.ConfigOf[[]byte]) {
 				cfg.CountSoftLimit = 1000
 				cfg.DeleteExpiredJobInterval = time.Hour
 				cfg.DeleteExpiredAfter = 2 * time.Hour
@@ -245,7 +245,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		l.CtxdLogger(),
 		l.StatsTracker(),
 		l.PhotoThumbnailer(),
-		sqlitec.NewDBMapOf[sprite.Manifest](persistentCacheStorage, func(cfg *cache.ConfigOf[sprite.Manifest]) {
+		sqlitec.NewDBMapOf[sprite.Manifest](persistentCacheStorage, "album-sprite-manifest", func(cfg *cache.ConfigOf[sprite.Manifest]) {
 			cfg.TimeToLive = cache.UnlimitedTTL
 		}),
 		spriteBlobStorage,

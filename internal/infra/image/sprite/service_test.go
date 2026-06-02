@@ -196,7 +196,7 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 	s := &Service{
 		logger:          ctxd.NoOpLogger{},
 		stats:           stats.NoOp{},
-		manifestBackend: sqlitec.NewDBMapOf[Manifest](st),
+		manifestBackend: sqlitec.NewDBMapOf[Manifest](st, "album-sprite-manifest"),
 		blobStore:       blobs,
 		version:         "test",
 		retirementDelay: 20 * time.Millisecond,
@@ -299,6 +299,106 @@ func TestServiceTrackAlbumAndRetire(t *testing.T) {
 	}
 
 	t.Fatalf("manifest should be deleted after delayed retirement")
+}
+
+func TestServiceDeleteManifest_KeepsSharedChunks(t *testing.T) {
+	ctx := context.Background()
+	st := testManifestStorage(t)
+
+	blobs, err := filecache.NewStorage[string](t.TempDir())
+	if err != nil {
+		t.Fatalf("new blob storage: %v", err)
+	}
+	defer func() {
+		_ = blobs.Close()
+	}()
+
+	s := &Service{
+		logger:          ctxd.NoOpLogger{},
+		stats:           stats.NoOp{},
+		manifestBackend: sqlitec.NewDBMapOf[Manifest](st, "album-sprite-manifest"),
+		blobStore:       blobs,
+		version:         "test",
+		retirementDelay: 0,
+	}
+
+	imagesA := []Image{{Hash: mustHash("a"), Width: 1000, Height: 500}}
+	imagesB := []Image{{Hash: mustHash("b"), Width: 1000, Height: 500}}
+	ownerA := mustHash("oa")
+	ownerB := mustHash("ob")
+	shared1x := "shared-1x"
+	shared2x := "shared-2x"
+
+	manifestKeyA := s.ManifestKey(imagesA)
+	manifestKeyB := s.ManifestKey(imagesB)
+
+	manifestA := Manifest{
+		Revision: s.revision(imagesA),
+		Version:  s.version,
+		Images: map[string]ImageThumb{
+			imagesA[0].Hash.String(): {
+				Chunk1x:          shared1x,
+				Chunk2x:          shared2x,
+				Width:            300,
+				Height:           150,
+				BackgroundWidth:  300,
+				BackgroundHeight: 150,
+			},
+		},
+	}
+
+	manifestB := Manifest{
+		Revision: s.revision(imagesB),
+		Version:  s.version,
+		Images: map[string]ImageThumb{
+			imagesB[0].Hash.String(): {
+				Chunk1x:          shared1x,
+				Chunk2x:          shared2x,
+				Width:            300,
+				Height:           150,
+				BackgroundWidth:  300,
+				BackgroundHeight: 150,
+			},
+		},
+	}
+
+	if err := s.manifestBackend.Write(ctx, []byte(manifestKeyA), manifestA); err != nil {
+		t.Fatalf("write manifest A: %v", err)
+	}
+	if err := s.manifestBackend.Write(ctx, []byte(manifestKeyB), manifestB); err != nil {
+		t.Fatalf("write manifest B: %v", err)
+	}
+
+	writeBlob(t, ctx, blobs, shared1x)
+	writeBlob(t, ctx, blobs, shared2x)
+
+	keyA, err := s.TrackAlbum(ctx, imagesA, ownerA)
+	if err != nil {
+		t.Fatalf("track owner A: %v", err)
+	}
+	if _, err := s.TrackAlbum(ctx, imagesB, ownerB); err != nil {
+		t.Fatalf("track owner B: %v", err)
+	}
+
+	if err := s.Delete(ctx, keyA); err != nil {
+		t.Fatalf("retire owner A: %v", err)
+	}
+
+	if _, err := s.manifestBackend.Read(ctx, []byte(manifestKeyA)); err == nil {
+		t.Fatalf("manifest A should be deleted")
+	}
+
+	if _, err := s.manifestBackend.Read(ctx, []byte(manifestKeyB)); err != nil {
+		t.Fatalf("manifest B should remain: %v", err)
+	}
+
+	if _, err := blobs.Read(ctx, shared1x); err != nil {
+		t.Fatalf("shared chunk 1x should remain for manifest B: %v", err)
+	}
+
+	if _, err := blobs.Read(ctx, shared2x); err != nil {
+		t.Fatalf("shared chunk 2x should remain for manifest B: %v", err)
+	}
 }
 
 type stubThumbnailer struct{}

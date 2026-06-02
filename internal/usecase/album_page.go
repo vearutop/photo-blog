@@ -70,7 +70,7 @@ func (pb *AlbumPageBuilder) addSprites(ctx context.Context, d *albumPageData) {
 	album := d.AlbumData.Album
 
 	imageSets := make([][]Image, 0, 1+len(d.SubAlbums))
-	imageSets = append(imageSets, d.AlbumData.Images)
+	imageSets = append(imageSets, d.StrippedAlbumData.Images)
 	for _, subAlbum := range d.SubAlbums {
 		imageSets = append(imageSets, subAlbum.Images)
 	}
@@ -114,12 +114,15 @@ func (pb *AlbumPageBuilder) addSprites(ctx context.Context, d *albumPageData) {
 	}
 
 	items := deps.AlbumSprites().View(manifest)
-	d.ThumbSprites = pb.filterThumbSprites(items, d.AlbumData.Images)
+	d.ThumbSprites = pb.filterThumbSprites(items, d.StrippedAlbumData.Images)
 	d.AlbumData.ThumbSprites = d.ThumbSprites
+	d.StrippedAlbumData.ThumbSprites = d.ThumbSprites
 	d.MarkerSprites = deps.AlbumSprites().MarkerView(manifest)
 	d.SpriteSheets = deps.AlbumSprites().CompactSheets(items, d.MarkerSprites)
 	d.AlbumData.MarkerSprites = d.MarkerSprites
+	d.StrippedAlbumData.MarkerSprites = d.MarkerSprites
 	d.AlbumData.SpriteSheets = d.SpriteSheets
+	d.StrippedAlbumData.SpriteSheets = d.SpriteSheets
 
 	for i := range d.SubAlbums {
 		d.SubAlbums[i].ThumbSprites = pb.filterThumbSprites(items, d.SubAlbums[i].Images)
@@ -266,17 +269,11 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	d.Hash = album.Hash.String()
 	d.Count = len(cont.Images)
 	d.AlbumData = cont
-	d.AlbumData.Images = append([]Image(nil), cont.Images...)
+	d.StrippedAlbumData = strippedAlbumData(cont)
 	d.AlbumData.Album.Settings.CollabKey = ""
+	d.StrippedAlbumData.Album.Settings.CollabKey = ""
 	d.Timeline = buildAlbumTimeline(cont.Images, cont.Album.Settings.Texts, cont.Album.Settings.NewestFirst)
 	d.Featured = deps.Settings().Appearance().FeaturedAlbumName
-
-	// Clear image descriptions from JSON.
-	for i, img := range d.AlbumData.Images {
-		img.Description = ""
-
-		d.AlbumData.Images[i] = img
-	}
 
 	d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 	if len(cont.Images) > 1 {
@@ -397,7 +394,8 @@ type albumPageData struct {
 	Featured       string
 
 	AlbumData getAlbumOutput
-	Timeline  []albumTimelineItem
+	StrippedAlbumData getAlbumOutput
+	Timeline          []albumTimelineItem
 
 	ShowMap           bool
 	ShowEXIFPreview   bool
@@ -435,6 +433,20 @@ type albumTimelineItem struct {
 	Image *Image
 	Text  template.HTML
 	Ts    int64
+}
+
+func strippedAlbumData(cont getAlbumOutput) getAlbumOutput {
+	res := cont
+	res.Images = append([]Image(nil), cont.Images...)
+
+	for i, img := range res.Images {
+		img.Description = ""
+		img.DescriptionHTML = ""
+		img.AISays = ""
+		res.Images[i] = img
+	}
+
+	return res
 }
 
 func buildAlbumTimeline(images []Image, texts []txt.Chronological, newestFirst bool) []albumTimelineItem {

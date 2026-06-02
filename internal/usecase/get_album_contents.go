@@ -63,8 +63,8 @@ type Image struct {
 	Gps             *photo.Gps      `json:"gps,omitempty"`
 	Exif            *photo.Exif     `json:"exif,omitempty"`
 	Description     string          `json:"description,omitempty"`
-	DescriptionHTML template.HTML   `json:"-"`
-	AISays          string          `json:"-"`
+	DescriptionHTML template.HTML   `json:"description_html,omitempty"`
+	AISays          string          `json:"ai_says,omitempty"`
 	Is360Pano       bool            `json:"is_360_pano,omitempty"`
 	Size            int64           `json:"size,omitempty"`
 	UTime           int64           `json:"utime"`

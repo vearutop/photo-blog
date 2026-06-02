@@ -86,6 +86,7 @@ func SearchImages(deps getAlbumImagesDeps) usecase.Interactor {
 		d.Hash = album.Hash.String()
 		d.Count = len(cont.Images)
 		d.AlbumData = cont
+		d.StrippedAlbumData = strippedAlbumData(cont)
 		d.Timeline = buildAlbumTimeline(cont.Images, cont.Album.Settings.Texts, cont.Album.Settings.NewestFirst)
 		d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 

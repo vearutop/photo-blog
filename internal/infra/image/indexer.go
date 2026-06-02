@@ -184,6 +184,8 @@ func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 		}
 	}
 
+	s := i.deps.Settings().Indexing()
+
 	if err := i.ensureExif(ctx, &img, flags); err != nil {
 		i.deps.CtxdLogger().Error(ctx, "failed to ensure exif", "error", err)
 	}
@@ -210,8 +212,6 @@ func (i *indexer) Index(ctx context.Context, img photo.Image, flags photo.Indexi
 			}
 		}
 	}
-
-	s := i.deps.Settings().Indexing()
 
 	i.ensureThumbs(ctx, img, flags)
 	i.ensureBlurHash(ctx, &img)

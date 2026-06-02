@@ -17,9 +17,11 @@ import (
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
+	"github.com/vearutop/photo-blog/internal/domain/topic"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra/dep"
 	"github.com/vearutop/photo-blog/internal/infra/image"
+	"github.com/vearutop/photo-blog/pkg/qlite"
 )
 
 type addRemoteDeps interface {
@@ -38,6 +40,7 @@ type addRemoteDeps interface {
 	PhotoThumbnailer() photo.Thumbnailer
 
 	DepCache() *dep.Cache
+	QueueBroker() *qlite.Broker
 }
 
 // AddRemote creates use case interactor to add remote directory of photos to an album.
@@ -208,6 +211,14 @@ func AddRemote(deps addRemoteDeps) usecase.Interactor {
 
 				if err := os.Remove(zipFn); err != nil {
 					return fmt.Errorf("removing zip file %s: %w", zipFn, err)
+				}
+			}
+
+			for _, img := range imgByHash {
+				if err := deps.QueueBroker().Publish(ctx, topic.IndexImage, image.IndexJob{Image: img}, func(msg *qlite.Message) {
+					msg.PublishOnSuccess(topic.AlbumChanged, a.Name)
+				}); err != nil {
+					return fmt.Errorf("publish index image: %w", err)
 				}
 			}
 

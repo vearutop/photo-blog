@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/jpeg"
 	"os"
 	"path"
 	"strings"
@@ -63,9 +64,9 @@ func (p *Processor) AddThumbnail(ctx context.Context, imgHash uniq.Hash, size ph
 
 	ctx = image.LargerThumbToContext(ctx, th)
 
-	p.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
+	_, err = p.deps.PhotoThumbnailer().Thumbnail(ctx, img, size)
 
-	return nil
+	return err
 }
 
 func (p *Processor) AddFile(ctx context.Context, albumName string, filePath string, after ...func(hash uniq.Hash)) (h uniq.Hash, idx func(), err error) {
@@ -85,6 +86,10 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 		d := photo.Image{}
 		if err := d.SetPath(ctx, filePath); err != nil {
 			return 0, nil, fmt.Errorf("set image path: %w", err)
+		}
+
+		if err := prepareUploadedImage(ctx, &d); err != nil {
+			return 0, nil, fmt.Errorf("prepare image metadata: %w", err)
 		}
 
 		img, err := p.deps.PhotoImageEnsurer().Ensure(ctx, d)
@@ -149,6 +154,42 @@ func (p *Processor) AddFile(ctx context.Context, albumName string, filePath stri
 	}
 
 	return 0, nil, ErrSkip
+}
+
+func prepareUploadedImage(ctx context.Context, img *photo.Image) (err error) {
+	f, err := os.Open(img.Path)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "open uploaded image")
+	}
+	defer func() {
+		if clErr := f.Close(); clErr != nil && err == nil {
+			err = clErr
+		}
+	}()
+
+	meta, metaErr := image.ReadMeta(f)
+	if metaErr == nil {
+		img.Settings.Rotate = meta.Rotate
+	}
+
+	if _, seekErr := f.Seek(0, 0); seekErr != nil {
+		return ctxd.WrapError(ctx, seekErr, "rewind uploaded image")
+	}
+
+	cfg, err := jpeg.DecodeConfig(f)
+	if err != nil {
+		return ctxd.WrapError(ctx, err, "decode uploaded image dimensions")
+	}
+
+	img.Width = int64(cfg.Width)
+	img.Height = int64(cfg.Height)
+
+	if img.Settings.Rotate == 90 || img.Settings.Rotate == 270 {
+		img.Width = int64(cfg.Height)
+		img.Height = int64(cfg.Width)
+	}
+
+	return nil
 }
 
 func (p *Processor) AddDirectory(ctx context.Context, albumName string, dirPath string) ([]string, error) {

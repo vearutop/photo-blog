@@ -45,7 +45,7 @@ func TestCleanupAlbumSprites_ShouldKeepManifestReachableForPendingPageCache(t *t
 
 	// This page cache models the observed production race: the cache row survived in a pending state,
 	// so it remembers the manifest key but still has no sprite sheets.
-	writeAlbumPageCache(t, ctx, deps.PersistentCacheStorage(), "album-page:page:berlin/false/false/en", cachedAlbumPageData{
+	writeAlbumPageCache(t, ctx, deps.PersistentCacheStorage(), "page:berlin/false/false/en", cachedAlbumPageData{
 		AlbumData:         cachedAlbumOutput{},
 		SpriteManifestKey: manifestKey,
 		SpriteSheets:      nil,
@@ -98,7 +98,7 @@ func TestCleanupAlbumSprites_ShouldDeleteBlobsOnlyWhenTheirManifestIsAlsoDeleted
 	writeBlob(t, ctx, deps, "album-sprite:cold-2x", 1024)
 
 	// Only one page cache is rooted, so the second manifest is still a stored manifest but invisible to page-rooted cleanup.
-	writeAlbumPageCache(t, ctx, deps.PersistentCacheStorage(), "album-page:page:people/false/false/en", cachedAlbumPageData{
+	writeAlbumPageCache(t, ctx, deps.PersistentCacheStorage(), "page:people/false/false/en", cachedAlbumPageData{
 		AlbumData: cachedAlbumOutput{
 			Images: []cachedImage{
 				{Hash: "a", Width: 1200, Height: 800},
@@ -159,7 +159,7 @@ func newCleanupTestDeps(t *testing.T) cleanupTestDeps {
 		ctxd.NoOpLogger{},
 		stats.NoOp{},
 		nil,
-		sqlitec.NewDBMapOf[sprite.Manifest](st, func(cfg *cache.ConfigOf[sprite.Manifest]) {
+		sqlitec.NewDBMapOf[sprite.Manifest](st, "album-sprite-manifest", func(cfg *cache.ConfigOf[sprite.Manifest]) {
 			cfg.TimeToLive = cache.UnlimitedTTL
 		}),
 		blobs,
@@ -221,7 +221,7 @@ func writeManifest(t *testing.T, ctx context.Context, deps cleanupTestDeps, key 
 	t.Helper()
 
 	require.NoError(t, deps.AlbumSprites().DeleteManifestRecord(ctx, key))
-	require.NoError(t, sqlitec.NewDBMapOf[sprite.Manifest](deps.st).Write(ctx, []byte(key), manifest))
+	require.NoError(t, sqlitec.NewDBMapOf[sprite.Manifest](deps.st, "album-sprite-manifest").Write(ctx, []byte(key), manifest))
 }
 
 func writeBlob(t *testing.T, ctx context.Context, deps cleanupTestDeps, key string, size int) {
@@ -246,8 +246,8 @@ func writeAlbumPageCache(t *testing.T, ctx context.Context, st *sqluct.Storage, 
 	require.NoError(t, err)
 
 	_, err = st.DB().DB.ExecContext(ctx,
-		`INSERT INTO record(key, val, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-		key, string(j))
+		`INSERT INTO record(cache_name, key, val, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+		"album-page", key, string(j))
 	require.NoError(t, err)
 }
 
