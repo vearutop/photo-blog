@@ -3,15 +3,20 @@ package sprite
 import (
 	"bytes"
 	"context"
+	"errors"
 	"image"
 	"image/color"
 	"image/jpeg"
+	"io"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/bool64/brick/database"
+	"github.com/bool64/cache"
 	"github.com/bool64/cache/blob"
 	"github.com/bool64/cache/filecache"
 	"github.com/bool64/ctxd"
@@ -401,6 +406,211 @@ func TestServiceDeleteManifest_KeepsSharedChunks(t *testing.T) {
 	}
 }
 
+func TestServiceRegenerateChunk_RebuildsMissingBlob(t *testing.T) {
+	ctx := context.Background()
+	st := testManifestStorage(t)
+
+	blobs, err := filecache.NewStorage[string](t.TempDir())
+	if err != nil {
+		t.Fatalf("new blob storage: %v", err)
+	}
+	defer func() {
+		_ = blobs.Close()
+	}()
+
+	s := &Service{
+		logger:          ctxd.NoOpLogger{},
+		stats:           stats.NoOp{},
+		thumbnailer:     stubThumbnailer{},
+		manifestBackend: sqlitec.NewDBMapOf[Manifest](st, "album-sprite-manifest"),
+		blobStore:       blobs,
+		boxWidth:        300,
+		boxHeight:       200,
+		chunkSize:       2,
+		version:         "test",
+	}
+
+	images := []Image{
+		{Hash: mustHash("a"), Width: 3000, Height: 2000},
+		{Hash: mustHash("b"), Width: 2400, Height: 1600},
+	}
+
+	manifest, _, err := s.build(ctx, images)
+	if err != nil {
+		t.Fatalf("build manifest: %v", err)
+	}
+
+	manifestKey := s.ManifestKey(images)
+	if err := s.manifestBackend.Write(ctx, []byte(manifestKey), manifest); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	chunk1x := manifest.Images[images[0].Hash.String()].Chunk1x
+	if chunk1x == "" {
+		t.Fatalf("expected chunk1x to be set")
+	}
+
+	original, err := blobs.Read(ctx, chunk1x)
+	if err != nil {
+		t.Fatalf("chunk should exist after build: %v", err)
+	}
+	originalBytes := readEntry(t, original)
+
+	if err := blobs.Delete(ctx, chunk1x); err != nil {
+		t.Fatalf("delete chunk to simulate loss: %v", err)
+	}
+
+	if _, err := blobs.Read(ctx, chunk1x); err == nil {
+		t.Fatalf("chunk should be gone before regeneration")
+	}
+
+	regenerated, err := s.RegenerateChunk(ctx, chunk1x)
+	if err != nil {
+		t.Fatalf("regenerate chunk: %v", err)
+	}
+
+	regeneratedBytes := readEntry(t, regenerated)
+	if !bytes.Equal(originalBytes, regeneratedBytes) {
+		t.Fatalf("regenerated chunk differs from original: content-derived key should reproduce identical bytes")
+	}
+
+	if _, err := blobs.Read(ctx, chunk1x); err != nil {
+		t.Fatalf("chunk should be persisted after regeneration: %v", err)
+	}
+}
+
+func TestServiceRegenerateChunk_UnknownKeyNotFound(t *testing.T) {
+	ctx := context.Background()
+	st := testManifestStorage(t)
+
+	blobs, err := filecache.NewStorage[string](t.TempDir())
+	if err != nil {
+		t.Fatalf("new blob storage: %v", err)
+	}
+	defer func() {
+		_ = blobs.Close()
+	}()
+
+	s := &Service{
+		logger:          ctxd.NoOpLogger{},
+		stats:           stats.NoOp{},
+		manifestBackend: sqlitec.NewDBMapOf[Manifest](st, "album-sprite-manifest"),
+		blobStore:       blobs,
+		version:         "test",
+	}
+
+	if _, err := s.RegenerateChunk(ctx, "does-not-exist"); !errors.Is(err, cache.ErrNotFound) {
+		t.Fatalf("expected cache.ErrNotFound, got: %v", err)
+	}
+}
+
+func TestServiceRegenerateChunk_DedupsConcurrentCalls(t *testing.T) {
+	ctx := context.Background()
+	st := testManifestStorage(t)
+
+	blobs, err := filecache.NewStorage[string](t.TempDir())
+	if err != nil {
+		t.Fatalf("new blob storage: %v", err)
+	}
+	defer func() {
+		_ = blobs.Close()
+	}()
+
+	var calls int64
+	thumbnailer := countingThumbnailer{calls: &calls, delay: 50 * time.Millisecond, inner: stubThumbnailer{}}
+
+	s := &Service{
+		logger:          ctxd.NoOpLogger{},
+		stats:           stats.NoOp{},
+		thumbnailer:     thumbnailer,
+		manifestBackend: sqlitec.NewDBMapOf[Manifest](st, "album-sprite-manifest"),
+		blobStore:       blobs,
+		boxWidth:        300,
+		boxHeight:       200,
+		chunkSize:       2,
+		version:         "test",
+	}
+
+	images := []Image{
+		{Hash: mustHash("a"), Width: 3000, Height: 2000},
+		{Hash: mustHash("b"), Width: 2400, Height: 1600},
+	}
+
+	manifest, _, err := s.build(ctx, images)
+	if err != nil {
+		t.Fatalf("build manifest: %v", err)
+	}
+
+	manifestKey := s.ManifestKey(images)
+	if err := s.manifestBackend.Write(ctx, []byte(manifestKey), manifest); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	chunk1x := manifest.Images[images[0].Hash.String()].Chunk1x
+	if chunk1x == "" {
+		t.Fatalf("expected chunk1x to be set")
+	}
+
+	if err := blobs.Delete(ctx, chunk1x); err != nil {
+		t.Fatalf("delete chunk to simulate loss: %v", err)
+	}
+
+	callsBeforeRegen := atomic.LoadInt64(&calls)
+
+	const concurrency = 20
+
+	var start, done sync.WaitGroup
+	start.Add(1)
+	done.Add(concurrency)
+
+	errs := make([]error, concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(i int) {
+			defer done.Done()
+			start.Wait()
+			_, regenErr := s.RegenerateChunk(ctx, chunk1x)
+			errs[i] = regenErr
+		}(i)
+	}
+
+	start.Done()
+	done.Wait()
+
+	for i, regenErr := range errs {
+		if regenErr != nil {
+			t.Fatalf("regenerate chunk (goroutine %d): %v", i, regenErr)
+		}
+	}
+
+	// A real rebuild calls the thumbnailer once per image (2 here). Without dedup, 20
+	// concurrent callers would each trigger their own rebuild, up to 20x that count.
+	gotCalls := atomic.LoadInt64(&calls) - callsBeforeRegen
+	if gotCalls > int64(len(images))*2 {
+		t.Fatalf("expected concurrent regenerations to be deduplicated via singleflight, "+
+			"thumbnailer was called %d times for %d concurrent callers", gotCalls, concurrency)
+	}
+
+	if _, err := blobs.Read(ctx, chunk1x); err != nil {
+		t.Fatalf("chunk should exist after concurrent regeneration: %v", err)
+	}
+}
+
+type countingThumbnailer struct {
+	calls *int64
+	delay time.Duration
+	inner photo.Thumbnailer
+}
+
+func (c countingThumbnailer) Thumbnail(ctx context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
+	atomic.AddInt64(c.calls, 1)
+
+	if c.delay > 0 {
+		time.Sleep(c.delay)
+	}
+
+	return c.inner.Thumbnail(ctx, img, size)
+}
+
 type stubThumbnailer struct{}
 
 func (stubThumbnailer) Thumbnail(_ context.Context, img photo.Image, size photo.ThumbSize) (photo.Thumb, error) {
@@ -478,6 +688,25 @@ func writeBlob(t *testing.T, ctx context.Context, blobs *filecache.Storage[strin
 	if err := blobs.Write(ctx, key, entry); err != nil {
 		t.Fatalf("write blob %s: %v", key, err)
 	}
+}
+
+func readEntry(t *testing.T, entry blob.Entry) []byte {
+	t.Helper()
+
+	rc, err := entry.Open()
+	if err != nil {
+		t.Fatalf("open blob entry: %v", err)
+	}
+	defer func() {
+		_ = rc.Close()
+	}()
+
+	data, err := io.ReadAll(rc)
+	if err != nil {
+		t.Fatalf("read blob entry: %v", err)
+	}
+
+	return data
 }
 
 func TestMain(m *testing.M) {

@@ -13,6 +13,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bool64/cache"
@@ -24,6 +25,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/pkg/sqlitec"
 	xdraw "golang.org/x/image/draw"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -51,6 +53,22 @@ type Manifest struct {
 	Albums   []uniq.Hash           `json:"albums,omitempty"`
 	Images   map[string]ImageThumb `json:"images"`
 	Markers  map[string]ImageThumb `json:"markers,omitempty"`
+
+	// ChunkPlans records how each chunk was built, so a chunk blob that goes missing
+	// (deleted by a race, an operator mistake, a storage hiccup) can be regenerated
+	// on demand instead of 404ing forever. Manifests persisted before this field
+	// existed simply have no plan, so their chunks can't self-heal - that's fine,
+	// they get replaced by a fresh manifest on the next content change anyway.
+	ChunkPlans map[string]chunkPlan `json:"chunk_plans,omitempty"`
+}
+
+// chunkPlan is the exact input that produced a chunk key, kept so the chunk can be
+// rebuilt byte-for-byte identical (chunk keys are content-derived) if its blob is lost.
+type chunkPlan struct {
+	Bucket bucketKey
+	Scale  int
+	Mode   composeMode
+	Images []Image
 }
 
 type ImageThumb struct {
@@ -84,6 +102,7 @@ type StoredBlobInfo struct {
 
 type buildTrace struct {
 	ChunkKeysWritten []string
+	PinnedChunks     []string
 	FailedStage      string
 }
 
@@ -104,6 +123,13 @@ type Service struct {
 	chunkSize       int
 	version         string
 	retirementDelay time.Duration
+
+	chunkPinsMu sync.Mutex
+	chunkPins   map[string]int
+
+	// chunkRegen deduplicates concurrent RegenerateChunk calls for the same key, so a
+	// single missing chunk requested by many concurrent page loads is rendered once.
+	chunkRegen singleflight.Group
 }
 
 func NewService(
@@ -124,6 +150,7 @@ func NewService(
 		chunkSize:       defaultChunkSize,
 		version:         defaultVersion,
 		retirementDelay: defaultRetirementDelay,
+		chunkPins:       make(map[string]int),
 	}
 
 	s.manifestCache = cache.NewFailoverOf[Manifest](func(cfg *cache.FailoverConfigOf[Manifest]) {
@@ -157,6 +184,12 @@ func (s *Service) EnsureBuild(ctx context.Context, key string, images []Image) {
 
 		return m, err
 	})
+
+	// Chunks stay pinned from the moment build() decides to reuse or create them until the
+	// manifest referencing them is persisted above, so a concurrent retirement of some other
+	// manifest can't delete a chunk this build is relying on before it becomes referenced.
+	s.unpinChunks(trace.PinnedChunks)
+
 	if err != nil {
 		s.logger.Error(ctx, "album sprite: build sprite manifest",
 			"manifest_key", key,
@@ -279,6 +312,91 @@ func (s *Service) MarkerView(manifest Manifest) map[string]*ViewItem {
 
 func (s *Service) Open(ctx context.Context, key string) (blob.Entry, error) {
 	return s.blobStore.Read(ctx, key)
+}
+
+// RegenerateChunk rebuilds a missing chunk blob from the plan recorded by any manifest
+// that still references it, and returns the freshly written blob. Chunk keys are
+// content-derived, so the result is byte-identical to what was there before it was
+// lost to a race, an operator mistake, or a storage hiccup - callers can treat this as
+// a drop-in retry for a 404 from Open. Returns cache.ErrNotFound if no stored manifest
+// has a plan for this key (e.g. it predates ChunkPlans, or the key is simply wrong).
+func (s *Service) RegenerateChunk(ctx context.Context, key string) (blob.Entry, error) {
+	_, err, _ := s.chunkRegen.Do(key, func() (any, error) {
+		plan, ok, err := s.findChunkPlan(key)
+		if err != nil {
+			return nil, err
+		}
+
+		if !ok {
+			return nil, cache.ErrNotFound
+		}
+
+		s.pinChunk(key)
+		defer s.unpinChunks([]string{key})
+
+		if _, err := s.ensureChunk(ctx, key, plan.Bucket, plan.Scale, plan.Images, plan.Mode); err != nil {
+			return nil, fmt.Errorf("regenerate sprite chunk %s: %w", key, err)
+		}
+
+		s.logger.Info(ctx, "album sprite: regenerated missing sprite chunk", "chunk_key", key)
+
+		return nil, nil //nolint:nilnil // value is irrelevant, the blob is re-read by every caller below
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.blobStore.Read(ctx, key)
+}
+
+func (s *Service) findChunkPlan(key string) (chunkPlan, bool, error) {
+	var found chunkPlan
+
+	ok := false
+
+	_, err := s.manifestBackend.Walk(func(entry cache.EntryOf[Manifest]) error {
+		if plan, exists := entry.Value().ChunkPlans[key]; exists {
+			found = plan
+			ok = true
+		}
+
+		return nil
+	})
+	if err != nil {
+		return chunkPlan{}, false, fmt.Errorf("walk sprite manifests: %w", err)
+	}
+
+	return found, ok, nil
+}
+
+// pinChunk marks a chunk key as relied upon by an in-progress build, so deleteManifest
+// won't delete its blob out from under a manifest that is about to reference it.
+func (s *Service) pinChunk(key string) {
+	s.chunkPinsMu.Lock()
+	if s.chunkPins == nil {
+		s.chunkPins = make(map[string]int)
+	}
+	s.chunkPins[key]++
+	s.chunkPinsMu.Unlock()
+}
+
+func (s *Service) unpinChunks(keys []string) {
+	s.chunkPinsMu.Lock()
+	for _, key := range keys {
+		if s.chunkPins[key] <= 1 {
+			delete(s.chunkPins, key)
+		} else {
+			s.chunkPins[key]--
+		}
+	}
+	s.chunkPinsMu.Unlock()
+}
+
+func (s *Service) isChunkPinned(key string) bool {
+	s.chunkPinsMu.Lock()
+	defer s.chunkPinsMu.Unlock()
+
+	return s.chunkPins[key] > 0
 }
 
 func (s *Service) DeleteManifestRecord(ctx context.Context, key string) error {
@@ -419,10 +537,11 @@ func (s *Service) Close() error {
 func (s *Service) build(ctx context.Context, images []Image) (Manifest, buildTrace, error) {
 	trace := buildTrace{}
 	manifest := Manifest{
-		Revision: s.revision(images),
-		Version:  s.version,
-		Images:   make(map[string]ImageThumb, len(images)),
-		Markers:  make(map[string]ImageThumb),
+		Revision:   s.revision(images),
+		Version:    s.version,
+		Images:     make(map[string]ImageThumb, len(images)),
+		Markers:    make(map[string]ImageThumb),
+		ChunkPlans: make(map[string]chunkPlan),
 	}
 
 	buckets := make(map[bucketKey][]Image)
@@ -449,6 +568,12 @@ func (s *Service) build(ctx context.Context, images []Image) (Manifest, buildTra
 			chunk1x := s.chunkKey(1, key, chunk, composeFit)
 			chunk2x := s.chunkKey(2, key, chunk, composeFit)
 
+			manifest.ChunkPlans[chunk1x] = chunkPlan{Bucket: key, Scale: 1, Mode: composeFit, Images: chunk}
+			manifest.ChunkPlans[chunk2x] = chunkPlan{Bucket: key, Scale: 2, Mode: composeFit, Images: chunk}
+
+			s.pinChunk(chunk1x)
+			trace.PinnedChunks = append(trace.PinnedChunks, chunk1x)
+
 			created, err := s.ensureChunk(ctx, chunk1x, key, 1, chunk, composeFit)
 			if created {
 				trace.ChunkKeysWritten = append(trace.ChunkKeysWritten, chunk1x)
@@ -457,6 +582,10 @@ func (s *Service) build(ctx context.Context, images []Image) (Manifest, buildTra
 				trace.FailedStage = "ensure_chunk_1x"
 				return Manifest{}, trace, fmt.Errorf("build sprite chunk 1x: %w", err)
 			}
+
+			s.pinChunk(chunk2x)
+			trace.PinnedChunks = append(trace.PinnedChunks, chunk2x)
+
 			created, err = s.ensureChunk(ctx, chunk2x, key, 2, chunk, composeFit)
 			if created {
 				trace.ChunkKeysWritten = append(trace.ChunkKeysWritten, chunk2x)
@@ -497,7 +626,7 @@ func (s *Service) build(ctx context.Context, images []Image) (Manifest, buildTra
 		}
 	}
 
-	if err := s.buildMarkerSprites(ctx, markerImages, &manifest); err != nil {
+	if err := s.buildMarkerSprites(ctx, markerImages, &manifest, &trace); err != nil {
 		trace.FailedStage = "build_marker_sprites"
 		return Manifest{}, trace, err
 	}
@@ -564,7 +693,7 @@ func (s *Service) ensureChunk(ctx context.Context, key string, bucket bucketKey,
 	return true, nil
 }
 
-func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manifest *Manifest) error {
+func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manifest *Manifest, trace *buildTrace) error {
 	if len(images) == 0 {
 		return nil
 	}
@@ -579,6 +708,11 @@ func (s *Service) buildMarkerSprites(ctx context.Context, images []Image, manife
 		chunk := images[start:end]
 		chunk1x := s.chunkKey(1, bucket, chunk, composeCover)
 		chunk2x := chunk1x
+
+		manifest.ChunkPlans[chunk1x] = chunkPlan{Bucket: bucket, Scale: 1, Mode: composeCover, Images: chunk}
+
+		s.pinChunk(chunk1x)
+		trace.PinnedChunks = append(trace.PinnedChunks, chunk1x)
 
 		created, err := s.ensureChunk(ctx, chunk1x, bucket, 1, chunk, composeCover)
 		if created {
@@ -672,6 +806,14 @@ func (s *Service) deleteManifest(ctx context.Context, key []byte, manifest Manif
 
 	for chunk := range chunks {
 		if _, keep := referencedByOthers[chunk]; keep {
+			continue
+		}
+
+		// A pinned chunk is being reused or created by a build in progress for some other
+		// manifest that hasn't been persisted yet, so manifestChunkRefsExcluding can't see it.
+		// Leave it alone; the next retirement pass will pick it up if it's truly orphaned.
+		if s.isChunkPinned(chunk) {
+			s.logger.Info(ctx, "album sprite: skip deleting pinned sprite chunk", "chunk_key", chunk)
 			continue
 		}
 

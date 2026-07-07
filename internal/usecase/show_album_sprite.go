@@ -27,11 +27,18 @@ func ShowAlbumSprite(deps showAlbumSpriteDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumSpriteInput, out *response.EmbeddedSetter) error {
 		entry, err := deps.AlbumSprites().Open(ctx, in.Key)
 		if err != nil {
-			if errors.Is(err, cache.ErrNotFound) {
-				return status.NotFound
+			if !errors.Is(err, cache.ErrNotFound) {
+				return err
 			}
 
-			return err
+			entry, err = deps.AlbumSprites().RegenerateChunk(ctx, in.Key)
+			if err != nil {
+				if errors.Is(err, cache.ErrNotFound) {
+					return status.NotFound
+				}
+
+				return err
+			}
 		}
 
 		rc, err := entry.Open()
