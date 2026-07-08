@@ -4,7 +4,7 @@
     <title>{{.Title}}</title>
     <meta charset="UTF-8">
 
-    {{if .CanonicalBaseURL}}
+    {{if and .CanonicalBaseURL (not .IsPhotoPage)}}
         <link rel="canonical" href="{{.CanonicalBaseURL}}/{{.Name}}/" />
     {{end}}
 
@@ -42,7 +42,7 @@
     <meta property="og:image:type" content="image/jpeg"/>
     <meta name="twitter:card" content="summary_large_image"/>
 
-    {{if not .Public}}
+    {{if or (not .Public) .IsPhotoPage}}
         <meta name="robots" content="noindex">
     {{end}}
 
@@ -183,6 +183,8 @@
                         </a><div class="pswp-caption-content" data-hash="{{$img.Hash}}" id="caption{{$img.Hash}}" style="display: none">
                             {{if $img.DescriptionHTML}}
                             <div class="caption-desc">{{$img.DescriptionHTML}}</div>
+                            {{end}}{{if and $img.Exif (or $img.Exif.CameraModel $img.Exif.LensModel $img.Exif.FocalLength $img.Exif.ExposureTime $img.Exif.FNumber $img.Exif.ISOSpeed)}}
+                            <div class="quick-exif">{{$img.Exif.CameraModel}} {{$img.Exif.LensModel}} {{if $img.Exif.FocalLength}}@ {{printf "%g" $img.Exif.FocalLength}}mm{{end}} {{if $img.Exif.ExposureTime}}{{$img.Exif.ExposureTime}}s{{end}} {{if $img.Exif.FNumber}}f/{{printf "%g" $img.Exif.FNumber}}{{end}} {{if $img.Exif.ISOSpeed}}iso{{$img.Exif.ISOSpeed}}{{end}}</div>
                             {{end}}{{if $img.AISays}}
                             <div class="ai-says" style="margin-top: 20px"><span title="I don't always talk bullshit, but when I do, I'm confident" class="icon-link robot-icon"></span><em>AI says:</em><br />
                                 {{$img.AISays}}

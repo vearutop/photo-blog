@@ -81,6 +81,7 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 
 		if in.imgHash != 0 {
 			d.CoverImage = "/thumb/1200w/" + in.imgHash.String() + ".jpg"
+			d.IsPhotoPage = true
 		}
 
 		if d.IsAdmin {

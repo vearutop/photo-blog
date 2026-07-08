@@ -383,6 +383,7 @@ type albumPageData struct {
 	Public      bool
 	NewestFirst bool
 	Hash        string
+	IsPhotoPage bool
 
 	Count          int
 	TotalSize      string

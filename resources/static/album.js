@@ -770,12 +770,20 @@ function loadAlbum(params) {
                     onInit: (el, pswp) => {
                         lightbox.pswp.on('change', () => {
                             const currSlideElement = lightbox.pswp.currSlide.data.element;
+                            let quickExifHTML = '';
+
                             if (currSlideElement) {
-                                const hiddenCaption = currSlideElement.querySelector('.quick-exif');
-                                if (hiddenCaption) {
-                                    el.innerHTML = hiddenCaption.innerHTML;
+                                const hash = currSlideElement.getAttribute('data-hash');
+                                if (hash) {
+                                    const hiddenCaption = document.querySelector('.pswp-caption-content[data-hash="' + hash + '"] .quick-exif');
+                                    if (hiddenCaption) {
+                                        quickExifHTML = hiddenCaption.innerHTML;
+                                    }
                                 }
                             }
+
+                            el.innerHTML = quickExifHTML;
+                            el.style.display = quickExifHTML.trim() ? '' : 'none';
                         });
                     }
                 });
