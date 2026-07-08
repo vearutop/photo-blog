@@ -4,114 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
-	"github.com/vearutop/photo-blog/internal/infra/dep"
 	infraService "github.com/vearutop/photo-blog/internal/infra/service"
-	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/pkg/txt"
 	"github.com/vearutop/photo-blog/pkg/web"
 	"github.com/vearutop/photo-blog/resources/static"
 )
-
-type showMainInput struct {
-	hasAuth bool
-}
-
-type showMainDeps interface {
-	getAlbumImagesDeps
-
-	DepCache() *dep.Cache
-	Settings() settings.Values
-}
-
-type pageCommon struct {
-	Title    string
-	Lang     string
-	Favicon  string
-	Head     template.HTML
-	Header   template.HTML
-	Footer   template.HTML
-	MainMenu []settings.MenuItem
-
-	Secure          bool
-	IsAdmin         bool
-	IsBot           bool
-	ShowLoginButton bool
-
-	ThumbBaseURL     string
-	ImageBaseURL     string
-	ThumbBaseHref    string
-	ImageBaseHref    string
-	CanonicalBaseURL string
-
-	SubAlbums []getAlbumOutput
-}
-
-func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Values) {
-	ap := a.Appearance()
-
-	if p.Title == "" {
-		p.Title = r.MustRenderLang(ctx, ap.SiteTitle, func(o *txt.RenderOptions) {
-			o.StripTags = true
-		})
-	}
-
-	p.Lang = txt.Language(ctx)
-
-	p.Head = template.HTML(r.MustRenderLang(ctx, ap.SiteHead))
-	p.Header = template.HTML(r.MustRenderLang(ctx, ap.SiteHeader))
-	p.Footer = template.HTML(r.MustRenderLang(ctx, ap.SiteFooter))
-	p.Favicon = ap.SiteFavicon
-
-	p.ThumbBaseURL = ap.ThumbBaseURL
-	p.ImageBaseURL = ap.ImageBaseURL
-	p.ThumbBaseHref = p.ThumbBaseURL
-	p.ImageBaseHref = p.ImageBaseURL
-	p.CanonicalBaseURL = strings.TrimSuffix(ap.CanonicalBaseURL, "/")
-
-	if p.Favicon == "" {
-		p.Favicon = "/static/favicon.png"
-	}
-	if p.ThumbBaseHref == "" {
-		p.ThumbBaseHref = "/thumb"
-	}
-	if p.ImageBaseHref == "" {
-		p.ImageBaseHref = "/image"
-	}
-
-	p.IsAdmin = auth.IsAdmin(ctx)
-	p.IsBot = auth.IsBot(ctx)
-	p.Secure = !a.Security().Disabled()
-	p.ShowLoginButton = !a.Privacy().HideLoginButton
-
-	for _, i := range ap.MainMenu {
-		if i.AdminOnly && !p.IsAdmin {
-			continue
-		}
-
-		p.MainMenu = append(p.MainMenu, settings.MenuItem{
-			URL: i.URL,
-			Text: strings.TrimSpace(r.MustRenderLang(ctx, i.Text, func(o *txt.RenderOptions) {
-				o.StripTags = true
-			})),
-		})
-	}
-
-	if len(p.MainMenu) == 0 {
-		p.MainMenu = append(p.MainMenu, settings.MenuItem{
-			URL:  "/",
-			Text: "Home",
-		})
-	}
-}
 
 // ShowMain creates use case interactor to show album.
 func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page] {

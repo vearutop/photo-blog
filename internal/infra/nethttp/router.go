@@ -239,7 +239,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Wrap(maybeAuth)
 
-		s.Wrap(auth.VisitorMiddleware(deps.AccessLog(), deps.Settings(), deps.VisitorStats(), deps.ASNBot))
+		s.Wrap(auth.VisitorMiddleware(deps.AccessLog(), deps.StatsTracker(), deps.Settings(), deps.VisitorStats(), deps.ASNBot))
 
 		s.Wrap(func(handler http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -295,6 +295,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/help/{file}", help.ServeFile(deps))
 
 		s.Get("/", usecase.ShowMain(deps))
+		s.Get("/main2/", usecase.ShowMain2(deps))
 		showAlbum := usecase.ShowAlbum(deps)
 		s.Get("/{name}/", showAlbum)
 		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(showAlbum))
