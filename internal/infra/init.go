@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bool64/brick"
@@ -55,6 +57,35 @@ import (
 	_ "modernc.org/sqlite" // SQLite3 driver.
 )
 
+// syncWriteCloser serializes Write and Close calls with a mutex.
+//
+// zstd.Encoder mutates internal state on Write without any locking of its own,
+// so concurrent writers (e.g. from concurrent HTTP requests logging at once)
+// corrupt it, and a Close racing with an in-flight Write can surface as a
+// spurious "encoder used after Close" panic.
+type syncWriteCloser struct {
+	mu sync.Mutex
+	wc io.WriteCloser
+}
+
+func newSyncWriteCloser(wc io.WriteCloser) *syncWriteCloser {
+	return &syncWriteCloser{wc: wc}
+}
+
+func (s *syncWriteCloser) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.wc.Write(p)
+}
+
+func (s *syncWriteCloser) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.wc.Close()
+}
+
 // NewServiceLocator creates application service locator.
 func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator, err error) {
 	l := &service.Locator{}
@@ -79,11 +110,12 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, fmt.Errorf("failed to create log file: %w", err)
 	}
 
-	logWriter, err := zstd.NewWriter(appLog)
+	zstdLogWriter, err := zstd.NewWriter(appLog)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create zstd log writer: %w", err)
 	}
 
+	logWriter := newSyncWriteCloser(zstdLogWriter)
 	cfg.BaseConfig.Log.Output = logWriter
 
 	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
@@ -311,19 +343,30 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 }
 
 func setupAccessLog(l *service.Locator) error {
-	f, err := os.OpenFile("access.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+	f, err := os.Create(fmt.Sprintf("access.%s.log.zst", time.Now().Format("2006-01-02-15-04-05")))
 	if err != nil {
 		return fmt.Errorf("access log: %w", err)
 	}
 
+	zstdLogWriter, err := zstd.NewWriter(f)
+	if err != nil {
+		return fmt.Errorf("failed to create zstd log writer: %w", err)
+	}
+
+	logWriter := newSyncWriteCloser(zstdLogWriter)
+
 	al := zapctxd.New(zapctxd.Config{
 		Level:  zap.InfoLevel,
-		Output: f,
+		Output: logWriter,
 	})
 
 	l.OnShutdown("access-log", func() {
 		if err := al.ZapLogger().Sync(); err != nil {
 			l.CtxdLogger().Error(context.Background(), "failed to sync access log", "error", err)
+		}
+
+		if err := logWriter.Close(); err != nil {
+			l.CtxdLogger().Error(context.Background(), "close zstd access log", "error", err)
 		}
 
 		if err := f.Close(); err != nil {
