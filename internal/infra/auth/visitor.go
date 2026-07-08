@@ -12,6 +12,7 @@ import (
 
 	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
+	"github.com/bool64/stats"
 	"github.com/cespare/xxhash/v2"
 	"github.com/vearutop/netrie"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
@@ -36,7 +37,7 @@ func VisitorFromContext(ctx context.Context) uniq.Hash {
 	return 0
 }
 
-func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.StatsRepository, asnBot netrie.IPLookuper) func(handler http.Handler) http.Handler {
+func VisitorMiddleware(logger ctxd.Logger, metrics stats.Tracker, cfg settings.Values, st *visitor.StatsRepository, asnBot netrie.IPLookuper) func(handler http.Handler) http.Handler {
 	recentVisitors := cache.NewFailoverOf[uniq.Hash](func(cfg *cache.FailoverConfigOf[uniq.Hash]) {
 		cfg.BackendConfig.TimeToLive = 15 * time.Minute
 	})
@@ -84,6 +85,20 @@ func VisitorMiddleware(logger ctxd.Logger, cfg settings.Values, st *visitor.Stat
 				ctx = SetBot(ctx)
 				r = r.WithContext(ctx)
 			}
+
+			boolStr := func(b bool) string {
+				if b {
+					return "1"
+				}
+
+				return "0"
+			}
+
+			metrics.Add(ctx, "visits_count", 1,
+				"is_bot", boolStr(isBot),
+				"is_admin", boolStr(isAdmin),
+				"bot_name", botName,
+			)
 
 			setNewVisitorCookie := func(ctx context.Context) (h uniq.Hash) {
 				if isBot {
