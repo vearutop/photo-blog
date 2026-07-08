@@ -18,8 +18,33 @@ body.dark-mode {
 
 .thumb {
     display: inline-block;
+    position: relative;
     text-align: center;
     background: #333;
+}
+
+.img-select-checkbox {
+    display: none;
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 10;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    cursor: pointer;
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.img-select-checkbox-caption {
+    position: static;
+    box-shadow: none;
+    vertical-align: middle;
+}
+
+.image-select-mode .img-select-checkbox {
+    display: inline-block;
 }
 
 .thumb, a.image {

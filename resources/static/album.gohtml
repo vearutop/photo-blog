@@ -148,6 +148,8 @@
                    href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
             {{end}}
 
+            <a id="view-selected-link" title="View selected images" href="#" style="display: none; margin-left: 10px;">View selected (<span id="view-selected-count">0</span>)</a>
+
             {{if .Visits}}
                 <span class="ctrl-btn view-icon"></span><span title="Unique/Views/External refers">{{.Visits}}</span>
             {{end}}
@@ -171,11 +173,13 @@
                            target="_blank" data-pswp-width="{{$img.Width}}" data-pswp-height="{{$img.Height}}">
                         {{if $sp := index $.ThumbSprites $img.Hash}}
                         <span class="thumb{{if $landscape}} landscape{{else}} portrait{{end}}" aria-describedby="caption{{$img.Hash}}">
+                            <input type="checkbox" class="img-select-checkbox" data-hash="{{$img.Hash}}" onclick="toggleImageSelect(this, event)" />
                             <canvas id="bh-{{$img.Hash}}" width="32" height="32"></canvas>
                             <span class="thumb-sprite"></span>
                         </span>
                         {{else}}
                         <span class="thumb{{if $landscape}} landscape{{else}} portrait{{end}}">
+                            <input type="checkbox" class="img-select-checkbox" data-hash="{{$img.Hash}}" onclick="toggleImageSelect(this, event)" />
                             <img alt="{{$img.Name}}" src="{{$.ThumbBaseHref}}/300w/{{$img.Hash}}.jpg"
                                  srcset="{{$.ThumbBaseHref}}/300w/{{$img.Hash}}.jpg 300w, {{$.ThumbBaseHref}}/600w/{{$img.Hash}}.jpg 600w" aria-describedby="caption{{$img.Hash}}"/>
                         </span>

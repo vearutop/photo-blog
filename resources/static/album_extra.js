@@ -152,6 +152,124 @@ function toggleFavorite(imageHash, a) {
     }
 }
 
+// Multi-image selection, backed by localStorage so a selection can span multiple albums.
+
+var IMAGE_SELECT_HASHES_KEY = 'imageSelect.hashes'
+var IMAGE_SELECT_MODE_KEY = 'imageSelect.enabled'
+
+function getSelectedImageHashes() {
+    try {
+        var raw = window.localStorage.getItem(IMAGE_SELECT_HASHES_KEY)
+        if (!raw) {
+            return []
+        }
+
+        var hashes = JSON.parse(raw)
+        if (!Array.isArray(hashes)) {
+            return []
+        }
+
+        return hashes
+    } catch (e) {
+        return []
+    }
+}
+
+function isImageHashSelected(hash) {
+    return getSelectedImageHashes().indexOf(hash) !== -1
+}
+
+function setImageHashSelected(hash, selected) {
+    var hashes = getSelectedImageHashes()
+    var idx = hashes.indexOf(hash)
+
+    if (selected) {
+        if (idx === -1) {
+            hashes.push(hash)
+            hashes.sort() // Keep a stable order so the "list-" URL is stable regardless of selection order.
+        }
+    } else if (idx !== -1) {
+        hashes.splice(idx, 1)
+    }
+
+    window.localStorage.setItem(IMAGE_SELECT_HASHES_KEY, JSON.stringify(hashes))
+}
+
+// viewSelectedImagesURL builds a stable "virtual album" URL listing all selected images.
+function viewSelectedImagesURL() {
+    var hashes = getSelectedImageHashes().slice().sort()
+    if (hashes.length === 0) {
+        return ""
+    }
+
+    return "/list-" + hashes.join(",") + "/"
+}
+
+// updateViewSelectedLink shows/hides and updates the "View selected" link in the album title panel.
+function updateViewSelectedLink() {
+    var link = document.getElementById('view-selected-link')
+    if (!link) {
+        return
+    }
+
+    var count = getSelectedImageHashes().length
+    var countEl = document.getElementById('view-selected-count')
+    if (countEl) {
+        countEl.textContent = count
+    }
+
+    if (count > 0) {
+        link.href = viewSelectedImagesURL()
+        link.style.display = ''
+    } else {
+        link.style.display = 'none'
+    }
+}
+
+// refreshImageSelectCheckboxes syncs the checked state of all rendered checkboxes with localStorage.
+function refreshImageSelectCheckboxes() {
+    var idx = {}
+    var hashes = getSelectedImageHashes()
+    for (var i = 0; i < hashes.length; i++) {
+        idx[hashes[i]] = true
+    }
+
+    var checkboxes = document.querySelectorAll('.img-select-checkbox')
+    for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = !!idx[checkboxes[i].getAttribute('data-hash')]
+    }
+}
+
+// selectImages shows/hides selection checkboxes on thumbnails and in the maximized view.
+// The enabled state is persisted so it survives navigation across album pages.
+function selectImages(enable) {
+    window.localStorage.setItem(IMAGE_SELECT_MODE_KEY, enable ? '1' : '0')
+
+    if (enable) {
+        document.documentElement.classList.add('image-select-mode')
+        refreshImageSelectCheckboxes()
+    } else {
+        document.documentElement.classList.remove('image-select-mode')
+    }
+}
+
+function toggleImageSelect(checkbox, e) {
+    if (e) {
+        e.stopPropagation()
+    }
+
+    var hash = checkbox.getAttribute('data-hash')
+    setImageHashSelected(hash, checkbox.checked)
+    refreshImageSelectCheckboxes()
+    updateViewSelectedLink()
+}
+
+(function () {
+    if (window.localStorage.getItem(IMAGE_SELECT_MODE_KEY) === '1') {
+        document.documentElement.classList.add('image-select-mode')
+    }
+})()
+
 function removeImage(albumName, imageHash, collabKey) {
     if (!window.confirm("This photo is about to be removed from the album '" + albumName + "'")) {
         return

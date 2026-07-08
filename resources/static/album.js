@@ -150,8 +150,13 @@ function loadAlbum(params) {
         imageBase = "/image"
     }
 
+    function selectCheckboxHTML(hash) {
+        return '<input type="checkbox" class="img-select-checkbox" data-hash="' + hash + '" onclick="toggleImageSelect(this, event)" />'
+    }
+
     function classicThumbHTML(img, landscape, aspectRatio) {
-        return '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
+        return selectCheckboxHTML(img.hash) +
+            '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
             '<img alt="photo" src="' + thumbBase + '/200h/' + img.hash + '.jpg" srcset="' + thumbBase + '/400h/' + img.hash + '.jpg ' + Math.round(400 * aspectRatio) + 'w, ' + thumbBase + '/300w/' + img.hash + '.jpg 300w, ' + thumbBase + '/600w/' + img.hash + '.jpg 600w" />'
     }
 
@@ -185,7 +190,8 @@ function loadAlbum(params) {
     }
 
     function spriteThumbHTML(img, landscape, sprite) {
-        return '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
+        return selectCheckboxHTML(img.hash) +
+            '<canvas id="bh-' + img.hash + '" width="32" height="32"></canvas>' +
             '<span class="thumb-sprite"></span>'
     }
 
@@ -396,7 +402,8 @@ function loadAlbum(params) {
                 a.attr("data-pswp-srcset", srcSet)
                 a.attr("data-ts", img.utime)
 
-                var img_description = '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
+                var img_description = '<input type="checkbox" class="img-select-checkbox img-select-checkbox-caption" data-hash="' + img.hash + '" onclick="toggleImageSelect(this, event)" />' +
+                    '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
                 if (result.album.name !== featured) {
                     img_description += '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\'' + img.hash + '\');return false"></a>'
                 }
@@ -592,6 +599,8 @@ function loadAlbum(params) {
         }
 
         updateResponsiveSpriteThumbs()
+        refreshImageSelectCheckboxes()
+        updateViewSelectedLink()
 
 
         if (chronoTexts && !params.preRendered) {
@@ -825,6 +834,10 @@ function loadAlbum(params) {
             currentImage.time = Date.now() - unfocused;
             currentImage.w = content.displayedImageWidth
             currentImage.h = content.displayedImageHeight
+
+            // The dynamic caption panel is rebuilt from innerHTML on slide activation, which drops the
+            // "checked" DOM property (it isn't reflected as an HTML attribute), so re-sync after it renders.
+            setTimeout(refreshImageSelectCheckboxes, 0)
         });
 
         lightbox.on('close', () => {
