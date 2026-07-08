@@ -39,10 +39,27 @@ func Main() error {
 		log       = zapctxd.New(zapctxd.Config{ColoredOutput: true})
 
 		listLists bool
+		infoFile  string
 	)
 
 	flag.BoolVar(&listLists, "l", false, "List all available lists")
+	flag.StringVar(&infoFile, "info", "", "Print info about single JPEG file")
 	flag.Parse()
+
+	if infoFile != "" {
+		if !fileExists(infoFile) {
+			return fmt.Errorf("file not found: %s", infoFile)
+		}
+
+		img := photo.Image{}
+
+		if err := img.SetPath(context.Background(), infoFile); err != nil {
+			return fmt.Errorf("set path: %w", err)
+		}
+
+		fmt.Println(img.Hash.String())
+		return nil
+	}
 
 	if listLists {
 		var list []string
