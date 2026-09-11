@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"runtime"
 	"time"
 
@@ -105,7 +106,7 @@ func (c *dbMapOf[V]) Read(ctx context.Context, key []byte) (val V, _ error) {
 	}
 
 	if err != nil {
-		return val, err
+		return val, fmt.Errorf("read DB cache: %w", err)
 	}
 
 	if !found {
@@ -115,7 +116,7 @@ func (c *dbMapOf[V]) Read(ctx context.Context, key []byte) (val V, _ error) {
 
 	v, err := c.t.PrepareRead(ctx, cacheEntry, found)
 	if err != nil {
-		return val, err
+		return val, fmt.Errorf("prepare DB cache read: %w", err)
 	}
 
 	return v, nil
@@ -199,7 +200,7 @@ func (c *dbMapOf[V]) Write(ctx context.Context, k []byte, v V) error {
 		Suffix("ON CONFLICT(cache_name, key) DO UPDATE SET expire_at = EXCLUDED.expire_at, val = EXCLUDED.val, updated_at = unixepoch()").
 		ExecContext(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert DB cache %T record: %w", v, err)
 	}
 
 	c.t.NotifyWritten(ctx, key, v, ttl)
