@@ -42,16 +42,19 @@
  * @property {Boolean} daily_rulers - Show date splits between the photos.
  * @property {String} description - Description. Description of an album, can contain HTML.
  * @property {Array<String>} gpx_tracks_hashes - GPX track hashes.
- * @property {('undefined'|'yes'|'no')} hide_download
+ * @property {Boolean} hide_ai_says
+ * @property {(''|'yes'|'no')} hide_download
  * @property {Boolean} hide_map
  * @property {Number} map_max_lat - Map max latitude. Overrides map default boundary.
  * @property {Number} map_max_lon - Map max longitude. Overrides map default boundary.
  * @property {Number} map_min_lat - Map min latitude. Overrides map default boundary.
  * @property {Number} map_min_lon - Map min longitude. Overrides map default boundary.
  * @property {Boolean} newest_first - Show newest images at the top.
- * @property {String} redirect - Relative or absolute URL to redirect to with HTTP 301 status.
+ * @property {String} redirect
+ * @property {Boolean} show_exif_preview
  * @property {Boolean} show_hidden_sub_albums - Show hidden sub albums.
  * @property {Boolean} show_private_sub_albums - Show private sub albums.
+ * @property {Boolean} skip_sprites
  * @property {Array<String>} sub_album_names - Sub albums.
  * @property {Array<TxtReplace>} text_replaces
  * @property {Array<TxtChronological>} texts - Chronological texts.
@@ -62,14 +65,15 @@
  * The Album
  * @typedef PhotoAlbum
  * @type {Object}
- * @property {String} cover_image - Cover Image. Hash of image to use as a cover.
+ * @property {String} cover_image
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - Hash Id. Unique hash value.
+ * @property {String} hash
  * @property {Boolean} hidden - Hidden. Makes album invisible in the main page list.
  * @property {String} name - Name. A slug value that is used in album URL.
  * @property {Boolean} public - Public. Makes album visible in the main page.
  * @property {PhotoAlbumSettings} settings
  * @property {String} title - Title. Title of an album.
+ * @property {String} updated_at - Updated At. Timestamp of last update.
  */
 
 /**
@@ -107,7 +111,7 @@
  * @property {Number} exposure_time_sec - Exposure (sec.).
  * @property {Number} f_number - Aperture.
  * @property {Number} focal_length - Focal length.
- * @property {String} hash - Hash Id. Unique hash value.
+ * @property {String} hash
  * @property {Number} iso_speed - ISO.
  * @property {String} lens_model - Lens.
  * @property {String} projection_type - Projection. Use 'equirectangular' for 360 panorama.
@@ -120,7 +124,7 @@
  * @type {Object}
  * @property {Number} altitude - Altitude.
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - Hash Id. Unique hash value.
+ * @property {String} hash
  * @property {Number} latitude - Latitude.
  * @property {Number} longitude - Longitude.
  * @property {String} time - GPS Timestamp.
@@ -203,8 +207,10 @@
 /**
  * @typedef UsecaseImage
  * @type {Object}
+ * @property {String} ai_says
  * @property {String} blur_hash
  * @property {String} description
+ * @property {String} description_html
  * @property {PhotoExif} exif
  * @property {PhotoGps} gps
  * @property {String} hash
@@ -215,6 +221,24 @@
  * @property {Number} size
  * @property {Number} utime
  * @property {Number} width
+ */
+
+/**
+ * @typedef SpriteViewItem
+ * @type {Object}
+ * @property {Number} background_height
+ * @property {Number} background_width
+ * @property {Number} height
+ * @property {Number} offset_y
+ * @property {String} sheet
+ * @property {Number} width
+ */
+
+/**
+ * @typedef SpriteSheet
+ * @type {Object}
+ * @property {String} chunk_1x
+ * @property {String} chunk_2x
  */
 
 /**
@@ -235,6 +259,10 @@
  * @property {String} description
  * @property {Boolean} hide_original
  * @property {Array<UsecaseImage>} images
+ * @property {Object.<String,SpriteViewItem>} marker_sprites
+ * @property {Boolean} skip_sprites
+ * @property {Object.<String,SpriteSheet>} sprite_sheets
+ * @property {Object.<String,SpriteViewItem>} thumb_sprites
  * @property {Array<UsecaseTrack>} tracks
  */
 
@@ -255,7 +283,7 @@
  * @type {Object}
  * @property {String} album_name
  * @property {String} image_hash
- * @property {String} timestamp
+ * @property {Number} timestamp
  */
 
 /**
@@ -304,7 +332,7 @@
  * @type {Object}
  * @property {String} album_name - Source Album Name. Name of a source album to add photos from.
  * @property {String} image_description - Set image description after adding from URL.. Description of an image, can contain HTML.
- * @property {String} image_hash - Image Hash. Hash of an image to add to album.
+ * @property {Array<String>} image_hashes - Image Hashes. Hashes of multiple images to add to album.
  * @property {String} image_lat_lon - Set image GPS location after adding from URL.. In latitude,longitude format.
  * @property {String} image_time - Set image time after adding from URL.
  * @property {String} image_url - Fetch image from a publicly available URL.
@@ -339,6 +367,20 @@
  */
 
 /**
+ * @typedef ControlRemoveMultipleFromAlbumInput
+ * @type {Object}
+ * @property {?Array<String>} image_hashes - Image Hashes. Hashes of images to remove from album.
+ */
+
+/**
+ * @typedef ControlRemoveMultipleFromAlbumRequest
+ * @type {Object}
+ * @property {String} collabKey - Collaborator key to allow admin access.
+ * @property {String} name - Name of album to remove images from.
+ * @property {ControlRemoveMultipleFromAlbumInput} body
+ */
+
+/**
  * @typedef ControlAddRemoteRequest
  * @type {Object}
  * @property {Boolean} addMissing - Add missing images to album.
@@ -358,14 +400,6 @@
  */
 
 /**
- * @typedef ControlRemoveFromAlbumRequest
- * @type {Object}
- * @property {String} collabKey - Collaborator key to allow admin access.
- * @property {String} name - Name of album to remove image from.
- * @property {String} hash - Hash of an image to remove from album.
- */
-
-/**
  * @typedef UsecaseGetAlbumsOutput
  * @type {Object}
  * @property {Array<PhotoAlbum>} albums
@@ -374,6 +408,58 @@
 /**
  * @callback UsecaseGetAlbumsOutputCallback
  * @param {UsecaseGetAlbumsOutput} value
+ */
+
+/**
+ * @typedef ControlIntegrityCleanupAlbumSpritesRequest
+ * @type {Object}
+ * @property {Boolean} dryRun - Report cleanup candidates without deleting them.
+ */
+
+/**
+ * @typedef IntegrityAlbumSpriteCleanupReport
+ * @type {Object}
+ * @property {Number} album_page_caches
+ * @property {Object} blob_store_repair
+ * @property {Number} broken_page_cache_count
+ * @property {Array<String>} broken_page_cache_keys
+ * @property {Number} deleted_blob_count
+ * @property {Array<String>} deleted_blob_keys
+ * @property {Number} deleted_blob_size
+ * @property {Number} deleted_manifest_count
+ * @property {Array<String>} deleted_manifest_keys
+ * @property {Number} deleted_page_cache_count
+ * @property {Array<String>} deleted_page_cache_keys
+ * @property {Boolean} dry_run
+ * @property {Number} missing_manifest_count
+ * @property {Array<String>} missing_manifest_references
+ * @property {Number} page_caches_with_sprites
+ * @property {Number} page_caches_without_sprites
+ * @property {Number} referenced_blob_count
+ * @property {Number} referenced_blob_size
+ * @property {Number} referenced_manifest_count
+ * @property {Array<String>} referenced_manifest_keys
+ * @property {Number} referenced_manifest_size
+ * @property {Number} total_blob_count
+ * @property {Number} total_blob_size
+ * @property {Number} would_delete_blob_count
+ * @property {Array<String>} would_delete_blob_keys
+ * @property {Number} would_delete_blob_size
+ * @property {Number} would_delete_manifest_count
+ * @property {Array<String>} would_delete_manifest_keys
+ * @property {Number} would_delete_page_cache_count
+ * @property {Array<String>} would_delete_page_cache_keys
+ */
+
+/**
+ * @callback IntegrityAlbumSpriteCleanupReportCallback
+ * @param {IntegrityAlbumSpriteCleanupReport} value
+ */
+
+/**
+ * @typedef ControlIntegrityCleanupRemoteRequest
+ * @type {Object}
+ * @property {Boolean} dryRun - Do not move files, just print what would be done.
  */
 
 /**
@@ -453,14 +539,14 @@
  */
 
 /**
- * @typedef ControlGatherFilesRequest
+ * @typedef ControlIntegrityGatherFilesRequest
  * @type {Object}
  * @property {Boolean} checkMissing
  * @property {String} name - Album name.
  */
 
 /**
- * @typedef ControlMove
+ * @typedef IntegrityMove
  * @type {Object}
  * @property {String} error
  * @property {String} new
@@ -468,21 +554,21 @@
  */
 
 /**
- * @typedef ControlAlbumReport
+ * @typedef IntegrityAlbumReport
  * @type {Object}
  * @property {String} albumName
- * @property {Array<ControlMove>} moves
+ * @property {Array<IntegrityMove>} moves
  */
 
 /**
- * @typedef ControlGatherFilesOutput
+ * @typedef IntegrityGatherFilesOutput
  * @type {Object}
- * @property {?Array<ControlAlbumReport>} reports
+ * @property {?Array<IntegrityAlbumReport>} reports
  */
 
 /**
- * @callback ControlGatherFilesOutputCallback
- * @param {ControlGatherFilesOutput} value
+ * @callback IntegrityGatherFilesOutputCallback
+ * @param {IntegrityGatherFilesOutput} value
  */
 
 /**
@@ -546,14 +632,16 @@
  * @type {Object}
  * @property {String} blurhash - BlurHash.
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - Hash Id. Unique hash value.
+ * @property {String} hash
  * @property {Number} height - Height, px.
+ * @property {?Boolean} is_hdr - Is HDR image.
  * @property {String} path - File Path.
- * @property {String} phash - PerceptionHash.
+ * @property {String} phash
  * @property {PhotoImageSettings} settings
  * @property {?Number} sharpness - Sharpness.
  * @property {Number} size - File Size.
  * @property {?String} taken_at - Taken At.
+ * @property {Number} utime - UTC Unix Time for sorting.
  * @property {Number} width - Width, px.
  */
 
@@ -561,6 +649,18 @@
  * @typedef ControlUpdatePhotoImageRequest
  * @type {Object}
  * @property {PhotoImage} body
+ */
+
+/**
+ * @typedef ShowImage3Request
+ * @type {Object}
+ * @property {String} hash
+ */
+
+/**
+ * @typedef ShowImage4Request
+ * @type {Object}
+ * @property {String} hash
  */
 
 /**
@@ -588,18 +688,6 @@
  * @typedef GetImageInfo2Request
  * @type {Object}
  * @property {Boolean} readMeta - Read meta from original file.
- * @property {String} hash
- */
-
-/**
- * @typedef ShowImage3Request
- * @type {Object}
- * @property {String} hash
- */
-
-/**
- * @typedef ShowImage4Request
- * @type {Object}
  * @property {String} hash
  */
 
@@ -648,11 +736,31 @@
 /**
  * @typedef ControlIndexAlbumRequest
  * @type {Object}
+ * @property {String} imageHash - Only one image to index.
  * @property {String} name - Album name, use '-' for all images and albums.
  * @property {Boolean} rebuildExif
  * @property {Boolean} rebuildGps
  * @property {Boolean} rebuildImageSize
  * @property {Boolean} rebuildThumbnails
+ */
+
+/**
+ * @typedef ControlIntegrityInvalidatePersistentCacheRequest
+ * @type {Object}
+ * @property {('album-data'|'album-page'|'main-page'|'thumb-grid')} cacheName - Persistent cache to invalidate.
+ */
+
+/**
+ * @typedef IntegrityInvalidatePersistentCacheReport
+ * @type {Object}
+ * @property {String} cache_name
+ * @property {Number} deleted_label_count
+ * @property {Number} deleted_record_count
+ */
+
+/**
+ * @callback IntegrityInvalidatePersistentCacheReportCallback
+ * @param {IntegrityInvalidatePersistentCacheReport} value
  */
 
 /**
@@ -670,12 +778,15 @@
  * @property {String} append
  * @property {String} fieldHtmlClass
  * @property {String} helpvalue
+ * @property {String} html
  * @property {String} htmlClass
  * @property {Object.<String,String>} htmlMetaData
  * @property {String} inlinetitle
  * @property {Array<JsonformGoFormItem>} items
  * @property {String} key
  * @property {Boolean} notitle
+ * @property {Boolean} optionalToggle
+ * @property {String} optionalToggleLabel
  * @property {String} placeholder
  * @property {String} prepend
  * @property {Boolean} readonly
@@ -727,7 +838,7 @@
  * @type {Object}
  * @property {String} name
  * @property {?String} related_at
- * @property {String} related_hash
+ * @property {String} related_hash - Only one image to index.
  * @property {String} text
  * @property {('image'|'album')} type
  */
@@ -743,10 +854,10 @@
  * @type {Object}
  * @property {Boolean} approved
  * @property {String} created_at - Created At. Timestamp of creation.
- * @property {String} hash - Hash Id. Unique hash value.
+ * @property {String} hash - Only one image to index.
  * @property {String} text
- * @property {String} thread_hash
- * @property {String} visitor_hash
+ * @property {String} thread_hash - Only one image to index.
+ * @property {String} visitor_hash - Only one image to index.
  */
 
 /**
@@ -758,7 +869,7 @@
  * @typedef ControlApproveMessageInput
  * @type {Object}
  * @property {Boolean} approve_visitor
- * @property {String} message_hash
+ * @property {String} message_hash - Only one image to index.
  */
 
 /**
@@ -816,6 +927,30 @@
  */
 
 /**
+ * @typedef SharePixelpeepRequest
+ * @type {Object}
+ * @property {String} config
+ */
+
+/**
+ * @typedef SharePixelpeep2Request
+ * @type {Object}
+ * @property {String} config
+ */
+
+/**
+ * @typedef ShowPixelpeepRequest
+ * @type {Object}
+ * @property {String} hashes
+ */
+
+/**
+ * @typedef ShowPixelpeep2Request
+ * @type {Object}
+ * @property {String} hashes
+ */
+
+/**
  * @typedef DownloadImagesPoiGpxRequest
  * @type {Object}
  * @property {String} name
@@ -856,8 +991,10 @@
 /**
  * @typedef SettingsAppearance
  * @type {Object}
+ * @property {String} canonical_base_url - Canonical Base URL. Optional canonical base URL for site. Example: https://example.org/.
+ * @property {Boolean} disable_sprites - Disable Sprites. Disable chunked thumbnail sprites on album pages and use classic thumbnail requests.
  * @property {String} featured_album_name - Featured album name. The name of an album to show on the main page.
- * @property {String} image_base_url - Images Base URL. Optional custom URL for images.
+ * @property {String} image_base_url - Images Base URL. Optional custom URL for images. Example: https://example.org/image.
  * @property {?Array<String>} languages - Languages. Supported content languages.
  * @property {Array<SettingsMenuItem>} main_menu - Main Menu.
  * @property {String} site_favicon - Link to favicon. Defaults to /static/favicon.png, you can upload your own and use, for example, /site/favicon.png.
@@ -866,7 +1003,7 @@
  * @property {String} site_header - Header. Injected at page start.
  * @property {String} site_title - Title. The title of this site.
  * @property {Array<TxtReplace>} text_replaces
- * @property {String} thumb_base_url - Thumbnails Base URL. Optional custom URL for thumbnails.
+ * @property {String} thumb_base_url - Thumbnails Base URL. Optional custom URL for thumbnails. Example: https://example.org/thumb.
  */
 
 /**
@@ -888,7 +1025,7 @@
  * @typedef FacesRecognizerConfig
  * @type {Object}
  * @property {Number} concurrencyLimit - Max simultaneous requests.
- * @property {Number} delay - Cooldown delay between requests.
+ * @property {Number} delay
  * @property {String} url
  */
 
@@ -1070,7 +1207,7 @@
 /**
  * @typedef CollectStatsRequest
  * @type {Object}
- * @property {String} v - Visitor.
+ * @property {String} v - Only one image to index.
  * @property {String} ref - Referer.
  * @property {Number} sw - Screen width.
  * @property {Number} sh - Screen height.
@@ -1079,7 +1216,7 @@
  * @property {String} album - Album with a name shown.
  * @property {?Object.<String,Number>} thumb - Thumb on-screen times, ms.
  * @property {Boolean} prt - Mobile portrait mode.
- * @property {String} img - Image with a hash is shown individually.
+ * @property {String} img - Only one image to index.
  * @property {Number} w - Shown width of the image.
  * @property {Number} h - Shown height of the image.
  * @property {Number} mw - Max shown width of the image (zoom).
@@ -1090,7 +1227,7 @@
 /**
  * @typedef CollectStats2Request
  * @type {Object}
- * @property {String} v - Visitor.
+ * @property {String} v - Only one image to index.
  * @property {String} ref - Referer.
  * @property {Number} sw - Screen width.
  * @property {Number} sh - Screen height.
@@ -1099,7 +1236,7 @@
  * @property {String} album - Album with a name shown.
  * @property {?Object.<String,Number>} thumb - Thumb on-screen times, ms.
  * @property {Boolean} prt - Mobile portrait mode.
- * @property {String} img - Image with a hash is shown individually.
+ * @property {String} img - Only one image to index.
  * @property {Number} w - Shown width of the image.
  * @property {Number} h - Shown height of the image.
  * @property {Number} mw - Max shown width of the image (zoom).
@@ -1122,39 +1259,51 @@
 /**
  * @typedef StatsShowVisitorRequest
  * @type {Object}
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
  * @typedef StatsShowVisitor2Request
  * @type {Object}
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
+ */
+
+/**
+ * @typedef ShowAlbumSpriteRequest
+ * @type {Object}
+ * @property {String} key
+ */
+
+/**
+ * @typedef ShowAlbumSprite2Request
+ * @type {Object}
+ * @property {String} key
  */
 
 /**
  * @typedef ShowThumbRequest
  * @type {Object}
  * @property {('2400w'|'1200w'|'600w'|'400h'|'300w'|'200h')} size
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
  * @typedef ShowThumb2Request
  * @type {Object}
  * @property {('2400w'|'1200w'|'600w'|'400h'|'300w'|'200h')} size
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
  * @typedef DownloadGpxRequest
  * @type {Object}
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
  * @typedef DownloadGpx2Request
  * @type {Object}
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
@@ -1172,17 +1321,39 @@
  */
 
 /**
+ * @typedef ShowThumbGridRequest
+ * @type {Object}
+ * @property {Number} cols
+ * @property {Number} rows
+ * @property {Number} cellW
+ * @property {Number} cellH
+ * @property {Number} offset
+ * @property {String} name
+ */
+
+/**
+ * @typedef ShowThumbGrid2Request
+ * @type {Object}
+ * @property {Number} cols
+ * @property {Number} rows
+ * @property {Number} cellW
+ * @property {Number} cellH
+ * @property {Number} offset
+ * @property {String} name
+ */
+
+/**
  * @typedef ShowPanoRequest
  * @type {Object}
  * @property {String} name
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
  * @typedef ShowPano2Request
  * @type {Object}
  * @property {String} name
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
@@ -1190,7 +1361,7 @@
  * @type {Object}
  * @property {String} collabKey - Access key to enable content upload and management.
  * @property {String} name
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 
 /**
@@ -1198,6 +1369,6 @@
  * @type {Object}
  * @property {String} collabKey - Access key to enable content upload and management.
  * @property {String} name
- * @property {String} hash
+ * @property {String} hash - Only one image to index.
  */
 

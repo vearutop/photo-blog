@@ -3,6 +3,7 @@ package help
 import (
 	"context"
 	"html/template"
+	"strings"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -21,7 +22,8 @@ func Markdown(deps indexDeps) usecase.Interactor {
 
 	type pageData struct {
 		pageCommon
-		Content template.HTML
+		Content      template.HTML
+		HasPixelpeep bool
 	}
 
 	type req struct {
@@ -57,6 +59,7 @@ Help
 		})
 
 		d.Content = template.HTML(c)
+		d.HasPixelpeep = strings.Contains(c, `class="pixelpeep`)
 
 		return output.Render(tmpl, d)
 	})

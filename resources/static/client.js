@@ -5,7 +5,7 @@
 
     /**
      * Photo Blog
-     * Version: Version: dev, GoVersion: go1.25.3
+     * Version: Version: dev, GoVersion: go1.26.1
      * @constructor
      * @param {string} baseURL - Base URL.
      */
@@ -868,6 +868,55 @@
     };
 
     /**
+     * Remove Multiple From Album
+     * @param {ControlRemoveMultipleFromAlbumRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.controlRemoveMultipleFromAlbum = function (req, onNoContent, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
+        '/remove-images?';
+        if (req.collabKey != null) {
+            url += 'collabKey=' + encodeURIComponent(req.collabKey) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+        if (typeof req.body !== 'undefined') {
+            x.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            x.send(JSON.stringify(req.body));
+            return;
+        }
+
+        x.send();
+    };
+
+    /**
      * Add Remote
      * Add a http-remote directory of photos to an album.
      * @param {ControlAddRemoteRequest} req - request parameters.
@@ -926,51 +975,6 @@
         }
 
         x.send(formData);
-    };
-
-    /**
-     * Remove From Album
-     * @param {ControlRemoveFromAlbumRequest} req - request parameters.
-     * @param {RawCallback} onNoContent
-     * @param {RestErrResponseCallback} onInternalServerError
-     */
-    Backend.prototype.controlRemoveFromAlbum = function (req, onNoContent, onInternalServerError) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
-                    }
-                    break;
-                case 500:
-                    if (typeof (onInternalServerError) === 'function') {
-                        onInternalServerError(JSON.parse(x.responseText));
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/album/' + encodeURIComponent(req.name) +
-        '/' + encodeURIComponent(req.hash) +
-        '?';
-        if (req.collabKey != null) {
-            url += 'collabKey=' + encodeURIComponent(req.collabKey) + '&';
-        }
-        url = url.slice(0, -1);
-
-        x.open("DELETE", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-
-        x.send();
     };
 
     /**
@@ -1066,14 +1070,63 @@
     };
 
     /**
+     * Cleanup Album Sprites
+     * @param {ControlIntegrityCleanupAlbumSpritesRequest} req - request parameters.
+     * @param {IntegrityAlbumSpriteCleanupReportCallback} onOK
+     * @param {RestErrResponseCallback} onUnauthorized
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.controlIntegrityCleanupAlbumSprites = function (req, onOK, onUnauthorized, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/cleanup-album-sprites?';
+        if (req.dryRun != null) {
+            url += 'dry_run=' + encodeURIComponent(req.dryRun) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Cleanup Remote
      * Cleanup iterates remote images moves existing local copies to 'check'
      * directory.
-     * @param {Object} req - request parameters.
+     * @param {ControlIntegrityCleanupRemoteRequest} req - request parameters.
      * @param {RawCallback} onAccepted
      * @param {RestErrResponseCallback} onUnauthorized
      */
-    Backend.prototype.controlCleanupRemote = function (req, onAccepted, onUnauthorized) {
+    Backend.prototype.controlIntegrityCleanupRemote = function (req, onAccepted, onUnauthorized) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -1097,6 +1150,9 @@
         };
 
         var url = this.baseURL + '/cleanup-remote?';
+        if (req.dryRun != null) {
+            url += 'dry_run=' + encodeURIComponent(req.dryRun) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("POST", url, true);
@@ -1884,13 +1940,14 @@
 
     /**
      * Gather Files
-     * @param {ControlGatherFilesRequest} req - request parameters.
-     * @param {ControlGatherFilesOutputCallback} onOK
+     * Moves album files from external directories into their canonical location.
+     * @param {ControlIntegrityGatherFilesRequest} req - request parameters.
+     * @param {IntegrityGatherFilesOutputCallback} onOK
      * @param {RestErrResponseCallback} onBadRequest
      * @param {RestErrResponseCallback} onUnauthorized
      * @param {RestErrResponseCallback} onInternalServerError
      */
-    Backend.prototype.controlGatherFiles = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
+    Backend.prototype.controlIntegrityGatherFiles = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
         var x = new XMLHttpRequest();
         x.onreadystatechange = function () {
             if (x.readyState !== XMLHttpRequest.DONE) {
@@ -2367,6 +2424,76 @@
     };
 
     /**
+     * Show Image
+     * @param {ShowImage3Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.showImage3 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/image-dl/' + encodeURIComponent(req.hash) +
+        '.jpg?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Image
+     * @param {ShowImage4Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.showImage4 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/image-dl/' + encodeURIComponent(req.hash) +
+        '.jpg?';
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Get Image Info
      * @param {GetImageInfoRequest} req - request parameters.
      * @param {UsecaseImageInfoCallback} onOK
@@ -2444,76 +2571,6 @@
         if (req.readMeta != null) {
             url += 'read_meta=' + encodeURIComponent(req.readMeta) + '&';
         }
-        url = url.slice(0, -1);
-
-        x.open("HEAD", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-
-        x.send();
-    };
-
-    /**
-     * Show Image
-     * @param {ShowImage3Request} req - request parameters.
-     * @param {RawCallback} onNoContent
-     */
-    Backend.prototype.showImage3 = function (req, onNoContent) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/image/' + encodeURIComponent(req.hash) +
-        '.avif?';
-        url = url.slice(0, -1);
-
-        x.open("GET", url, true);
-        if (typeof (this.prepareRequest) === 'function') {
-            this.prepareRequest(x);
-        }
-
-        x.send();
-    };
-
-    /**
-     * Show Image
-     * @param {ShowImage4Request} req - request parameters.
-     * @param {RawCallback} onNoContent
-     */
-    Backend.prototype.showImage4 = function (req, onNoContent) {
-        var x = new XMLHttpRequest();
-        x.onreadystatechange = function () {
-            if (x.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-
-            switch (x.status) {
-                case 204:
-                    if (typeof (onNoContent) === 'function') {
-                        onNoContent(x);
-                    }
-                    break;
-                default:
-                    throw {err: 'unexpected response', data: x};
-            }
-        };
-
-        var url = this.baseURL + '/image/' + encodeURIComponent(req.hash) +
-        '.avif?';
         url = url.slice(0, -1);
 
         x.open("HEAD", url, true);
@@ -2801,6 +2858,9 @@
 
         var url = this.baseURL + '/index/' + encodeURIComponent(req.name) +
         '?';
+        if (req.imageHash != null) {
+            url += 'image_hash=' + encodeURIComponent(req.imageHash) + '&';
+        }
         url = url.slice(0, -1);
 
         x.open("POST", url, true);
@@ -2822,6 +2882,60 @@
         }
 
         x.send(formData);
+    };
+
+    /**
+     * Invalidate Persistent Cache
+     * Invalidates one persistent cache and its invalidation labels.
+     * @param {ControlIntegrityInvalidatePersistentCacheRequest} req - request parameters.
+     * @param {IntegrityInvalidatePersistentCacheReportCallback} onOK
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onUnauthorized
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.controlIntegrityInvalidatePersistentCache = function (req, onOK, onBadRequest, onUnauthorized, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 200:
+                    if (typeof (onOK) === 'function') {
+                        onOK(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 401:
+                    if (typeof (onUnauthorized) === 'function') {
+                        onUnauthorized(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/invalidate-persistent-cache/' + encodeURIComponent(req.cacheName) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("POST", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
     };
 
     /**
@@ -2976,6 +3090,110 @@
         };
 
         var url = this.baseURL + '/login?';
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Main 2
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onForbidden
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.showMain22 = function (req, onNoContent, onBadRequest, onForbidden, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 403:
+                    if (typeof (onForbidden) === 'function') {
+                        onForbidden(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/main2/?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Main 2
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RawCallback} onBadRequest
+     * @param {RawCallback} onForbidden
+     * @param {RawCallback} onInternalServerError
+     */
+    Backend.prototype.showMain23 = function (req, onNoContent, onBadRequest, onForbidden, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(x);
+                    }
+                    break;
+                case 403:
+                    if (typeof (onForbidden) === 'function') {
+                        onForbidden(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/main2/?';
         url = url.slice(0, -1);
 
         x.open("HEAD", url, true);
@@ -3437,6 +3655,198 @@
         url = url.slice(0, -1);
 
         x.open("TRACE", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Share Pixelpeep
+     * @param {SharePixelpeepRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.sharePixelpeep = function (req, onNoContent, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/pixelpeep?';
+        if (req.config != null) {
+            url += 'config=' + encodeURIComponent(req.config) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Share Pixelpeep
+     * @param {SharePixelpeep2Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RawCallback} onBadRequest
+     * @param {RawCallback} onInternalServerError
+     */
+    Backend.prototype.sharePixelpeep2 = function (req, onNoContent, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/pixelpeep?';
+        if (req.config != null) {
+            url += 'config=' + encodeURIComponent(req.config) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Pixelpeep
+     * @param {ShowPixelpeepRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RestErrResponseCallback} onBadRequest
+     * @param {RestErrResponseCallback} onInternalServerError
+     */
+    Backend.prototype.showPixelpeep = function (req, onNoContent, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(JSON.parse(x.responseText));
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(JSON.parse(x.responseText));
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/pixelpeep-' + encodeURIComponent(req.hashes) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Pixelpeep
+     * @param {ShowPixelpeep2Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     * @param {RawCallback} onBadRequest
+     * @param {RawCallback} onInternalServerError
+     */
+    Backend.prototype.showPixelpeep2 = function (req, onNoContent, onBadRequest, onInternalServerError) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                case 400:
+                    if (typeof (onBadRequest) === 'function') {
+                        onBadRequest(x);
+                    }
+                    break;
+                case 500:
+                    if (typeof (onInternalServerError) === 'function') {
+                        onInternalServerError(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/pixelpeep-' + encodeURIComponent(req.hashes) +
+        '?';
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
         if (typeof (this.prepareRequest) === 'function') {
             this.prepareRequest(x);
         }
@@ -4296,6 +4706,74 @@
     };
 
     /**
+     * Serve Sitemap
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.serveSitemap = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/sitemap.xml?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Serve Sitemap
+     * @param {Object} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.serveSitemap2 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/sitemap.xml?';
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Collect Stats
      * @param {CollectStatsRequest} req - request parameters.
      * @param {RawCallback} onNoContent
@@ -4862,6 +5340,76 @@
     };
 
     /**
+     * Show Album Sprite
+     * @param {ShowAlbumSpriteRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.showAlbumSprite = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/thumb-sprite/' + encodeURIComponent(req.key) +
+        '.jpg?';
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Album Sprite
+     * @param {ShowAlbumSprite2Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.showAlbumSprite2 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/thumb-sprite/' + encodeURIComponent(req.key) +
+        '.jpg?';
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
      * Show Thumb
      * @param {ShowThumbRequest} req - request parameters.
      * @param {RawCallback} onNoContent
@@ -5104,6 +5652,106 @@
         '/?';
         if (req.collabKey != null) {
             url += 'collab_key=' + encodeURIComponent(req.collabKey) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("HEAD", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Thumb Grid
+     * @param {ShowThumbGridRequest} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.showThumbGrid = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/' + encodeURIComponent(req.name) +
+        '/grid.jpg?';
+        if (req.cols != null) {
+            url += 'cols=' + encodeURIComponent(req.cols) + '&';
+        }
+        if (req.rows != null) {
+            url += 'rows=' + encodeURIComponent(req.rows) + '&';
+        }
+        if (req.cellW != null) {
+            url += 'cell_w=' + encodeURIComponent(req.cellW) + '&';
+        }
+        if (req.cellH != null) {
+            url += 'cell_h=' + encodeURIComponent(req.cellH) + '&';
+        }
+        if (req.offset != null) {
+            url += 'offset=' + encodeURIComponent(req.offset) + '&';
+        }
+        url = url.slice(0, -1);
+
+        x.open("GET", url, true);
+        if (typeof (this.prepareRequest) === 'function') {
+            this.prepareRequest(x);
+        }
+
+        x.send();
+    };
+
+    /**
+     * Show Thumb Grid
+     * @param {ShowThumbGrid2Request} req - request parameters.
+     * @param {RawCallback} onNoContent
+     */
+    Backend.prototype.showThumbGrid2 = function (req, onNoContent) {
+        var x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+
+            switch (x.status) {
+                case 204:
+                    if (typeof (onNoContent) === 'function') {
+                        onNoContent(x);
+                    }
+                    break;
+                default:
+                    throw {err: 'unexpected response', data: x};
+            }
+        };
+
+        var url = this.baseURL + '/' + encodeURIComponent(req.name) +
+        '/grid.jpg?';
+        if (req.cols != null) {
+            url += 'cols=' + encodeURIComponent(req.cols) + '&';
+        }
+        if (req.rows != null) {
+            url += 'rows=' + encodeURIComponent(req.rows) + '&';
+        }
+        if (req.cellW != null) {
+            url += 'cell_w=' + encodeURIComponent(req.cellW) + '&';
+        }
+        if (req.cellH != null) {
+            url += 'cell_h=' + encodeURIComponent(req.cellH) + '&';
+        }
+        if (req.offset != null) {
+            url += 'offset=' + encodeURIComponent(req.offset) + '&';
         }
         url = url.slice(0, -1);
 

@@ -7,6 +7,10 @@
     <link rel="icon" href="{{.Favicon}}" type="image/png"/>
     <link rel="stylesheet" href="/static/pure.css">
     <link rel="stylesheet" href="/static/style.css">
+    {{if .HasPixelpeep}}
+    <link rel="stylesheet" href="/static/pixelpeep.css">
+    <script src="/static/pixelpeep.js" defer></script>
+    {{end}}
 {{.Head}}
 </head>
 <body class="dark-mode">

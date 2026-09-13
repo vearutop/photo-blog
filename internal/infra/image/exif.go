@@ -241,6 +241,10 @@ func extractExifInt(v any) int {
 				return int(i.Numerator)
 			}
 
+			if i.Denominator == 0 {
+				return 0
+			}
+
 			return int(i.Numerator / i.Denominator)
 		}
 	case []uint16:
@@ -259,6 +263,10 @@ func extractExifFloat(v any) float64 {
 			i := vv[0]
 			if i.Denominator == 1 {
 				return float64(i.Numerator)
+			}
+
+			if i.Denominator == 0 {
+				return 0
 			}
 
 			return float64(i.Numerator) / float64(i.Denominator)

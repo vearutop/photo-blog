@@ -228,7 +228,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 			panic(err)
 		}
 
-		s.Delete("/album/{name}/{hash}", control.RemoveFromAlbum(deps))
+		s.Post("/album/{name}/remove-images", control.RemoveMultipleFromAlbum(deps))
 	})
 
 	s.Get("/album-contents/{name}.json", usecase.GetAlbumContents(deps))
@@ -302,6 +302,9 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Get("/search/", usecase.SearchImages(deps))
 
+		s.Get("/pixelpeep-{hashes}", usecase.ShowPixelpeep(deps))
+		s.Get("/pixelpeep", usecase.SharePixelpeep())
+
 		s.Get("/poi/photos-{name}.gpx", usecase.DownloadImagesPoiGpx(deps))
 		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 		s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
@@ -309,7 +312,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/{name}/grid.jpg", usecase.ShowThumbGrid(deps))
 
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
-		s.Get("/image/{hash}.avif", usecase.ShowImage(deps, true))
+		s.Get("/image-dl/{hash}.jpg", usecase.ShowImage(deps, true))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 		s.Get("/thumb-sprite/{key}.jpg", usecase.ShowAlbumSprite(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))

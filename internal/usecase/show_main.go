@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bool64/cache"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 	"github.com/vearutop/photo-blog/internal/infra/auth"
@@ -33,7 +34,10 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 	}
 
 	cacheName := "main-page"
-	c := infraService.MakePersistentCacheOf[pageData](deps, cacheName, time.Hour)
+	var c *cache.FailoverOf[pageData]
+	if deps.DepCache() != nil {
+		c = infraService.MakePersistentCacheOf[pageData](deps, cacheName, time.Hour)
+	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_main", 1)
@@ -44,9 +48,6 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		d, err := c.Get(ctx, cacheKey, func(ctx context.Context) (pageData, error) {
 			cacheMiss = true
 			d := pageData{}
-			if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
-				return d, fmt.Errorf("reset cache deps: %w", err)
-			}
 
 			d.fill(ctx, deps.TxtRenderer(), deps.Settings())
 
@@ -104,6 +105,13 @@ func ShowMain(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page]
 		}
 
 		if cacheMiss {
+			// Labels are reset right before (re)registering them, as close to the cache write as
+			// possible, so a concurrent invalidation during the (slow) build above can't be lost
+			// by finding no labels to match against.
+			if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+				return fmt.Errorf("reset cache deps: %w", err)
+			}
+
 			deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 			deps.DepCache().AlbumListDependency(cacheName, cacheKey)
 

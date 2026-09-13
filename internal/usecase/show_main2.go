@@ -114,14 +114,23 @@ func (p *pageCommon) fill(ctx context.Context, r *txt.Renderer, a settings.Value
 
 // ShowMain2 creates use case interactor to show album.
 func ShowMain2(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page] {
-	tmpl, err := static.Template("album.gohtml")
-	if err != nil {
-		panic(err)
+	var (
+		tmpl     *template.Template
+		err      error
+		notFound usecase.IOInteractorOf[struct{}, web.Page]
+		b        *AlbumPageBuilder
+	)
+
+	if deps.DepCache() != nil {
+		tmpl, err = static.Template("album.gohtml")
+		if err != nil {
+			panic(err)
+		}
+
+		notFound = NotFound(deps)
+
+		b = NewAlbumPageBuilder(deps)
 	}
-
-	notFound := NotFound(deps)
-
-	b := NewAlbumPageBuilder(deps)
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showMainInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_main", 1)
@@ -158,7 +167,13 @@ func ShowMain2(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page
 			return err
 		}
 		d.OGPageURL = "https://" + in.Request().Host + in.Request().URL.Path
+
 		d.Title = deps.Settings().Appearance().SiteTitle
+		d.Title, err = deps.TxtRenderer().RenderLang(ctx, d.Title, txt.StripTags)
+		if err != nil {
+			return err
+		}
+		d.TotalSize = ""
 
 		if d.IsAdmin {
 			ps, err := deps.VisitorStats().AlbumViews(ctx, d.AlbumData.Album.Hash)

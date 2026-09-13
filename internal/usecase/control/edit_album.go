@@ -79,6 +79,10 @@ function formDone(x, ctx) { $(ctx.result).html('Done.').show() }
 				Value:         addToAlbumInput{},
 				SubmitText:    "Add",
 				OnSuccess:     `formDone`,
+				AfterForm: template.HTML(`
+<button id="add-selected-button" type="button" style="display: none; margin: 1em 0;" onclick="addSelectedImagesToAlbum('` + a.Name + `')">Add Selected (<span id="add-selected-count">0</span>)</button>
+<button id="remove-selected-button" type="button" style="display: none; margin: 1em 0 1em 1em;" onclick="removeSelectedImagesFromAlbum('` + a.Name + `')">Remove Selected (<span id="remove-selected-count">0</span>)</button>
+`),
 			},
 		)
 	})

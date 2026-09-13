@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/swaggest/rest/request"
@@ -42,14 +43,23 @@ func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) useca
 
 // ShowAlbum creates use case interactor to show album.
 func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, web.Page] {
-	tmpl, err := static.Template("album.gohtml")
-	if err != nil {
-		panic(err)
+	var (
+		tmpl     *template.Template
+		err      error
+		notFound usecase.IOInteractorOf[struct{}, web.Page]
+		b        *AlbumPageBuilder
+	)
+
+	if deps.DepCache() != nil {
+		tmpl, err = static.Template("album.gohtml")
+		if err != nil {
+			panic(err)
+		}
+
+		notFound = NotFound(deps)
+
+		b = NewAlbumPageBuilder(deps)
 	}
-
-	notFound := NotFound(deps)
-
-	b := NewAlbumPageBuilder(deps)
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumInput, out *web.Page) error {
 		deps.StatsTracker().Add(ctx, "show_album", 1)

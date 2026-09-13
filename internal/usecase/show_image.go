@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/bool64/ctxd"
 	"github.com/swaggest/rest/response"
@@ -23,7 +22,7 @@ type showImageDeps interface {
 	CtxdLogger() ctxd.Logger
 }
 
-func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
+func ShowImage(deps showImageDeps, forceDownload bool) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in hashInPath, out *response.EmbeddedSetter) error {
 		if deps.Settings().Privacy().HideOriginal && !auth.IsAdmin(ctx) {
 			if exif, err := deps.PhotoExifFinder().FindByHash(ctx, in.Hash); err != nil {
@@ -46,7 +45,7 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 		if len(image.Settings.HTTPSources) > 0 {
 			remoteURL := image.Settings.HTTPSources[0]
 
-			if r.Header.Get("X-Mirror") != "" {
+			if r.Header.Get("X-Mirror") != "" || forceDownload {
 				deps.CtxdLogger().Info(ctx, "serving image from remote address", "img", image, "url", image.Settings.HTTPSources[0])
 
 				return serveRemote(ctx, rw, r, remoteURL)
@@ -58,9 +57,6 @@ func ShowImage(deps showImageDeps, useAvif bool) usecase.Interactor {
 		}
 
 		p := image.Path
-		if useAvif {
-			p = p[0:strings.LastIndex(p, ".")] + ".avif"
-		}
 
 		rw.Header().Set("Cache-Control", "max-age=31536000")
 

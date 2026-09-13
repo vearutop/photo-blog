@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -94,43 +95,56 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 	ctx := context.Background()
 
 	defer func() {
-		if err != nil && l != nil && l.LoggerProvider != nil {
-			l.CtxdLogger().Error(ctx, err.Error())
+		if err != nil {
+			if docsMode {
+				log.Println(err.Error())
+			} else {
+				l.CtxdLogger().Error(ctx, err.Error())
+			}
 		}
 	}()
 
 	cfg.Debug.Middlewares = append(cfg.Debug.Middlewares, auth.BasicAuth("Admin Access", l.Settings))
 
-	if err = os.Chdir(cfg.StoragePath); err != nil {
-		return nil, fmt.Errorf("change dir to storage path: %w", err)
-	}
-
-	appLog, err := os.Create(fmt.Sprintf("app.%s.log.zst", time.Now().Format("2006-01-02-15-04-05")))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create log file: %w", err)
-	}
-
-	zstdLogWriter, err := zstd.NewWriter(appLog)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create zstd log writer: %w", err)
-	}
-
-	logWriter := newSyncWriteCloser(zstdLogWriter)
-	cfg.BaseConfig.Log.Output = logWriter
-
-	l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	l.OnShutdown("app-log", func() {
-		if err := logWriter.Close(); err != nil {
-			println("close zstd log:", err.Error())
+	if cfg.StoragePath != "" {
+		if err = os.Chdir(cfg.StoragePath); err != nil {
+			return nil, fmt.Errorf("change dir to storage path: %w", err)
 		}
-		if err := appLog.Close(); err != nil {
-			println("close app log file", err.Error())
+	}
+
+	if cfg.PersistAppLog {
+		appLog, err := os.Create(fmt.Sprintf("app.%s.log.zst", time.Now().Format("2006-01-02-15-04-05")))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create log file: %w", err)
 		}
-	})
+
+		zstdLogWriter, err := zstd.NewWriter(appLog)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zstd log writer: %w", err)
+		}
+
+		logWriter := newSyncWriteCloser(zstdLogWriter)
+		cfg.BaseConfig.Log.Output = logWriter
+
+		l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		l.OnShutdown("app-log", func() {
+			if err := logWriter.Close(); err != nil {
+				println("close zstd log:", err.Error())
+			}
+			if err := appLog.Close(); err != nil {
+				println("close app log file", err.Error())
+			}
+		})
+	} else {
+		l.BaseLocator, err = brick.NewBaseLocator(cfg.BaseConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	l.SwaggerUIOptions = append(l.SwaggerUIOptions, func(cfg *swgui.Config) {
 		cfg.HideCurl = true

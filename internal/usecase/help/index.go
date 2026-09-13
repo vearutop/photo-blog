@@ -3,6 +3,7 @@ package help
 import (
 	"context"
 	"html/template"
+	"strings"
 
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -59,7 +60,8 @@ func Index(deps indexDeps) usecase.Interactor {
 
 	type pageData struct {
 		pageCommon
-		Content template.HTML
+		Content      template.HTML
+		HasPixelpeep bool
 	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, input struct{}, output *web.Page) error {
@@ -86,6 +88,7 @@ Help
 		})
 
 		d.Content = template.HTML(c)
+		d.HasPixelpeep = strings.Contains(c, `class="pixelpeep`)
 
 		return output.Render(tmpl, d)
 	})

@@ -11,5 +11,6 @@ const Name = "photo-blog"
 type Config struct {
 	brick.BaseConfig
 
-	StoragePath string `split_words:"true" default:"./photo-blog-data/"`
+	StoragePath   string `split_words:"true" default:"./photo-blog-data/"`
+	PersistAppLog bool   `split_words:"true" default:"false"`
 }

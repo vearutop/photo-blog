@@ -95,7 +95,7 @@ function addToFeatured(imageHash) {
     b.controlAddToAlbum({
         name: featured,
         body: {
-            image_hash: imageHash
+            image_hashes: [imageHash]
         }
     }, function () {
         // alert("Done")
@@ -205,26 +205,56 @@ function viewSelectedImagesURL() {
     return "/list-" + hashes.join(",") + "/"
 }
 
-// updateViewSelectedLink shows/hides and updates the "View selected" link in the album title panel.
-function updateViewSelectedLink() {
-    var link = document.getElementById('view-selected-link')
-    if (!link) {
-        return
-    }
+// clearSelectedImages empties the selection, unchecking any rendered checkboxes.
+function clearSelectedImages() {
+    window.localStorage.removeItem(IMAGE_SELECT_HASHES_KEY)
+    refreshImageSelectCheckboxes()
+    updateSelectionWidgets()
+}
 
+// updateSelectionWidgets shows/hides and updates any selection-driven widgets present on the current
+// page: the "View selected" link in the album title panel, and the "Add Selected"/"Remove Selected" buttons on forms
+// that add images to an album.
+function updateSelectionWidgets() {
     var count = getSelectedImageHashes().length
-    var countEl = document.getElementById('view-selected-count')
-    if (countEl) {
-        countEl.textContent = count
+
+    var link = document.getElementById('view-selected-link')
+    if (link) {
+        var viewCountEl = document.getElementById('view-selected-count')
+        if (viewCountEl) {
+            viewCountEl.textContent = count
+        }
+
+        if (count > 0) {
+            link.href = viewSelectedImagesURL()
+            link.style.display = ''
+        } else {
+            link.style.display = 'none'
+        }
     }
 
-    if (count > 0) {
-        link.href = viewSelectedImagesURL()
-        link.style.display = ''
-    } else {
-        link.style.display = 'none'
+    var addBtn = document.getElementById('add-selected-button')
+    if (addBtn) {
+        var addCountEl = document.getElementById('add-selected-count')
+        if (addCountEl) {
+            addCountEl.textContent = count
+        }
+
+        addBtn.style.display = count > 0 ? '' : 'none'
+    }
+
+    var removeBtn = document.getElementById('remove-selected-button')
+    if (removeBtn) {
+        var removeCountEl = document.getElementById('remove-selected-count')
+        if (removeCountEl) {
+            removeCountEl.textContent = count
+        }
+
+        removeBtn.style.display = count > 0 ? '' : 'none'
     }
 }
+
+document.addEventListener('DOMContentLoaded', updateSelectionWidgets)
 
 // refreshImageSelectCheckboxes syncs the checked state of all rendered checkboxes with localStorage.
 function refreshImageSelectCheckboxes() {
@@ -253,15 +283,96 @@ function selectImages(enable) {
     }
 }
 
+var lastClickedImageHash = null
+
 function toggleImageSelect(checkbox, e) {
     if (e) {
         e.stopPropagation()
     }
 
     var hash = checkbox.getAttribute('data-hash')
-    setImageHashSelected(hash, checkbox.checked)
+
+    if (e && e.shiftKey && lastClickedImageHash) {
+        // Range-select within the same view (thumbnail grid or lightbox caption), since both
+        // can be present in the DOM at once and shouldn't be mixed into one range.
+        var selector = checkbox.classList.contains('img-select-checkbox-caption')
+            ? '.img-select-checkbox-caption' : '.img-select-checkbox:not(.img-select-checkbox-caption)'
+        var group = document.querySelectorAll(selector)
+        var from = -1, to = -1
+        for (var i = 0; i < group.length; i++) {
+            var h = group[i].getAttribute('data-hash')
+            if (h === lastClickedImageHash) from = i
+            if (h === hash) to = i
+        }
+
+        if (from !== -1 && to !== -1) {
+            if (from > to) {
+                var t = from; from = to; to = t
+            }
+            for (var i = from; i <= to; i++) {
+                setImageHashSelected(group[i].getAttribute('data-hash'), checkbox.checked)
+            }
+        } else {
+            setImageHashSelected(hash, checkbox.checked)
+        }
+    } else {
+        setImageHashSelected(hash, checkbox.checked)
+    }
+
+    lastClickedImageHash = hash
     refreshImageSelectCheckboxes()
-    updateViewSelectedLink()
+    updateSelectionWidgets()
+}
+
+// addSelectedImagesToAlbum submits the current selection to the "Add Images From Another Album" endpoint.
+function addSelectedImagesToAlbum(albumName) {
+    var hashes = getSelectedImageHashes()
+    if (hashes.length === 0) {
+        return
+    }
+
+    if (!window.confirm("Add " + hashes.length + " selected image(s) to album '" + albumName + "'?")) {
+        return
+    }
+
+    var b = new Backend('')
+    b.controlAddToAlbum({
+        name: albumName,
+        body: {
+            image_hashes: hashes
+        }
+    }, function () {
+        alert("Added " + hashes.length + " image(s) to '" + albumName + "'")
+    }, function (x) {
+        alert("Failed: " + x.error)
+    }, function (x) {
+        alert("Failed: " + x.error)
+    })
+}
+
+// removeSelectedImagesFromAlbum submits the current selection to the "Remove Selected" endpoint.
+function removeSelectedImagesFromAlbum(albumName) {
+    var hashes = getSelectedImageHashes()
+    if (hashes.length === 0) {
+        return
+    }
+
+    if (!window.confirm("Remove " + hashes.length + " selected image(s) from album '" + albumName + "'?")) {
+        return
+    }
+
+    var b = new Backend('')
+    b.controlRemoveMultipleFromAlbum({
+        name: albumName,
+        body: {
+            image_hashes: hashes
+        }
+    }, function () {
+        alert("Removed " + hashes.length + " image(s) from '" + albumName + "'")
+        clearSelectedImages()
+    }, function (x) {
+        alert("Failed: " + x.error)
+    })
 }
 
 (function () {
@@ -280,10 +391,12 @@ function removeImage(albumName, imageHash, collabKey) {
     }
 
     var b = new Backend('');
-    b.controlRemoveFromAlbum({
+    b.controlRemoveMultipleFromAlbum({
         name: albumName,
-        hash: imageHash,
-        collabKey: collabKey
+        collabKey: collabKey,
+        body: {
+            image_hashes: [imageHash]
+        }
     }, function (x) {
         $('#img' + imageHash).remove()
         // alert("Photo is removed from the album")

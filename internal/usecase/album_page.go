@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bool64/cache"
@@ -47,17 +48,21 @@ func (pb *AlbumPageBuilder) getCachedAlbum(ctx context.Context, name string, pre
 
 	d, err := pb.albumDataCache.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
 		cacheMiss = true
-		if err := pb.deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
-			return getAlbumOutput{}, fmt.Errorf("reset cache deps: %w", err)
-		}
 
 		return getAlbumContents(ctx, pb.deps, imagesFilter{albumName: name}, preview)
 	})
 	if err != nil {
-		return getAlbumOutput{}, err
+		return getAlbumOutput{}, fmt.Errorf("cache get: %w, cache miss: %v", err, cacheMiss)
 	}
 
 	if cacheMiss {
+		// Labels are reset right before (re)registering them, as close to the cache write as
+		// possible, so a concurrent AlbumChanged invalidation during the (slow) build above
+		// can't be lost by finding no labels to match against.
+		if err := pb.deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+			return getAlbumOutput{}, fmt.Errorf("reset cache deps: %w", err)
+		}
+
 		pb.deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 		pb.deps.DepCache().AlbumDependency(cacheName, cacheKey, name)
 	}
@@ -209,9 +214,6 @@ func (pb *AlbumPageBuilder) cachedBuild(ctx context.Context, cont getAlbumOutput
 
 	d, err := pb.albumPageCache.Get(ctx, cacheKey, func(ctx context.Context) (albumPageData, error) {
 		cacheMiss = true
-		if err := pb.deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
-			return albumPageData{}, fmt.Errorf("reset cache deps: %w", err)
-		}
 
 		d, err := pb.build(ctx, cont)
 		if err != nil {
@@ -225,6 +227,13 @@ func (pb *AlbumPageBuilder) cachedBuild(ctx context.Context, cont getAlbumOutput
 	}
 
 	if cacheMiss {
+		// Labels are reset right before (re)registering them, as close to the cache write as
+		// possible, so a concurrent AlbumChanged invalidation during the (slow) build above
+		// can't be lost by finding no labels to match against.
+		if err := pb.deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+			return albumPageData{}, fmt.Errorf("reset cache deps: %w", err)
+		}
+
 		pb.deps.DepCache().ServiceSettingsDependency(cacheName, cacheKey)
 		pb.deps.DepCache().AlbumDependency(cacheName, cacheKey, cont.Album.Name)
 
@@ -290,10 +299,21 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	d.ShowAISays = !album.Settings.HideAISays
 	d.PreRender = true
 	d.HasPanos = false
+	d.HasPixelpeep = strings.Contains(string(d.Description), `class="pixelpeep`)
 
 	for _, img := range cont.Images {
 		if img.Is360Pano {
 			d.HasPanos = true
+		}
+
+		if strings.Contains(string(img.DescriptionHTML), `class="pixelpeep`) {
+			d.HasPixelpeep = true
+		}
+	}
+
+	for _, item := range d.Timeline {
+		if strings.Contains(string(item.Text), `class="pixelpeep`) {
+			d.HasPixelpeep = true
 		}
 	}
 
@@ -362,7 +382,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 		d.SubAlbums = append(d.SubAlbums, cont)
 	}
 
-	if deps.Settings().Appearance().AlbumSpritesEnabled() {
+	if deps.Settings().Appearance().AlbumSpritesEnabled() && !cont.SkipSprites && !cont.Album.Settings.SkipSprites {
 		deps.CtxdLogger().Info(ctx, "album sprite: adding album sprites")
 		pb.addSprites(ctx, &d)
 	}
@@ -394,7 +414,7 @@ type albumPageData struct {
 	MapAttribution string
 	Featured       string
 
-	AlbumData getAlbumOutput
+	AlbumData         getAlbumOutput
 	StrippedAlbumData getAlbumOutput
 	Timeline          []albumTimelineItem
 
@@ -403,6 +423,7 @@ type albumPageData struct {
 	ShowAISays        bool
 	PreRender         bool
 	HasPanos          bool
+	HasPixelpeep      bool
 	ThumbSprites      map[string]*sprite.ViewItem
 	MarkerSprites     map[string]*sprite.ViewItem
 	SpriteSheets      map[string]sprite.Sheet

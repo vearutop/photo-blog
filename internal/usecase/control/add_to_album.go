@@ -41,20 +41,20 @@ type addToAlbumDeps interface {
 	DepCache() *dep.Cache
 }
 type addToAlbumInput struct {
-	DstAlbumName        string    `path:"name" description:"Name of destination album to add photo."`
-	SrcImageHash        uniq.Hash `json:"image_hash,omitempty" title:"Image Hash" description:"Hash of an image to add to album."`
-	SrcAlbumName        string    `json:"album_name,omitempty" title:"Source Album Name" description:"Name of a source album to add photos from."`
-	SrcImageURL         string    `json:"image_url,omitempty" title:"Fetch image from a publicly available URL."`
-	SrcImageTime        time.Time `json:"image_time,omitzero" title:"Set image time after adding from URL."`
-	SrcGPS              string    `json:"image_lat_lon,omitempty" title:"Set image GPS location after adding from URL." description:"In latitude,longitude format."`
-	SrcImageDescription string    `json:"image_description,omitempty" title:"Set image description after adding from URL." formType:"textarea" description:"Description of an image, can contain HTML."`
+	DstAlbumName        string      `path:"name" description:"Name of destination album to add photo."`
+	SrcImageHashes      []uniq.Hash `json:"image_hashes,omitempty" title:"Image Hashes" description:"Hashes of multiple images to add to album."`
+	SrcAlbumName        string      `json:"album_name,omitempty" title:"Source Album Name" description:"Name of a source album to add photos from."`
+	SrcImageURL         string      `json:"image_url,omitempty" title:"Fetch image from a publicly available URL."`
+	SrcImageTime        time.Time   `json:"image_time,omitzero" title:"Set image time after adding from URL."`
+	SrcGPS              string      `json:"image_lat_lon,omitempty" title:"Set image GPS location after adding from URL." description:"In latitude,longitude format."`
+	SrcImageDescription string      `json:"image_description,omitempty" title:"Set image description after adding from URL." formType:"textarea" description:"Description of an image, can contain HTML."`
 }
 
 // AddToAlbum creates use case interactor to add a single photo or photos from an album to another album.
 func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in addToAlbumInput, out *struct{}) error {
 		deps.StatsTracker().Add(ctx, "add_to_album", 1)
-		deps.CtxdLogger().Info(ctx, "adding to album", "name", in.DstAlbumName, "hash", in.SrcImageHash)
+		deps.CtxdLogger().Info(ctx, "adding to album", "input", in)
 
 		dstAlbum, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.DstAlbumName))
 		if err != nil {
@@ -72,13 +72,11 @@ func AddToAlbum(deps addToAlbumDeps) usecase.Interactor {
 			}
 		}
 
-		if in.SrcImageHash != 0 {
-			img, err := deps.PhotoImageFinder().FindByHash(ctx, in.SrcImageHash)
+		if len(in.SrcImageHashes) > 0 {
+			err = deps.PhotoAlbumImageAdder().AddImages(ctx, dstAlbum.Hash, in.SrcImageHashes...)
 			if err != nil {
 				return err
 			}
-
-			err = deps.PhotoAlbumImageAdder().AddImages(ctx, dstAlbum.Hash, img.Hash)
 		}
 
 		if in.SrcImageURL != "" {

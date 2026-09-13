@@ -61,6 +61,11 @@
     <script src="/static/tus/uppy.legacy.min.js"></script>
     {{end}}
 
+    {{if .HasPixelpeep}}
+    <link rel="stylesheet" href="/static/pixelpeep.css">
+    <script src="/static/pixelpeep.js" defer></script>
+    {{end}}
+
     <style>
         /*{{if .IsAdmin}}*/
         .not-control-panel {
@@ -120,8 +125,8 @@
         </div>
     </div>
 
-    {{if not .IsBot}}
     <script src="/static/menu.js"></script>
+    {{if not .IsBot}}
     <script>
         collectStats({album: '{{.Name}}'});
     </script>

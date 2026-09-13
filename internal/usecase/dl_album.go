@@ -41,9 +41,43 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 	var inProgress int64
 
 	u := usecase.NewInteractor(func(ctx context.Context, in dlAlbumInput, out *response.EmbeddedSetter) (err error) {
-		album, err := deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
-		if err != nil {
-			return err
+		var (
+			album  photo.Album
+			images []photo.Image
+		)
+
+		if strings.HasPrefix(in.Name, "list-") {
+			album.Name = in.Name
+
+			hashes, err := parseListHashes(in.Name)
+			if err != nil {
+				return err
+			}
+
+			images, err = deps.PhotoImageFinder().FindByHashes(ctx, hashes...)
+			if err != nil {
+				return err
+			}
+		} else {
+			album, err = deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(in.Name))
+			if err != nil {
+				return err
+			}
+
+			if in.Favorite {
+				visitorHash := auth.VisitorFromContext(ctx)
+				if visitorHash == 0 {
+					return status.PermissionDenied
+				}
+
+				images, err = deps.FavoriteRepository().FindAlbumImages(ctx, visitorHash, album.Hash)
+			} else {
+				images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, album.Hash)
+			}
+
+			if err != nil {
+				return err
+			}
 		}
 
 		privacy := deps.Settings().Privacy()
@@ -52,22 +86,6 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 		}
 
 		rw := out.ResponseWriter()
-
-		var images []photo.Image
-		if in.Favorite {
-			visitorHash := auth.VisitorFromContext(ctx)
-			if visitorHash == 0 {
-				return status.PermissionDenied
-			}
-
-			images, err = deps.FavoriteRepository().FindAlbumImages(ctx, visitorHash, album.Hash)
-		} else {
-			images, err = deps.PhotoAlbumImageFinder().FindImages(ctx, album.Hash)
-		}
-
-		if err != nil {
-			return err
-		}
 
 		deps.StatsTracker().Set(ctx, "dl_in_progress", float64(atomic.AddInt64(&inProgress, 1)))
 

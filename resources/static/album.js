@@ -20,6 +20,16 @@ window.openByHashInGallery = window.openByHashInGallery || function (galleryKey,
                 removeImage(currentImage.album, currentImage.img);
             }
         }
+
+        if ((e.key === "s" || e.key === "S") && !e.ctrlKey && !e.metaKey && !e.altKey) { // S: toggle selection of maximized image, when in select mode.
+            var tag = e.target && e.target.tagName
+            if (tag !== 'INPUT' && tag !== 'TEXTAREA' &&
+                document.documentElement.classList.contains('image-select-mode') && currentImage.img) {
+                setImageHashSelected(currentImage.img, !isImageHashSelected(currentImage.img))
+                refreshImageSelectCheckboxes()
+                updateSelectionWidgets()
+            }
+        }
         // console.log("key pressed", e)
     }, false);
 
@@ -600,7 +610,7 @@ function loadAlbum(params) {
 
         updateResponsiveSpriteThumbs()
         refreshImageSelectCheckboxes()
-        updateViewSelectedLink()
+        updateSelectionWidgets()
 
 
         if (chronoTexts && !params.preRendered) {
@@ -761,7 +771,8 @@ function loadAlbum(params) {
                     el.setAttribute('rel', 'noopener');
 
                     pswp.on('change', () => {
-                        el.href = pswp.currSlide.data.src;
+                        // console.log(pswp.currSlide.data);
+                        el.href = pswp.currSlide.data.src.replace('/image/', '/image-dl/');
                     });
                 }
             });
@@ -830,6 +841,7 @@ function loadAlbum(params) {
                 collectStats(currentImage);
             }
 
+            currentImage.album = params.albumName
             currentImage.img = $(content.data.element).data('hash')
             currentImage.time = Date.now() - unfocused;
             currentImage.w = content.displayedImageWidth

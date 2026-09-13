@@ -24,17 +24,21 @@ type removeFromAlbumDeps interface {
 	DepCache() *dep.Cache
 }
 
-type removeFromAlbumInput struct {
-	AlbumName string    `path:"name" description:"Name of album to remove image from."`
-	ImageHash uniq.Hash `path:"hash" description:"Hash of an image to remove from album."`
-	CollabKey string    `query:"collabKey" description:"Collaborator key to allow admin access."`
+type removeMultipleFromAlbumInput struct {
+	AlbumName   string      `path:"name" description:"Name of album to remove images from."`
+	ImageHashes []uniq.Hash `json:"image_hashes" title:"Image Hashes" description:"Hashes of images to remove from album."`
+	CollabKey   string      `query:"collabKey" description:"Collaborator key to allow admin access."`
 }
 
-// RemoveFromAlbum creates use case interactor to delete a photo from album.
-func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, in removeFromAlbumInput, out *struct{}) error {
-		deps.StatsTracker().Add(ctx, "remove_from_album", 1)
-		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.AlbumName, "hash", in.ImageHash)
+// RemoveMultipleFromAlbum creates use case interactor to delete one or more photos from album.
+func RemoveMultipleFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, in removeMultipleFromAlbumInput, out *struct{}) error {
+		deps.StatsTracker().Add(ctx, "remove_from_album", float64(len(in.ImageHashes)))
+		deps.CtxdLogger().Info(ctx, "removing from album", "name", in.AlbumName, "hashes", in.ImageHashes)
+
+		if len(in.ImageHashes) == 0 {
+			return nil
+		}
 
 		albumHash := photo.AlbumHash(in.AlbumName)
 
@@ -44,7 +48,6 @@ func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
 		}
 
 		if !auth.IsAdmin(ctx) {
-
 			if in.CollabKey == "" {
 				return status.PermissionDenied
 			}
@@ -54,8 +57,7 @@ func RemoveFromAlbum(deps removeFromAlbumDeps) usecase.Interactor {
 			}
 		}
 
-		err = deps.PhotoAlbumImageDeleter().DeleteImages(ctx, albumHash, in.ImageHash)
-		if err != nil {
+		if err := deps.PhotoAlbumImageDeleter().DeleteImages(ctx, albumHash, in.ImageHashes...); err != nil {
 			return err
 		}
 

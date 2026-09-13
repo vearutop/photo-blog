@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bool64/cache"
 	"github.com/bool64/ctxd"
 	"github.com/bool64/sqluct"
 	"github.com/bool64/stats"
@@ -48,7 +49,10 @@ type showThumbGridDeps interface {
 func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 	const cacheName = "thumb-grid"
 
-	c := service.MakePersistentCacheOf[[]byte](deps, cacheName, time.Hour)
+	var c *cache.FailoverOf[[]byte]
+	if deps.DepCache() != nil {
+		c = service.MakePersistentCacheOf[[]byte](deps, cacheName, time.Hour)
+	}
 
 	u := usecase.NewInteractor(func(ctx context.Context, in showThumbGridInput, out *response.EmbeddedSetter) error {
 		rw := out.ResponseWriter()
@@ -62,9 +66,6 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 			cacheKey,
 			func(ctx context.Context) ([]byte, error) {
 				cacheMiss = true
-				if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
-					return nil, err
-				}
 
 				images, err := deps.PhotoAlbumImageFinder().FindImages(ctx, photo.AlbumHash(in.Name))
 				if err != nil {
@@ -115,6 +116,13 @@ func ShowThumbGrid(deps showThumbGridDeps) usecase.Interactor {
 		}
 
 		if cacheMiss {
+			// Labels are reset right before (re)registering them, as close to the cache write as
+			// possible, so a concurrent invalidation during the (slow) build above can't be lost
+			// by finding no labels to match against.
+			if err := deps.DepCache().ResetKey(ctx, cacheName, cacheKey); err != nil {
+				return err
+			}
+
 			deps.DepCache().AlbumDependency(cacheName, cacheKey, in.Name)
 		}
 

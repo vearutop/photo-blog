@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"math"
 	"path"
 	"strings"
 	"time"
@@ -85,6 +86,7 @@ type getAlbumOutput struct {
 	MarkerSprites map[string]*sprite.ViewItem `json:"marker_sprites,omitempty"`
 	SpriteSheets  map[string]sprite.Sheet     `json:"sprite_sheets,omitempty"`
 	HideOriginal  bool                        `json:"hide_original"`
+	SkipSprites   bool                        `json:"skip_sprites,omitempty"`
 }
 
 // GetAlbumContents creates use case interactor to get album data.
@@ -104,6 +106,24 @@ func GetAlbumContents(deps getAlbumImagesDeps) usecase.IOInteractorOf[getAlbumIn
 	return u
 }
 
+func parseListHashes(name string) ([]uniq.Hash, error) {
+	l := strings.TrimPrefix(name, "list-")
+	ll := strings.Split(l, ",")
+	hashes := make([]uniq.Hash, 0, len(ll))
+
+	for _, l := range ll {
+		var h uniq.Hash
+
+		if err := h.UnmarshalText([]byte(l)); err != nil {
+			return nil, fmt.Errorf("decode hash: %w", err)
+		}
+
+		hashes = append(hashes, h)
+	}
+
+	return hashes, nil
+}
+
 func reverse[S ~[]E, E any](s S) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
@@ -119,10 +139,12 @@ type imagesFilter struct {
 }
 
 func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter imagesFilter, preview bool) (out getAlbumOutput, err error) {
-	return buildAlbumContents(ctx, deps, filter, preview)
-}
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("get album output: %w", err)
+		}
+	}()
 
-func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter imagesFilter, preview bool) (out getAlbumOutput, err error) {
 	name := filter.albumName
 	albumHash := photo.AlbumHash(filter.albumName)
 
@@ -134,28 +156,25 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 	)
 
 	if strings.HasPrefix(name, "list-") {
-		l := strings.TrimPrefix(name, "list-")
 		album.Title = "List"
 		album.Name = name
+		out.SkipSprites = true
+
+		var hashes []uniq.Hash
+
+		hashes, err = parseListHashes(name)
+		if err != nil {
+			return getAlbumOutput{}, err
+		}
 
 		name = "list"
-		ll := strings.Split(l, ",")
-		hashes := make([]uniq.Hash, 0, len(ll))
-		for _, l := range ll {
-			var h uniq.Hash
-
-			if err := h.UnmarshalText([]byte(l)); err != nil {
-				return getAlbumOutput{}, fmt.Errorf("decode hash: %w", err)
-			}
-
-			hashes = append(hashes, h)
-		}
 		images, err = deps.PhotoImageFinder().FindByHashes(ctx, hashes...)
 	}
 
 	if strings.HasPrefix(name, "search:") {
 		query = strings.TrimPrefix(name, "search:")
 		name = "search"
+		out.SkipSprites = true
 	}
 
 	switch name {
@@ -170,6 +189,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 		album.Title = "Favorite Photos"
 		album.Name = photo.Favorite
 		images, err = deps.FavoriteRepository().FindImages(ctx, visitorHash)
+		out.SkipSprites = true
 
 	case "search":
 		if !auth.IsAdmin(ctx) {
@@ -178,6 +198,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 		album.Title = query
 		album.Name = "search"
 		images, err = deps.PhotoAlbumImageFinder().SearchImages(ctx, query)
+		out.SkipSprites = true
 
 	case photo.Orphan:
 		if !auth.IsAdmin(ctx) {
@@ -187,6 +208,8 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 		album.Title = "Orphan Photos"
 		album.Name = photo.Orphan
 		images, err = deps.PhotoAlbumImageFinder().FindOrphanImages(ctx)
+		out.SkipSprites = true
+
 	case photo.Broken:
 		if !isAdmin {
 			return out, status.PermissionDenied
@@ -195,6 +218,8 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 		album.Title = "Broken Photos"
 		album.Name = photo.Broken
 		images, err = deps.PhotoAlbumImageFinder().FindBrokenImages(ctx)
+		out.SkipSprites = true
+
 	default:
 		album, err = deps.PhotoAlbumFinder().FindByHash(ctx, albumHash)
 		if err != nil {
@@ -217,7 +242,7 @@ func buildAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter ima
 	out.Album = album
 
 	if err := out.prepare(ctx, deps, images, preview); err != nil {
-		return out, err
+		return out, fmt.Errorf("prepare album: %w", err)
 	}
 
 	return out, nil
@@ -349,7 +374,10 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 						gps.Latitude = float64(p.Lat)
 						gps.Longitude = float64(p.Lon)
 						gps.GpsTime = *i.TakenAt
-						gps.Altitude = float64(p.Alt)
+
+						if !math.IsNaN(float64(p.Alt)) {
+							gps.Altitude = float64(p.Alt)
+						}
 
 						img.Gps = &gps
 					}
@@ -415,6 +443,10 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 		prevDate := ""
 
 		for _, i := range out.Images {
+			if i.Is360Pano {
+				continue
+			}
+
 			d := time.Unix(i.UTime, 0).Format(time.DateOnly)
 			if d != prevDate {
 				albumSettings.Texts = append(albumSettings.Texts, txt.Chronological{
