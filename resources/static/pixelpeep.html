@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>pixelpeep</title>
+<link rel="stylesheet" href="/static/pixelpeep.css">
+<style>body { margin: 0; background: #222; }</style>
+</head>
+<body>
+<div class="pixelpeep" data-share-base="{{.ShareBase}}"><script type="application/json">{{.ConfigJSON}}</script></div>
+<script src="/static/pixelpeep.js"></script>
+{{if .Editor}}<script src="/static/pixelpeep-editor.js"></script>{{end}}
+</body>
+</html>

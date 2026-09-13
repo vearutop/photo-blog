@@ -381,6 +381,10 @@ a.ctrl-btn:hover {
     max-width: 900px;
 }
 
+.some-text:has(.pixelpeep) {
+    max-width: none;
+}
+
 .main-title {
     margin: 7px 25px
 }

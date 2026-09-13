@@ -1,0 +1,46 @@
+.pixelpeep {
+  background: #222; color: #ccc; font: 12px sans-serif;
+  display: flex; flex-direction: column; height: var(--pp-height, 100vh);
+  overflow: hidden;
+}
+/* Raw JSON config, visible in the markup until pixelpeep.js replaces it —
+   hidden via CSS so it never flashes, however slow the script is to load. */
+.pixelpeep pre { display: none; }
+.pixelpeep .toolbar { flex: none; padding: 6px; }
+.pixelpeep .zoom-pct { padding-left: 6px; color: #888; }
+.pixelpeep .row { display: flex; flex: 1 1 auto; min-height: 0; }
+.pixelpeep .vp {
+  flex: 1 1 0; min-width: 0; height: var(--vp-height, auto);
+  overflow: hidden; position: relative;
+  border: 1px solid #444; cursor: grab; user-select: none;
+  touch-action: none;
+}
+.pixelpeep .vp.unlocked { border-color: #e6a817; }
+.pixelpeep .group { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.pixelpeep .group img {
+  position: absolute; top: 0; left: 0; transform-origin: 0 0; max-width: none;
+  -webkit-user-drag: none;
+}
+.pixelpeep .label { position: absolute; bottom: 0; left: 0; background: rgba(0,0,0,.6); padding: 2px 6px; z-index: 1; }
+.pixelpeep .lock {
+  position: absolute; top: 0; right: 0; z-index: 2;
+  background: rgba(0,0,0,.6); color: inherit; border: none; padding: 2px 6px; cursor: pointer;
+}
+
+.pp-editor-toggle {
+  position: fixed; top: 6px; right: 6px; z-index: 20;
+  background: rgba(0,0,0,.6); color: #ccc; border: 1px solid #444; padding: 4px 8px; cursor: pointer;
+  font: 12px sans-serif;
+}
+.pixelpeep-editor {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  max-height: 45vh; overflow-y: auto;
+  background: rgba(20,20,20,.92); color: #ccc; font: 12px sans-serif; padding: 6px;
+  border-top: 1px solid #444;
+}
+.pixelpeep-editor.hidden { display: none; }
+.pixelpeep-editor .pp-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+.pixelpeep-editor .pp-row:first-child { border-bottom: 1px solid #444; margin-bottom: 2px; padding-bottom: 4px; }
+.pixelpeep-editor .pp-index { width: 2.5em; color: #888; }
+.pixelpeep-editor input { background: #333; color: #ccc; border: 1px solid #444; padding: 2px 4px; }
+.pixelpeep-editor .pp-buttons { padding-top: 6px; display: flex; gap: 6px; }
