@@ -20,6 +20,28 @@ import (
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
+// albumCacheVersion must be bumped whenever getAlbumOutput or albumPageData's JSON shape changes
+// in a way that isn't safe for an old cached blob to deserialize into (i.e. anything but adding a
+// new field with omitempty that every reader tolerates being zero-value). album-data/album-page
+// are FailoverOf caches: they keep serving a stale blob past its TTL while refreshing in the
+// background, so an incompatible old shape doesn't error — it silently deserializes into zero
+// values, which is exactly what happened twice while pagination was being built (Image and
+// Timeline). Bumping this orphans every previously-cached entry at once instead of chasing each
+// field that turns out to depend on one.
+//
+// InvalidatePersistentCache's enum tag can't reference this constant (Go struct tags must be
+// literal strings), so its "album-data-N"/"album-page-N" entries must be updated by hand to match
+// whenever this changes.
+const albumCacheVersion = "2"
+
+// AlbumDataCacheName and AlbumPageCacheName are the persistent cache names for album content and
+// rendered album pages. Exported so InvalidatePersistentCache's allow-list can reference the same
+// values rather than duplicating the version number.
+const (
+	AlbumDataCacheName = "album-data-" + albumCacheVersion
+	AlbumPageCacheName = "album-page-" + albumCacheVersion
+)
+
 type AlbumPageBuilder struct {
 	deps               getAlbumImagesDeps
 	albumDataCache     *cache.FailoverOf[getAlbumOutput]
@@ -29,8 +51,8 @@ type AlbumPageBuilder struct {
 }
 
 func NewAlbumPageBuilder(deps getAlbumImagesDeps) *AlbumPageBuilder {
-	albumDataCacheName := "album-data"
-	albumPageCacheName := "album-page"
+	albumDataCacheName := AlbumDataCacheName
+	albumPageCacheName := AlbumPageCacheName
 
 	return &AlbumPageBuilder{
 		deps:               deps,
@@ -41,15 +63,16 @@ func NewAlbumPageBuilder(deps getAlbumImagesDeps) *AlbumPageBuilder {
 	}
 }
 
-func (pb *AlbumPageBuilder) getCachedAlbum(ctx context.Context, name string, preview bool) (getAlbumOutput, error) {
-	cacheKey := []byte(name + "/" + strconv.FormatBool(auth.IsAdmin(ctx)) + "/" + txt.Language(ctx) + "/" + strconv.FormatBool(preview))
+func (pb *AlbumPageBuilder) getCachedAlbum(ctx context.Context, name string, preview bool, page string, pageResolved bool) (getAlbumOutput, error) {
+	cacheKey := []byte(name + "/" + strconv.FormatBool(auth.IsAdmin(ctx)) + "/" + txt.Language(ctx) + "/" +
+		strconv.FormatBool(preview) + "/" + page)
 	cacheName := pb.albumDataCacheName
 	cacheMiss := false
 
 	d, err := pb.albumDataCache.Get(ctx, cacheKey, func(ctx context.Context) (getAlbumOutput, error) {
 		cacheMiss = true
 
-		return getAlbumContents(ctx, pb.deps, imagesFilter{albumName: name}, preview)
+		return getAlbumContents(ctx, pb.deps, imagesFilter{albumName: name, page: page, pageResolved: pageResolved}, preview)
 	})
 	if err != nil {
 		return getAlbumOutput{}, fmt.Errorf("cache get: %w, cache miss: %v", err, cacheMiss)
@@ -68,6 +91,28 @@ func (pb *AlbumPageBuilder) getCachedAlbum(ctx context.Context, name string, pre
 	}
 
 	return d, nil
+}
+
+// resolveHashPage finds which page of albumName contains the image with the given hash, so
+// permalinks like /{name}/photo-{hash}.html always open the page the photo actually lives on.
+// ok is false when the album has no pages, or the hash/album can't be resolved.
+func (pb *AlbumPageBuilder) resolveHashPage(ctx context.Context, albumName string, hash uniq.Hash) (page string, ok bool) {
+	album, err := pb.deps.PhotoAlbumFinder().FindByHash(ctx, photo.AlbumHash(albumName))
+	if err != nil {
+		return "", false
+	}
+
+	bounds := pageBoundaries(album.Settings.Texts)
+	if len(bounds) == 0 {
+		return "", false
+	}
+
+	img, err := pb.deps.PhotoImageFinder().FindByHash(ctx, hash)
+	if err != nil {
+		return "", false
+	}
+
+	return pageForUTime(bounds, img.UTime, album.Settings.NewestFirst), true
 }
 
 func (pb *AlbumPageBuilder) addSprites(ctx context.Context, d *albumPageData) {
@@ -208,7 +253,7 @@ func (pb *AlbumPageBuilder) albumSpriteImages(images []Image) []sprite.Image {
 
 func (pb *AlbumPageBuilder) cachedBuild(ctx context.Context, cont getAlbumOutput) (albumPageData, error) {
 	cacheKey := []byte("page:" + cont.Album.Name + "/" + strconv.FormatBool(auth.IsAdmin(ctx)) + "/" +
-		strconv.FormatBool(auth.IsBot(ctx)) + "/" + txt.Language(ctx))
+		strconv.FormatBool(auth.IsBot(ctx)) + "/" + txt.Language(ctx) + "/" + cont.Page)
 	cacheName := pb.albumPageCacheName
 	cacheMiss := false
 
@@ -272,7 +317,12 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	d := albumPageData{}
 	d.Title = album.Title
 
-	d.Description = template.HTML(album.Settings.Description)
+	// Description is only shown on the unnamed page ("" — see pageForTime).
+	if cont.Page == "" {
+		d.Description = template.HTML(album.Settings.Description)
+	}
+
+	d.Page = cont.Page
 	d.Name = album.Name
 	d.Public = album.Public
 	d.Hash = album.Hash.String()
@@ -281,7 +331,13 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	d.StrippedAlbumData = strippedAlbumData(cont)
 	d.AlbumData.Album.Settings.CollabKey = ""
 	d.StrippedAlbumData.Album.Settings.CollabKey = ""
+	// Computed fresh rather than reused from cont.Timeline: cont comes from the album-data
+	// persistent cache, a JSON blob that can predate whatever fields getAlbumOutput currently
+	// has — trusting a cached field here silently breaks the page the moment that field didn't
+	// exist yet when the entry was cached. Images/Texts are cheap to re-merge and don't have
+	// this problem since they're not new.
 	d.Timeline = buildAlbumTimeline(cont.Images, cont.Album.Settings.Texts, cont.Album.Settings.NewestFirst)
+	d.JsRender = album.Settings.JsRender
 	d.Featured = deps.Settings().Appearance().FeaturedAlbumName
 
 	d.fill(ctx, deps.TxtRenderer(), deps.Settings())
@@ -373,7 +429,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 			}
 		}
 
-		cont, err := pb.getCachedAlbum(ctx, a.Name, true)
+		cont, err := pb.getCachedAlbum(ctx, a.Name, true, "", false)
 
 		if len(cont.Images) == 0 && !d.IsAdmin {
 			continue
@@ -404,6 +460,8 @@ type albumPageData struct {
 	NewestFirst bool
 	Hash        string
 	IsPhotoPage bool
+	Page        string
+	JsRender    bool
 
 	Count          int
 	TotalSize      string
@@ -451,10 +509,17 @@ func (pb *AlbumPageBuilder) startPendingSpriteBuild(ctx context.Context, album p
 	}()
 }
 
+// albumTimelineItem is either a photo or a chrono text, already placed in final display order —
+// see buildAlbumTimeline. Image must round-trip through JSON: the album-page persistent cache
+// stores albumPageData (which embeds this) as JSON, and on a cache hit build() never re-runs, so
+// whatever the server template needs to render has to survive that exact round-trip, not just
+// work when freshly computed in memory. ImageHash is a separate, deliberately minimal key: a
+// client-side renderer only ever needs the hash, never the full (and here duplicated) Image object.
 type albumTimelineItem struct {
-	Image *Image
-	Text  template.HTML
-	Ts    int64
+	Image     *Image        `json:"image_full,omitempty"`
+	ImageHash string        `json:"image,omitempty"`
+	Text      template.HTML `json:"text,omitempty"`
+	Ts        int64         `json:"-"`
 }
 
 func strippedAlbumData(cont getAlbumOutput) getAlbumOutput {
@@ -469,6 +534,19 @@ func strippedAlbumData(cont getAlbumOutput) getAlbumOutput {
 	}
 
 	return res
+}
+
+// appendText adds a text timeline entry, unless its text is blank — there's no use case for
+// rendering an empty chrono-text block, so it's dropped here rather than trusted to callers.
+func appendText(timeline []albumTimelineItem, t txt.Chronological) []albumTimelineItem {
+	if strings.TrimSpace(t.Text) == "" {
+		return timeline
+	}
+
+	return append(timeline, albumTimelineItem{
+		Text: template.HTML(t.Text),
+		Ts:   t.Time.Unix(),
+	})
 }
 
 func buildAlbumTimeline(images []Image, texts []txt.Chronological, newestFirst bool) []albumTimelineItem {
@@ -487,25 +565,16 @@ func buildAlbumTimeline(images []Image, texts []txt.Chronological, newestFirst b
 		}
 
 		if len(remaining) > 0 {
+			imgTime := time.Unix(img.UTime, 0)
+
 			next := remaining[:0]
 			for _, t := range remaining {
-				tt := t.Time.Unix()
-				if newestFirst {
-					if tt < img.UTime {
-						next = append(next, t)
-						continue
-					}
-				} else {
-					if tt > img.UTime {
-						next = append(next, t)
-						continue
-					}
+				if !displayReached(imgTime, t.Time, newestFirst) {
+					next = append(next, t)
+					continue
 				}
 
-				timeline = append(timeline, albumTimelineItem{
-					Text: template.HTML(t.Text),
-					Ts:   tt,
-				})
+				timeline = appendText(timeline, t)
 			}
 
 			remaining = next
@@ -513,16 +582,14 @@ func buildAlbumTimeline(images []Image, texts []txt.Chronological, newestFirst b
 
 		imgCopy := img
 		timeline = append(timeline, albumTimelineItem{
-			Image: &imgCopy,
-			Ts:    img.UTime,
+			Image:     &imgCopy,
+			ImageHash: img.Hash,
+			Ts:        img.UTime,
 		})
 	}
 
 	for _, t := range remaining {
-		timeline = append(timeline, albumTimelineItem{
-			Text: template.HTML(t.Text),
-			Ts:   t.Time.Unix(),
-		})
+		timeline = appendText(timeline, t)
 	}
 
 	return timeline

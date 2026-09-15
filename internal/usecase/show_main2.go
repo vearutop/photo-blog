@@ -138,7 +138,7 @@ func ShowMain2(deps showMainDeps) usecase.IOInteractorOf[showMainInput, web.Page
 
 		featured := deps.Settings().Appearance().FeaturedAlbumName
 
-		cont, err := b.getCachedAlbum(ctx, featured, false)
+		cont, err := b.getCachedAlbum(ctx, featured, false, "", false)
 		if err != nil {
 			if errors.Is(err, status.NotFound) {
 				return notFound.Invoke(ctx, struct{}{}, out)

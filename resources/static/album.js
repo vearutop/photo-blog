@@ -315,7 +315,26 @@ function loadAlbum(params) {
         }
 
         var albumSettings = result.album.settings
-        var chronoTexts = result.album.settings.texts
+
+        // textsBeforeHash/trailingTexts come from the server-computed timeline (already in final
+        // display order, already respecting NewestFirst/pagination/whatever ordering exists) — so
+        // this renderer never has to compare timestamps or branch on newest_first itself, it just
+        // inserts each text where the server says it goes.
+        var textsBeforeHash = {}
+        var trailingTexts = []
+        if (Array.isArray(result.timeline)) {
+            var pendingTexts = []
+            for (var tli = 0; tli < result.timeline.length; tli++) {
+                var tlItem = result.timeline[tli]
+                if (tlItem.image) {
+                    textsBeforeHash[tlItem.image] = pendingTexts
+                    pendingTexts = []
+                } else if (tlItem.text) {
+                    pendingTexts.push(tlItem)
+                }
+            }
+            trailingTexts = pendingTexts
+        }
 
         var exifHtml = {}
 
@@ -430,31 +449,11 @@ function loadAlbum(params) {
                 }
 
 
-                var ts = img.utime
+                if (!params.preRendered) {
+                    var dueTexts = textsBeforeHash[img.hash] || []
 
-                if (chronoTexts && !params.preRendered) {
-                    var ct = [];
-
-                    for (var ti = 0; ti < chronoTexts.length; ti++) {
-                        var t = chronoTexts[ti]
-
-                        var tt = Date.parse(t.time) / 1000
-
-                        if (albumSettings.newest_first) {
-                            if (tt < ts) {
-                                ct.push(t)
-
-                                continue
-                            }
-                        } else {
-                            if (tt > ts) {
-                                ct.push(t)
-
-                                continue
-                            }
-                        }
-
-                        var div = $("<div data-ts='" + tt + "' class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
+                    for (var ti = 0; ti < dueTexts.length; ti++) {
+                        var div = $("<div class='chrono-text'><div class='text some-text'>" + dueTexts[ti].text + "</div></div>")
 
                         if (existing) {
                             a.before(div)
@@ -463,8 +462,6 @@ function loadAlbum(params) {
                         }
                     }
                 }
-
-                chronoTexts = ct
 
                 exif["file_name"] = img.name
                 exif["size"] = humanFileSize(img.size) + ", " + (Math.round((img.width * img.height) / 10000) / 100 + " MP")
@@ -613,10 +610,9 @@ function loadAlbum(params) {
         updateSelectionWidgets()
 
 
-        if (chronoTexts && !params.preRendered) {
-            for (var ti = 0; ti < chronoTexts.length; ti++) {
-                var t = chronoTexts[ti]
-                $(params.gallery).append("<div class='chrono-text'><div class='text some-text'>" + t.text + "</div></div>")
+        if (!params.preRendered) {
+            for (var ti = 0; ti < trailingTexts.length; ti++) {
+                $(params.gallery).append("<div class='chrono-text'><div class='text some-text'>" + trailingTexts[ti].text + "</div></div>")
             }
         }
 

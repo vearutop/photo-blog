@@ -149,8 +149,8 @@
             {{end}}
 
             {{if and .TotalSize (not .IsBot) }}
-                <a title="Download all" rel="nofollow" class="ctrl-btn download-icon"
-                   href="/album/{{.Name}}.zip"></a> {{.TotalSize}} zip, {{.Count}} photos
+                <a title="Download {{if .Page}}this page{{else}}all{{end}}" rel="nofollow" class="ctrl-btn download-icon"
+                   href="/album/{{.Name}}.zip{{if .Page}}?page={{.Page}}{{end}}"></a> {{.TotalSize}} zip, {{.Count}} photos
             {{end}}
 
             <a id="view-selected-link" title="View selected images" href="#" style="display: none; margin-left: 10px;">View selected (<span id="view-selected-count">0</span>)</a>
@@ -168,7 +168,7 @@
     <div id="exif-container" class="exif"></div>
 
     <div id="gallery" class="grid">
-        {{if .PreRender}}
+        {{if and .PreRender (not .JsRender)}}
             {{range $i, $item := .Timeline}}
                 {{if $item.Image}}{{$img := $item.Image}}{{$landscape := ge $img.Width $img.Height}}
                     <figure>
@@ -203,7 +203,7 @@
                             {{end}}
                         </div>
                     </figure>
-                {{else}}
+                {{else if $item.Text}}
                     <div data-ts="{{$item.Ts}}" class="chrono-text">
                         <div class="text some-text">{{$item.Text}}</div>
                     </div>
@@ -215,7 +215,7 @@
     {{if .HasPanos}}
         <div id="gallery-pano">
             <h2>Panoramas</h2>
-            {{if .PreRender}}
+            {{if and .PreRender (not .JsRender)}}
                 {{range $i, $img := .AlbumData.Images}}
                     {{if $img.Is360Pano}}
                         <a id="img{{$img.Hash}}" href="/{{$.Name}}/pano-{{$img.Hash}}.html">
@@ -240,10 +240,10 @@
             imageBaseUrl: "{{.ImageBaseURL}}",
             gallery: "#gallery",
             galleryPano: "#gallery-pano",
-            baseUrl: "/{{.Name}}/",
+            baseUrl: "/{{.Name}}/{{if .Page}}{{.Page}}/{{end}}",
             collabKey: "{{.CollabKey}}",
             albumData: {{.StrippedAlbumData}},
-            preRendered: {{.PreRender}},
+            preRendered: {{and .PreRender (not .JsRender)}},
             enableFavorite: {{.EnableFavorite}},
             showMap: {{.ShowMap}},
             showAISays: {{.ShowAISays}},

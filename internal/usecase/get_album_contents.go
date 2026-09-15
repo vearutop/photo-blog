@@ -7,6 +7,9 @@ import (
 	"html/template"
 	"math"
 	"path"
+	"regexp"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -87,6 +90,17 @@ type getAlbumOutput struct {
 	SpriteSheets  map[string]sprite.Sheet     `json:"sprite_sheets,omitempty"`
 	HideOriginal  bool                        `json:"hide_original"`
 	SkipSprites   bool                        `json:"skip_sprites,omitempty"`
+
+	// Page is the resolved page (chrono-marker split) shown in Images. "" means the unnamed page —
+	// not yet opened (oldest-first) or not yet closed out (newest-first); see pageForTime.
+	Page string `json:"page,omitempty"`
+	// Pages lists every page that has at least one image, in chronological order.
+	Pages []string `json:"pages,omitempty"`
+
+	// Timeline is Images and the rendered chrono texts merged into final display order — see
+	// buildAlbumTimeline. A client-side renderer should walk this instead of re-deriving order
+	// from Images/Album.Settings.Texts, so ordering logic lives in exactly one place.
+	Timeline []albumTimelineItem `json:"timeline,omitempty"`
 }
 
 // GetAlbumContents creates use case interactor to get album data.
@@ -124,18 +138,179 @@ func parseListHashes(name string) ([]uniq.Hash, error) {
 	return hashes, nil
 }
 
-func reverse[S ~[]E, E any](s S) {
-	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-		s[i], s[j] = s[j], s[i]
-	}
-}
-
 type imagesFilter struct {
 	albumName string
 	search    string
 	lens      string
 	camera    string
 	list      []uniq.Hash
+
+	// page requests one page (chrono-marker split) of a real album; "" means "use the default page".
+	page string
+	// pageResolved marks page as already resolved (e.g. from a photo hash permalink), skipping
+	// default-page resolution and page-name validation.
+	pageResolved bool
+}
+
+// pageMarkerRe matches a "[page:NAME]" directive as the first line of a chrono text.
+var pageMarkerRe = regexp.MustCompile(`^\s*\[page:([^\]\n]+)\][ \t]*\r?\n?`)
+
+// splitPageMarker extracts a leading "[page:NAME]" directive from a chrono text, returning the
+// page name it starts ("" if none) and the remaining text with the directive line removed.
+func splitPageMarker(text string) (page, rest string) {
+	m := pageMarkerRe.FindStringSubmatchIndex(text)
+	if m == nil {
+		return "", text
+	}
+
+	return strings.TrimSpace(text[m[2]:m[3]]), text[m[1]:]
+}
+
+// pageBoundary marks where a named album page begins.
+type pageBoundary struct {
+	time time.Time
+	name string
+}
+
+// pageBoundaries extracts page-split markers from an album's chrono texts, sorted ascending by time.
+// "[page:*]" is a wildcard: it marks a chrono text as shown on every page and never starts one.
+func pageBoundaries(texts []txt.Chronological) []pageBoundary {
+	var bounds []pageBoundary
+
+	for _, t := range texts {
+		name, _ := splitPageMarker(t.Text)
+		if name == "" || name == "*" {
+			continue
+		}
+
+		bounds = append(bounds, pageBoundary{time: t.Time, name: name})
+	}
+
+	sort.Slice(bounds, func(i, j int) bool { return bounds[i].time.Before(bounds[j].time) })
+
+	return bounds
+}
+
+// displayBefore is the single source of truth for what an album's display order means: whether
+// moment a is shown before moment b. Every place that cares about NewestFirst — page splitting,
+// timeline interleaving, finding the "first" image — goes through this one function, so a new
+// ordering scheme (or a fix to this one) only has to change in one place.
+func displayBefore(a, b time.Time, newestFirst bool) bool {
+	if newestFirst {
+		return a.After(b)
+	}
+
+	return a.Before(b)
+}
+
+// displayReached reports whether, by the time display order arrives at moment t, a marker/text
+// timestamped at bt has already been passed.
+func displayReached(t, bt time.Time, newestFirst bool) bool {
+	return !displayBefore(t, bt, newestFirst)
+}
+
+// pageForTime resolves which page a moment belongs to. A "[page:NAME]" marker is a pure split
+// point — whether it opens the page that follows or closes the page that precedes depends on
+// which way the album reads, because that's genuinely which side you haven't gotten to yet:
+//
+//   - Oldest-first: a marker OPENS the page that follows it going forward in time, like dating the
+//     first entry of a new chapter. A moment belongs to the latest marker at or before it; "" is
+//     everything before the first marker (not opened yet).
+//   - Newest-first: a marker CLOSES the page that precedes it, like stamping "this is 2025" on New
+//     Year's Eve for the year that just ended. A moment belongs to the earliest marker at or after
+//     it; "" is everything after the last marker (not closed out yet — the current page).
+//
+// Both read the same way through displayReached: a boundary applies once display order has reached
+// it, and bounds is sorted ascending, so oldest-first keeps the latest reached boundary while
+// newest-first (walking conceptually from the end) stops at the first one.
+func pageForTime(bounds []pageBoundary, t time.Time, newestFirst bool) string {
+	if newestFirst {
+		for _, b := range bounds {
+			if displayReached(t, b.time, newestFirst) {
+				return b.name
+			}
+		}
+
+		return ""
+	}
+
+	page := ""
+
+	for _, b := range bounds {
+		if !displayReached(t, b.time, newestFirst) {
+			break
+		}
+
+		page = b.name
+	}
+
+	return page
+}
+
+func pageForUTime(bounds []pageBoundary, utime int64, newestFirst bool) string {
+	return pageForTime(bounds, time.Unix(utime, 0), newestFirst)
+}
+
+// defaultPage picks the page containing the first image in display order (respecting newestFirst) —
+// what a bare album URL should show.
+func defaultPage(images []photo.Image, newestFirst bool, bounds []pageBoundary) string {
+	var target *photo.Image
+
+	for i := range images {
+		if images[i].BlurHash == "" {
+			continue // unprocessed, never displayed
+		}
+
+		if target == nil || displayBefore(time.Unix(images[i].UTime, 0), time.Unix(target.UTime, 0), newestFirst) {
+			target = &images[i]
+		}
+	}
+
+	if target == nil {
+		return ""
+	}
+
+	return pageForUTime(bounds, target.UTime, newestFirst)
+}
+
+// filterImagesByPage keeps only the images whose timestamp falls on the given page.
+func filterImagesByPage(images []photo.Image, bounds []pageBoundary, page string, newestFirst bool) []photo.Image {
+	filtered := images[:0]
+
+	for _, img := range images {
+		if pageForUTime(bounds, img.UTime, newestFirst) == page {
+			filtered = append(filtered, img)
+		}
+	}
+
+	return filtered
+}
+
+// filterPageTexts strips "[page:NAME]" directives from chrono texts and keeps only the entries
+// belonging to the given page. A marker's own trailing text (if any) becomes a normal chrono text
+// like any other, positioned in the timeline by its own real timestamp — a marker only decides
+// page membership, not display position.
+func filterPageTexts(texts []txt.Chronological, page string, newestFirst bool) []txt.Chronological {
+	bounds := pageBoundaries(texts)
+
+	filtered := texts[:0]
+
+	for _, t := range texts {
+		name, rest := splitPageMarker(t.Text)
+
+		if name != "*" && pageForUTime(bounds, t.Time.Unix(), newestFirst) != page {
+			continue
+		}
+
+		if name != "" && strings.TrimSpace(rest) == "" {
+			continue
+		}
+
+		t.Text = rest
+		filtered = append(filtered, t)
+	}
+
+	return filtered
 }
 
 func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter imagesFilter, preview bool) (out getAlbumOutput, err error) {
@@ -237,6 +412,49 @@ func getAlbumContents(ctx context.Context, deps getAlbumImagesDeps, filter image
 
 	if err != nil {
 		return out, err
+	}
+
+	bounds := pageBoundaries(album.Settings.Texts)
+
+	if len(bounds) > 0 {
+		seen := make(map[string]bool, len(bounds)+1)
+
+		for _, img := range images {
+			if img.BlurHash == "" {
+				continue
+			}
+
+			seen[pageForUTime(bounds, img.UTime, album.Settings.NewestFirst)] = true
+		}
+
+		for _, b := range bounds {
+			if seen[b.name] {
+				out.Pages = append(out.Pages, b.name)
+			}
+		}
+
+		if seen[""] {
+			out.Pages = append(out.Pages, "")
+		}
+	}
+
+	switch {
+	case filter.pageResolved:
+		images = filterImagesByPage(images, bounds, filter.page, album.Settings.NewestFirst)
+		out.Page = filter.page
+
+	case filter.page != "":
+		if !slices.Contains(out.Pages, filter.page) {
+			return out, status.NotFound
+		}
+
+		images = filterImagesByPage(images, bounds, filter.page, album.Settings.NewestFirst)
+		out.Page = filter.page
+
+	case len(bounds) > 0:
+		page := defaultPage(images, album.Settings.NewestFirst, bounds)
+		images = filterImagesByPage(images, bounds, page, album.Settings.NewestFirst)
+		out.Page = page
 	}
 
 	out.Album = album
@@ -430,9 +648,11 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 		out.Images = append(out.Images, img)
 	}
 
-	if albumSettings.NewestFirst {
-		reverse(out.Images)
-	}
+	sort.SliceStable(out.Images, func(i, j int) bool {
+		return displayBefore(time.Unix(out.Images[i].UTime, 0), time.Unix(out.Images[j].UTime, 0), albumSettings.NewestFirst)
+	})
+
+	albumSettings.Texts = filterPageTexts(albumSettings.Texts, out.Page, albumSettings.NewestFirst)
 
 	if albumSettings.DailyRulers {
 		dateShift := -time.Second
@@ -503,6 +723,7 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 	album.Settings = albumSettings
 
 	out.Album = album
+	out.Timeline = buildAlbumTimeline(out.Images, albumSettings.Texts, albumSettings.NewestFirst)
 
 	return nil
 }

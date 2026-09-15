@@ -43,6 +43,7 @@ type AlbumSettings struct {
 	GpxTracksHashes []uniq.Hash         `json:"gpx_tracks_hashes,omitempty" items.title:"Hash" title:"GPX track hashes"`
 	NewestFirst     bool                `json:"newest_first,omitempty" noTitle:"true" inlineTitle:"Newest first" description:"Show newest images at the top."`
 	DailyRulers     bool                `json:"daily_rulers,omitempty" noTitle:"true" inlineTitle:"Daily rulers" description:"Show date splits between the photos."`
+	JsRender        bool                `json:"js_render,omitempty" noTitle:"true" inlineTitle:"Render in browser (JS)" description:"Experimental: build the photo grid client-side from JSON instead of pre-rendered HTML."`
 	Texts           []txt.Chronological `json:"texts,omitempty" title:"Chronological texts"`
 	TextReplaces    txt.Replaces        `json:"text_replaces,omitempty" title:"Text replaces"`
 

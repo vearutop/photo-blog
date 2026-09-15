@@ -20,17 +20,37 @@ type showAlbumAtImageInput struct {
 	Hash uniq.Hash `path:"hash"`
 }
 
+type showAlbumAtPageInput struct {
+	showAlbumInput
+	Page string `path:"page"`
+}
+
 type showAlbumInput struct {
 	request.EmbeddedSetter
 
 	Name      string `path:"name"`
 	CollabKey string `query:"collab_key" description:"Access key to enable content upload and management."`
 	imgHash   uniq.Hash
+	page      string
 }
 
 func ShowAlbumAtImage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumAtImageInput, out *web.Page) error {
 		in.imgHash = in.Hash
+
+		return up.Invoke(ctx, in.showAlbumInput, out)
+	})
+
+	u.SetTags("Album")
+	u.SetExpectedErrors(status.Unknown, status.InvalidArgument)
+
+	return u
+}
+
+// ShowAlbumAtPage creates use case interactor to show one page (chrono-marker split) of an album.
+func ShowAlbumAtPage(up usecase.IOInteractorOf[showAlbumInput, web.Page]) usecase.Interactor {
+	u := usecase.NewInteractor(func(ctx context.Context, in showAlbumAtPageInput, out *web.Page) error {
+		in.page = in.Page
 
 		return up.Invoke(ctx, in.showAlbumInput, out)
 	})
@@ -65,7 +85,17 @@ func ShowAlbum(deps getAlbumImagesDeps) usecase.IOInteractorOf[showAlbumInput, w
 		deps.StatsTracker().Add(ctx, "show_album", 1)
 		deps.CtxdLogger().Debug(ctx, "showing album", "name", in.Name)
 
-		cont, err := b.getCachedAlbum(ctx, in.Name, false)
+		page := in.page
+		pageResolved := false
+
+		if in.imgHash != 0 {
+			if resolved, ok := b.resolveHashPage(ctx, in.Name, in.imgHash); ok {
+				page = resolved
+				pageResolved = true
+			}
+		}
+
+		cont, err := b.getCachedAlbum(ctx, in.Name, false, page, pageResolved)
 		if err != nil {
 			if errors.Is(err, status.NotFound) {
 				return notFound.Invoke(ctx, struct{}{}, out)

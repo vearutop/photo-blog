@@ -35,6 +35,7 @@ type dlAlbumDeps interface {
 type dlAlbumInput struct {
 	Name     string `path:"name"`
 	Favorite bool   `query:"favorite"`
+	Page     string `query:"page" description:"Download only this page (chrono-marker split) of the album."`
 }
 
 func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
@@ -77,6 +78,12 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 
 			if err != nil {
 				return err
+			}
+
+			if !in.Favorite {
+				if bounds := pageBoundaries(album.Settings.Texts); len(bounds) > 0 {
+					images = filterImagesByPage(images, bounds, in.Page, album.Settings.NewestFirst)
+				}
 			}
 		}
 
@@ -132,7 +139,12 @@ func DownloadAlbum(deps dlAlbumDeps) usecase.Interactor {
 			}
 		}
 
-		h := httpzip.NewHandler(album.Name)
+		zipName := album.Name
+		if in.Page != "" && !in.Favorite {
+			zipName += "-" + in.Page
+		}
+
+		h := httpzip.NewHandler(zipName)
 		h.OnError = func(err error) {
 			deps.CtxdLogger().Error(ctx, "serve zip", "error", err)
 		}

@@ -298,6 +298,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/main2/", usecase.ShowMain2(deps))
 		showAlbum := usecase.ShowAlbum(deps)
 		s.Get("/{name}/", showAlbum)
+		s.Get("/{name}/{page}/", usecase.ShowAlbumAtPage(showAlbum))
 		s.Get("/{name}/photo-{hash}.html", usecase.ShowAlbumAtImage(showAlbum))
 
 		s.Get("/search/", usecase.SearchImages(deps))
