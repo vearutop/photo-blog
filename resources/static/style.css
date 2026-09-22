@@ -43,6 +43,15 @@ body.dark-mode {
     vertical-align: middle;
 }
 
+.pswp__select-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.pswp__select-checkbox .img-select-checkbox {
+    margin: 0 12px;
+}
+
 .image-select-mode .img-select-checkbox {
     display: inline-block;
 }

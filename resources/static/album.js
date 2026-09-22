@@ -431,8 +431,7 @@ function loadAlbum(params) {
                 a.attr("data-pswp-srcset", srcSet)
                 a.attr("data-ts", img.utime)
 
-                var img_description = '<input type="checkbox" class="img-select-checkbox img-select-checkbox-caption" data-hash="' + img.hash + '" onclick="toggleImageSelect(this, event)" />' +
-                    '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
+                var img_description = '<a title="Edit details" class="control-panel ctrl-btn edit-icon" href="/edit/image/' + img.hash + '.html"></a>'
                 if (result.album.name !== featured) {
                     img_description += '<a title="Add to featured" class="control-panel ctrl-btn star-icon" href="#" onclick="addToFeatured(\'' + img.hash + '\');return false"></a>'
                 }
@@ -712,13 +711,37 @@ function loadAlbum(params) {
         //const _autoHideUI = new PhotoSwipeAutoHideUI(lightbox, {});
 
 
+        // Selection checkbox in the top bar, so it stays visible in full screen.
+        lightbox.on('uiRegister', function () {
+            lightbox.pswp.ui.registerElement({
+                name: 'select-checkbox',
+                order: 7.5, // Right of tech details (7, after the preloader's margin-right: auto), before fullscreen (8).
+                isButton: false,
+                html: '<input type="checkbox" title="Select" class="img-select-checkbox img-select-checkbox-caption" onclick="toggleImageSelect(this, event)" />',
+                onInit: (el, pswp) => {
+                    var cb = el.querySelector('input')
+                    pswp.on('change', () => {
+                        cb.setAttribute('data-hash', $(pswp.currSlide.data.element).data('hash'))
+                        refreshImageSelectCheckboxes()
+                    });
+                }
+            });
+        });
+
         lightbox.on('uiRegister', function () {
             lightbox.pswp.ui.registerElement({
                 name: 'tech-details-button',
                 ariaLabel: 'Technical details',
                 order: 7,
                 isButton: true,
-                html: '<i title="Technical details" class="camera-icon ctrl-btn"></i>',
+                title: 'Technical details',
+                // Camera icon (https://www.iconfinder.com/icons/211634/camera_icon) scaled from 512 to 32 viewBox,
+                // outlined like built-in PhotoSwipe icons.
+                html: {
+                    isCustomSVG: true,
+                    inner: '<g id="pswp__icn-camera" transform="translate(6.3 6.3) scale(0.038)"><path vector-effect="non-scaling-stroke" d="M430.4,147h-67.5l-40.4-40.8c0,0-0.2-0.2-0.3-0.2l-0.2-0.2v0c-6-6-14.1-9.8-23.3-9.8h-84c-9.8,0-18.5,4.2-24.6,10.9l0,0.1l-39.5,40H81.6C63,147,48,161.6,48,180.2v202.1c0,18.6,15,33.7,33.6,33.7h348.8c18.5,0,33.6-15.1,33.6-33.7V180.2C464,161.6,448.9,147,430.4,147z M256,365.5c-50.9,0-92.4-41.6-92.4-92.6c0-51.1,41.5-92.6,92.4-92.6c51,0,92.4,41.5,92.4,92.6C348.4,323.9,307,365.5,256,365.5z M424.1,200.5c-7.7,0-14-6.3-14-14.1s6.3-14.1,14-14.1c7.7,0,14,6.3,14,14.1S431.8,200.5,424.1,200.5z"/><path vector-effect="non-scaling-stroke" d="M256,202.9c-38.6,0-69.8,31.3-69.8,70c0,38.6,31.2,70,69.8,70c38.5,0,69.8-31.3,69.8-70C325.8,234.2,294.5,202.9,256,202.9z"/></g>',
+                    outlineID: 'pswp__icn-camera'
+                },
                 onClick: (event, el) => {
                     var hash = $(pswp.currSlide.data.element).data('hash')
                     var exh = exifHtml[hash]
@@ -737,7 +760,13 @@ function loadAlbum(params) {
                 ariaLabel: 'Toggle full screen',
                 order: 8,
                 isButton: true,
-                html: '<i title="Toggle full screen" class="screen-icon ctrl-btn"></i>',
+                title: 'Toggle full screen',
+                // Monitor icon (https://www.iconfinder.com/icons/211777/monitor_icon), outlined like built-in PhotoSwipe icons.
+                html: {
+                    isCustomSVG: true,
+                    inner: '<g id="pswp__icn-fullscreen" transform="translate(7.2 7.2) scale(0.55)"><path vector-effect="non-scaling-stroke" d="M28,2h-6c-1.104,0-2,0.896-2,2s0.896,2,2,2h1.2l-4.6,4.601C18.28,10.921,18,11.344,18,12c0,1.094,0.859,2,2,2c0.641,0,1.049-0.248,1.4-0.6L26,8.8V10c0,1.104,0.896,2,2,2s2-0.896,2-2V4C30,2.896,29.104,2,28,2z M12,18c-0.641,0-1.049,0.248-1.4,0.6L6,23.2V22c0-1.104-0.896-2-2-2s-2,0.896-2,2v6c0,1.104,0.896,2,2,2h6c1.104,0,2-0.896,2-2s-0.896-2-2-2H8.8l4.6-4.601C13.72,21.079,14,20.656,14,20C14,18.906,13.141,18,12,18z"/></g>',
+                    outlineID: 'pswp__icn-fullscreen'
+                },
                 onClick: (event, el) => {
                     toggleFullscreen()
                 }
@@ -842,10 +871,6 @@ function loadAlbum(params) {
             currentImage.time = Date.now() - unfocused;
             currentImage.w = content.displayedImageWidth
             currentImage.h = content.displayedImageHeight
-
-            // The dynamic caption panel is rebuilt from innerHTML on slide activation, which drops the
-            // "checked" DOM property (it isn't reflected as an HTML attribute), so re-sync after it renders.
-            setTimeout(refreshImageSelectCheckboxes, 0)
         });
 
         lightbox.on('close', () => {

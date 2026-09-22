@@ -293,10 +293,8 @@ function toggleImageSelect(checkbox, e) {
     var hash = checkbox.getAttribute('data-hash')
 
     if (e && e.shiftKey && lastClickedImageHash) {
-        // Range-select within the same view (thumbnail grid or lightbox caption), since both
-        // can be present in the DOM at once and shouldn't be mixed into one range.
-        var selector = checkbox.classList.contains('img-select-checkbox-caption')
-            ? '.img-select-checkbox-caption' : '.img-select-checkbox:not(.img-select-checkbox-caption)'
+        // Range-select in thumbnail grid order, which also works from the lightbox checkbox.
+        var selector = '.img-select-checkbox:not(.img-select-checkbox-caption)'
         var group = document.querySelectorAll(selector)
         var from = -1, to = -1
         for (var i = 0; i < group.length; i++) {
