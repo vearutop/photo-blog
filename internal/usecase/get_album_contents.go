@@ -648,9 +648,13 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 		out.Images = append(out.Images, img)
 	}
 
-	sort.SliceStable(out.Images, func(i, j int) bool {
-		return displayBefore(time.Unix(out.Images[i].UTime, 0), time.Unix(out.Images[j].UTime, 0), albumSettings.NewestFirst)
-	})
+	// Preview images already come pre-ordered (cover image first, best aspect ratio next) from
+	// FindPreviewImages — sorting by time here would bury the cover image in the stripe.
+	if !preview {
+		sort.SliceStable(out.Images, func(i, j int) bool {
+			return displayBefore(time.Unix(out.Images[i].UTime, 0), time.Unix(out.Images[j].UTime, 0), albumSettings.NewestFirst)
+		})
+	}
 
 	albumSettings.Texts = filterPageTexts(albumSettings.Texts, out.Page, albumSettings.NewestFirst)
 
