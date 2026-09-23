@@ -78,6 +78,7 @@ type AlbumVote struct {
 	Open          bool `json:"open,omitempty" noTitle:"true" inlineTitle:"Voting open" description:"Visitors can change their picks while voting is open."`
 	MaxPicks      int  `json:"max_picks,omitempty" title:"Max picks" description:"How many images a visitor can pick, default 5."`
 	ResultsPublic bool `json:"results_public,omitempty" noTitle:"true" inlineTitle:"Public results" description:"Visitors can see results, otherwise only admin can."`
+	Shuffle       bool `json:"shuffle,omitempty" noTitle:"true" inlineTitle:"Shuffle photos" description:"Show images in a deterministic shuffled order (by image hash) instead of chronological."`
 }
 
 // Limit returns the effective max number of picks per visitor.
