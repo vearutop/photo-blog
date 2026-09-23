@@ -121,3 +121,7 @@ type CommentThreadFinderProvider interface {
 type FavoriteRepositoryProvider interface {
 	FavoriteRepository() *storage.FavoriteRepository
 }
+
+type VoteRepositoryProvider interface {
+	VoteRepository() *storage.VoteRepository
+}

@@ -82,6 +82,7 @@ type Locator struct {
 	CommentThreadFinderProvider
 
 	FavoriteRepositoryProvider
+	VoteRepositoryProvider
 
 	CloudflareImageClassifierInstance *cloudflare.ImageClassifier
 	CloudflareImageDescriberInstance  *cloudflare.ImageDescriber

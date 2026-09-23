@@ -248,6 +248,7 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 
 	fr := storage.NewFavoriteRepository(l.Storage)
 	l.FavoriteRepositoryProvider = fr
+	l.VoteRepositoryProvider = storage.NewVoteRepository(l.Storage)
 
 	statsStorage, err := setupStorage(l, "stats", sqlite_stats.Migrations)
 	if err != nil {

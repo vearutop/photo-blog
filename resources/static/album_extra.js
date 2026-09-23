@@ -596,3 +596,106 @@ function distance(lat1, lon1, lat2, lon2) {
 
     return 6371000 * c
 }
+
+// Album voting: visitors pick up to max_picks best images, picks are stored on the server.
+
+var voteAlbumName = null
+var voteState = null
+var voteThumbBase = '/thumb'
+
+function voteRequest(method, imageHash, onOK) {
+    var url = '/vote?album_name=' + encodeURIComponent(voteAlbumName)
+    if (imageHash) {
+        url += '&image_hash=' + imageHash
+    }
+
+    fetch(url, {method: method}).then(function (resp) {
+        return resp.text().then(function (body) {
+            var data = body ? JSON.parse(body) : null
+            if (!resp.ok) {
+                throw new Error(data && data.error ? data.error : resp.statusText)
+            }
+            onOK(data)
+        })
+    }).catch(function (e) {
+        alert('Vote failed: ' + e.message)
+    })
+}
+
+// initVote adds pick buttons to album thumbnails and a vote bar above the gallery.
+function initVote(albumName, gallery, thumbBase) {
+    voteAlbumName = albumName
+    if (thumbBase) {
+        voteThumbBase = thumbBase
+    }
+
+    $(gallery).before('<div id="vote-bar" class="vote-bar"></div><div id="vote-results" class="vote-results" style="display: none"></div>')
+
+    $(gallery).find('a.image[data-hash] .thumb').each(function () {
+        var h = $(this).closest('a.image').attr('data-hash')
+        // Handled on the star itself (not delegated) to stop the click before it reaches the lightbox on gallery.
+        $(this).append('<span class="vote-pick" data-hash="' + h + '" title="Pick as one of the best" ' +
+            'onclick="event.preventDefault();event.stopPropagation();toggleVote(this.getAttribute(\'data-hash\'))"></span>')
+    })
+
+    loadVote()
+}
+
+function loadVote() {
+    voteRequest('GET', null, function (st) {
+        voteState = st
+        renderVote()
+    })
+}
+
+function isVotePicked(hash) {
+    return voteState && voteState.picks && voteState.picks.indexOf(hash) !== -1
+}
+
+function toggleVote(hash) {
+    if (!voteState || !voteState.open) {
+        return
+    }
+
+    if (!isVotePicked(hash) && voteState.picks.length >= voteState.max_picks) {
+        alert('You have used all ' + voteState.max_picks + ' picks, unpick an image to pick another one.')
+        return
+    }
+
+    voteRequest(isVotePicked(hash) ? 'DELETE' : 'POST', hash, loadVote)
+}
+
+function renderVote() {
+    var st = voteState
+    if (!st.picks) {
+        st.picks = []
+    }
+
+    $('.vote-pick').each(function () {
+        $(this).toggleClass('picked', isVotePicked($(this).attr('data-hash')))
+    })
+    document.documentElement.classList.toggle('vote-open', st.open)
+    $(document).trigger('vote-changed')
+
+    var bar = st.open
+        ? 'Pick up to ' + st.max_picks + ' best photos: <b>' + st.picks.length + '</b> of ' + st.max_picks + ' picked.'
+        : 'Voting is closed.'
+    if (st.can_see_results) {
+        bar += ' <a href="#" onclick="$(\'#vote-results\').toggle();return false">Show results</a>'
+    }
+    $('#vote-bar').html(bar)
+
+    if (!st.can_see_results) {
+        return
+    }
+
+    var res = st.results || []
+    var html = '<div>' + st.voters + ' voter(s)' + (res.length ? '' : ', no picks yet') + '</div>'
+    for (var i = 0; i < res.length; i++) {
+        var r = res[i]
+        html += '<a class="vote-result' + (isVotePicked(r.hash) ? ' picked' : '') + '" href="/' + voteAlbumName + '/photo-' + r.hash + '.html">' +
+            '<img alt="#' + (i + 1) + '" src="' + voteThumbBase + '/300w/' + r.hash + '.jpg" />' +
+            '<span>#' + (i + 1) + ' ★ ' + r.count + '</span></a>'
+    }
+    $('#vote-results').html(html)
+}

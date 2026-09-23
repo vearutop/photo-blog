@@ -393,6 +393,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 
 	if deps.Settings().Visitors().Tag {
 		d.EnableFavorite = true
+		d.EnableVote = album.Settings.Vote.Enabled
 	}
 
 	switch {
@@ -456,6 +457,7 @@ type albumPageData struct {
 	TotalSize      string
 	Visits         string
 	EnableFavorite bool
+	EnableVote     bool
 
 	MapTiles       string
 	MapAttribution string

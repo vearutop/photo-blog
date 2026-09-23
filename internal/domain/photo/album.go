@@ -68,6 +68,25 @@ type AlbumSettings struct {
 	ShowPrivateSubAlbums bool     `json:"show_private_sub_albums,omitempty" title:"Show private sub albums"`
 	ShowHiddenSubAlbums  bool     `json:"show_hidden_sub_albums,omitempty" title:"Show hidden sub albums"`
 	SubAlbumNames        []string `json:"sub_album_names,omitempty" items.title:"Album Name" title:"Sub albums"`
+
+	Vote AlbumVote `json:"vote,omitzero" title:"Voting" description:"Let visitors pick the best images of the album."`
+}
+
+// AlbumVote configures visitor voting for the best images of an album.
+type AlbumVote struct {
+	Enabled       bool `json:"enabled,omitempty" noTitle:"true" inlineTitle:"Enable voting" description:"Show voting UI for this album, votes are kept when disabled."`
+	Open          bool `json:"open,omitempty" noTitle:"true" inlineTitle:"Voting open" description:"Visitors can change their picks while voting is open."`
+	MaxPicks      int  `json:"max_picks,omitempty" title:"Max picks" description:"How many images a visitor can pick, default 5."`
+	ResultsPublic bool `json:"results_public,omitempty" noTitle:"true" inlineTitle:"Public results" description:"Visitors can see results, otherwise only admin can."`
+}
+
+// Limit returns the effective max number of picks per visitor.
+func (v AlbumVote) Limit() int {
+	if v.MaxPicks <= 0 {
+		return 5
+	}
+
+	return v.MaxPicks
 }
 
 func (s *AlbumSettings) Scan(src any) error {

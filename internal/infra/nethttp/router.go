@@ -326,6 +326,10 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Post("/favorite", usecase.AddFavorite(deps))
 		s.Delete("/favorite", usecase.DeleteFavorite(deps))
 		s.Get("/favorite", usecase.GetFavorite(deps))
+
+		s.Get("/vote", usecase.GetVote(deps))
+		s.Post("/vote", usecase.AddVote(deps))
+		s.Delete("/vote", usecase.DeleteVote(deps))
 	})
 
 	s.Get("/sitemap.xml", usecase.ServeSitemap(deps))
