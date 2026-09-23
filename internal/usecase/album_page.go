@@ -20,26 +20,15 @@ import (
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
-// albumCacheVersion must be bumped whenever getAlbumOutput or albumPageData's JSON shape changes
-// in a way that isn't safe for an old cached blob to deserialize into (i.e. anything but adding a
-// new field with omitempty that every reader tolerates being zero-value). album-data/album-page
-// are FailoverOf caches: they keep serving a stale blob past its TTL while refreshing in the
-// background, so an incompatible old shape doesn't error — it silently deserializes into zero
-// values, which is exactly what happened twice while pagination was being built (Image and
-// Timeline). Bumping this orphans every previously-cached entry at once instead of chasing each
-// field that turns out to depend on one.
-//
-// InvalidatePersistentCache's enum tag can't reference this constant (Go struct tags must be
-// literal strings), so its "album-data-N"/"album-page-N" entries must be updated by hand to match
-// whenever this changes.
-const albumCacheVersion = "2"
-
 // AlbumDataCacheName and AlbumPageCacheName are the persistent cache names for album content and
-// rendered album pages. Exported so InvalidatePersistentCache's allow-list can reference the same
-// values rather than duplicating the version number.
+// rendered album pages.
+//
+// These caches keep serving stale blobs past TTL, and an incompatible old shape silently deserializes
+// into zero values. When getAlbumOutput or albumPageData JSON shape changes incompatibly, add a migration
+// to internal/infra/storage/sqlite_cache that clears both caches, see 20260923140000_clear_album_cache.sql.
 const (
-	AlbumDataCacheName = "album-data-" + albumCacheVersion
-	AlbumPageCacheName = "album-page-" + albumCacheVersion
+	AlbumDataCacheName = "album-data"
+	AlbumPageCacheName = "album-page"
 )
 
 type AlbumPageBuilder struct {

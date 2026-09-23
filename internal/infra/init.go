@@ -47,6 +47,7 @@ import (
 	"github.com/vearutop/photo-blog/internal/infra/settings"
 	"github.com/vearutop/photo-blog/internal/infra/storage"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite"
+	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_cache"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_stats"
 	"github.com/vearutop/photo-blog/internal/infra/storage/sqlite_thumbs"
 	"github.com/vearutop/photo-blog/internal/infra/storage/visitor"
@@ -205,6 +206,9 @@ func NewServiceLocator(cfg service.Config, docsMode bool) (loc *service.Locator,
 		return nil, err
 	}
 	if err = applyStorageMigrations(l.CtxdLogger(), persistentCacheStorage, invalidation.Migrations); err != nil {
+		return nil, err
+	}
+	if err = applyStorageMigrations(l.CtxdLogger(), persistentCacheStorage, sqlite_cache.Migrations); err != nil {
 		return nil, err
 	}
 	l.PersistentCacheStorageInstance = persistentCacheStorage
