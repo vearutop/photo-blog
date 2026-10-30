@@ -89,6 +89,7 @@ window.openByHashInGallery = window.openByHashInGallery || function (galleryKey,
  * @property {String} galleryPano - CSS selector for gallery panoramas container
  * @property {String} baseUrl - base address to set on image close
  * @property {Boolean} enableFavorite - allow favorite pictures
+ * @property {Boolean} enableVote - allow picking best pictures of album
  * @property {String} imageBaseUrl - base address to link to full-res images
  * @property {String} thumbBaseUrl - thumbnail base URL
  * @property {String} collabKey - optional collaborator key to remove images
@@ -728,6 +729,35 @@ function loadAlbum(params) {
             });
         });
 
+        if (params.enableVote) {
+            lightbox.on('uiRegister', function () {
+                lightbox.pswp.ui.registerElement({
+                    name: 'vote-pick',
+                    order: 7.6, // Next to the selection checkbox.
+                    isButton: true,
+                    title: 'Pick as one of the best',
+                    html: {
+                        isCustomSVG: true,
+                        inner: '<polygon id="pswp__icn-vote" points="16.0,7.8 18.3,13.6 24.6,14.0 19.7,18.0 21.3,24.1 16.0,20.7 10.7,24.1 12.3,18.0 7.4,14.0 13.7,13.6"/>',
+                        outlineID: 'pswp__icn-vote'
+                    },
+                    onClick: (event, el, pswp) => {
+                        toggleVote(pswp.currSlide.data.element.getAttribute('data-hash'))
+                    },
+                    onInit: (el, pswp) => {
+                        var sync = () => {
+                            if (pswp.currSlide) {
+                                el.classList.toggle('picked', isVotePicked(pswp.currSlide.data.element.getAttribute('data-hash')))
+                            }
+                        }
+                        pswp.on('change', sync)
+                        $(document).on('vote-changed', sync)
+                        pswp.on('destroy', () => $(document).off('vote-changed', sync))
+                    }
+                });
+            });
+        }
+
         lightbox.on('uiRegister', function () {
             lightbox.pswp.ui.registerElement({
                 name: 'tech-details-button',
@@ -1149,6 +1179,9 @@ function loadAlbum(params) {
         renderAlbum(params.albumData)
         if (params.enableFavorite) {
             fillFavorite(params.albumData.album.hash)
+        }
+        if (params.enableVote) {
+            initVote(params.albumName, params.gallery, thumbBase)
         }
     } else {
         client.getAlbumContents({

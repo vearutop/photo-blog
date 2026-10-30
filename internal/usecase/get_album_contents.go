@@ -651,9 +651,17 @@ func (out *getAlbumOutput) prepare(ctx context.Context, deps getAlbumImagesDeps,
 	// Preview images already come pre-ordered (cover image first, best aspect ratio next) from
 	// FindPreviewImages — sorting by time here would bury the cover image in the stripe.
 	if !preview {
-		sort.SliceStable(out.Images, func(i, j int) bool {
-			return displayBefore(time.Unix(out.Images[i].UTime, 0), time.Unix(out.Images[j].UTime, 0), albumSettings.NewestFirst)
-		})
+		if albumSettings.Vote.Shuffle {
+			// Deterministic shuffle: hash order has no relation to capture time or filename,
+			// so it reads as random while staying stable across renders.
+			sort.SliceStable(out.Images, func(i, j int) bool {
+				return out.Images[i].Hash < out.Images[j].Hash
+			})
+		} else {
+			sort.SliceStable(out.Images, func(i, j int) bool {
+				return displayBefore(time.Unix(out.Images[i].UTime, 0), time.Unix(out.Images[j].UTime, 0), albumSettings.NewestFirst)
+			})
+		}
 	}
 
 	albumSettings.Texts = filterPageTexts(albumSettings.Texts, out.Page, albumSettings.NewestFirst)

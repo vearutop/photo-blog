@@ -20,26 +20,15 @@ import (
 	"github.com/vearutop/photo-blog/pkg/txt"
 )
 
-// albumCacheVersion must be bumped whenever getAlbumOutput or albumPageData's JSON shape changes
-// in a way that isn't safe for an old cached blob to deserialize into (i.e. anything but adding a
-// new field with omitempty that every reader tolerates being zero-value). album-data/album-page
-// are FailoverOf caches: they keep serving a stale blob past its TTL while refreshing in the
-// background, so an incompatible old shape doesn't error — it silently deserializes into zero
-// values, which is exactly what happened twice while pagination was being built (Image and
-// Timeline). Bumping this orphans every previously-cached entry at once instead of chasing each
-// field that turns out to depend on one.
-//
-// InvalidatePersistentCache's enum tag can't reference this constant (Go struct tags must be
-// literal strings), so its "album-data-N"/"album-page-N" entries must be updated by hand to match
-// whenever this changes.
-const albumCacheVersion = "2"
-
 // AlbumDataCacheName and AlbumPageCacheName are the persistent cache names for album content and
-// rendered album pages. Exported so InvalidatePersistentCache's allow-list can reference the same
-// values rather than duplicating the version number.
+// rendered album pages.
+//
+// These caches keep serving stale blobs past TTL, and an incompatible old shape silently deserializes
+// into zero values. When getAlbumOutput or albumPageData JSON shape changes incompatibly, add a migration
+// to internal/infra/storage/sqlite_cache that clears both caches, see 20260923140000_clear_album_cache.sql.
 const (
-	AlbumDataCacheName = "album-data-" + albumCacheVersion
-	AlbumPageCacheName = "album-page-" + albumCacheVersion
+	AlbumDataCacheName = "album-data"
+	AlbumPageCacheName = "album-page"
 )
 
 type AlbumPageBuilder struct {
@@ -356,6 +345,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	d.PreRender = true
 	d.HasPanos = false
 	d.HasPixelpeep = strings.Contains(string(d.Description), `class="pixelpeep`)
+	d.HasRoomPreview = strings.Contains(string(d.Description), `class="room-preview`)
 
 	for _, img := range cont.Images {
 		if img.Is360Pano {
@@ -365,11 +355,19 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 		if strings.Contains(string(img.DescriptionHTML), `class="pixelpeep`) {
 			d.HasPixelpeep = true
 		}
+
+		if strings.Contains(string(img.DescriptionHTML), `class="room-preview`) {
+			d.HasRoomPreview = true
+		}
 	}
 
 	for _, item := range d.Timeline {
 		if strings.Contains(string(item.Text), `class="pixelpeep`) {
 			d.HasPixelpeep = true
+		}
+
+		if strings.Contains(string(item.Text), `class="room-preview`) {
+			d.HasRoomPreview = true
 		}
 	}
 
@@ -404,6 +402,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 
 	if deps.Settings().Visitors().Tag {
 		d.EnableFavorite = true
+		d.EnableVote = album.Settings.Vote.Enabled
 	}
 
 	switch {
@@ -467,6 +466,7 @@ type albumPageData struct {
 	TotalSize      string
 	Visits         string
 	EnableFavorite bool
+	EnableVote     bool
 
 	MapTiles       string
 	MapAttribution string
@@ -482,6 +482,7 @@ type albumPageData struct {
 	PreRender         bool
 	HasPanos          bool
 	HasPixelpeep      bool
+	HasRoomPreview    bool
 	ThumbSprites      map[string]*sprite.ViewItem
 	MarkerSprites     map[string]*sprite.ViewItem
 	SpriteSheets      map[string]sprite.Sheet

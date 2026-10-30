@@ -12,19 +12,20 @@ import (
 	"reflect"
 	"runtime"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 	"unsafe"
 
-	"github.com/bool64/cache"
 	"github.com/bool64/brick"
+	"github.com/bool64/cache"
 	"github.com/stretchr/testify/require"
 	"github.com/vearutop/photo-blog/internal/domain/photo"
 	"github.com/vearutop/photo-blog/internal/domain/uniq"
 	"github.com/vearutop/photo-blog/internal/infra"
+	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	apphttp "github.com/vearutop/photo-blog/internal/infra/nethttp"
 	"github.com/vearutop/photo-blog/internal/infra/service"
-	"github.com/vearutop/photo-blog/internal/infra/image/sprite"
 	integrity "github.com/vearutop/photo-blog/internal/usecase/control/integrity"
 )
 
@@ -280,9 +281,9 @@ func createAlbum(t *testing.T, ctx context.Context, loc *service.Locator, name s
 	t.Helper()
 
 	album, err := loc.PhotoAlbumEnsurer().Ensure(ctx, photo.Album{
-		Head: uniq.Head{Hash: photo.AlbumHash(name)},
-		Name: name,
-		Title: name,
+		Head:   uniq.Head{Hash: photo.AlbumHash(name)},
+		Name:   name,
+		Title:  name,
 		Public: true,
 	})
 	require.NoError(t, err)
@@ -422,7 +423,9 @@ func getAlbumPage(t *testing.T, handler http.Handler, albumName string) {
 func removeImageFromAlbum(t *testing.T, handler http.Handler, albumName string, imageHash uniq.Hash) {
 	t.Helper()
 
-	req := httptest.NewRequest(http.MethodDelete, "/album/"+albumName+"/"+imageHash.String(), nil)
+	req := httptest.NewRequest(http.MethodPost, "/album/"+albumName+"/remove-images",
+		strings.NewReader(`{"image_hashes":["`+imageHash.String()+`"]}`))
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)

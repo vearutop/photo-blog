@@ -12,10 +12,8 @@ import (
 	rootusecase "github.com/vearutop/photo-blog/internal/usecase"
 )
 
-// persistentCacheNames references rootusecase's exported constants (rather than duplicating the
-// literal names) so this list can't drift from what NewAlbumPageBuilder actually writes to. The
-// enum tag on invalidatePersistentCacheInput.CacheName below can't do the same (Go struct tags
-// must be literal strings) — keep it in sync by hand when albumCacheVersion changes.
+// persistentCacheNames references rootusecase's exported constants so this list can't drift from what
+// NewAlbumPageBuilder actually writes to, enum tag of invalidatePersistentCacheInput.CacheName must match it.
 var persistentCacheNames = []string{
 	rootusecase.AlbumDataCacheName,
 	rootusecase.AlbumPageCacheName,
@@ -29,7 +27,7 @@ type invalidatePersistentCacheDeps interface {
 }
 
 type invalidatePersistentCacheInput struct {
-	CacheName string `path:"cache_name" required:"true" enum:"album-data-2,album-page-2,main-page,thumb-grid" description:"Persistent cache to invalidate."`
+	CacheName string `path:"cache_name" required:"true" enum:"album-data,album-page,main-page,thumb-grid" description:"Persistent cache to invalidate."`
 }
 
 type InvalidatePersistentCacheReport struct {
