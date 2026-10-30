@@ -345,6 +345,7 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 	d.PreRender = true
 	d.HasPanos = false
 	d.HasPixelpeep = strings.Contains(string(d.Description), `class="pixelpeep`)
+	d.HasRoomPreview = strings.Contains(string(d.Description), `class="room-preview`)
 
 	for _, img := range cont.Images {
 		if img.Is360Pano {
@@ -354,11 +355,19 @@ func (pb *AlbumPageBuilder) build(ctx context.Context, cont getAlbumOutput) (alb
 		if strings.Contains(string(img.DescriptionHTML), `class="pixelpeep`) {
 			d.HasPixelpeep = true
 		}
+
+		if strings.Contains(string(img.DescriptionHTML), `class="room-preview`) {
+			d.HasRoomPreview = true
+		}
 	}
 
 	for _, item := range d.Timeline {
 		if strings.Contains(string(item.Text), `class="pixelpeep`) {
 			d.HasPixelpeep = true
+		}
+
+		if strings.Contains(string(item.Text), `class="room-preview`) {
+			d.HasRoomPreview = true
 		}
 	}
 
@@ -473,6 +482,7 @@ type albumPageData struct {
 	PreRender         bool
 	HasPanos          bool
 	HasPixelpeep      bool
+	HasRoomPreview    bool
 	ThumbSprites      map[string]*sprite.ViewItem
 	MarkerSprites     map[string]*sprite.ViewItem
 	SpriteSheets      map[string]sprite.Sheet

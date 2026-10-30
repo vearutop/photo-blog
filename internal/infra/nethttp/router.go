@@ -306,6 +306,8 @@ func NewRouter(deps *service.Locator) *web.Service {
 		s.Get("/pixelpeep-{hashes}", usecase.ShowPixelpeep(deps))
 		s.Get("/pixelpeep", usecase.SharePixelpeep())
 
+		s.Get("/room-preview-{hashes}", usecase.ShowRoomPreview())
+
 		s.Get("/poi/photos-{name}.gpx", usecase.DownloadImagesPoiGpx(deps))
 		s.Get("/album/{name}.zip", usecase.DownloadAlbum(deps))
 		s.Get("/{name}/pano-{hash}.html", usecase.ShowPano(deps))
@@ -314,6 +316,7 @@ func NewRouter(deps *service.Locator) *web.Service {
 
 		s.Get("/image/{hash}.jpg", usecase.ShowImage(deps, false))
 		s.Get("/image-dl/{hash}.jpg", usecase.ShowImage(deps, true))
+		s.Get("/split/{grid}/{hash}.zip", usecase.SplitImage(deps))
 		s.Get("/thumb/{size}/{hash}.jpg", usecase.ShowThumb(deps))
 		s.Get("/thumb-sprite/{key}.jpg", usecase.ShowAlbumSprite(deps))
 		s.Get("/track/{hash}.gpx", usecase.DownloadGpx(deps))

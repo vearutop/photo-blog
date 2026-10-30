@@ -1,0 +1,45 @@
+.room-preview { position: relative; max-width: 100%; outline: none; }
+.room-preview .rp-box { position: relative; overflow: hidden; contain: paint; background: #222; user-select: none; }
+.room-preview .rp-stage { position: absolute; left: 0; top: 0; }
+.room-preview .rp-stage > * { position: absolute; left: 0; top: 0; max-width: none; }
+.room-preview .rp-canvas { display: block; }
+.room-preview .rp-svg { width: 100%; height: 100%; }
+.room-preview .rp-svg circle { cursor: move; }
+.room-preview .rp-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  background: rgba(0,0,0,.4); color: #fff; border: none; font-size: 32px; line-height: 1;
+  padding: 8px 12px; cursor: pointer;
+}
+.room-preview .rp-full {
+  position: absolute; top: 0; left: 0; z-index: 2;
+  background: rgba(0,0,0,.4); color: #fff; border: none; font-size: 20px; line-height: 1;
+  padding: 6px 8px; cursor: pointer;
+}
+.room-preview:fullscreen { max-width: none !important; background: #000; display: flex; flex-direction: column; justify-content: center; }
+.room-preview .rp-prev { left: 0; }
+.room-preview .rp-next { right: 0; }
+.room-preview .rp-caption {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%); z-index: 2; pointer-events: none;
+  background: rgba(0,0,0,.5); color: #fff; font: 13px sans-serif; padding: 2px 8px; border-radius: 10px;
+}
+.room-preview .rp-caption:empty { display: none; }
+
+.rp-editor-toggle {
+  position: fixed; top: 6px; right: 6px; z-index: 20;
+  background: rgba(0,0,0,.6); color: #ccc; border: 1px solid #444; padding: 4px 8px; cursor: pointer;
+  font: 12px sans-serif;
+}
+.room-preview-editor {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  max-height: 45vh; overflow-y: auto;
+  background: rgba(20,20,20,.92); color: #ccc; font: 12px sans-serif; padding: 6px;
+  border-top: 1px solid #444;
+}
+.room-preview-editor.hidden { display: none; }
+.room-preview-editor .rp-row { padding: 2px 0; }
+.room-preview-editor input[type=number] { width: 60px; }
+.room-preview-editor input, .room-preview-editor select, .room-preview-editor textarea { background: #333; color: #ccc; border: 1px solid #444; padding: 2px 4px; }
+.room-preview-editor textarea { width: 100%; height: 4em; box-sizing: border-box; }
+
+/* The JSON config is replaced by the widget on init, don't flash it while loading. */
+.room-preview pre { display: none; }

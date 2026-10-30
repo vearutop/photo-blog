@@ -66,6 +66,11 @@
     <script src="/static/pixelpeep.js" defer></script>
     {{end}}
 
+    {{if .HasRoomPreview}}
+    <link rel="stylesheet" href="/static/room-preview.css">
+    <script src="/static/room-preview.js" defer></script>
+    {{end}}
+
     <style>
         /*{{if .IsAdmin}}*/
         .not-control-panel {

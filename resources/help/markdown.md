@@ -164,3 +164,19 @@ Compare 2-4 images side by side with synchronized pan/zoom, to check sharpness a
 }
 ```
 :::
+
+:::{lang=en}
+### Room preview
+:::
+
+:::{lang=ru}
+### Примерка в интерьере
+:::
+
+:::{lang=en}
+Show album photos hung on a wall of a room, in correct perspective, with left/right buttons to flip through the album. Take a photo of an empty room with a plain white wall, and open `/room-preview-<room image hash>,<sample image hash>` (admin tool): drag the sample over the wall, tick "calibrate" and drag the lines along parallel edges of the walls (red: ceiling/floor of the wall with the photo, blue: of the perpendicular wall), tick "measure" and align the segment with something of known length on the wall (e.g. a sofa) to set the scale, then "Copy markdown widget" and paste the result to an album description. By default the widget flips through all the images of the album page, `items` (array of image hashes) can override that. `width` is the long side of the photo in cm, `aspect` (e.g. 1.5 for 3:2, off by default) centre-crops all photos to the same print shape, e.g. to make square ones match the rest, `maxWidth` limits the widget width in px (it never exceeds the page width).
+:::
+
+:::{lang=ru}
+Показывает фотографии альбома на стене комнаты, в правильной перспективе, с кнопками влево/вправо для перелистывания альбома. Сфотографируйте пустую комнату с ровной белой стеной и откройте `/room-preview-<хеш комнаты>,<хеш образца>` (инструмент администратора): перетащите образец на стену, включите "calibrate" и совместите линии с параллельными рёбрами стен (красные: потолок/пол стены с фото, синие: перпендикулярной стены), включите "measure" и совместите отрезок с объектом известной длины на стене (например, диваном) для масштаба, затем "Copy markdown widget" и вставьте результат в описание альбома. По умолчанию виджет листает все изображения страницы альбома, это можно переопределить массивом хешей `items`. `width` — длинная сторона фото в см, `aspect` (например 1.5 для 3:2, по умолчанию выключено) обрезает все фото по центру до одинаковой формы отпечатка, например, чтобы квадратные совпадали с остальными, `maxWidth` ограничивает ширину виджета в px (на узких экранах не шире страницы).
+:::
